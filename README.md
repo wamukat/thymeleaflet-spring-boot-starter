@@ -139,11 +139,12 @@ npm run build
 
 See:
 
-- `docs/getting-started.md`
-- `docs/configuration.md`
-- `docs/javadoc.md`
-- `docs/stories.md`
-- `docs/security.md`
+- [docs/README.md](docs/README.md)
+- [docs/getting-started.md](docs/getting-started.md)
+- [docs/configuration.md](docs/configuration.md)
+- [docs/javadoc.md](docs/javadoc.md)
+- [docs/stories.md](docs/stories.md)
+- [docs/security.md](docs/security.md)
 
 ## Contributing
 

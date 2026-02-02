@@ -31,3 +31,8 @@ recommended for richer previews.
 - `@example` is used to link JavaDoc metadata with a fragment.
 - Parameters should include type and requirement to be rendered correctly.
 - Place the JavaDoc block inside an HTML comment (`<!-- ... -->`).
+
+## Related
+
+- Getting started: [getting-started.md](getting-started.md)
+- Stories: [stories.md](stories.md)

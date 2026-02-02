@@ -1,7 +1,8 @@
 # 設定
 
 全ての設定は `thymeleaflet` プレフィックス配下です。
-使い方の詳細は `getting-started.ja.md` と `stories.ja.md` を参照してください。
+使い方の詳細は [getting-started.ja.md](getting-started.ja.md) と
+[stories.ja.md](stories.ja.md) を参照してください。
 
 ## 基本プロパティ
 
@@ -19,7 +20,7 @@
 | `thymeleaflet.resources.cache-duration-seconds` | int | `3600` | キャッシュ秒数 |
 
 `resources.stylesheets` は **Shadow DOM のプレビュー領域**にのみ注入されます。
-レイアウトやテーマの再現は `stories.ja.md` の `preview.wrapper` を使ってください。
+レイアウトやテーマの再現は [stories.ja.md](stories.ja.md) の `preview.wrapper` を使ってください。
 
 ## セキュリティ
 
