@@ -55,3 +55,6 @@ out/
 
 # Tailwind CSS build output (optional - you may want to commit this)
 # src/main/resources/META-INF/resources/static/css/thymeleaflet.css
+
+# Generated UI CSS
+src/main/resources/META-INF/resources/static/css/thymeleaflet.css
