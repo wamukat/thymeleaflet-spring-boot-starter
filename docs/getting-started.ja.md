@@ -66,10 +66,10 @@ spring:
 2) 同じテンプレートパスに対応するストーリー YAML を作成します。
 3) UI をリロードしてフラグメントを選択します。
 
-形式は `stories.ja.md` を参照してください。
+形式は [stories.ja.md](stories.ja.md) を参照してください。
 
 ## 次に読む
 
-- 設定: `configuration.ja.md`
-- JavaDoc: `javadoc.ja.md`
-- ストーリー/プレビュー: `stories.ja.md`
+- 設定: [configuration.ja.md](configuration.ja.md)
+- JavaDoc: [javadoc.ja.md](javadoc.ja.md)
+- ストーリー/プレビュー: [stories.ja.md](stories.ja.md)

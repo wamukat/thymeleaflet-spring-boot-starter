@@ -33,3 +33,7 @@ spring:
   autoconfigure:
     exclude: io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookAutoConfiguration
 ```
+
+## Related
+
+- Configuration: [configuration.md](configuration.md)
