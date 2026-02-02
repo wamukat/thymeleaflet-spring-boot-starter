@@ -148,16 +148,16 @@ See:
 
 ## Contributing
 
-See `CONTRIBUTING.md`.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Security
 
-See `SECURITY.md`.
+See [SECURITY.md](SECURITY.md).
 
 ## License
 
-Apache-2.0. See `LICENSE`.
+Apache-2.0. See [LICENSE](LICENSE).
 
 ## 日本語
 
-日本語版ドキュメントは `README.ja.md` を参照してください。
+日本語版ドキュメントは [README.ja.md](README.ja.md) を参照してください。

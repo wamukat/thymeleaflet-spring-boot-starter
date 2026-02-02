@@ -31,3 +31,8 @@ npm run build
 ## License
 
 By contributing, you agree that your contributions will be licensed under the Apache-2.0 License.
+See [LICENSE](LICENSE).
+
+## Related
+
+- Project overview: [README.md](README.md)

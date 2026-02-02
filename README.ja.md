@@ -144,12 +144,16 @@ npm run build
 
 ## コントリビューション
 
-`CONTRIBUTING.md` を参照してください。
+[CONTRIBUTING.md](CONTRIBUTING.md) を参照してください。
 
 ## セキュリティ
 
-`SECURITY.md` を参照してください。
+[SECURITY.md](SECURITY.md) を参照してください。
 
 ## ライセンス
 
-Apache-2.0. `LICENSE` を参照してください。
+Apache-2.0. [LICENSE](LICENSE) を参照してください。
+
+## English
+
+English README: [README.md](README.md)
