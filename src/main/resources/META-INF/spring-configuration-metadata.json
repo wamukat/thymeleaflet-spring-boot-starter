@@ -1,0 +1,29 @@
+{
+  "groups": [
+    {
+      "name": "thymeleaflet",
+      "type": "io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties",
+      "sourceType": "io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "thymeleaflet.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable or disable Thymeleaflet feature",
+      "defaultValue": true
+    },
+    {
+      "name": "thymeleaflet.base-path",
+      "type": "java.lang.String",
+      "description": "Base path for Thymeleaflet URLs",
+      "defaultValue": "/thymeleaflet"
+    },
+    {
+      "name": "thymeleaflet.debug",
+      "type": "java.lang.Boolean",
+      "description": "Enable debug mode for Thymeleaflet",
+      "defaultValue": false
+    }
+  ]
+}

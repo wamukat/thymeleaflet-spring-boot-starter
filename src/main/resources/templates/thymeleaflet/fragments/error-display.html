@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * 統一エラー表示フラグメント
+ * 
+ * 全てのエラー表示を統一したスタイルで提供する汎用的なエラーUIコンポーネント。
+ * タイプ別の色分け、アクションボタンの条件表示、詳細情報の動的表示をサポート。
+ * 
+ * @fragment error - メインエラー表示フラグメント
+ * @param type {@code String} [required] エラータイプ (danger, warning, info)
+ * @param title {@code String} [optional=タイプ別タイトル] エラータイトル
+ * @param message {@code String} [optional=model.error] エラーメッセージ
+ * @param showActionButton {@code Boolean} [optional=false] アクションボタン表示
+ * @param actionText {@code String} [optional=再読み込み] アクションボタンテキスト
+ * @param actionScript {@code String} [optional=window.location.reload()] アクションボタンのJavaScript
+ * @param templatePath {@code String} [optional] テンプレートパス (warning/danger時のファイル案内用)
+ * 
+ * @example
+ * // 基本的なdangerエラー
+ * <div th:replace="~{thymeleaflet/fragments/error-display :: error('danger')}"></div>
+ * 
+ * @example
+ * // カスタムメッセージ付きwarning
+ * <div th:replace="~{thymeleaflet/fragments/error-display :: error('warning', 'ストーリーファイルが必要です', null, true)}"></div>
+ * 
+ * @example
+ * // テンプレートパス指定でのwarning
+ * <div th:replace="~{thymeleaflet/fragments/error-display :: error('warning', null, null, false, null, null, ${templatePath})}"></div>
+ */
+-->
+<div th:fragment="error(type, title, message, showActionButton, actionText, actionScript, templatePath)"
+     th:with="
+        errorType=${type ?: 'danger'},
+        errorTitle=${title ?: (errorType == 'danger' ? 'エラーが発生しました' : 
+                              errorType == 'warning' ? 'Stories ファイルが必要です' : 
+                              'プレビューエラー')},
+        errorMessage=${message ?: #ctx.getVariable('error') ?: 
+                     (errorType == 'danger' ? '指定されたリソースが見つかりません' :
+                      errorType == 'warning' ? 'このフラグメントをプレビューするには、ストーリー設定ファイルが必要です。' :
+                      'ストーリーの読み込みに失敗しました')},
+        showButton=${showActionButton ?: false},
+        buttonText=${actionText ?: '再読み込み'},
+        buttonScript=${actionScript ?: 'window.location.reload()'},
+        hasTemplateInfo=${templatePath != null and (errorType == 'warning' or errorType == 'danger')},
+        containerClass=${errorType == 'danger' ? 'text-center py-8 rounded-lg border-2 border-dashed border-red-300 bg-red-50' : 
+                       (errorType == 'warning' ? 'text-center py-8 rounded-lg border-2 border-dashed border-orange-300 bg-orange-50' : 
+                        'text-center py-8 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50')},
+        iconClass=${errorType == 'danger' ? 'mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-red-100' : 
+                   (errorType == 'warning' ? 'mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-orange-100' : 
+                    'mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 bg-gray-100')},
+        titleClass=${errorType == 'danger' ? 'text-lg font-semibold mb-2 text-red-900' : 
+                    (errorType == 'warning' ? 'text-lg font-semibold mb-2 text-orange-900' : 
+                     'text-lg font-semibold mb-2 text-gray-900')},
+        messageClass=${errorType == 'danger' ? 'mb-4 text-red-700' : 
+                      (errorType == 'warning' ? 'mb-4 text-orange-700' : 
+                       'mb-4 text-gray-600')},
+        templateInfoClass=${errorType == 'danger' ? 'rounded-md p-3 mb-4 bg-red-100' : 'rounded-md p-3 mb-4 bg-orange-100'},
+        templateLabelClass=${errorType == 'danger' ? 'text-xs mb-1 text-red-600' : 'text-xs mb-1 text-orange-600'},
+        templateCodeClass=${errorType == 'danger' ? 'text-sm font-mono text-red-800' : 'text-sm font-mono text-orange-800'},
+        templateNameClass=${errorType == 'danger' ? 'text-xs mt-2 text-red-600' : 'text-xs mt-2 text-orange-600'}
+     "
+     th:class="${containerClass}">
+    
+    <!-- アイコン表示 -->
+    <div th:class="${iconClass}">
+        
+        <!-- Danger: X mark -->
+        <svg th:if="${errorType == 'danger'}" 
+             class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        
+        <!-- Warning: Warning triangle -->
+        <svg th:if="${errorType == 'warning'}" 
+             class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+        </svg>
+        
+        <!-- Info: Info circle -->
+        <svg th:if="${errorType == 'info'}" 
+             class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+    </div>
+    
+    <!-- タイトル -->
+    <h3 th:class="${titleClass}" 
+        th:text="${errorTitle}">エラータイトル</h3>
+    
+    <!-- メッセージ -->
+    <p th:class="${messageClass}" 
+       th:text="${errorMessage}">エラーメッセージ</p>
+    
+    <!-- テンプレートパス情報 (warning/danger時) -->
+    <div th:if="${hasTemplateInfo}" 
+         th:class="${templateInfoClass}">
+        <div th:class="${templateLabelClass}">
+            作成すべきファイル:
+        </div>
+        <code th:class="${templateCodeClass}" 
+              th:text="'/src/main/resources/thymeleaflet/stories/' + ${templatePath} + '.stories.yml'">
+            /src/main/resources/thymeleaflet/stories/template/path.stories.yml
+        </code>
+        <div th:class="${templateNameClass}">
+            テンプレートファイル名: <code th:text="${templatePath}">template-path</code>
+        </div>
+    </div>
+    
+    <!-- 推奨メッセージ (warning時) -->
+    <p th:if="${errorType == 'warning'}" class="text-sm text-orange-600">
+        <strong>推奨:</strong> ストーリーファイルを作成して、適切なモックデータを設定してください。
+    </p>
+    
+    <!-- 解決ガイド (danger時) -->
+    <p th:if="${errorType == 'danger'}" class="text-sm text-red-600">
+        適切なストーリー設定ファイルを作成するか、フラグメントの定義を確認してください。
+    </p>
+    
+    <!-- アクションボタン -->
+    <button th:if="${showButton}" 
+            th:class="'mt-3 btn-thymeleaflet-secondary btn-thymeleaflet-small'"
+            th:attr="onclick=${buttonScript}"
+            th:text="${buttonText}">
+        アクション
+    </button>
+</div>
+
+</body>
+</html>

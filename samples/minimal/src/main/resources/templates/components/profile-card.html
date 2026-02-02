@@ -1,0 +1,37 @@
+<!--
+/**
+ * Profile card (profileCard)
+ *
+ * @model profile {@code Map<String, Object>} [required] Profile data
+ * @example <div th:replace="~{components/profile-card :: profileCard()}"></div>
+ */
+-->
+<div th:fragment="profileCard()" class="card w-full max-w-sm bg-base-100/90 shadow-xl border border-base-200/70">
+    <div class="card-body">
+        <div class="flex items-center gap-4">
+            <div class="avatar placeholder">
+                <div class="bg-neutral text-neutral-content rounded-full w-12 ring ring-primary/30">
+                    <span th:text="${#strings.substring(profile.name, 0, 1)}">A</span>
+                </div>
+            </div>
+            <div>
+                <h2 class="card-title" th:text="${profile.name}">Alex Morgan</h2>
+                <p class="text-sm opacity-70" th:text="${profile.role}">Product Designer</p>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center gap-2">
+            <div class="badge badge-primary" th:text="${profile.plan}">Pro</div>
+            <div class="badge badge-outline" th:text="${profile.region}">APAC</div>
+        </div>
+        <div class="mt-4 stats stats-horizontal bg-base-200">
+            <div class="stat">
+                <div class="stat-title">Points</div>
+                <div class="stat-value" th:text="${profile.points}">1280</div>
+            </div>
+            <div class="stat">
+                <div class="stat-title">Projects</div>
+                <div class="stat-value" th:text="${profile.projects}">8</div>
+            </div>
+        </div>
+    </div>
+</div>

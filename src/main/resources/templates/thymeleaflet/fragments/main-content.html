@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * メインコンテンツフラグメント
+ *
+ * フラグメント詳細ページの本文領域を構成する。
+ *
+ * @example <div th:replace="~{thymeleaflet/fragments/main-content :: content()}"></div>
+ */
+-->
+<div th:fragment="content" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- メタ情報 -->
+    <div class="lg:col-span-1 space-y-6">
+        <!-- ストーリー選択 -->
+        <div class="card-thymeleaflet">
+            <div class="card-thymeleaflet-header">
+                <h3 class="text-lg font-semibold text-gray-900">ストーリー選択</h3>
+            </div>
+            <div class="card-thymeleaflet-content">
+                <div class="space-y-2">
+                    <div th:each="story : ${stories}">
+                        <a th:href="@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${story.storyName}}"
+                           hx-get th:hx-get="@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${story.storyName} + '/content'}"
+                           hx-target="#main-content-area"
+                           th:hx-push-url="@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${story.storyName}}"
+                           class="block p-3 rounded-lg border transition-colors duration-200"
+                           th:classappend="${selectedStory != null && selectedStory.storyName == story.storyName ? 
+                                           'border-blue-500 bg-blue-50 text-blue-900' : 
+                                           'border-gray-200 hover:border-gray-300 hover:bg-slate-50'}">
+                            <div class="flex items-start justify-between">
+                                <div class="min-w-0 flex-1">
+                                    <h4 class="text-sm font-medium" th:text="${story.displayTitle ?: story.storyName}">デフォルト</h4>
+                                    <p class="text-xs text-gray-500 mt-1" th:text="${story.storyName}">default</p>
+                                </div>
+                                <div class="ml-2 flex-shrink-0">
+                                    <div th:replace="~{thymeleaflet/fragments/story-badge :: badge(${story})}"></div>
+                                </div>
+                            </div>
+                            <p th:if="${story.displayDescription}" 
+                               class="text-xs text-gray-600 mt-2 line-clamp-2" 
+                               th:text="${story.displayDescription}">標準のホームアイコン</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ストーリー値カード -->
+        <div class="card-thymeleaflet" 
+             th:if="${(displayParameters != null and !#maps.isEmpty(displayParameters)) or (displayModel != null and !#maps.isEmpty(displayModel))}">
+            <div class="card-thymeleaflet-header">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    ストーリー値
+                    <span th:if="${selectedStory}" class="text-gray-500 font-normal" th:text="'- ' + ${selectedStory.displayTitle ?: selectedStory.storyName}">- デフォルト</span>
+                </h3>
+            </div>
+            <div class="card-thymeleaflet-content">
+                <div class="space-y-4">
+                    <!-- Parameters -->
+                    <div th:if="${displayParameters != null and !#maps.isEmpty(displayParameters)}" class="space-y-3">
+                        <div class="text-xs font-semibold tracking-wide text-blue-700 bg-blue-50 inline-flex px-2 py-1 rounded">PARAMETERS</div>
+                        <div class="space-y-3">
+                            <div th:each="storyParam : ${displayParameters}" 
+                                 th:with="isDifferent=${defaultParameters != null && defaultParameters.containsKey(storyParam.key) ? !#objects.nullSafe(defaultParameters[storyParam.key], '').toString().equals(storyParam.value.toString()) : false}"
+                                 class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex-shrink-0">
+                                        <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200" 
+                                              th:text="${storyParam.key}"></span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <code th:class="'text-sm font-medium px-2 py-1 rounded border break-all block ' + 
+                                                      (${isDifferent} ? 'bg-blue-50 border-blue-200 text-gray-800' : 'bg-white border-gray-200 text-gray-800')" 
+                                              th:text="${storyParam.value}"></code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Model -->
+                    <div th:if="${displayModel != null and !#maps.isEmpty(displayModel)}" class="space-y-3">
+                        <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded">MODEL</div>
+                        <div class="space-y-3">
+                            <div th:each="entry : ${displayModel}" 
+                                 class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex-shrink-0">
+                                        <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200" 
+                                              th:text="${entry.key}"></span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <code class="text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800" 
+                                              th:text="${entry.value}"></code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- プレビューエリア -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- プレビューカード -->
+        <div class="card-thymeleaflet">
+            <div class="card-thymeleaflet-header flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    プレビュー
+                    <span th:if="${selectedStory}" class="text-gray-500 font-normal" th:text="'- ' + ${selectedStory.displayTitle ?: selectedStory.storyName}">- デフォルト</span>
+                </h3>
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs text-gray-500">Live Preview</span>
+                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    
+                    <!-- 背景色切替スイッチ -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs text-gray-500">背景色:</span>
+                        <button id="background-toggle"
+                                class="flex items-center space-x-1 px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                                onclick="togglePreviewBackground()"
+                                title="プレビュー背景色を手動で切り替えます（明るい⇔暗い）">
+                            <span id="toggle-icon">☀️</span>
+                            <span id="toggle-text">明るい</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-thymeleaflet-content">
+                <!--
+                /**
+                 * プレビュー表示用の内部フラグメント
+                 *
+                 * @param render {@code Boolean} [required] レンダリング制御フラグ
+                 * @example <th:block th:replace="~{::fragment-preview-content(true)}"></th:block>
+                 */
+                -->
+                <th:block th:fragment="fragment-preview-content(render)" th:if="${render}">
+                    <!-- Shadow DOMプレビューコンテンツ -->
+                    <div th:if="${selectedFragment != null and selectedStory != null}"
+                         id="fragment-preview-host"
+                         th:attr="data-preview-url=@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${selectedStory.storyName} + '/render'}, data-preview-wrapper=${selectedStory.story.preview.wrapper}"
+                         data-preview-stylesheets="/css/mypage.css,/css/mypage/components.css"
+                         class="w-full bg-transparent transition-all duration-300"
+                         style="min-height: 0; height: 0; display: block; overflow: hidden;"
+                         aria-label="フラグメントプレビュー">
+                    </div>
+                    
+                    <!-- プレースホルダー表示 -->
+                    <div th:if="${selectedFragment == null or selectedStory == null}" 
+                         class="flex items-center justify-center p-8 text-gray-500">
+                        <div class="text-center">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                            </svg>
+                            <p class="text-sm">フラグメント・ストーリーを選択してプレビューを表示</p>
+                        </div>
+                    </div>
+                </th:block>
+                
+                <div th:replace="~{thymeleaflet/fragments/preview-container :: container(false, null, 'preview-container', 'gray-200', 'min-h-16', null, null, null, null, ~{::fragment-preview-content(true)})}"></div>
+            </div>
+        </div>
+
+        <!-- 使用例カード -->
+        <div class="card-thymeleaflet">
+            <div class="card-thymeleaflet-header">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    使用例
+                    <span th:if="${selectedStory}" class="text-gray-500 font-normal" th:text="'- ' + ${selectedStory.displayTitle ?: selectedStory.storyName}">- デフォルト</span>
+                </h3>
+            </div>
+            <div class="card-thymeleaflet-content">
+                <div th:if="${displayModel != null and !#maps.isEmpty(displayModel)}" class="mb-3 text-xs text-gray-500">
+                    モデル値はストーリーのmodelで注入されます
+                </div>
+                <div th:if="${selectedFragment != null and selectedStory != null}"
+                     hx-get th:hx-get="@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${selectedStory.storyName} + '/usage'}"
+                     hx-trigger="load"
+                     hx-swap="innerHTML">
+                    <!-- HTMXでロードされる使用例 -->
+                </div>
+                
+                <!-- 統一コピーボタンコンポーネント使用 -->
+                <button class="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg font-medium transition-colors"
+                        onclick="copyUsageExample('usage-example')">
+                    使用例をコピー
+                </button>
+            </div>
+        </div>
+
+        <!-- パラメータ説明カード -->
+        <div class="card-thymeleaflet" 
+             th:if="${javadocInfo != null or (selectedFragment.parameters != null and !#lists.isEmpty(selectedFragment.parameters))}">
+            <div class="card-thymeleaflet-header">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    フラグメント詳細
+                </h3>
+            </div>
+            <div class="card-thymeleaflet-content">
+                <!-- JSDocによるフラグメント説明 -->
+                <div th:if="${javadocInfo != null}" class="mb-6">
+                    <div th:if="${javadocInfo.description != null and !#strings.isEmpty(javadocInfo.description)}" class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                        <p class="text-sm text-blue-800 whitespace-pre-line" th:text="${javadocInfo.description}">フラグメントの説明</p>
+                    </div>
+                    
+                    <!-- JSDocパラメータ -->
+                    <div th:if="${javadocInfo.parameters != null and !#lists.isEmpty(javadocInfo.parameters)}">
+                        <p class="text-sm font-medium text-gray-700 mb-2">フラグメントパラメータ</p>
+                        <h4 class="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            パラメータ仕様
+                        </h4>
+                        <div class="space-y-4">
+                            <div th:each="jsParam : ${javadocInfo.parameters}" 
+                                 class="border border-gray-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                                
+                                <!-- パラメータヘッダー -->
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <span class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-md text-sm font-mono font-semibold" 
+                                              th:text="${jsParam.name}"></span>
+                                        <span class="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium uppercase tracking-wide" 
+                                              th:text="${jsParam.type}"></span>
+                                    </div>
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold" 
+                                          th:classappend="${jsParam.required ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}"
+                                          th:text="${jsParam.required ? '必須' : '任意'}"></span>
+                                </div>
+                                
+                                <!-- パラメータ説明 -->
+                                <div class="mb-3">
+                                    <p class="text-sm text-gray-800 leading-relaxed font-medium whitespace-pre-line" th:text="${jsParam.description}">パラメータの説明</p>
+                                </div>
+                                
+                                <!-- 詳細情報 -->
+                                <div class="space-y-2">
+                                    <!-- デフォルト値 -->
+                                    <div th:if="${jsParam.defaultValue != null and !#strings.isEmpty(jsParam.defaultValue)}" 
+                                         class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-500 font-medium min-w-0 flex-shrink-0">デフォルト値:</span>
+                                        <code class="text-xs bg-slate-100 px-2 py-1 rounded border font-mono text-slate-700" 
+                                              th:text="${jsParam.defaultValue}"></code>
+                                    </div>
+                                    
+                                    <!-- 許可値 -->
+                                    <div th:if="${jsParam.allowedValues != null and !#lists.isEmpty(jsParam.allowedValues)}" 
+                                         class="space-y-1">
+                                        <span class="text-xs text-gray-500 font-medium block">許可値:</span>
+                                        <div class="flex flex-wrap gap-1">
+                                            <span th:each="allowedValue : ${jsParam.allowedValues}"
+                                                  class="inline-block bg-amber-50 text-amber-800 px-2 py-1 rounded border border-amber-200 text-xs font-mono"
+                                                  th:text="${allowedValue}"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- JSDocモデル -->
+                    <div th:if="${javadocInfo.models != null and !#lists.isEmpty(javadocInfo.models)}" class="mt-8">
+                        <p class="text-sm font-medium text-gray-700 mb-2">フラグメントモデル</p>
+                        <h4 class="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M5 12h14M7 6h10M7 18h10"></path>
+                            </svg>
+                            モデル仕様
+                        </h4>
+                        <div class="space-y-4">
+                            <div th:each="jsModel : ${javadocInfo.models}" 
+                                 class="border border-gray-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                                
+                                <!-- モデルヘッダー -->
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <span class="inline-block bg-emerald-100 text-emerald-800 px-3 py-1 rounded-md text-sm font-mono font-semibold" 
+                                              th:text="${jsModel.name}"></span>
+                                        <span class="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium uppercase tracking-wide" 
+                                              th:text="${jsModel.type}"></span>
+                                    </div>
+                                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold" 
+                                          th:classappend="${jsModel.required ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}"
+                                          th:text="${jsModel.required ? '必須' : '任意'}"></span>
+                                </div>
+                                
+                                <!-- モデル説明 -->
+                                <div class="mb-3">
+                                    <p class="text-sm text-gray-800 leading-relaxed font-medium whitespace-pre-line" th:text="${jsModel.description}">モデルの説明</p>
+                                </div>
+                                
+                                <!-- 詳細情報 -->
+                                <div class="space-y-2">
+                                    <!-- デフォルト値 -->
+                                    <div th:if="${jsModel.defaultValue != null and !#strings.isEmpty(jsModel.defaultValue)}" 
+                                         class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-500 font-medium min-w-0 flex-shrink-0">デフォルト値:</span>
+                                        <code class="text-xs bg-slate-100 px-2 py-1 rounded border font-mono text-slate-700" 
+                                              th:text="${jsModel.defaultValue}"></code>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- フォールバック表示 -->
+                <div th:if="${javadocInfo == null and selectedFragment.parameters != null and !#lists.isEmpty(selectedFragment.parameters)}" class="mb-6">
+                    <h4 class="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        フラグメントパラメータ
+                    </h4>
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            <div>
+                                <h5 class="text-sm font-semibold text-amber-800 mb-1">詳細な仕様情報がありません</h5>
+                                <p class="text-xs text-amber-700">このフラグメントにはJavaDocコメントが設定されていないため、基本的なパラメータ名のみ表示されています。</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div th:each="parameter : ${selectedFragment.parameters}" 
+                             class="border border-gray-200 rounded-lg p-4 bg-gray-50/50 hover:bg-gray-50 transition-colors duration-200">
+                            <div class="flex items-start gap-3">
+                                <div class="flex-shrink-0">
+                                    <span class="inline-block bg-gray-100 text-gray-800 px-3 py-1 rounded-md text-sm font-mono font-semibold border border-gray-200" 
+                                          th:text="${parameter}"></span>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="space-y-1">
+                                        <p class="text-sm text-gray-700 font-medium">フラグメントで利用可能なパラメータ</p>
+                                        <p class="text-xs text-gray-500">詳細な型や説明については、フラグメントのJavaDocコメントを確認してください。</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- パラメータがない場合 -->
+                <div th:if="${javadocInfo == null and (selectedFragment.parameters == null or #lists.isEmpty(selectedFragment.parameters))}" 
+                     class="text-center py-4">
+                    <div class="text-gray-400 mb-2">
+                        <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-sm text-gray-500">このフラグメントにはパラメータがありません</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 依存コンポーネント一覧 -->
+        <div class="card-thymeleaflet" th:if="${dependentComponents != null and !#lists.isEmpty(dependentComponents)}">
+            <div class="card-thymeleaflet-header">
+                <h3 class="text-lg font-semibold text-gray-900">依存コンポーネント一覧</h3>
+            </div>
+            <div class="card-thymeleaflet-content">
+                <div class="space-y-2">
+                    <a th:each="dep : ${dependentComponents}"
+                       th:href="@{'/thymeleaflet/' + ${dep.encodedTemplatePath} + '/' + ${dep.fragmentName} + '/default'}"
+                       class="block p-3 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-slate-50 transition-colors">
+                        <div class="flex items-center justify-between">
+                            <div class="min-w-0 flex-1">
+                                <div class="text-sm font-medium text-gray-900" th:text="${dep.fragmentName}">fragment</div>
+                                <div class="text-xs text-gray-500 mt-1" th:text="${dep.templatePath}">template</div>
+                            </div>
+                            <div class="ml-3 text-xs text-gray-400">default</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 親フレームのmessageリスナーは遅延読み込み側で設定 -->
+    <script>
+    // no-op
+    </script>
+</div>
+
+<!--
+/**
+ * 遅延読み込み用メインコンテンツフラグメント
+ *
+ * HTMXで置き換えるメイン領域のデータ更新スクリプトとプレースホルダを提供する。
+ *
+ * @example <div th:replace="~{thymeleaflet/fragments/main-content :: delayedContent()}"></div>
+ */
+-->
+<div th:fragment="delayedContent">
+    <!-- データ更新用スクリプト -->
+    <script type="application/json" id="fragmentsDataUpdated" th:utext="${fragmentsJson}"></script>
+    <script type="application/json" id="hierarchicalDataUpdated" th:utext="${hierarchicalJson}"></script>
+    
+    <!-- 遅延読み込み用JavaScript -->
+    <script>
+        // Alpine.jsデータを更新
+        document.addEventListener('htmx:afterSettle', function(event) {
+            if (event.detail.target && event.detail.target.id === 'main-content-area') {
+                console.log('Main content loaded, updating Alpine.js data');
+                
+                // 新しいデータを取得
+                const newFragmentsData = JSON.parse(document.getElementById('fragmentsDataUpdated')?.textContent || '[]');
+                const newHierarchicalData = JSON.parse(document.getElementById('hierarchicalDataUpdated')?.textContent || '{}');
+                
+                // Alpine.jsデータを更新
+                const updateAlpineData = () => {
+                    const alpineData = Alpine.$data(document.querySelector('[x-data]'));
+                    if (!alpineData) {
+                        return false;
+                    }
+                    alpineData.allFragments = newFragmentsData;
+                    alpineData.hierarchyTree = newHierarchicalData;
+                    if (typeof alpineData.expandAllFolders === 'function') {
+                        alpineData.expandAllFolders();
+                    }
+                    console.log('Alpine.js data updated successfully');
+                    return true;
+                };
+                if (!updateAlpineData()) {
+                    setTimeout(updateAlpineData, 0);
+                }
+                
+                // プレースホルダを非表示にして実際のコンテンツを表示
+                const placeholder = document.getElementById('main-content-placeholder');
+                const realContent = document.getElementById('main-content-real');
+                
+                if (placeholder && realContent) {
+                    placeholder.style.display = 'none';
+                    realContent.style.display = 'block';
+                    console.log('Placeholder hidden, real content shown');
+                }
+                
+                // 古いデータスクリプトを削除
+                const oldFragmentsData = document.getElementById('fragmentsData');
+                const oldHierarchicalData = document.getElementById('hierarchicalData');
+                if (oldFragmentsData) oldFragmentsData.parentNode.replaceChild(document.getElementById('fragmentsDataUpdated'), oldFragmentsData);
+                if (oldHierarchicalData) oldHierarchicalData.parentNode.replaceChild(document.getElementById('hierarchicalDataUpdated'), oldHierarchicalData);
+            }
+        });
+        
+        // プレビュー動的更新機能
+        document.addEventListener('htmx:afterSettle', function(event) {
+            if (event.detail.target && event.detail.target.id === 'main-content-area') {
+                console.log('[DEBUG-PARENT-HTMX] 🔄 Main content updated, refreshing preview...');
+                
+                // URLから現在の選択状態を抽出
+                const currentUrl = window.location.pathname;
+                const urlMatch = currentUrl.match(/\/thymeleaflet\/([^\/]+)\/([^\/]+)\/([^\/]+)/);
+                
+                console.log('[DEBUG-PARENT-HTMX] URL analysis:', {
+                    currentUrl: currentUrl,
+                    urlMatch: urlMatch,
+                    hasValidPattern: !!urlMatch
+                });
+                
+                if (urlMatch) {
+                    const [, templatePath, fragmentName, storyName] = urlMatch;
+                    const previewUrl = `/thymeleaflet/${templatePath}/${fragmentName}/${storyName}/render`;
+                    
+                    console.log('[DEBUG-PARENT-HTMX] Extracted URL components:', {
+                        templatePath: templatePath,
+                        fragmentName: fragmentName,
+                        storyName: storyName,
+                        previewUrl: previewUrl
+                    });
+                    
+                    // Shadow DOMプレビューのコンテンツを更新
+                    const host = document.getElementById('fragment-preview-host');
+                    if (host) {
+                        const previousUrl = host.dataset.previewUrl || '';
+                        console.log('[DEBUG-PARENT-HTMX] Updating preview content:', {
+                            from: previousUrl,
+                            to: previewUrl,
+                            changed: previousUrl !== previewUrl
+                        });
+                        
+                        if (window.__thymeleafletResetPreviewHeight) {
+                            window.__thymeleafletResetPreviewHeight();
+                        }
+                        
+                        host.dataset.previewUrl = previewUrl;
+                        if (window.__thymeleafletLoadShadowPreview) {
+                            window.__thymeleafletLoadShadowPreview(host);
+                        }
+                    } else {
+                        console.error('[DEBUG-PARENT-HTMX] ❌ preview host element not found');
+                    }
+                } else {
+                    // URLがパターンに一致しない場合はプレビューをクリア
+                    console.log('[DEBUG-PARENT-HTMX] URL pattern not matched, clearing preview');
+                    const host = document.getElementById('fragment-preview-host');
+                    if (host) {
+                        if (window.__thymeleafletResetPreviewHeight) {
+                            window.__thymeleafletResetPreviewHeight();
+                        }
+                        host.dataset.previewUrl = '';
+                        if (window.__thymeleafletLoadShadowPreview) {
+                            window.__thymeleafletLoadShadowPreview(host);
+                        }
+                        console.log('[DEBUG-PARENT-HTMX] preview content cleared');
+                    }
+                }
+            }
+        });
+        
+        // preview controls are defined in fragment-list
+    </script>
+    
+    
+    <!-- フラグメント未選択時の表示 -->
+    <div class="text-center py-16">
+        <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
+            </svg>
+        </div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-2">フラグメントを選択してください</h2>
+        <p class="text-gray-600 mb-6">左のサイドバーからフラグメントを選択すると、詳細情報が表示されます</p>
+        
+        <!-- 統計情報 -->
+        <div class="max-w-2xl mx-auto">
+            <div class="card-thymeleaflet">
+                <div class="card-thymeleaflet-content text-center">
+                    <div class="text-2xl font-bold text-blue-600" th:text="${totalCount}">0</div>
+                    <div class="text-sm text-gray-600">総フラグメント数</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 統一JavaScriptコンポーネント -->
+<div th:replace="~{thymeleaflet/fragments/common-scripts :: scripts}"></div>
+
+</body>
+</html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Story Preview: ' + ${storyInfo.displayTitle}">Story Preview</title>
+    <link rel="stylesheet" th:href="@{/thymeleaflet/css/thymeleaflet.css}">
+    <script th:src="@{/thymeleaflet/js/htmx.min.js}"></script>
+    <script th:src="@{/thymeleaflet/js/alpine.min.js}" defer></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 統一ナビゲーションヘッダー -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- ブレッドクラム -->
+            <div class="breadcrumb-thymeleaflet py-3">
+                <a href="/thymeleaflet">Thymeleaflet</a>
+                <span class="separator">/</span>
+                <span th:text="${storyInfo.fragmentInfo.fragmentName}">フラグメント名</span>
+                <span class="separator">/</span>
+                <span class="text-gray-900" th:text="${storyInfo.storyName}">ストーリー名</span>
+            </div>
+            
+            <!-- ページタイトル・アクション -->
+            <div class="flex justify-between items-center py-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900" th:text="${storyInfo.displayTitle}">Story Title</h1>
+                    <p class="text-gray-600 text-sm">
+                        <span th:text="${storyInfo.fragmentInfo.templatePath}">template/path</span>
+                        <span class="text-gray-400">::</span>
+                        <span th:text="${storyInfo.fragmentInfo.fragmentName}">fragment</span>
+                        <span class="text-gray-400">::</span>
+                        <span th:text="${storyInfo.storyName}">story</span>
+                    </p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div th:replace="~{thymeleaflet/fragments/story-badge :: badge(${storyInfo})}"></div>
+                    <button class="btn-thymeleaflet-secondary btn-thymeleaflet-small" onclick="refreshPreview()">
+                        プレビュー更新
+                    </button>
+                    <a th:href="@{/thymeleaflet}" 
+                       class="btn-thymeleaflet-primary btn-thymeleaflet-small">
+                        Thymeleafletに戻る
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- メタ情報 -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- ストーリー情報 -->
+                <div class="card-thymeleaflet">
+                    <div class="card-thymeleaflet-header">
+                        <h3 class="text-lg font-semibold text-gray-900">ストーリー情報</h3>
+                    </div>
+                    <div class="card-thymeleaflet-content">
+                        <div class="space-y-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500 mb-1">Story Name</dt>
+                                <dd class="text-sm text-gray-900 font-mono bg-gray-50 px-2 py-1 rounded" th:text="${storyInfo.storyName}">story-name</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500 mb-1">Title</dt>
+                                <dd class="text-sm text-gray-900 bg-gray-50 px-2 py-1 rounded" th:text="${storyInfo.displayTitle}">title</dd>
+                            </div>
+                            <div th:if="${storyInfo.displayDescription}">
+                                <dt class="text-sm font-medium text-gray-500 mb-1">Description</dt>
+                                <dd class="text-sm text-gray-900 bg-gray-50 px-2 py-1 rounded" th:text="${storyInfo.displayDescription}">description</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-500 mb-1">Fragment Type</dt>
+                                <dd>
+                                    <span th:class="${storyInfo.fragmentInfo.type.name() == 'SIMPLE' ? 'badge-simple' : 
+                                                     storyInfo.fragmentInfo.type.name() == 'PARAMETERIZED' ? 'badge-parameterized' : 
+                                                     'badge-data-dependent'}"
+                                          th:text="${storyInfo.fragmentInfo.type.name()}">type</span>
+                                </dd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- パラメータ/モデル情報 -->
+                <div th:if="${displayParameters != null or displayModel != null}" class="card-thymeleaflet">
+                    <div class="card-thymeleaflet-header">
+                        <h3 class="text-lg font-semibold text-gray-900">ストーリー値</h3>
+                    </div>
+                    <div class="card-thymeleaflet-content">
+                    <div class="space-y-4">
+                            <!-- Parameters -->
+                            <div th:if="${storyInfo.fragmentInfo.type.name() == 'PARAMETERIZED'}" class="space-y-3">
+                                <div class="text-sm font-semibold text-gray-700">フラグメントパラメータ</div>
+                                <div class="text-xs text-gray-500">パラメータ仕様</div>
+                                <div th:if="${displayParameters != null and !displayParameters.isEmpty()}" class="space-y-3">
+                                    <div class="text-xs font-semibold tracking-wide text-blue-700 bg-blue-50 inline-flex px-2 py-1 rounded">PARAMETERS</div>
+                                    <div class="space-y-3">
+                                        <div th:each="parameter : ${displayParameters}" 
+                                             class="flex justify-between items-start py-2 px-3 bg-gray-50 rounded">
+                                            <div class="flex-1">
+                                                <span class="text-sm font-mono text-gray-700" th:text="${parameter.key}">param</span>
+                                                <div class="text-xs text-gray-500 mt-1">
+                                                    <span th:switch="${parameter.value.class.simpleName}">
+                                                        <span th:case="'Boolean'" class="bg-purple-100 text-purple-800 px-2 py-1 rounded">Boolean</span>
+                                                        <span th:case="'String'" class="bg-blue-100 text-blue-800 px-2 py-1 rounded">String</span>
+                                                        <span th:case="'Integer'" class="bg-green-100 text-green-800 px-2 py-1 rounded">Number</span>
+                                                        <span th:case="*" class="bg-gray-100 text-gray-800 px-2 py-1 rounded">Object</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="text-right">
+                                                <span class="text-sm text-gray-800 break-all" th:text="${parameter.value}">value</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div th:if="${displayParameters == null or displayParameters.isEmpty()}" class="text-xs text-gray-500">
+                                    パラメータはストーリー側で指定されていません
+                                </div>
+                            </div>
+
+                            <!-- Model -->
+                            <div th:if="${displayModel != null and !displayModel.isEmpty()}" class="space-y-3">
+                                <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded">MODEL</div>
+                                <div class="space-y-3">
+                                    <div th:each="entry : ${displayModel}" 
+                                         class="flex justify-between items-start py-2 px-3 bg-gray-50 rounded">
+                                        <div class="flex-1">
+                                            <span class="text-sm font-mono text-gray-700" th:text="${entry.key}">key</span>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                <span th:switch="${entry.value != null ? entry.value.class.simpleName : 'null'}">
+                                                    <span th:case="'Boolean'" class="bg-purple-100 text-purple-800 px-2 py-1 rounded">Boolean</span>
+                                                    <span th:case="'String'" class="bg-blue-100 text-blue-800 px-2 py-1 rounded">String</span>
+                                                    <span th:case="'Integer'" class="bg-green-100 text-green-800 px-2 py-1 rounded">Number</span>
+                                                    <span th:case="'null'" class="bg-gray-100 text-gray-800 px-2 py-1 rounded">null</span>
+                                                    <span th:case="*" class="bg-gray-100 text-gray-800 px-2 py-1 rounded">Object</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <span class="text-sm text-gray-800 break-all" th:text="${entry.value}">value</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- アクション -->
+                <div class="card-thymeleaflet">
+                    <div class="card-thymeleaflet-header">
+                        <h3 class="text-lg font-semibold text-gray-900">アクション</h3>
+                    </div>
+                    <div class="card-thymeleaflet-content">
+                        <div class="space-y-3">
+                            <button id="refreshBtn" 
+                                    class="w-full btn-thymeleaflet-primary"
+                                    onclick="refreshPreview()">
+                                プレビュー更新
+                            </button>
+                            <!-- 統一コピー機能使用 -->
+                            <button class="w-full btn-thymeleaflet-secondary"
+                                    onclick="copyStoryCode()">
+                                使用例をコピー
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- プレビューエリア -->
+            <div class="lg:col-span-2">
+                <div class="card-thymeleaflet">
+                    <div class="card-thymeleaflet-header">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-900">プレビュー</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-gray-500">Live Preview</span>
+                                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-thymeleaflet-content">
+                        <!--
+                        /**
+                         * ストーリープレビュー用のローディング表示フラグメント
+                         *
+                         * @param render {@code Boolean} [required] レンダリング制御フラグ
+                         * @example <th:block th:replace="~{::story-preview-content(true)}"></th:block>
+                         */
+                        -->
+                        <th:block th:fragment="story-preview-content(render)" th:if="${render}">
+                            <!-- ローディング表示 -->
+                            <div class="flex items-center justify-center h-24">
+                                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                <span class="ml-3 text-gray-600">読み込み中...</span>
+                            </div>
+                        </th:block>
+                        
+                        <div th:replace="~{thymeleaflet/fragments/preview-container :: container(true, 'p-8 flex items-center justify-center', 'preview-container', 'gray-200', 'min-h-20', '/thymeleaflet/' + templatePathEncoded + '/' + storyInfo.fragmentInfo.fragmentName + '/' + storyInfo.storyName + '/render', 'load', 'this', 'innerHTML', ~{::story-preview-content(true)})}"></div>
+                    </div>
+                </div>
+
+                <!-- 使用例 -->
+                <div class="mt-6 card-thymeleaflet">
+                    <div class="card-thymeleaflet-header">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-gray-900">使用例</h3>
+                            <div class="flex items-center space-x-2">
+                                <span id="usage-status" class="text-xs text-gray-500">プレビューと同期中...</span>
+                                <div id="usage-indicator" class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-thymeleaflet-content">
+                        <div id="usage-description" class="mb-3 text-sm text-gray-600">
+                            プレビューの実際の状態と一致する使用例を表示しています
+                        </div>
+                        <div th:if="${displayModel != null and !displayModel.isEmpty()}" class="mb-3 text-xs text-gray-500">
+                            モデル値はストーリーのmodelで注入されます
+                        </div>
+                        <div class="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto">
+                            <div id="usage-example"
+                                 th:hx-get="@{/thymeleaflet/{templatePath}/{fragmentName}/{storyName}/usage(templatePath=${templatePathEncoded}, fragmentName=${storyInfo.fragmentInfo.fragmentName}, storyName=${storyInfo.storyName})}"
+                                 hx-trigger="load delay:500ms"
+                                 hx-target="this"
+                                 hx-swap="outerHTML">
+                                <pre><code class="language-html hljs"><!-- 使用例を読み込み中... --></code></pre>
+                            </div>
+                        </div>
+                        <!-- 統一コピーボタンコンポーネント使用 -->
+                        <button class="mt-3 btn-thymeleaflet-secondary btn-thymeleaflet-small" onclick="copyUsageExample('usage-example')">
+                            使用例をコピー
+                        </button>
+                    </div>
+                </div>
+
+                <!-- フォールバック状態の警告 -->
+                <div th:if="${storyInfo.isFallbackStory()}" class="mt-6 bg-orange-50 border border-orange-200 rounded-lg overflow-hidden">
+                    <div class="px-6 py-4 border-b bg-orange-100">
+                        <h3 class="text-lg font-semibold text-orange-900">ストーリーファイル作成のご案内</h3>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0">
+                                <svg class="w-5 h-5 text-orange-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-orange-800 mb-2">現在はデフォルト値で表示中</h4>
+                                <p class="text-sm text-orange-700 mb-3">
+                                    このフラグメントにはカスタムストーリーが定義されていません。以下のファイルを作成すると、複数のバリエーション表示やカスタムパラメータの設定が可能になります。
+                                </p>
+                                <div class="bg-orange-100 rounded p-3 mb-3">
+                                    <p class="text-xs font-medium text-orange-800 mb-1">作成するファイル:</p>
+                                    <code class="block text-orange-900 text-sm font-mono break-all" 
+                                          th:text="'/src/main/resources/thymeleaflet/stories/' + ${storyInfo.fragmentInfo.templatePath} + '.stories.yml'">
+                                        ストーリーファイルパス
+                                    </code>
+                                </div>
+                                <div class="text-xs text-orange-600">
+                                    <p class="font-medium mb-1">ストーリーファイルで可能なこと:</p>
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>複数のバリエーション（例: デフォルト、無効状態、大小サイズ等）</li>
+                                        <li>各バリエーションに最適化されたパラメータ設定</li>
+                                        <li>分かりやすいタイトルと説明文の追加</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function refreshPreview() {
+            const container = document.getElementById('preview-container');
+            const usageContainer = document.getElementById('usage-example');
+            
+            // プレビューを更新
+            htmx.trigger(container, 'load');
+            
+            // 使用例も更新（プレビュー更新後にdelayをかけて実行）
+            setTimeout(() => {
+                htmx.trigger(usageContainer, 'load');
+            }, 1000);
+            
+            // インジケーター更新
+            updateUsageStatus('プレビューと同期中...', 'yellow');
+        }
+        
+        // copyUsageExampleは統一コンポーネントに移動済み。グローバルスコープで利用可能。
+        
+        function copyStoryCode() {
+            const templatePath = '[[${storyInfo.fragmentInfo.templatePath}]]';
+            const fragmentName = '[[${storyInfo.fragmentInfo.fragmentName}]]';
+            const code = `<div th:replace="~{${templatePath} :: ${fragmentName}}"></div>`;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'コピーしました！';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 1500);
+            });
+        }
+        
+        function updateUsageStatus(status, color) {
+            const statusElement = document.getElementById('usage-status');
+            const indicatorElement = document.getElementById('usage-indicator');
+            const descriptionElement = document.getElementById('usage-description');
+            
+            if (statusElement) {
+                statusElement.textContent = status;
+            }
+            
+            if (indicatorElement) {
+                indicatorElement.className = `w-2 h-2 rounded-full animate-pulse bg-${color}-400`;
+            }
+        }
+        
+        // HTMX イベントリスナー
+        document.addEventListener('htmx:afterRequest', function(evt) {
+            if (evt.detail.target && evt.detail.target.id === 'usage-example') {
+                // 使用例の更新が完了したら状態を更新
+                if (evt.detail.xhr.status === 200) {
+                    updateUsageStatus('プレビューと同期済み', 'green');
+                    
+                    const descriptionElement = document.getElementById('usage-description');
+                    if (descriptionElement) {
+                        descriptionElement.textContent = 'プレビューの実際の状態と完全に一致する使用例を表示しています';
+                    }
+                } else {
+                    updateUsageStatus('同期エラー', 'red');
+                }
+            }
+        });
+        
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateUsageStatus('プレビューと同期中...', 'yellow');
+        });
+    </script>
+    
+    <!-- 統一JavaScriptコンポーネント -->
+    <div th:replace="~{thymeleaflet/fragments/common-scripts :: scripts}"></div>
+    
+</body>
+</html>
