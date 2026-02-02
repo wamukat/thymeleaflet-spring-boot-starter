@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * 統一使用例コードブロックフラグメント
+ * 
+ * 全ての使用例表示を統一したスタイルで提供する汎用的なコードブロックコンポーネント。
+ * シンタックスハイライト、コピー機能、複数言語対応を包含。
+ * 
+ * @fragment codeBlock - メインコードブロックフラグメント
+ * @param code {@code String} [required] 表示するコード
+ * @param language {@code String} [optional=html] 言語 (html, javascript, css等)
+ * @param showCopyButton {@code Boolean} [optional=true] コピーボタン表示
+ * @param title {@code String} [optional] ブロックタイトル
+ * @param hasError {@code Boolean} [optional=false] エラー状態フラグ
+ * @param errorMessage {@code String} [optional] エラーメッセージ
+ * @param blockId {@code String} [optional=usage-example] ブロックID
+ * 
+ * @example
+ * // 基本的な使用例
+ * <div th:replace="~{thymeleaflet/fragments/usage-code-block :: codeBlock(${usageExample})}"></div>
+ * 
+ * @example
+ * // JavaScriptコード、コピーボタン付き
+ * <div th:replace="~{thymeleaflet/fragments/usage-code-block :: codeBlock(${jsCode}, 'javascript', true, 'JavaScript Example')}"></div>
+ * 
+ * @example
+ * // エラー状態での表示
+ * <div th:replace="~{thymeleaflet/fragments/usage-code-block :: codeBlock(${errorCode}, 'html', true, null, true, 'Template not found')}"></div>
+ */
+-->
+<div th:fragment="codeBlock(code, language, showCopyButton, title, hasError, errorMessage, blockId)"
+     th:with="
+        displayCode=${code ?: '<!-- No code available -->'},
+        lang=${language ?: 'html'},
+        copyButton=${showCopyButton != null ? showCopyButton : true},
+        blockTitle=${title ?: ''},
+        isError=${hasError ?: false},
+        errMsg=${errorMessage ?: ''},
+        elementId=${blockId ?: 'usage-example'}
+     "
+     th:id="${elementId}"
+     th:class="'storybook-usage-section ' + (${isError} ? 'error-state' : 'normal-state')">
+    
+    <!-- ブロックヘッダー -->
+    <div th:if="${blockTitle != '' or copyButton}" class="flex justify-between items-center mb-2">
+        <!-- タイトル -->
+        <h4 th:if="${blockTitle != ''}" 
+            th:class="'text-sm font-medium ' + (${isError} ? 'text-red-700' : 'text-gray-700')"
+            th:text="${blockTitle}">Code Title</h4>
+        
+        <!-- コピーボタン -->
+        <button th:if="${copyButton}" 
+                class="btn-thymeleaflet-secondary btn-thymeleaflet-small copy-button"
+                th:attr="onclick='copyUsageExample(\'' + ${elementId} + '\')',
+                         title='コードをクリップボードにコピー'">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            コピー
+        </button>
+    </div>
+    
+    <!-- エラーメッセージ -->
+    <div th:if="${isError and errMsg != ''}" 
+         class="bg-red-50 border-l-4 border-red-400 p-3 mb-3">
+        <div class="flex">
+            <svg class="w-5 h-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <p class="text-sm text-red-700" th:text="${errMsg}">Error message</p>
+        </div>
+    </div>
+    
+    <!-- コードブロック本体 -->
+    <div class="storybook-usage-example">
+        <div class="code-block-scrollable">
+            <pre class="code-block-pre"><code th:class="'language-' + ${lang} + ' hljs'" 
+                                             th:text="${displayCode}">Code content</code></pre>
+        </div>
+    </div>
+</div>
+
+<!--
+/**
+ * シンプルコードブロックフラグメント
+ * 
+ * ボタンやタイトルなしのシンプルなコードブロック。
+ * インライン表示や埋め込み用途に最適。
+ * 
+ * @fragment simple - シンプルコードブロックフラグメント
+ * @param code {@code String} [required] 表示するコード
+ * @param language {@code String} [optional=html] 言語
+ * @param customClasses {@code String} [optional] 追加CSSクラス
+ * 
+ * @example
+ * // シンプルなコードブロック
+ * <div th:replace="~{thymeleaflet/fragments/usage-code-block :: simple(${code})}"></div>
+ * 
+ * @example
+ * // CSSコード、カスタムクラス付き
+ * <div th:replace="~{thymeleaflet/fragments/usage-code-block :: simple(${cssCode}, 'css', 'my-custom-style')}"></div>
+ */
+-->
+<div th:fragment="simple(code, language, customClasses)"
+     th:with="
+        displayCode=${code ?: '<!-- No code available -->'},
+        lang=${language ?: 'html'},
+        additionalClasses=${customClasses ?: ''}
+     "
+     th:class="'storybook-usage-example ' + ${additionalClasses}">
+    
+    <div class="code-block-scrollable">
+        <pre class="code-block-pre"><code th:class="'language-' + ${lang} + ' hljs'" 
+                                         th:text="${displayCode}">Code content</code></pre>
+    </div>
+</div>
+
+<!--
+/**
+ * インラインコードフラグメント
+ * 
+ * 文中で使用するインラインコード表示。
+ * シンタックスハイライトなしの軽量表示。
+ * 
+ * @fragment inline - インラインコードフラグメント
+ * @param code {@code String} [required] 表示するコード
+ * @param customClasses {@code String} [optional] 追加CSSクラス
+ * 
+ * @example
+ * // インラインコード
+ * <span th:replace="~{thymeleaflet/fragments/usage-code-block :: inline('th:text=${value}')}"></span>
+ */
+-->
+<code th:fragment="inline(code, customClasses)"
+      th:with="
+        displayCode=${code ?: ''},
+        additionalClasses=${customClasses ?: ''}
+      "
+      th:class="'font-mono text-sm bg-gray-100 px-2 py-1 rounded ' + ${additionalClasses}"
+      th:text="${displayCode}">inline code</code>
+
+</body>
+</html>

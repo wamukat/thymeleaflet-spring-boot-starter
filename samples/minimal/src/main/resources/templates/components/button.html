@@ -1,0 +1,26 @@
+<!--
+/**
+ * Primary button (primaryButton)
+ *
+ * @param label {@code String} [required] Button label
+ * @param variant {@code String} [optional=primary] DaisyUI button variant
+ * @example <div th:replace="~{components/button :: primaryButton(label='Save', variant='primary')}"></div>
+ */
+-->
+<div th:fragment="primaryButton(label, variant)"
+     class="btn"
+     th:classappend="' btn-' + ${variant}">
+    <span th:text="${label}">Button</span>
+</div>
+
+<!--
+/**
+ * Disabled button (disabledButton)
+ *
+ * @param label {@code String} [required] Button label
+ * @example <div th:replace="~{components/button :: disabledButton(label='Disabled')}"></div>
+ */
+-->
+<div th:fragment="disabledButton(label)" class="btn btn-disabled">
+    <span th:text="${label}">Disabled</span>
+</div>

@@ -1,0 +1,60 @@
+meta:
+  title: Profile Cards
+  description: Dummy profile data for screenshots
+
+storyGroups:
+  profileCard:
+    title: Profile Card
+    description: Sample data for UI screenshots
+    stories:
+      - name: default
+        title: Default
+        preview:
+          wrapper: |
+            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+        model:
+          profile:
+            name: Default User
+            role: Product Manager
+            plan: Starter
+            region: US
+            points: 840
+            projects: 3
+      - name: alex
+        title: Alex
+        preview:
+          wrapper: |
+            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+        model:
+          profile:
+            name: Alex Morgan
+            role: Product Designer
+            plan: Pro
+            region: APAC
+            points: 1280
+            projects: 8
+      - name: yumi
+        title: Yumi
+        preview:
+          wrapper: |
+            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+        model:
+          profile:
+            name: Yumi Tanaka
+            role: Frontend Engineer
+            plan: Team
+            region: JP
+            points: 2140
+            projects: 12

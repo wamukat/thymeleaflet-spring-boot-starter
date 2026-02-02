@@ -1,0 +1,102 @@
+/* Storybook専用 - 完全独立構成 */
+@import './components.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  /* Storybook専用のボタンスタイル */
+  .btn-storybook-primary {
+    @apply bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium text-sm;
+  }
+  
+  .btn-storybook-secondary {
+    @apply bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors font-medium text-sm border border-gray-300;
+  }
+  
+  .btn-storybook-small {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* Storybook専用のカードスタイル */
+  .card-storybook {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200;
+  }
+  
+  .card-storybook-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+  
+  .card-storybook-content {
+    @apply px-6 py-4;
+  }
+
+  /* Storybook専用のブレッドクラム */
+  .breadcrumb-storybook {
+    @apply text-sm;
+  }
+  
+  .breadcrumb-storybook .separator {
+    @apply mx-2 text-gray-400;
+  }
+
+  /* 統計カード専用スタイル */
+  .stats-card {
+    @apply bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-lg border border-blue-200;
+  }
+  
+  .stats-number {
+    @apply text-2xl font-bold text-blue-600;
+  }
+  
+  .stats-label {
+    @apply text-xs text-gray-600 uppercase tracking-wide;
+  }
+
+  /* サイドバー統計カード */
+  .sidebar-stats {
+    @apply bg-white p-3 rounded-lg border border-gray-200 hover:shadow-md transition-shadow;
+  }
+  
+  .sidebar-stats-icon {
+    @apply w-8 h-8 p-1.5 rounded-full;
+  }
+  
+  .sidebar-stats-number {
+    @apply text-lg font-semibold;
+  }
+  
+  .sidebar-stats-label {
+    @apply text-xs text-gray-600;
+  }
+
+  /* アイコン付きカテゴリースタイル */
+  .category-domain .sidebar-stats-icon {
+    @apply bg-blue-100 text-blue-600;
+  }
+  
+  .category-member .sidebar-stats-icon {
+    @apply bg-green-100 text-green-600;
+  }
+  
+  .category-point .sidebar-stats-icon {
+    @apply bg-yellow-100 text-yellow-600;
+  }
+  
+  .category-shared .sidebar-stats-icon {
+    @apply bg-purple-100 text-purple-600;
+  }
+  
+  .category-atoms .sidebar-stats-icon {
+    @apply bg-red-100 text-red-600;
+  }
+  
+  .category-molecules .sidebar-stats-icon {
+    @apply bg-indigo-100 text-indigo-600;
+  }
+  
+  .category-organisms .sidebar-stats-icon {
+    @apply bg-pink-100 text-pink-600;
+  }
+}

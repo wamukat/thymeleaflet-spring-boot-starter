@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thymeleaflet - フラグメント一覧</title>
+    <link rel="stylesheet" th:href="@{/thymeleaflet/css/thymeleaflet.css}">
+    <script th:src="@{/thymeleaflet/js/htmx.min.js}"></script>
+    <script th:src="@{/thymeleaflet/js/alpine.min.js}" defer></script>
+    
+    <!-- Highlight.js CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js"></script>
+    
+    <!-- サーバーからの選択状態 -->
+    <meta name="selected-template-path" th:content="${selectedTemplatePath ?: ''}">
+    <meta name="selected-fragment-name" th:content="${selectedFragmentName ?: ''}">
+    <meta name="selected-story-name" th:content="${selectedStoryName ?: ''}">
+</head>
+<body class="bg-gray-50" x-data="hierarchicalFragmentList()" x-init="$nextTick(() => { expandAllFolders(); initializeFromServerState(); })">
+    <!-- モバイル用オーバーレイ -->
+    <div x-show="sidebarOpen" 
+         x-transition.opacity 
+         class="nav-overlay lg:hidden" 
+         @click="sidebarOpen = false"></div>
+
+    <!-- サイドバーナビゲーション -->
+    <nav class="nav-sidebar" :class="{ 'mobile-open': sidebarOpen }">
+        <!-- サイドバーヘッダー -->
+        <div class="px-4 py-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-lg font-bold text-gray-900">Fragment Storybook</h1>
+                    <p class="text-xs text-gray-500 mt-1">フラグメント一覧</p>
+                </div>
+                <button class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
+                        @click="sidebarOpen = false">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- 統計サマリー -->
+            <div class="mt-4 text-center">
+                <div class="bg-blue-50 rounded-lg p-2">
+                    <div class="text-lg font-bold text-blue-600" th:text="${totalCount}">0</div>
+                    <div class="text-xs text-blue-700">Total</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 検索フィルタ -->
+        <div class="px-4 py-4 border-b border-gray-200">
+            <input type="text" 
+                   placeholder="フラグメント検索..." 
+                   class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                   x-model="searchQuery" 
+                   @input="filterFragments()">
+        </div>
+
+        <!-- 階層ナビゲーション -->
+        <div class="px-2 py-4 pb-24">
+            <template x-for="(category, categoryName) in hierarchyTree" :key="categoryName">
+                <div class="mb-2">
+                    <!-- カテゴリフォルダ -->
+                    <div class="nav-tree-folder" 
+                         :class="{ 'expanded': expandedFolders[categoryName] }"
+                         @click="toggleFolder(categoryName)">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-2 transition-transform" 
+                                     :class="{ 'rotate-90': expandedFolders[categoryName] }"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                                <span x-text="categoryName" class="capitalize"></span>
+                            </div>
+                            <span class="nav-fragment-count" x-text="getCategoryCount(category)"></span>
+                        </div>
+                    </div>
+                    
+                    <!-- サブカテゴリとフラグメント -->
+                    <div x-show="expandedFolders[categoryName]" 
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform scale-95"
+                         x-transition:enter-end="opacity-100 transform scale-100">
+                        <template x-for="(subcategory, subcategoryName) in category" :key="subcategoryName">
+                            <div x-show="subcategoryName !== '_fragments'">
+                                <div class="nav-tree-folder nav-tree-indent-1" 
+                                     :class="{ 'expanded': expandedFolders[categoryName + '/' + subcategoryName] }"
+                                     @click="toggleFolder(categoryName + '/' + subcategoryName)">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <svg class="w-3 h-3 mr-2 transition-transform" 
+                                                 :class="{ 'rotate-90': expandedFolders[categoryName + '/' + subcategoryName] }"
+                                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                            <span x-text="subcategoryName"></span>
+                                        </div>
+                                        <span class="nav-fragment-count" x-text="getCategoryCount(subcategory)"></span>
+                                    </div>
+                                </div>
+                                
+                                <!-- サブサブカテゴリと直接フラグメントリスト -->
+                                <div x-show="expandedFolders[categoryName + '/' + subcategoryName]"
+                                     x-transition:enter="transition ease-out duration-200">
+                                    
+                                    <!-- サブサブカテゴリ（atoms, molecules, organisms等）の処理 -->
+                                    <template x-for="(subSubcategory, subSubcategoryName) in subcategory" :key="subSubcategoryName">
+                                        <div x-show="subSubcategoryName !== '_fragments'">
+                                            <div class="nav-tree-folder nav-tree-indent-2" 
+                                                 :class="{ 'expanded': expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName] }"
+                                                 @click="toggleFolder(categoryName + '/' + subcategoryName + '/' + subSubcategoryName)">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center">
+                                                        <svg class="w-2 h-2 mr-2 transition-transform" 
+                                                             :class="{ 'rotate-90': expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName] }"
+                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                        </svg>
+                                                        <span x-text="subSubcategoryName" class="text-xs"></span>
+                                                    </div>
+                                                    <span class="nav-fragment-count" x-text="getCategoryCount(subSubcategory)"></span>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- サブサブカテゴリ内のフラグメントリスト -->
+                                            <div x-show="expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName]"
+                                                 x-transition:enter="transition ease-out duration-200">
+                                                <template x-for="(fragmentGroup, templateName) in subSubcategory._fragments" :key="templateName">
+                                                    <div class="nav-tree-indent-3">
+                                                        <div class="nav-tree-folder"
+                                                             :class="{ 'expanded': expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName + '/' + templateName] }"
+                                                             @click="toggleFolder(categoryName + '/' + subcategoryName + '/' + subSubcategoryName + '/' + templateName)">
+                                                            <div class="flex items-center justify-between">
+                                                                <div class="flex items-center">
+                                                                    <svg class="w-2 h-2 mr-2 transition-transform" 
+                                                                         :class="{ 'rotate-90': expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName + '/' + templateName] }"
+                                                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                                    </svg>
+                                                                    <span x-text="templateName" class="text-xs font-mono"></span>
+                                                                </div>
+                                                                <span class="nav-fragment-count" x-text="fragmentGroup.length"></span>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- 個別フラグメント -->
+                                                        <div x-show="expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName + '/' + templateName]"
+                                                             x-transition:enter="transition ease-out duration-200">
+                                                            <template x-for="fragment in fragmentGroup" :key="fragment.templatePath + '::' + fragment.fragmentName">
+                                                                <a class="nav-tree-item nav-tree-indent-4 w-full block text-left"
+                                                                   :class="{ 'active': selectedFragment && selectedFragment.templatePath === fragment.templatePath && selectedFragment.fragmentName === fragment.fragmentName }"
+                                                                   :href="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`"
+                                                                   hx-get :hx-get="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default/content`"
+                                                                   hx-target="#main-content-area"
+                                                                   :hx-push-url="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`">
+                                                                    <div class="flex items-center justify-between">
+                                                                        <span x-text="fragment.fragmentName" class="font-mono text-xs"></span>
+                                                                        <span class="nav-fragment-badge"
+                                                                              :class="fragment.type === 'SIMPLE' ? 'bg-green-100 text-green-800' : 
+                                                                                      fragment.type === 'PARAMETERIZED' ? 'bg-blue-100 text-blue-800' : 
+                                                                                      'bg-purple-100 text-purple-800'"
+                                                                              x-text="fragment.type.charAt(0)">
+                                                                        </span>
+                                                                    </div>
+                                                                </a>
+                                                            </template>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- 直接的なフラグメントリスト（サブカテゴリに直接_fragmentsがある場合）-->
+                                    <template x-for="(fragmentGroup, templateName) in subcategory._fragments" :key="templateName">
+                                        <div class="nav-tree-indent-2">
+                                            <div class="nav-tree-folder"
+                                                 :class="{ 'expanded': expandedFolders[categoryName + '/' + subcategoryName + '/' + templateName] }"
+                                                 @click="toggleFolder(categoryName + '/' + subcategoryName + '/' + templateName)">
+                                                <div class="flex items-center justify-between">
+                                                    <div class="flex items-center">
+                                                        <svg class="w-3 h-3 mr-2 transition-transform" 
+                                                             :class="{ 'rotate-90': expandedFolders[categoryName + '/' + subcategoryName + '/' + templateName] }"
+                                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                        </svg>
+                                                        <span x-text="templateName" class="text-xs font-mono"></span>
+                                                    </div>
+                                                    <span class="nav-fragment-count" x-text="fragmentGroup.length"></span>
+                                                </div>
+                                            </div>
+                                            
+                                            <!-- 個別フラグメント -->
+                                            <div x-show="expandedFolders[categoryName + '/' + subcategoryName + '/' + templateName]"
+                                                 x-transition:enter="transition ease-out duration-200">
+                                                <template x-for="fragment in fragmentGroup" :key="fragment.templatePath + '::' + fragment.fragmentName">
+                                            <a class="nav-tree-item nav-tree-indent-3 w-full block text-left"
+                                               :class="{ 'active': selectedFragment && selectedFragment.templatePath === fragment.templatePath && selectedFragment.fragmentName === fragment.fragmentName }"
+                                               :href="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`"
+                                               hx-get :hx-get="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default/content`"
+                                               hx-target="#main-content-area"
+                                               :hx-push-url="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`">
+                                                        <div class="flex items-center justify-between">
+                                                            <span x-text="fragment.fragmentName" class="font-mono text-xs"></span>
+                                                            <span class="nav-fragment-badge"
+                                                                  :class="fragment.type === 'SIMPLE' ? 'bg-green-100 text-green-800' : 
+                                                                          fragment.type === 'PARAMETERIZED' ? 'bg-blue-100 text-blue-800' : 
+                                                                          'bg-purple-100 text-purple-800'"
+                                                                  x-text="fragment.type.charAt(0)">
+                                                            </span>
+                                                        </div>
+                                                    </a>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <!-- 直接的なフラグメントリスト（カテゴリに直接_fragmentsがある場合）-->
+                        <template x-for="(fragmentGroup, templateName) in category._fragments" :key="templateName">
+                            <div class="nav-tree-indent-1">
+                                <div class="nav-tree-folder"
+                                     :class="{ 'expanded': expandedFolders[categoryName + '/' + templateName] }"
+                                     @click="toggleFolder(categoryName + '/' + templateName)">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <svg class="w-3 h-3 mr-2 transition-transform" 
+                                                 :class="{ 'rotate-90': expandedFolders[categoryName + '/' + templateName] }"
+                                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                            </svg>
+                                            <span x-text="templateName" class="text-xs font-mono"></span>
+                                        </div>
+                                        <span class="nav-fragment-count" x-text="fragmentGroup.length"></span>
+                                    </div>
+                                </div>
+                                
+                                <!-- 個別フラグメント -->
+                                <div x-show="expandedFolders[categoryName + '/' + templateName]"
+                                     x-transition:enter="transition ease-out duration-200">
+                                    <template x-for="fragment in fragmentGroup" :key="fragment.templatePath + '::' + fragment.fragmentName">
+                                        <a class="nav-tree-item nav-tree-indent-2 w-full block text-left"
+                                           :class="{ 'active': selectedFragment && selectedFragment.templatePath === fragment.templatePath && selectedFragment.fragmentName === fragment.fragmentName }"
+                                           :href="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`"
+                                           hx-get :hx-get="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default/content`"
+                                           hx-target="#main-content-area"
+                                           :hx-push-url="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`">
+                                            <div class="flex items-center justify-between">
+                                                <span x-text="fragment.fragmentName" class="font-mono text-xs"></span>
+                                                <span class="nav-fragment-badge"
+                                                      :class="fragment.type === 'SIMPLE' ? 'bg-green-100 text-green-800' : 
+                                                              fragment.type === 'PARAMETERIZED' ? 'bg-blue-100 text-blue-800' : 
+                                                              'bg-purple-100 text-purple-800'"
+                                                      x-text="fragment.type.charAt(0)">
+                                                </span>
+                                            </div>
+                                        </a>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+    </nav>
+
+    <!-- メインコンテンツ -->
+    <main class="nav-main-content">
+        <!-- トップバー -->
+        <div class="bg-white border-b border-gray-200 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <!-- モバイルメニューボタン -->
+                    <button class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600 mr-4"
+                            @click="sidebarOpen = true">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                    
+                    <!-- ブレッドクラム -->
+                    <nav class="breadcrumb-thymeleaflet">
+                        <a href="/thymeleaflet" class="font-medium">Thymeleaflet</a>
+                        <span class="separator">/</span>
+                        <span class="text-gray-900" x-text="selectedFragment ? selectedFragment.fragmentName : 'フラグメント一覧'"></span>
+                    </nav>
+                </div>
+                
+            </div>
+        </div>
+
+        <!-- コンテンツエリア -->
+        <div class="p-6">
+            <!-- HTMXターゲットエリア -->
+            <div id="main-content-area">
+                <!-- 直接URLアクセス時でストーリーが選択されている場合の表示 -->
+                <div th:if="${selectedFragment != null and selectedStory != null}">
+                    <div th:replace="~{thymeleaflet/fragments/main-content :: content}"></div>
+                </div>
+                
+                <!-- プレースホルダ表示（初期レンダリング時） -->
+                <div th:unless="${selectedFragment != null and selectedStory != null}" id="main-content-placeholder" class="animate-pulse">
+                    <!-- ウェルカムメッセージプレースホルダ -->
+                    <div class="text-center py-16">
+                        <div class="mx-auto w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+                            <div class="w-8 h-8 bg-gray-300 rounded"></div>
+                        </div>
+                        <div class="h-6 bg-gray-300 rounded w-48 mx-auto mb-2"></div>
+                        <div class="h-4 bg-gray-200 rounded w-72 mx-auto mb-6"></div>
+                        
+                        <!-- 統計情報プレースホルダ -->
+                        <div class="max-w-2xl mx-auto">
+                            <div class="card-thymeleaflet">
+                                <div class="card-thymeleaflet-content text-center">
+                                    <div class="h-8 bg-gray-300 rounded w-12 mx-auto mb-2"></div>
+                                    <div class="h-4 bg-gray-200 rounded w-24 mx-auto"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 実際のコンテンツ（非表示状態で開始） -->
+                <div th:unless="${selectedFragment != null and selectedStory != null}" id="main-content-real" style="display: none;">
+                    <!-- フラグメント未選択時の表示 -->
+                    <div x-show="!selectedFragment" class="text-center py-16">
+                <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">フラグメントを選択してください</h2>
+                <p class="text-gray-600 mb-6">左のサイドバーからフラグメントを選択すると、詳細情報が表示されます</p>
+                
+                <!-- 統計情報 -->
+                <div class="max-w-2xl mx-auto">
+                    <div class="card-thymeleaflet">
+                        <div class="card-thymeleaflet-content text-center">
+                            <div class="text-2xl font-bold text-blue-600" th:text="${totalCount}">0</div>
+                            <div class="text-sm text-gray-600">総フラグメント数</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- フラグメント選択時の詳細表示 -->
+            <div x-show="selectedFragment" x-transition:enter="transition ease-out duration-200">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- メタ情報 -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <!-- ストーリー選択 -->
+                        <div class="card-thymeleaflet" x-show="selectedFragment?.stories && selectedFragment.stories.length > 0">
+                            <div class="card-thymeleaflet-header">
+                                <h3 class="text-lg font-semibold text-gray-900">ストーリー選択</h3>
+                            </div>
+                            <div class="card-thymeleaflet-content">
+                                <div class="space-y-2">
+                                    <template x-for="story in selectedFragment?.stories" :key="story.storyName">
+                                        <a class="w-full text-left p-3 rounded-lg border transition-colors block"
+                                           :class="selectedStory?.storyName === story.storyName ? 
+                                                   'border-blue-500 bg-blue-50 text-blue-900' : 
+                                                   'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
+                                           :href="`/thymeleaflet/${templatePathForUrl(selectedFragment.templatePath)}/${selectedFragment.fragmentName}/${encodeStoryName(story.storyName)}`"
+                                           hx-get :hx-get="`/thymeleaflet/${templatePathForUrl(selectedFragment.templatePath)}/${selectedFragment.fragmentName}/${encodeStoryName(story.storyName)}/content`"
+                                           hx-target="#main-content-area"
+                                           :hx-push-url="`/thymeleaflet/${templatePathForUrl(selectedFragment.templatePath)}/${selectedFragment.fragmentName}/${encodeStoryName(story.storyName)}`">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex-1 min-w-0">
+                                                    <h4 class="font-medium text-sm truncate" x-text="story.displayTitle"></h4>
+                                                    <p class="text-xs text-gray-500 font-mono truncate" x-text="story.storyName"></p>
+                                                </div>
+                                                <!-- Story/Fallbackラベルは共有フラグメントに統一 -->
+                                                <div class="ml-2 flex-shrink-0 story-badge-placeholder\" data-has-story-config="\" x-bind:data-has-story-config="story.hasStoryConfig\"></div>
+                                            </div>
+                                            <p x-show="story.displayDescription" 
+                                               class="text-xs text-gray-600 mt-1" 
+                                               x-text="story.displayDescription"></p>
+                                        </a>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- プレビューエリア -->
+                    <div class="lg:col-span-2">
+                        <div class="card-thymeleaflet">
+                            <div class="card-thymeleaflet-header">
+                                <div class="flex justify-between items-center">
+                                    <h3 class="text-lg font-semibold text-gray-900">
+                                        プレビュー
+                                        <span x-show="selectedStory && selectedStory.displayTitle" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-base font-normal text-gray-600"></span>
+                                    </h3>
+                                    <div class="flex items-center space-x-3">
+                                        <span class="text-xs text-gray-500">Live Preview</span>
+                                        <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                        
+                                        <!-- 背景色切替スイッチ -->
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-xs text-gray-500">背景色:</span>
+                                            <button id="background-toggle"
+                                                    class="flex items-center space-x-1 px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                                                    onclick="togglePreviewBackground()"
+                                                    title="プレビュー背景色を手動で切り替えます（明るい⇔暗い）">
+                                                <span id="toggle-icon">☀️</span>
+                                                <span id="toggle-text">明るい</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-thymeleaflet-content">
+                                <!-- 共通のloading-indicator（HTMXで使用） -->
+                                <div id="loading-indicator" class="flex items-center justify-center h-24 text-gray-500" style="display: none;">
+                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                                    <span class="ml-2">プレビューを読み込んでいます...</span>
+                                </div>
+                                
+                                <!--
+                                /**
+                                 * フラグメント一覧のプレビュー内容フラグメント
+                                 *
+                                 * @param render {@code Boolean} [required] レンダリング制御フラグ
+                                 * @example <th:block th:replace="~{::fragment-preview-content(true)}"></th:block>
+                                 */
+                                -->
+                                <th:block th:fragment="fragment-preview-content(render)" th:if="${render}">
+                                    <!-- サーバーサイドでレンダリングされたプレビュー -->
+                                    <div th:if="${selectedFragment != null and selectedStory != null}">
+                                        
+                                        <!-- PARAMETERIZEDタイプで stories.yml も JavaDoc フォールバックも利用できない場合のエラー表示 -->
+                                        <div th:if="${selectedFragment.type.name() == 'PARAMETERIZED' and !selectedStory.hasStoryConfig() and #maps.isEmpty(selectedStory.parameters)}" 
+                                             style="padding: 16px; background: #fee; border: 1px solid #fcc; border-radius: 8px;">
+                                            <p style="color: #c33; font-weight: bold;">⚠️ stories.ymlとJavaDocフォールバックが利用できません</p>
+                                            <p style="color: #666; font-size: 14px;">フラグメント「<span th:text="${selectedFragment.fragmentName}"></span>」をプレビューするには stories.yml ファイルまたは @example 付きのJavaDocコメントが必要です。</p>
+                                        </div>
+                                        
+                                        <!-- 動的フラグメントレンダリング（HTMXを使用） -->
+                                        <div th:if="${selectedFragment.type.name() == 'SIMPLE' or selectedStory.hasStoryConfig() or !#maps.isEmpty(selectedStory.parameters)}">
+                                            <div th:attr="hx-get=@{/thymeleaflet/{templatePath}/{fragmentName}/{storyName}/render(templatePath=${templatePathEncoded}, fragmentName=${selectedFragment.fragmentName}, storyName=${selectedStoryName})}"
+                                                 hx-trigger="load"
+                                                 hx-indicator="#loading-indicator">
+                                                <!-- HTMXコンテナ（初期読み込み表示なし） -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- フラグメント選択されているがストーリー未選択 -->
+                                    <div th:if="${selectedFragment != null and selectedStory == null}" class="flex items-center justify-center h-24">
+                                        <div class="text-center">
+                                            <div class="text-gray-400 mb-2">
+                                                <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                                </svg>
+                                            </div>
+                                            <p class="text-gray-600">ストーリーを選択してプレビューを表示</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- 何も選択されていない場合 -->
+                                    <div th:if="${selectedFragment == null}" class="flex items-center justify-center h-24">
+                                        <div class="text-center">
+                                            <div class="text-gray-400 mb-2">
+                                                <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
+                                                </svg>
+                                            </div>
+                                            <p class="text-gray-600">フラグメントを選択してプレビューを表示</p>
+                                        </div>
+                                    </div>
+                                </th:block>
+                                
+                                <div th:replace="~{thymeleaflet/fragments/preview-container :: container(false, 'border-dashed p-8', 'preview-container', 'zinc-300', 'min-h-32', null, null, null, null, ~{::fragment-preview-content(true)})}"></div>
+                            </div>
+                        </div>
+
+                        <!-- 使用例 -->
+                        <div class="mt-6 card-thymeleaflet" th:if="${selectedFragment != null}">
+                            <div class="card-thymeleaflet-header">
+                                <h3 class="text-lg font-semibold text-gray-900">使用例</h3>
+                                <span th:if="${selectedStory != null}" class="text-sm text-gray-500 ml-2" 
+                                      th:text="'- ' + (${selectedStory.displayTitle != null ? selectedStory.displayTitle : (selectedStory.storyName != null ? selectedStory.storyName : 'デフォルト')})"></span>
+                            </div>
+                            <div class="card-thymeleaflet-content">
+                                <div class="storybook-usage-example">
+                                    <div class="code-block-scrollable">
+                                        <div id="usage-example">
+                                            <!-- highlight.jsによる動的ハイライトのためのプレーンテキスト -->
+                                            <pre class="code-block-pre"><code class="language-html hljs"><!-- プレビューと同じパラメータ使用例 -->
+&lt;div th:replace="~{<span th:text="${selectedFragment.templatePath}">template</span> :: <span th:text="${selectedFragment.fragmentName}">fragment</span>}"<span th:if="${selectedStory != null and selectedStory.parameters != null and not #maps.isEmpty(selectedStory.parameters)}">
+     <span th:each="storyParam : ${selectedStory.parameters}" th:text="${storyParam.key + '=&quot;' + storyParam.value + '&quot;'}">param="value"</span></span>&gt;&lt;/div&gt;</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button class="mt-3 btn-thymeleaflet-secondary btn-thymeleaflet-small" @click="copyUsageExample()">
+                                    使用例をコピー
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- パラメータ説明 -->
+                        <div class="mt-6 card-thymeleaflet" x-show="selectedFragment && (selectedFragment.parameters?.length > 0 || storyParameters(selectedStory).length > 0)">
+                            <div class="card-thymeleaflet-header">
+                                <h3 class="text-lg font-semibold text-gray-900">パラメータ説明</h3>
+                                <span x-show="selectedStory && selectedStory.displayTitle" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-sm text-gray-500 ml-2"></span>
+                            </div>
+                            <div class="card-thymeleaflet-content">
+                                <!-- フラグメントのパラメータ -->
+                                <div x-show="selectedFragment?.parameters && selectedFragment.parameters.length > 0" class="mb-6">
+                                    <h4 class="text-md font-medium text-gray-800 mb-3">フラグメントパラメータ</h4>
+                                    <div class="space-y-3">
+                                        <template x-for="parameter in selectedFragment?.parameters" :key="parameter">
+                                            <div class="flex items-start gap-3 py-2 px-3 bg-gray-50 rounded-lg">
+                                                <div class="flex-shrink-0">
+                                                    <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-mono" x-text="parameter"></span>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm text-gray-600">フラグメントで利用可能なパラメータです</p>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- 現在のストーリーパラメータ -->
+                                <div x-show="storyParameters(selectedStory).length > 0">
+                                    <h4 class="text-md font-medium text-gray-800 mb-3">現在のストーリー値</h4>
+                                    <div class="space-y-3">
+                                        <template x-for="(storyParameter, index) in storyParameters(selectedStory)" :key="storyParameter.key || 'param-' + index">
+                                            <div class="flex items-start gap-3 py-3 px-3 bg-green-50 rounded-lg">
+                                                <div class="flex-shrink-0">
+                                                    <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-mono" x-text="storyParameter.key"></span>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <div class="flex items-start justify-between">
+                                                        <div class="flex-1">
+                                                            <p class="text-sm font-medium text-gray-800 break-all" x-text="storyParameter.value"></p>
+                                                            <p class="text-xs text-gray-500 mt-1">このストーリーで設定されている値</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <!-- パラメータがない場合 -->
+                                <div x-show="(!selectedFragment?.parameters || selectedFragment.parameters.length === 0) && storyParameters(selectedStory).length === 0" class="text-center py-4">
+                                    <div class="text-gray-400 mb-2">
+                                        <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                        </svg>
+                                    </div>
+                                    <p class="text-sm text-gray-500">このフラグメントにはパラメータがありません</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                </div> <!-- 実際のコンテンツ終了 -->
+            </div> <!-- HTMXターゲットエリア終了 -->
+        </div>
+    </main>
+
+    <!-- データ格納 -->
+    <script type="application/json" id="fragmentsData" th:utext="${fragmentsJson}"></script>
+    <script type="application/json" id="hierarchicalData" th:utext="${hierarchicalJson}"></script>
+    
+    <!-- 遅延読み込み用HTMXトリガー（ストーリー未選択時のみ） -->
+    <div th:unless="${selectedFragment != null and selectedStory != null}"
+         hx-get="/thymeleaflet/main-content" 
+         hx-target="#main-content-area" 
+         hx-trigger="load delay:100ms"
+         style="display: none;"></div>
+
+    <script>
+        function hierarchicalFragmentList() {
+            // JSONデータを読み込み
+            const fragmentsData = JSON.parse(document.getElementById('fragmentsData')?.textContent || '[]');
+            const hierarchicalData = JSON.parse(document.getElementById('hierarchicalData')?.textContent || '{}');
+            
+            const expandedFolders = {};
+            const expandNode = (node, currentPath) => {
+                if (currentPath) {
+                    expandedFolders[currentPath] = true;
+                }
+                if (node && typeof node === 'object') {
+                    if (node._fragments) {
+                        Object.keys(node._fragments).forEach(templateName => {
+                            const templatePath = currentPath ? `${currentPath}/${templateName}` : templateName;
+                            expandedFolders[templatePath] = true;
+                        });
+                    }
+                    Object.keys(node).forEach(key => {
+                        if (key === '_fragments') {
+                            return;
+                        }
+                        const nextPath = currentPath ? `${currentPath}/${key}` : key;
+                        expandNode(node[key], nextPath);
+                    });
+                }
+            };
+            Object.keys(hierarchicalData || {}).forEach(rootKey => {
+                expandNode(hierarchicalData[rootKey], rootKey);
+            });
+
+            return {
+                allFragments: fragmentsData || [],
+                hierarchyTree: hierarchicalData || {},
+                selectedFragment: null,
+                
+                // Phase 4.3: SecureTemplatePath 対応 - templatePath変換ヘルパー
+                templatePathForUrl: function(templatePath) {
+                    // SecureTemplatePath.forUrl() と同じ変換: "/" → "."
+                    return templatePath.replace(/\//g, '.');
+                },
+                templatePathForFilePath: function(templatePath) {
+                    // SecureTemplatePath.forFilePath() と同じ変換: "." → "/"
+                    return templatePath.replace(/\./g, '/');
+                },
+                // URLエンコード用ヘルパー関数
+                encodeStoryName: function(storyName) {
+                    return encodeURIComponent(storyName);
+                },
+                storyParameters: function(story) {
+                    if (!story || !story.parameters) {
+                        return [];
+                    }
+                    if (Array.isArray(story.parameters)) {
+                        return story.parameters;
+                    }
+                    return Object.entries(story.parameters).map(([key, value]) => ({ key, value }));
+                },
+                selectedStory: null,
+                searchQuery: '',
+                sidebarOpen: false,
+                expandedFolders: expandedFolders,
+                
+                initializeFromServerState() {
+                    // サーバーサイドから渡された選択状態を使用
+                    const selectedTemplatePath = document.querySelector('meta[name="selected-template-path"]')?.content;
+                    const selectedFragmentName = document.querySelector('meta[name="selected-fragment-name"]')?.content;
+                    const selectedStoryName = document.querySelector('meta[name="selected-story-name"]')?.content;
+                    
+                    if (selectedTemplatePath && selectedFragmentName) {
+                        // 該当するフラグメントを検索
+                        const fragment = this.allFragments?.find(f => 
+                            f?.templatePath === selectedTemplatePath && 
+                            f?.fragmentName === selectedFragmentName
+                        );
+                        
+                        if (fragment) {
+                            this.selectedFragment = fragment;
+                            this.expandFoldersForFragment(fragment);
+                            
+                            // ストーリーも選択
+                            if (selectedStoryName && fragment.stories) {
+                                const story = fragment.stories.find(s => s?.storyName === selectedStoryName);
+                                if (story) {
+                                    this.selectedStory = story;
+                                }
+                            }
+                        }
+                    }
+                },
+                
+                
+                expandFoldersForFragment(fragment) {
+                    const pathParts = fragment.templatePath.split('/');
+                    let currentPath = '';
+                    
+                    // パスの各レベルを展開
+                    for (let i = 0; i < pathParts.length; i++) {
+                        if (i === 0) {
+                            currentPath = pathParts[i];
+                        } else {
+                            currentPath += '/' + pathParts[i];
+                        }
+                        this.expandedFolders[currentPath] = true;
+                        
+                        // テンプレートファイル名も展開
+                        if (i === pathParts.length - 1) {
+                            const templateName = fragment.templatePath.split('/').pop();
+                            this.expandedFolders[currentPath + '/' + templateName] = true;
+                        }
+                    }
+                },
+
+                expandAllFolders() {
+                    const expandNode = (node, currentPath) => {
+                        if (currentPath) {
+                            this.expandedFolders[currentPath] = true;
+                        }
+
+                        if (node && typeof node === 'object') {
+                            if (node._fragments) {
+                                Object.keys(node._fragments).forEach(templateName => {
+                                    const templatePath = currentPath ? `${currentPath}/${templateName}` : templateName;
+                                    this.expandedFolders[templatePath] = true;
+                                });
+                            }
+
+                            Object.keys(node).forEach(key => {
+                                if (key === '_fragments') {
+                                    return;
+                                }
+                                const nextPath = currentPath ? `${currentPath}/${key}` : key;
+                                expandNode(node[key], nextPath);
+                            });
+                        }
+                    };
+
+                    Object.keys(this.hierarchyTree || {}).forEach(rootKey => {
+                        expandNode(this.hierarchyTree[rootKey], rootKey);
+                    });
+                },
+                
+                
+                toggleFolder(path) {
+                    this.expandedFolders[path] = !this.expandedFolders[path];
+                },
+                
+                
+                getCategoryCount(category) {
+                    let count = 0;
+                    
+                    // 再帰的にカテゴリ内のフラグメントをカウント
+                    const countFragmentsRecursively = (cat) => {
+                        let localCount = 0;
+                        
+                        // 直接のフラグメントをカウント
+                        if (cat._fragments) {
+                            Object.values(cat._fragments).forEach(fragments => {
+                                localCount += fragments.length;
+                            });
+                        }
+                        
+                        // サブカテゴリを再帰的に処理
+                        Object.keys(cat).forEach(key => {
+                            if (key !== '_fragments' && typeof cat[key] === 'object' && cat[key] !== null) {
+                                localCount += countFragmentsRecursively(cat[key]);
+                            }
+                        });
+                        
+                        return localCount;
+                    };
+                    
+                    return countFragmentsRecursively(category);
+                },
+                
+                filterFragments() {
+                    // サイドバーのフィルタリング機能は今回は簡素化
+                    // 必要に応じて後で実装
+                },
+                
+                
+                
+                copyUsageExample() {
+                    // 表示されている使用例をそのままコピー
+                    const usageExample = document.querySelector('#usage-example');
+                    if (usageExample) {
+                        const text = usageExample.textContent.trim();
+                        navigator.clipboard.writeText(text).then(() => {
+                            console.log('Usage example copied to clipboard');
+                        });
+                    }
+                },
+                
+                // Story/Fallbackバッジを動的にレンダリング
+                renderStoryBadges() {
+                    const placeholders = document.querySelectorAll('.story-badge-placeholder');
+                    placeholders.forEach(placeholder => {
+                        const hasStoryConfig = placeholder.dataset.hasStoryConfig === 'true';
+                        const badgeClass = hasStoryConfig ? 'badge-story' : 'badge-fallback';
+                        const badgeText = hasStoryConfig ? 'Story' : 'Fallback';
+                        
+                        placeholder.innerHTML = `<span class="${badgeClass}">${badgeText}</span>`;
+                    });
+                },
+                
+                // Alpine.jsデータ変更時にバッジを更新
+                updateStoryBadges() {
+                    this.$nextTick(() => {
+                        this.renderStoryBadges();
+                    });
+                }
+                
+            }
+        }
+    </script>
+    
+    <!-- Story/Fallbackバッジ管理 -->
+    <script>
+        // ページ読み込み完了時にバッジをレンダリング
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                renderStoryBadges();
+            }, 100);
+        });
+        
+        // HTMXコンテンツ更新後にバッジをレンダリング
+        document.addEventListener('htmx:afterSettle', function(event) {
+            setTimeout(() => {
+                renderStoryBadges();
+            }, 50);
+        });
+        
+        // バッジレンダリング関数（グローバル）
+        function renderStoryBadges() {
+            const placeholders = document.querySelectorAll('.story-badge-placeholder');
+            placeholders.forEach(placeholder => {
+                const hasStoryConfig = placeholder.dataset.hasStoryConfig === 'true';
+                const badgeClass = hasStoryConfig ? 'badge-story' : 'badge-fallback';
+                const badgeText = hasStoryConfig ? 'Story' : 'Fallback';
+                
+                placeholder.innerHTML = `<span class="${badgeClass}">${badgeText}</span>`;
+            });
+        }
+    </script>
+
+    <!-- 統一JavaScriptコンポーネント -->
+    <div th:replace="~{thymeleaflet/fragments/common-scripts :: scripts}"></div>
+
+    <!-- Preview controls (global, HTMX-safe) -->
+    <script>
+        (function() {
+            if (window.__thymeleafletPreviewControlsInitialized) {
+                return;
+            }
+            window.__thymeleafletPreviewControlsInitialized = true;
+
+            const INITIAL_PREVIEW_HEIGHT = 80;
+            const MIN_HEIGHT = 60;
+            const MAX_HEIGHT = 1200;
+            let previewContentHeight = INITIAL_PREVIEW_HEIGHT;
+            let previewObserver = null;
+            let previewResizeObserver = null;
+            let measureTimer = null;
+            let stableTimer = null;
+            let lastMeasurementTime = 0;
+            let pendingHeight = null;
+            let fontsReadyPromise = null;
+
+            function getPreviewHost() {
+                return document.querySelector('#fragment-preview-host');
+            }
+
+            function ensureShadowRoot(host) {
+                if (!host) return null;
+                const shadowRoot = host.shadowRoot || host.attachShadow({ mode: 'open' });
+                if (!shadowRoot.__thymeleafletClickGuard) {
+                    shadowRoot.__thymeleafletClickGuard = true;
+                    // Prevent click-away handlers outside the shadow root from misfiring.
+                    shadowRoot.addEventListener('click', event => event.stopPropagation());
+                }
+                return shadowRoot;
+            }
+
+            function setPreviewHeight(heightPx) {
+                const host = getPreviewHost();
+                if (host) {
+                    host.style.height = heightPx + 'px';
+                }
+            }
+
+            function resetPreviewHeight() {
+                previewContentHeight = INITIAL_PREVIEW_HEIGHT;
+                setPreviewHeight(INITIAL_PREVIEW_HEIGHT);
+            }
+
+            function getPreviewContentHeight(shadowRoot) {
+                if (!shadowRoot) return 0;
+                const frame = shadowRoot.getElementById('shadow-preview-frame');
+                if (!frame) return 0;
+                const frameRect = frame.getBoundingClientRect();
+                let maxBottom = frameRect.height;
+
+                const elements = frame.querySelectorAll('*:not(script):not(style)');
+                elements.forEach(element => {
+                    const rect = element.getBoundingClientRect();
+                    if (rect.width === 0 && rect.height === 0) {
+                        return;
+                    }
+                    const relativeBottom = rect.bottom - frameRect.top;
+                    if (relativeBottom > maxBottom) {
+                        maxBottom = relativeBottom;
+                    }
+                });
+
+                return Math.ceil(Math.max(0, maxBottom));
+            }
+
+            function handleResize(height) {
+                const adjustedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height));
+                const roundedHeight = Math.round(adjustedHeight / 8) * 8;
+                const stabilizedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, roundedHeight));
+
+                previewContentHeight = stabilizedHeight;
+                setPreviewHeight(stabilizedHeight);
+            }
+
+            function scheduleMeasure(shadowRoot) {
+                if (measureTimer) {
+                    clearTimeout(measureTimer);
+                }
+                measureTimer = setTimeout(() => {
+                    const measuredHeight = getPreviewContentHeight(shadowRoot);
+                    queueStableHeight(measuredHeight > 0 ? measuredHeight : INITIAL_PREVIEW_HEIGHT);
+                }, 100);
+            }
+
+            function queueStableHeight(height) {
+                pendingHeight = height;
+                lastMeasurementTime = Date.now();
+                if (stableTimer) {
+                    clearTimeout(stableTimer);
+                }
+                stableTimer = setTimeout(() => {
+                    if (pendingHeight != null && Date.now() - lastMeasurementTime >= 300) {
+                        handleResize(pendingHeight);
+                        pendingHeight = null;
+                    }
+                }, 320);
+            }
+
+            function waitForFontsOnce() {
+                if (fontsReadyPromise) {
+                    return fontsReadyPromise;
+                }
+                if (document.fonts && typeof document.fonts.ready === 'object') {
+                    fontsReadyPromise = Promise.race([
+                        document.fonts.ready,
+                        new Promise(resolve => setTimeout(resolve, 1000))
+                    ]);
+                } else {
+                    fontsReadyPromise = Promise.resolve();
+                }
+                return fontsReadyPromise;
+            }
+
+            function setupPreviewObservers(host, shadowRoot) {
+                if (!host || !shadowRoot) return;
+
+                if (previewObserver) {
+                    previewObserver.disconnect();
+                }
+                previewObserver = new MutationObserver(() => {
+                    scheduleMeasure(shadowRoot);
+                });
+                previewObserver.observe(shadowRoot, {
+                    childList: true,
+                    subtree: true,
+                    attributes: true,
+                    characterData: true
+                });
+
+                if (previewResizeObserver) {
+                    previewResizeObserver.disconnect();
+                }
+                previewResizeObserver = new ResizeObserver(() => {
+                    scheduleMeasure(shadowRoot);
+                });
+                const frame = shadowRoot.getElementById('shadow-preview-frame');
+                if (frame) {
+                    previewResizeObserver.observe(frame);
+                }
+            }
+
+            function buildShadowContent(shadowRoot, host, html) {
+                shadowRoot.innerHTML = '';
+
+                const baseStyle = document.createElement('style');
+                baseStyle.textContent = `
+                    :host { display: block; }
+                    .shadow-preview-frame {
+                        width: 100%;
+                        min-height: 50px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        padding: 20px;
+                        box-sizing: border-box;
+                    }
+                    .shadow-preview-content {
+                        display: inline-block;
+                        width: fit-content;
+                        max-width: 100%;
+                    }
+                `;
+                shadowRoot.appendChild(baseStyle);
+
+                const styles = (host.dataset.previewStylesheets || '')
+                    .split(',')
+                    .map(value => value.trim())
+                    .filter(Boolean);
+
+                styles.forEach(href => {
+                    const link = document.createElement('link');
+                    link.rel = 'stylesheet';
+                    link.href = href;
+                    shadowRoot.appendChild(link);
+                });
+
+                const contentWrapper = document.createElement('div');
+                contentWrapper.id = 'shadow-preview-content';
+                contentWrapper.className = 'shadow-preview-content';
+                const wrapper = host?.dataset?.previewWrapper || '';
+                const wrappedHtml = wrapper && wrapper.includes('{{content}}')
+                    ? wrapper.replace('{{content}}', html)
+                    : html;
+                contentWrapper.innerHTML = wrappedHtml;
+                const frame = document.createElement('div');
+                frame.id = 'shadow-preview-frame';
+                frame.className = 'shadow-preview-frame';
+                frame.appendChild(contentWrapper);
+                shadowRoot.appendChild(frame);
+
+                if (window.htmx && typeof window.htmx.process === 'function') {
+                    try {
+                        window.htmx.process(frame);
+                    } catch (error) {
+                        console.warn('HTMX process failed for shadow content:', error);
+                    }
+                }
+                if (window.Alpine && typeof window.Alpine.initTree === 'function') {
+                    const initAlpine = () => {
+                        try {
+                            if (typeof window.Alpine.mutateDom === 'function') {
+                                window.Alpine.mutateDom(() => window.Alpine.initTree(frame));
+                            } else {
+                                window.Alpine.initTree(frame);
+                            }
+                        } catch (error) {
+                            console.warn('Alpine init failed for shadow content:', error);
+                        }
+                    };
+
+                    try {
+                        if (typeof window.Alpine.stopObservingMutations === 'function') {
+                            window.Alpine.stopObservingMutations();
+                            initAlpine();
+                            window.Alpine.startObservingMutations?.();
+                        } else {
+                            initAlpine();
+                        }
+                        document.addEventListener('alpine:initialized', initAlpine, { once: true });
+                    } catch (error) {
+                        console.warn('Alpine init failed for shadow content:', error);
+                    }
+                }
+            }
+
+            function renderPreviewError(shadowRoot, host, message) {
+                const safeMessage = message || 'プレビューの読み込みに失敗しました。';
+                const html = `
+                    <div class="w-full rounded border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-700">
+                        ${safeMessage}
+                    </div>
+                `;
+                buildShadowContent(shadowRoot, host, html);
+            }
+
+            async function loadShadowPreview(host) {
+                const targetHost = host || getPreviewHost();
+                if (!targetHost) return;
+
+                const previewUrl = targetHost.dataset.previewUrl || '';
+                const shadowRoot = ensureShadowRoot(targetHost);
+                if (!shadowRoot) return;
+
+                resetPreviewHeight();
+
+                if (!previewUrl) {
+                    shadowRoot.innerHTML = '';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(previewUrl, {
+                        headers: { 'HX-Request': 'true' }
+                    });
+                    if (!response.ok) {
+                        throw new Error(`Preview response status ${response.status}`);
+                    }
+                    const html = await response.text();
+                    // If a full error page leaks in, keep the failure inside the preview.
+                    if (html.includes('システムエラー') || html.includes('System Error')) {
+                        throw new Error('Preview error page detected');
+                    }
+                    buildShadowContent(shadowRoot, targetHost, html);
+                    setupPreviewObservers(targetHost, shadowRoot);
+                    await waitForFontsOnce();
+                    scheduleMeasure(shadowRoot);
+                } catch (error) {
+                    const message = `プレビューの読み込みに失敗しました。${error?.message ? ` (${error.message})` : ''}`;
+                    renderPreviewError(shadowRoot, targetHost, message);
+                    setupPreviewObservers(targetHost, shadowRoot);
+                    scheduleMeasure(shadowRoot);
+                }
+            }
+
+            window.__thymeleafletResetPreviewHeight = resetPreviewHeight;
+            window.__thymeleafletLoadShadowPreview = loadShadowPreview;
+
+            document.addEventListener('DOMContentLoaded', function() {
+                loadShadowPreview();
+            });
+
+            document.addEventListener('htmx:afterSettle', function(event) {
+                if (event.detail.target && event.detail.target.id === 'main-content-area') {
+                    loadShadowPreview();
+                }
+            });
+        })();
+    </script>
+    
+    <!-- Highlight.js初期化とHTMX対応 -->
+    <script>
+        // シンタックスハイライト共通処理関数
+        function applyHighlighting(container) {
+            if (!container) return;
+            
+            const codeBlocks = container.querySelectorAll('pre code');
+            codeBlocks.forEach(function(block) {
+                // 既にハイライト済みの場合はリセット
+                if (block.dataset.highlighted) {
+                    delete block.dataset.highlighted;
+                }
+                hljs.highlightElement(block);
+            });
+        }
+        
+        // ページ読み込み時にHighlight.jsを初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            hljs.highlightAll();
+        });
+
+        // HTMX部分更新後にHighlight.jsを再適用
+        document.addEventListener('htmx:afterSettle', function(event) {
+            applyHighlighting(event.detail.target);
+        });
+
+        // HTMXリクエスト完了後にもHighlight.jsを適用（フォールバック）
+        document.addEventListener('htmx:afterRequest', function(event) {
+            // 使用例エリアが更新された場合
+            if (event.detail.target && event.detail.target.id === 'usage-example') {
+                setTimeout(() => applyHighlighting(event.detail.target), 50);
+            }
+        });
+
+        // メインコンテンツエリアの更新後にAlpine.js状態を同期
+        document.addEventListener('htmx:afterSettle', function(event) {
+            // メインコンテンツエリアが更新された場合
+            if (event.detail.target && event.detail.target.id === 'main-content-area') {
+                // URLから現在の選択状態を抽出
+                const currentUrl = window.location.pathname;
+                const urlMatch = currentUrl.match(/\/thymeleaflet\/([^\/]+)\/([^\/]+)\/([^\/]+)/);
+                
+                if (urlMatch) {
+                    const [, templatePath, fragmentName, encodedStoryName] = urlMatch;
+                    const storyName = decodeURIComponent(encodedStoryName);
+                    console.log('🔍 URL解析:', { templatePath, fragmentName, encodedStoryName, storyName });
+                    
+                    // Alpine.jsの状態を取得
+                    const alpineData = Alpine.$data(document.querySelector('[x-data]'));
+                    console.log('🔍 alpineData取得:', alpineData ? 'OK' : 'NG');
+                    
+                    // テンプレートパスを正規化（ドットをスラッシュに戻す）
+                    const normalizedTemplatePath = alpineData ? alpineData.templatePathForFilePath(templatePath) : templatePath;
+                    console.log('🔍 正規化:', { templatePath, normalizedTemplatePath });
+                    if (alpineData && alpineData.allFragments) {
+                        console.log('🔍 フラグメント数:', alpineData.allFragments.length);
+                        const fragment = alpineData.allFragments.find(f => 
+                            f?.templatePath === normalizedTemplatePath && 
+                            f?.fragmentName === fragmentName
+                        );
+                        console.log('🔍 フラグメント検索:', fragment ? 'found' : 'not found');
+                        
+                        if (fragment) {
+                            console.log('🔍 selectedFragment更新:', fragment);
+                            alpineData.selectedFragment = fragment;
+                            
+                            // ストーリーも更新
+                            if (storyName && fragment.stories) {
+                                const story = fragment.stories.find(s => s?.storyName === storyName);
+                                if (story) {
+                                    alpineData.selectedStory = story;
+                                }
+                            }
+                            
+                            console.log('Alpine.js状態を更新しました:', {
+                                templatePath: normalizedTemplatePath,
+                                fragmentName: fragmentName,
+                                storyName: storyName
+                            });
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
