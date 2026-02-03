@@ -1,0 +1,29 @@
+<!--
+/**
+ * Accordion item (accordionItem)
+ *
+ * @param title {@code String} [required] Accordion title
+ * @param body {@code String} [required] Accordion body content
+ * @param open {@code Boolean} [optional=false] Whether the item is open
+ * @example <div th:replace="~{components/accordion :: accordionItem(title='Shipping details', body='Ships in 2-3 business days.', open=false)}"></div>
+ */
+-->
+<div th:fragment="accordionItem(title, body, open)"
+     class="border border-base-200 rounded-2xl overflow-hidden bg-base-100/80 shadow-sm"
+     data-accordion>
+    <button type="button"
+            class="w-full flex items-center justify-between px-4 py-3 text-left font-semibold text-base-content"
+            th:attr="aria-expanded=${open}"
+            onclick="const expanded = this.getAttribute('aria-expanded') === 'true'; this.setAttribute('aria-expanded', (!expanded).toString()); const panel = this.nextElementSibling; if (panel) { panel.style.display = expanded ? 'none' : 'block'; } const icon = this.querySelector('[data-accordion-icon]'); if (icon) { icon.classList.toggle('rotate-180'); }">
+        <span th:text="${title}">Accordion title</span>
+        <svg class="w-4 h-4 text-primary transition-transform duration-200"
+             data-accordion-icon
+             th:classappend="${open} ? ' rotate-180' : ''"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+        </svg>
+    </button>
+    <div class="px-4 pb-4 text-sm text-base-content/70"
+         th:style="${open} ? 'display: block;' : 'display: none;'"
+         th:text="${body}">Accordion body</div>
+</div>
