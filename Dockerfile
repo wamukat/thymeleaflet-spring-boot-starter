@@ -10,6 +10,7 @@ FROM eclipse-temurin:17-jre
 
 WORKDIR /app
 ENV PORT=6006
+ENV SPRING_PROFILES_ACTIVE=koyeb
 EXPOSE 6006
 
 COPY --from=build /app/sample/target/thymeleaflet-sample-0.1.0-SNAPSHOT.jar /app/app.jar
