@@ -89,6 +89,9 @@ thymeleaflet:
     stylesheets: []
     scripts: []
     cache-duration-seconds: 3600
+  cache:
+    enabled: true
+    preload: false
   security:
     enabled: true
 ```
@@ -101,6 +104,8 @@ thymeleaflet:
 - `resources.scripts` は最大 10 件まで指定できます（プレビューiframe内に注入）。
 - JS を使う場合は `resources.scripts` に登録し、`preview.wrapper` で必要なDOM構造を整えてください。
   - 例: `<div data-theme=\"light\">{{content}}</div>`
+- `cache.enabled` はフラグメント探索・JavaDoc解析・依存解析のメモリキャッシュを有効化します。
+- `cache.preload` は起動時にキャッシュをウォームアップします（低CPU環境向け）。
 - CSP はプレビューで外部 JS/CSS を使えるよう意図的に緩めています。信頼できる環境でのみ利用してください。
 - プレビュー iframe は same-origin を許可しているため、Cookie / localStorage / 認証付きAPIが動作します。
 - `security.enabled` で `/thymeleaflet/**` のセキュリティ設定を切り替えます。

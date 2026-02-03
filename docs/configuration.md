@@ -28,6 +28,13 @@ To use JavaScript in previews, register it in `resources.scripts`.
 Example: `<div data-theme="light">{{content}}</div>`
 Preview iframes allow same-origin so cookies/localStorage and authenticated API calls work.
 
+## Cache Configuration
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `thymeleaflet.cache.enabled` | boolean | `true` | Enables in-memory caches for fragment discovery, JavaDoc parsing, and dependency analysis |
+| `thymeleaflet.cache.preload` | boolean | `false` | Preload caches at startup (useful for low-CPU demo environments) |
+
 ### CSP note (permissive by design)
 
 Thymeleaflet sets a permissive CSP to allow external JS and CSS inside preview iframes.
@@ -66,6 +73,9 @@ thymeleaflet:
     scripts:
       - /js/app.js
     cache-duration-seconds: 3600
+  cache:
+    enabled: true
+    preload: false
   security:
     enabled: true
 ```

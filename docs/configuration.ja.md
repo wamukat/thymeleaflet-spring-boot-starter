@@ -28,6 +28,13 @@ JavaScript を使いたい場合は `resources.scripts` に登録してくださ
 例: `<div data-theme=\"light\">{{content}}</div>`
 プレビュー iframe は same-origin を許可しているため、Cookie / localStorage / 認証付きAPIが動作します。
 
+## キャッシュ設定
+
+| プロパティ | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `thymeleaflet.cache.enabled` | boolean | `true` | フラグメント探索・JavaDoc解析・依存解析のメモリキャッシュ |
+| `thymeleaflet.cache.preload` | boolean | `false` | 起動時にキャッシュをウォームアップ |
+
 ### CSP 補足（意図的に緩め）
 
 Thymeleaflet はプレビューで外部 JS/CSS を使えるよう、CSP を意図的に緩めています。
@@ -65,6 +72,9 @@ thymeleaflet:
     scripts:
       - /js/app.js
     cache-duration-seconds: 3600
+  cache:
+    enabled: true
+    preload: false
   security:
     enabled: true
 ```
