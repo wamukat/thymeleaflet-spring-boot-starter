@@ -12,7 +12,7 @@ recommended for richer previews.
  * Member detail (memberDetail)
  *
  * @param variant {@code String} [optional=standard] Display variant
- * @model memberProfile {@code MemberProfile} [required] Member model
+ * @model memberProfile {@code List<Map<String, Object>>} [required] Member model
  * @example <div th:replace="~{domain/member/organisms/member-profile :: memberDetail()}"></div>
  * @background gray-50
  */
