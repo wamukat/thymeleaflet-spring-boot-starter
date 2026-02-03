@@ -90,19 +90,17 @@ thymeleaflet:
     cache-duration-seconds: 3600
   security:
     enabled: true
-  migration:
-    phase: "4.0"
-    monitoring:
-      response-time-degradation-threshold: 10
-      error-rate-increase-threshold: 1
-      enforce-contract-tests: true
 ```
 
 ### 補足
 
 - `thymeleaflet.base-path` で UI のパスを変更できます。
 - `resources.template-paths` は 1〜5 件の指定が必要です。
-- `resources.stylesheets` は最大 10 件まで指定できます。
+- `resources.stylesheets` は最大 10 件まで指定できます（Shadow DOMプレビューにのみ注入）。
+- JS を使いたい場合は、**アプリ側の通常の `<head>` で読み込む**のが推奨です。
+  - 例: 共通レイアウトテンプレート（`layout.html` など）で `<script src="/js/app.js"></script>` を追加
+  - その上で `preview.wrapper` で必要なDOM構造を整えると、プレビューでも同じ挙動を再現できます。
+    - 例: `<div data-theme=\"light\">{{content}}</div>`
 - `security.enabled` で `/thymeleaflet/**` のセキュリティ設定を切り替えます。
 
 ## エンドポイント
