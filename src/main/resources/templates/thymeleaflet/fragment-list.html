@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thymeleaflet - フラグメント一覧</title>
+    <link rel="icon" type="image/png" th:href="@{/favicon.png}">
     <link rel="stylesheet" th:href="@{/thymeleaflet/css/thymeleaflet.css}">
     <script th:src="@{/thymeleaflet/js/htmx.min.js}"></script>
     <script th:src="@{/thymeleaflet/js/alpine.min.js}" defer></script>
@@ -31,7 +32,12 @@
         <div class="px-4 py-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-lg font-bold text-gray-900">Fragment Storybook</h1>
+                    <a href="/thymeleaflet" class="flex items-center text-gray-900">
+                        <img th:src="@{/thymeleaflet/images/thymeleaflet-icon.png}"
+                             alt="Thymeleaflet"
+                             class="h-7 w-7 mr-2">
+                        <span class="text-lg font-bold leading-none">Thymeleaflet</span>
+                    </a>
                     <p class="text-xs text-gray-500 mt-1">フラグメント一覧</p>
                 </div>
                 <button class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
@@ -289,8 +295,6 @@
                     
                     <!-- ブレッドクラム -->
                     <nav class="breadcrumb-thymeleaflet">
-                        <a href="/thymeleaflet" class="font-medium">Thymeleaflet</a>
-                        <span class="separator">/</span>
                         <span class="text-gray-900" x-text="selectedFragment ? selectedFragment.fragmentName : 'フラグメント一覧'"></span>
                     </nav>
                 </div>
@@ -333,10 +337,10 @@
                 <div th:unless="${selectedFragment != null and selectedStory != null}" id="main-content-real" style="display: none;">
                     <!-- フラグメント未選択時の表示 -->
                     <div x-show="!selectedFragment" class="text-center py-16">
-                <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
-                    </svg>
+                <div class="mx-auto w-32 h-32 flex items-center justify-center mb-4">
+                    <img th:src="@{/thymeleaflet/images/thymeleaflet-logo.png}"
+                         alt="Thymeleaflet"
+                         class="h-28 w-28">
                 </div>
                 <h2 class="text-xl font-semibold text-gray-900 mb-2">フラグメントを選択してください</h2>
                 <p class="text-gray-600 mb-6">左のサイドバーからフラグメントを選択すると、詳細情報が表示されます</p>
