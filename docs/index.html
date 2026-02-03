@@ -49,8 +49,9 @@
         margin-top: 20px;
       }
       .link {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
         align-items: center;
         padding: 12px 16px;
         border: 1px solid var(--border);
@@ -58,6 +59,11 @@
         text-decoration: none;
         color: var(--fg);
         background: #fff;
+      }
+      .link svg {
+        width: 20px;
+        height: 20px;
+        color: var(--accent);
       }
       .link span {
         color: var(--accent);
@@ -82,18 +88,53 @@
         </p>
         <div class="links">
           <a class="link" href="https://bad-siouxie-wamukat-977c4dc6.koyeb.app/thymeleaflet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="14" rx="2"></rect>
+              <path d="M8 21h8"></path>
+              <path d="M12 17v4"></path>
+              <path d="M7 8h10"></path>
+            </svg>
             Live demo <span>→</span>
           </a>
           <a class="link" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 19c-4.3 1.3-4.3-2.4-6-3"></path>
+              <path d="M15 19c0 1 .1 2-.6 2.7-.7.7-1.8.9-2.4.3"></path>
+              <path d="M15 19v-3.5c0-1 .2-2-1-2.7"></path>
+              <path d="M9 15.5V19"></path>
+              <path d="M7 9c1-2 4-2 5-2s4 0 5 2"></path>
+              <path d="M6 9c-1-1-1-3 0-4"></path>
+              <path d="M18 9c1-1 1-3 0-4"></path>
+            </svg>
             GitHub repository <span>→</span>
           </a>
           <a class="link" href="getting-started.md">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5C5.5 18 8 18 10 19V6C8 5 5.5 5 4 6.5z"></path>
+              <path d="M20 19.5C18.5 18 16 18 14 19V6c2-1 4.5-1 6 0.5z"></path>
+            </svg>
             Getting started <span>→</span>
           </a>
           <a class="link" href="stories.md">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 6h8"></path>
+              <path d="M4 12h14"></path>
+              <path d="M4 18h10"></path>
+            </svg>
             Stories guide <span>→</span>
           </a>
           <a class="link" href="configuration.md">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2v3"></path>
+              <path d="M12 19v3"></path>
+              <path d="M4.9 4.9l2.1 2.1"></path>
+              <path d="M17 17l2.1 2.1"></path>
+              <path d="M2 12h3"></path>
+              <path d="M19 12h3"></path>
+              <path d="M4.9 19.1l2.1-2.1"></path>
+              <path d="M17 7l2.1-2.1"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
             Configuration <span>→</span>
           </a>
         </div>
