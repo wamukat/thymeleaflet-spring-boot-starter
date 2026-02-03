@@ -1,6 +1,8 @@
 package io.github.wamukat.thymeleaflet.samples.minimal;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -27,5 +29,45 @@ public class SamplePageController {
         model.addAttribute("ctaLabel", "Get started");
 
         return "index";
+    }
+
+    @GetMapping("/forms")
+    public String forms(Model model) {
+        List<Map<String, Object>> options = new ArrayList<>();
+        options.add(option("starter", "Starter"));
+        options.add(option("pro", "Pro"));
+        options.add(option("enterprise", "Enterprise"));
+
+        model.addAttribute("options", options);
+
+        model.addAttribute("formInputLabel", "Email");
+        model.addAttribute("formInputValue", "");
+        model.addAttribute("formInputPlaceholder", "you@example.com");
+        model.addAttribute("formInputHelp", "We never share your email.");
+        model.addAttribute("formInputError", "");
+        model.addAttribute("formInputRequired", true);
+        model.addAttribute("formInputDisabled", false);
+
+        model.addAttribute("formSelectLabel", "Plan");
+        model.addAttribute("formSelectSelected", "pro");
+        model.addAttribute("formSelectHelp", "Choose the plan for this account.");
+        model.addAttribute("formSelectError", "");
+        model.addAttribute("formSelectRequired", true);
+        model.addAttribute("formSelectDisabled", false);
+
+        model.addAttribute("formCheckboxLabel", "Accept terms and conditions");
+        model.addAttribute("formCheckboxChecked", false);
+        model.addAttribute("formCheckboxHelp", "You must agree before continuing.");
+        model.addAttribute("formCheckboxError", "");
+        model.addAttribute("formCheckboxDisabled", false);
+
+        return "forms";
+    }
+
+    private Map<String, Object> option(String value, String label) {
+        Map<String, Object> option = new LinkedHashMap<>();
+        option.put("value", value);
+        option.put("label", label);
+        return option;
     }
 }
