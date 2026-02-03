@@ -27,12 +27,12 @@ public class JavaDocAnalyzer {
     );
     
     private static final Pattern PARAM_PATTERN = Pattern.compile(
-        "@param\\s+(\\w+)\\s+\\{@code\\s+(\\w+)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@example|\\s*@background|\\s*\\*/|$)",
+        "@param\\s+(\\w+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@model|\\s*@example|\\s*@background|\\s*\\*/|$)",
         Pattern.MULTILINE | Pattern.DOTALL
     );
 
     private static final Pattern MODEL_PATTERN = Pattern.compile(
-        "@model\\s+(\\w+)\\s+\\{@code\\s+(\\w+)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@model|\\s*@example|\\s*@background|\\s*\\*/|$)",
+        "@model\\s+(\\w+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@model|\\s*@example|\\s*@background|\\s*\\*/|$)",
         Pattern.MULTILINE | Pattern.DOTALL
     );
     
