@@ -3,6 +3,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +40,9 @@ public class StoryCommonDataService {
 
     @Autowired
     private FragmentDependencyService fragmentDependencyService;
+
+    @Autowired
+    private StorybookProperties storybookProperties;
     
     /**
      * フラグメント・ストーリー共通データセットアップ
@@ -106,5 +110,17 @@ public class StoryCommonDataService {
         model.addAttribute("defaultStory", defaultStory);
         model.addAttribute("defaultParameters", defaultParameters);
         model.addAttribute("javadocInfo", javadocInfo);
+        model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
+        model.addAttribute("previewScripts", joinResources(storybookProperties.getResources().getScripts()));
+    }
+
+    private String joinResources(java.util.List<String> resources) {
+        if (resources == null || resources.isEmpty()) {
+            return "";
+        }
+        return resources.stream()
+            .map(value -> value == null ? "" : value.trim())
+            .filter(value -> !value.isEmpty())
+            .collect(Collectors.joining(","));
     }
 }
