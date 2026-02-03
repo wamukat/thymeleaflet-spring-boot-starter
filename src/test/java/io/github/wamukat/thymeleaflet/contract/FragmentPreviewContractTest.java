@@ -209,9 +209,6 @@ class FragmentPreviewContractTest {
         String actualContentType = result.getResponse().getContentType();
         
         // ログ出力で現在の動作を記録
-        System.out.println("【Contract記録】存在しないパスでのレスポンス:");
-        System.out.println("  Status Code: " + actualStatusCode);
-        System.out.println("  Content-Type: " + actualContentType);
         
         // 基本的な応答性の確認
         assertNotNull(result.getResponse(), "レスポンスオブジェクトが存在すること");

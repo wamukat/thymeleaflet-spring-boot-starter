@@ -10,9 +10,8 @@ import org.springframework.context.annotation.Configuration;
 
 /**
  * セキュリティ統合設定 - Configuration
- * 
- * Phase 4.4: Security統合完了の一環として実装
- * Feature Toggle制御による段階的なセキュリティ機能有効化を提供
+ *
+ * Migration phase に応じて FragmentPreviewUseCase を切り替える。
  */
 @Configuration
 public class SecurityIntegrationConfiguration {
@@ -20,7 +19,7 @@ public class SecurityIntegrationConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(SecurityIntegrationConfiguration.class);
 
     /**
-     * セキュリティ統合FragmentPreviewUseCase（Phase 4.4以降で有効）
+     * Migration phase 4.4 向け設定
      */
     @Bean
     @ConditionalOnProperty(
@@ -33,12 +32,11 @@ public class SecurityIntegrationConfiguration {
         
         logger.info("Configuring Security Integrated Fragment Preview UseCase - referencing existing bean");
 
-        // Phase 8.3: 既存のSpring管理UseCaseImplを参照
         return fragmentPreviewUseCaseImpl;
     }
 
     /**
-     * Phase 4.5用の設定（完全移行版）
+     * Migration phase 4.5 向け設定
      */
     @Bean
     @ConditionalOnProperty(
@@ -50,10 +48,6 @@ public class SecurityIntegrationConfiguration {
             FragmentPreviewUseCaseImpl fragmentPreviewUseCaseImpl) {
         
         logger.info("Configuring Fully Migrated Fragment Preview UseCase for migration phase: 4.5");
-
-        // Phase 8.3: 既存のSpring管理UseCaseImplを参照
-        // Phase 4.5では追加のセキュリティ機能を有効化
-        logger.info("Enhanced security features enabled for Phase 4.5");
         
         return fragmentPreviewUseCaseImpl;
     }

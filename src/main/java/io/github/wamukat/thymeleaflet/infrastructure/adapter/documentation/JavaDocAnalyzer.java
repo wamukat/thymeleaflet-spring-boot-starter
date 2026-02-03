@@ -12,8 +12,7 @@ import java.util.regex.Pattern;
 
 /**
  * HTMLテンプレート内のJavaDocコメント解析Infrastructure実装
- * Legacy実装の完全移設
- * TODO: FragmentAnalysisAdapterとの違いはなに？統合しないの？
+ * Legacy実装の完全移設（既存の解析結果との互換性維持を優先）
  */
 @Component
 public class JavaDocAnalyzer {

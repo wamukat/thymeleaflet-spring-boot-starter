@@ -70,23 +70,13 @@ class JavaDocAnalyzerRealFileTest {
             }
         }
 
-        System.out.println("=== HTML Content ===");
-        System.out.println(htmlContent);
-        System.out.println("=== End HTML Content ===");
 
         // When
         List<JavaDocAnalyzer.JavaDocInfo> result = analyzer.analyzeJavaDocFromHtml(htmlContent);
 
         // Then
-        System.out.println("=== Analysis Result ===");
-        System.out.println("Result size: " + result.size());
         for (int i = 0; i < result.size(); i++) {
             JavaDocAnalyzer.JavaDocInfo info = result.get(i);
-            System.out.println("Info " + i + ": " + info);
-            System.out.println("  Description: " + info.getDescription());
-            System.out.println("  Parameters: " + info.getParameters().size());
-            System.out.println("  Examples: " + info.getExamples().size());
-            System.out.println("  Background: " + info.getBackgroundColor());
         }
 
         // 基本的なアサーション
@@ -98,9 +88,7 @@ class JavaDocAnalyzerRealFileTest {
         assertThat(result.get(0).getParameters().get(0).isRequired()).isTrue();
         
         // 現在のEXAMPLE_PATTERNでは動的値を含む@exampleは解析されない可能性があることを考慮
-        System.out.println("Examples found: " + result.get(0).getExamples().size());
         for (JavaDocAnalyzer.ExampleInfo example : result.get(0).getExamples()) {
-            System.out.println("  Example: " + example.getTemplatePath() + " :: " + example.getFragmentName() + "(" + example.getArguments() + ")");
         }
     }
 }
