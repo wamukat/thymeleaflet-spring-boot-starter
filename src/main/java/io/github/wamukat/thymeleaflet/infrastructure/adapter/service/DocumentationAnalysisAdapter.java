@@ -4,12 +4,15 @@ import io.github.wamukat.thymeleaflet.application.port.outbound.DocumentationAna
 import io.github.wamukat.thymeleaflet.domain.model.TypeInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocContentService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.TypeInformationExtractor;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ドキュメント解析アダプタ
@@ -23,21 +26,35 @@ public class DocumentationAnalysisAdapter implements DocumentationAnalysisPort {
     
     private final TypeInformationExtractor typeInformationExtractor;
     private final JavaDocContentService javaDocContentService;
+    private final StorybookProperties storybookProperties;
+    private final Map<String, List<TypeInfo>> typeInfoCache = new ConcurrentHashMap<>();
     
     public DocumentationAnalysisAdapter(TypeInformationExtractor typeInformationExtractor,
-                                        JavaDocContentService javaDocContentService) {
+                                        JavaDocContentService javaDocContentService,
+                                        StorybookProperties storybookProperties) {
         this.typeInformationExtractor = typeInformationExtractor;
         this.javaDocContentService = javaDocContentService;
+        this.storybookProperties = storybookProperties;
     }
     
     @Override
     public List<TypeInfo> extractTypeInformation(String templatePath) {
+        if (storybookProperties.getCache().isEnabled()) {
+            List<TypeInfo> cached = typeInfoCache.get(templatePath);
+            if (cached != null) {
+                return cached;
+            }
+        }
         try {
             String htmlContent = javaDocContentService.loadTemplateContent(templatePath);
             if (htmlContent == null || htmlContent.isBlank()) {
                 return new ArrayList<>();
             }
-            return typeInformationExtractor.extractTypeInformationFromHtml(htmlContent);
+            List<TypeInfo> result = typeInformationExtractor.extractTypeInformationFromHtml(htmlContent);
+            if (storybookProperties.getCache().isEnabled()) {
+                typeInfoCache.put(templatePath, result);
+            }
+            return result;
             
         } catch (Exception e) {
             logger.error("Failed to extract type information from {}: {}", templatePath, e.getMessage());
