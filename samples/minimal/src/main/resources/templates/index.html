@@ -61,13 +61,13 @@
                 <div class="stats stats-vertical sm:stats-horizontal shadow bg-base-100/90">
                     <div class="stat">
                         <div class="stat-title">Fragments</div>
-                        <div class="stat-value">3</div>
-                        <div class="stat-desc">Buttons, cards, profile</div>
+                        <div class="stat-value">4</div>
+                        <div class="stat-desc">Buttons, cards, profile, accordion</div>
                     </div>
                     <div class="stat">
                         <div class="stat-title">Stories</div>
-                        <div class="stat-value">6</div>
-                        <div class="stat-desc">Default, variants</div>
+                        <div class="stat-value">8</div>
+                        <div class="stat-desc">Default, variants, accordion states</div>
                     </div>
                 </div>
             </div>
@@ -78,6 +78,23 @@
                         <div th:replace="~{components/profile-card :: profileCard()}"></div>
                     </div>
                 </div>
+            </div>
+        </section>
+
+
+        <section class="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
+            <div class="space-y-4">
+                <h2 class="font-display text-3xl font-semibold">Interactive accordion</h2>
+                <p class="opacity-70">
+                    This accordion uses a minimal inline handler (no Alpine). The same fragment
+                    can be previewed inside Thymeleaflet.
+                </p>
+                <div class="badge badge-outline">Vanilla JS</div>
+            </div>
+            <div class="space-y-3">
+                <div th:replace="~{components/accordion :: accordionItem(title='Shipping details', body='Ships in 2-3 business days.', open=false)}"></div>
+                <div th:replace="~{components/accordion :: accordionItem(title='Returns', body='Returns are accepted within 14 days of delivery.', open=true)}"></div>
+                <div th:replace="~{components/accordion :: accordionItem(title='Support', body='Support is available Monday to Friday, 9:00-18:00.', open=false)}"></div>
             </div>
         </section>
     </main>
