@@ -55,12 +55,12 @@
         <button th:if="${copyButton}" 
                 class="btn-thymeleaflet-secondary btn-thymeleaflet-small copy-button"
                 th:attr="onclick='copyUsageExample(\'' + ${elementId} + '\')',
-                         title='コードをクリップボードにコピー'">
+                         title=#{thymeleaflet.copy.title}">
             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                       d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
             </svg>
-            コピー
+            <span th:text="#{thymeleaflet.copy}">Copy</span>
         </button>
     </div>
     

@@ -17,7 +17,7 @@
 -->
 <span th:fragment="badge(story)"
       th:class="${story.hasStoryConfig() ? 'badge-story' : 'badge-fallback'}"
-      th:text="${story.hasStoryConfig() ? 'Story' : 'Fallback'}">
+      th:text="${story.hasStoryConfig() ? #messages.msg('thymeleaflet.badge.story') : #messages.msg('thymeleaflet.badge.fallback')}">
 </span>
 
 <!--
@@ -35,7 +35,7 @@
 -->
 <span th:fragment="badgeWithClasses(story, additionalClasses)"
       th:class="${(additionalClasses ?: '') + (story.hasStoryConfig() ? ' badge-story' : ' badge-fallback')}"
-      th:text="${story.hasStoryConfig() ? 'Story' : 'Fallback'}">
+      th:text="${story.hasStoryConfig() ? #messages.msg('thymeleaflet.badge.story') : #messages.msg('thymeleaflet.badge.fallback')}">
 </span>
 
 </body>

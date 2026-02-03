@@ -34,15 +34,15 @@
 <div th:fragment="error(type, title, message, showActionButton, actionText, actionScript, templatePath)"
      th:with="
         errorType=${type ?: 'danger'},
-        errorTitle=${title ?: (errorType == 'danger' ? 'エラーが発生しました' : 
-                              errorType == 'warning' ? 'Stories ファイルが必要です' : 
-                              'プレビューエラー')},
+        errorTitle=${title ?: (errorType == 'danger' ? #messages.msg('thymeleaflet.error.title.danger') :
+                              errorType == 'warning' ? #messages.msg('thymeleaflet.error.title.warning') :
+                              #messages.msg('thymeleaflet.error.title.info'))},
         errorMessage=${message ?: #ctx.getVariable('error') ?: 
-                     (errorType == 'danger' ? '指定されたリソースが見つかりません' :
-                      errorType == 'warning' ? 'このフラグメントをプレビューするには、ストーリー設定ファイルが必要です。' :
-                      'ストーリーの読み込みに失敗しました')},
+                     (errorType == 'danger' ? #messages.msg('thymeleaflet.error.message.danger') :
+                      errorType == 'warning' ? #messages.msg('thymeleaflet.error.message.warning') :
+                      #messages.msg('thymeleaflet.error.message.info'))},
         showButton=${showActionButton ?: false},
-        buttonText=${actionText ?: '再読み込み'},
+        buttonText=${actionText ?: #messages.msg('thymeleaflet.error.button.reload')},
         buttonScript=${actionScript ?: 'window.location.reload()'},
         hasTemplateInfo=${templatePath != null and (errorType == 'warning' or errorType == 'danger')},
         containerClass=${errorType == 'danger' ? 'text-center py-8 rounded-lg border-2 border-dashed border-red-300 bg-red-50' : 
@@ -97,34 +97,37 @@
     <!-- テンプレートパス情報 (warning/danger時) -->
     <div th:if="${hasTemplateInfo}" 
          th:class="${templateInfoClass}">
-        <div th:class="${templateLabelClass}">
-            作成すべきファイル:
+        <div th:class="${templateLabelClass}" th:text="#{thymeleaflet.error.template.label}">
+            File to create:
         </div>
         <code th:class="${templateCodeClass}" 
               th:text="'/src/main/resources/thymeleaflet/stories/' + ${templatePath} + '.stories.yml'">
             /src/main/resources/thymeleaflet/stories/template/path.stories.yml
         </code>
         <div th:class="${templateNameClass}">
-            テンプレートファイル名: <code th:text="${templatePath}">template-path</code>
+            <span th:text="#{thymeleaflet.error.template.name}">Template file:</span>
+            <code th:text="${templatePath}">template-path</code>
         </div>
     </div>
     
     <!-- 推奨メッセージ (warning時) -->
     <p th:if="${errorType == 'warning'}" class="text-sm text-orange-600">
-        <strong>推奨:</strong> ストーリーファイルを作成して、適切なモックデータを設定してください。
+        <strong th:text="#{thymeleaflet.error.recommend}">Recommendation:</strong>
+        <span th:text="#{thymeleaflet.error.recommend.detail}">Create a stories file and set appropriate mock data.</span>
     </p>
     
     <!-- 解決ガイド (danger時) -->
-    <p th:if="${errorType == 'danger'}" class="text-sm text-red-600">
-        適切なストーリー設定ファイルを作成するか、フラグメントの定義を確認してください。
+    <p th:if="${errorType == 'danger'}" class="text-sm text-red-600"
+       th:text="#{thymeleaflet.error.danger.detail}">
+        Create a valid story file or verify the fragment definition.
     </p>
     
     <!-- アクションボタン -->
     <button th:if="${showButton}" 
             th:class="'mt-3 btn-thymeleaflet-secondary btn-thymeleaflet-small'"
             th:attr="onclick=${buttonScript}"
-            th:text="${buttonText}">
-        アクション
+            th:text="${buttonText} ?: #{thymeleaflet.error.button.action}">
+        Action
     </button>
 </div>
 
