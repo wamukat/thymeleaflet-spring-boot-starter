@@ -17,16 +17,21 @@
 |---|---|---|---|
 | `thymeleaflet.resources.template-paths` | List<String> | [`/templates/`] | テンプレート探索パス (1〜5件) |
 | `thymeleaflet.resources.stylesheets` | List<String> | `[]` | プレビューに注入する CSS (最大10件) |
+| `thymeleaflet.resources.scripts` | List<String> | `[]` | プレビューiframeに注入する JS (最大10件) |
 | `thymeleaflet.resources.cache-duration-seconds` | int | `3600` | キャッシュ秒数 |
 
-`resources.stylesheets` は **Shadow DOM のプレビュー領域**にのみ注入されます。
+`resources.stylesheets` と `resources.scripts` は **iframeプレビュー**にのみ注入されます。
 レイアウトやテーマの再現は [stories.ja.md](stories.ja.md) の `preview.wrapper` を使ってください。
 サンプルでは `/css/mypage.css` と `/css/mypage/components.css` を注入し、
 アプリと同じ見た目になるよう揃えています。
-JavaScript を使いたい場合は **アプリ側の通常のテンプレートで読み込む**のが推奨です。
-例えば共通レイアウト（`layout.html` など）の `<head>` に `<script src="/js/app.js"></script>` を追加し、
-`preview.wrapper` で必要なDOMを包むことでプレビューでも同じ動作を再現できます。
+JavaScript を使いたい場合は `resources.scripts` に登録してください。
 例: `<div data-theme=\"light\">{{content}}</div>`
+プレビュー iframe は same-origin を許可しているため、Cookie / localStorage / 認証付きAPIが動作します。
+
+### CSP 補足（意図的に緩め）
+
+Thymeleaflet はプレビューで外部 JS/CSS を使えるよう、CSP を意図的に緩めています。
+利便性は上がりますが **保護は弱くなります**。必ず認証された環境でのみ利用してください。
 
 ## セキュリティ
 
@@ -57,6 +62,8 @@ thymeleaflet:
       - /templates/
     stylesheets:
       - /css/app.css
+    scripts:
+      - /js/app.js
     cache-duration-seconds: 3600
   security:
     enabled: true

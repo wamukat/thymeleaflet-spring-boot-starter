@@ -87,6 +87,7 @@ thymeleaflet:
     template-paths:
       - /templates/
     stylesheets: []
+    scripts: []
     cache-duration-seconds: 3600
   security:
     enabled: true
@@ -96,11 +97,12 @@ thymeleaflet:
 
 - `thymeleaflet.base-path` で UI のパスを変更できます。
 - `resources.template-paths` は 1〜5 件の指定が必要です。
-- `resources.stylesheets` は最大 10 件まで指定できます（Shadow DOMプレビューにのみ注入）。
-- JS を使いたい場合は、**アプリ側の通常の `<head>` で読み込む**のが推奨です。
-  - 例: 共通レイアウトテンプレート（`layout.html` など）で `<script src="/js/app.js"></script>` を追加
-  - その上で `preview.wrapper` で必要なDOM構造を整えると、プレビューでも同じ挙動を再現できます。
-    - 例: `<div data-theme=\"light\">{{content}}</div>`
+- `resources.stylesheets` は最大 10 件まで指定できます。
+- `resources.scripts` は最大 10 件まで指定できます（プレビューiframe内に注入）。
+- JS を使う場合は `resources.scripts` に登録し、`preview.wrapper` で必要なDOM構造を整えてください。
+  - 例: `<div data-theme=\"light\">{{content}}</div>`
+- CSP はプレビューで外部 JS/CSS を使えるよう意図的に緩めています。信頼できる環境でのみ利用してください。
+- プレビュー iframe は same-origin を許可しているため、Cookie / localStorage / 認証付きAPIが動作します。
 - `security.enabled` で `/thymeleaflet/**` のセキュリティ設定を切り替えます。
 
 ## エンドポイント
