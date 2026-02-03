@@ -15,8 +15,8 @@ import java.util.Map;
  * - Expert推奨パターン適用
  * 
  * Clean Architecture: Pure Domain層Value Object
- *
- * TODO: domain.model.configuration パッケージ内でJSONに依存していることに違和感を感じる。
+ * 
+ * Jackson annotations are kept to map YAML/JSON story files directly.
  */
 public record StoryConfiguration(
     @JsonProperty("meta") StoryMeta meta,

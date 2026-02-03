@@ -97,12 +97,6 @@ class PerformanceContractTest {
                         avgResponseTime, allowedThreshold));
         
         // ログ出力で現在のパフォーマンスを記録
-        System.out.println("【Performance Contract記録】フラグメント一覧:");
-        System.out.println("  測定回数: " + iterationCount);
-        System.out.println("  平均レスポンス時間: " + String.format("%.2f", avgResponseTime) + "ms");
-        System.out.println("  ベースライン: " + FRAGMENT_LIST_BASELINE_MS + "ms");
-        System.out.println("  許容しきい値: " + String.format("%.2f", allowedThreshold) + "ms");
-        System.out.println("  個別測定値: " + responseTimes);
     }
 
     @Test
@@ -149,12 +143,6 @@ class PerformanceContractTest {
                         avgResponseTime, allowedThreshold));
         
         // ログ出力で現在のパフォーマンスを記録
-        System.out.println("【Performance Contract記録】ストーリープレビュー:");
-        System.out.println("  測定回数: " + iterationCount);
-        System.out.println("  平均レスポンス時間: " + String.format("%.2f", avgResponseTime) + "ms");
-        System.out.println("  ベースライン: " + STORY_PREVIEW_BASELINE_MS + "ms");
-        System.out.println("  許容しきい値: " + String.format("%.2f", allowedThreshold) + "ms");
-        System.out.println("  個別測定値: " + responseTimes);
     }
 
     @Test
@@ -196,17 +184,10 @@ class PerformanceContractTest {
                         avgValidationTime, allowedThreshold));
         
         // ログ出力で現在のセキュリティ検証パフォーマンスを記録
-        System.out.println("【Performance Contract記録】セキュリティ検証:");
-        System.out.println("  測定回数: " + iterationCount);
-        System.out.println("  平均検証時間: " + String.format("%.4f", avgValidationTime) + "ms");
-        System.out.println("  ベースライン: " + SECURITY_VALIDATION_BASELINE_MS + "ms");
-        System.out.println("  許容しきい値: " + String.format("%.2f", allowedThreshold) + "ms");
         
         // 統計情報も出力
         long minTime = validationTimes.stream().mapToLong(Long::longValue).min().orElse(0);
         long maxTime = validationTimes.stream().mapToLong(Long::longValue).max().orElse(0);
-        System.out.println("  最小時間: " + minTime + "ms");
-        System.out.println("  最大時間: " + maxTime + "ms");
     }
 
     @Test
@@ -246,11 +227,5 @@ class PerformanceContractTest {
                         memoryIncreasePerOperation, allowedMemoryIncrease));
         
         // ログ出力でメモリ効率を記録
-        System.out.println("【Performance Contract記録】メモリ効率:");
-        System.out.println("  操作回数: " + operationCount);
-        System.out.println("  実行前メモリ: " + String.format("%.2f", memoryBefore / 1024.0 / 1024.0) + "MB");
-        System.out.println("  実行後メモリ: " + String.format("%.2f", memoryAfter / 1024.0 / 1024.0) + "MB");
-        System.out.println("  総メモリ増加: " + String.format("%.2f", memoryIncrease / 1024.0 / 1024.0) + "MB");
-        System.out.println("  操作あたり増加: " + String.format("%.2f", memoryIncreasePerOperation / 1024.0 / 1024.0) + "MB");
     }
 }
