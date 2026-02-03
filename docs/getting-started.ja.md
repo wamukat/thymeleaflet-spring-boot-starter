@@ -35,6 +35,24 @@ dependencies {
 http://localhost:6006/thymeleaflet
 ```
 
+サンプルはポート競合を避けるため `6006` を使っています。
+必要であれば `server.port` で変更できます。
+
+## サンプルページ
+
+- アプリ画面: `http://localhost:6006/`
+- フォーム画面: `http://localhost:6006/forms`
+- Thymeleaflet UI: `http://localhost:6006/thymeleaflet`
+
+## サンプルのスタイル（Tailwind + daisyUI）
+
+サンプルは Tailwind CSS と daisyUI を使用しています。起動前に CSS をビルドしてください。
+
+```bash
+npm install
+npm run build
+```
+
 ## 開発用途での利用
 
 Thymeleaflet は開発中の補助ツールとしての利用を想定しています。
