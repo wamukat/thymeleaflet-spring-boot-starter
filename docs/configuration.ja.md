@@ -23,6 +23,10 @@
 レイアウトやテーマの再現は [stories.ja.md](stories.ja.md) の `preview.wrapper` を使ってください。
 サンプルでは `/css/mypage.css` と `/css/mypage/components.css` を注入し、
 アプリと同じ見た目になるよう揃えています。
+JavaScript を使いたい場合は **アプリ側の通常のテンプレートで読み込む**のが推奨です。
+例えば共通レイアウト（`layout.html` など）の `<head>` に `<script src="/js/app.js"></script>` を追加し、
+`preview.wrapper` で必要なDOMを包むことでプレビューでも同じ動作を再現できます。
+例: `<div data-theme=\"light\">{{content}}</div>`
 
 ## セキュリティ
 
@@ -41,15 +45,6 @@ spring:
   autoconfigure:
     exclude: io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookAutoConfiguration
 ```
-
-## 内部設定（マイグレーション）
-
-| プロパティ | 型 | デフォルト | 説明 |
-|---|---|---|---|
-| `thymeleaflet.migration.phase` | String | `"4.0"` | 内部フェーズ管理 |
-| `thymeleaflet.migration.monitoring.response-time-degradation-threshold` | int | `10` | 内部監視設定 |
-| `thymeleaflet.migration.monitoring.error-rate-increase-threshold` | int | `1` | 内部監視設定 |
-| `thymeleaflet.migration.monitoring.enforce-contract-tests` | boolean | `true` | 内部監視設定 |
 
 ## 設定例
 

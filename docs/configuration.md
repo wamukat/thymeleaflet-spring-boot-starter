@@ -23,6 +23,9 @@ This page covers *only* configuration. Usage details are in
 Use `preview.wrapper` in [stories.md](stories.md) to align layout and theme.
 The sample app injects `/css/mypage.css` and `/css/mypage/components.css`
 so the preview matches the app styling.
+To use JavaScript, load it in your app's normal layout (e.g. `layout.html`)
+and wrap the required DOM in `preview.wrapper`.
+Example: `<div data-theme="light">{{content}}</div>`
 
 ## Security
 
@@ -41,15 +44,6 @@ spring:
   autoconfigure:
     exclude: io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookAutoConfiguration
 ```
-
-## Internal (Migration)
-
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `thymeleaflet.migration.phase` | String | `"4.0"` | Feature toggle / migration phase |
-| `thymeleaflet.migration.monitoring.response-time-degradation-threshold` | int | `10` | Internal monitoring setting |
-| `thymeleaflet.migration.monitoring.error-rate-increase-threshold` | int | `1` | Internal monitoring setting |
-| `thymeleaflet.migration.monitoring.enforce-contract-tests` | boolean | `true` | Internal monitoring setting |
 
 ## Example
 
