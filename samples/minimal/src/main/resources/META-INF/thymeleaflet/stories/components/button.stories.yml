@@ -1,0 +1,48 @@
+meta:
+  title: Buttons
+  description: DaisyUI button variations
+
+storyGroups:
+  primaryButton:
+    title: Primary Button
+    description: Primary button variants
+    stories:
+      - name: default
+        title: Default
+        preview:
+          wrapper: |
+            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+        parameters:
+          label: Save
+          variant: primary
+      - name: outline
+        title: Outline
+        preview:
+          wrapper: |
+            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+        parameters:
+          label: Outline
+          variant: outline
+  disabledButton:
+    title: Disabled Button
+    description: Disabled state
+    stories:
+      - name: disabled
+        title: Disabled
+        preview:
+          wrapper: |
+            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+        parameters:
+          label: Disabled

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * ストーリーバッジ表示フラグメント
+ * 
+ * ストーリーの種別（Story/Fallback）に応じてラベルを表示する。
+ * hasStoryConfig()の結果に基づいて色分けとテキストを決定。
+ * 
+ * @fragment badge - Story/Fallbackラベル表示
+ * @param story {@code Story} [required] ストーリー情報オブジェクト
+ * 
+ * @example <div th:replace="~{thymeleaflet/fragments/story-badge :: badge(${story})}"></div>
+ */
+-->
+<span th:fragment="badge(story)"
+      th:class="${story.hasStoryConfig() ? 'badge-story' : 'badge-fallback'}"
+      th:text="${story.hasStoryConfig() ? 'Story' : 'Fallback'}">
+</span>
+
+<!--
+/**
+ * ストーリーバッジ表示フラグメント（クラス指定）
+ * 
+ * 追加クラスを指定して、Story/Fallbackラベルを表示する。
+ * 
+ * @fragment badgeWithClasses - 追加クラス対応バッジ
+ * @param story {@code Story} [required] ストーリー情報オブジェクト
+ * @param additionalClasses {@code String} [optional=''] 追加CSSクラス
+ * 
+ * @example <div th:replace="~{thymeleaflet/fragments/story-badge :: badgeWithClasses(${story}, 'ml-2 flex-shrink-0')}"></div>
+ */
+-->
+<span th:fragment="badgeWithClasses(story, additionalClasses)"
+      th:class="${(additionalClasses ?: '') + (story.hasStoryConfig() ? ' badge-story' : ' badge-fallback')}"
+      th:text="${story.hasStoryConfig() ? 'Story' : 'Fallback'}">
+</span>
+
+</body>
+</html>

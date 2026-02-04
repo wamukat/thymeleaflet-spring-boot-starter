@@ -1,0 +1,362 @@
+/**
+ * Storybook component styles using Tailwind CSS @apply directive
+ * Storybook専用コンポーネントスタイル定義
+ */
+
+@layer components {
+  /* Base button styles */
+  .btn-base {
+    @apply font-semibold rounded-sm transition-colors duration-200 inline-flex items-center justify-center cursor-pointer;
+    @apply focus:outline focus:outline-2 focus:outline-primary-light focus:outline-offset-2;
+  }
+
+  /* Primary button variant */
+  .btn-primary {
+    @apply btn-base bg-primary text-white border-none;
+    @apply hover:bg-primary-light;
+  }
+
+  /* Secondary button variant */
+  .btn-secondary {
+    @apply btn-base bg-neutral-100 text-neutral-700 border border-neutral-300;
+    @apply hover:bg-neutral-200;
+  }
+
+  /* Button sizes */
+  .btn-sm {
+    @apply px-3 py-1.5 text-sm min-h-[28px];
+  }
+
+  .btn-md {
+    @apply px-4 py-2 text-sm min-h-[36px];
+  }
+
+  .btn-lg {
+    @apply px-5 py-3 text-base min-h-[44px];
+  }
+
+  /* Button states */
+  .btn-disabled {
+    @apply opacity-40 cursor-not-allowed;
+  }
+
+  /* Link button specific styles */
+  .btn-link {
+    @apply text-center no-underline;
+  }
+
+  .btn-link-disabled {
+    @apply opacity-40 pointer-events-none;
+  }
+
+  /* Submit button with loading state */
+  .btn-submit {
+    @apply btn-primary transition-all duration-200;
+  }
+
+  /* Storybook統一デザインシステム */
+  .btn-storybook-primary {
+    @apply bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200;
+  }
+
+  .btn-storybook-secondary {
+    @apply bg-gray-100 text-gray-600 px-4 py-2 rounded-lg font-medium border border-gray-300 hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200;
+  }
+
+  .btn-storybook-small {
+    @apply px-3 py-1.5 text-sm;
+  }
+
+  .badge-simple {
+    @apply bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-parameterized {
+    @apply bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-data-dependent {
+    @apply bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-story {
+    @apply bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .badge-fallback {
+    @apply bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium;
+  }
+
+  .card-storybook {
+    @apply bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200;
+  }
+
+  .card-storybook-header {
+    @apply px-6 py-4 border-b bg-gray-50;
+  }
+
+  .card-storybook-content {
+    @apply p-6;
+  }
+
+  .breadcrumb-storybook {
+    @apply flex items-center space-x-2 text-sm text-gray-600;
+  }
+
+  .breadcrumb-storybook a {
+    @apply text-blue-600 hover:text-blue-800 transition-colors;
+  }
+
+  .breadcrumb-storybook .separator {
+    @apply text-gray-400;
+  }
+
+  .input-storybook {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors;
+  }
+
+  .select-storybook {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-white;
+  }
+
+  /* 階層型ナビゲーション */
+  .nav-sidebar {
+    @apply w-80 bg-white border-r border-gray-200 fixed left-0 top-0 h-full overflow-y-auto z-40;
+  }
+
+  .nav-main-content {
+    @apply ml-80 min-h-screen bg-gray-50;
+  }
+
+  .nav-tree {
+    @apply space-y-1;
+  }
+
+  .nav-tree-item {
+    @apply block w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors;
+  }
+
+  .nav-tree-item.active {
+    @apply bg-blue-50 text-blue-700 border-r-2 border-blue-500;
+  }
+
+  .nav-tree-folder {
+    @apply font-medium text-gray-900 px-3 py-2 text-sm cursor-pointer select-none hover:bg-gray-50 transition-colors;
+  }
+
+  .nav-tree-folder.expanded {
+    @apply bg-gray-50;
+  }
+
+  .nav-tree-indent-1 { @apply pl-4; }
+  .nav-tree-indent-2 { @apply pl-6; }
+  .nav-tree-indent-3 { @apply pl-8; }
+  .nav-tree-indent-4 { @apply pl-10; }
+
+  .nav-fragment-badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ml-2;
+  }
+
+  .nav-fragment-count {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 ml-auto;
+  }
+
+  /* コードブロック用スタイル */
+  .code-block-container {
+    @apply bg-gray-900 rounded-lg border border-gray-700 overflow-hidden;
+  }
+
+  .code-block-scrollable {
+    @apply overflow-x-auto overflow-y-hidden;
+    /* 横スクロールバーを常に表示（WebKit系ブラウザ） */
+    scrollbar-width: thin;
+    scrollbar-color: #4B5563 #1F2937;
+  }
+
+  .code-block-scrollable::-webkit-scrollbar {
+    @apply h-3;
+  }
+
+  .code-block-scrollable::-webkit-scrollbar-track {
+    @apply bg-gray-800 rounded-full;
+  }
+
+  .code-block-scrollable::-webkit-scrollbar-thumb {
+    @apply bg-gray-600 rounded-full;
+  }
+
+  .code-block-scrollable::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+
+  .code-block-pre {
+    @apply m-0 p-4 text-sm font-mono leading-relaxed min-w-full whitespace-pre;
+    /* 最小幅を確保してコンテンツが折り返されないようにする */
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .code-block-pre code {
+    @apply text-gray-100 whitespace-pre;
+  }
+
+
+  /* ストーリーブック使用例エリア専用 */
+  .storybook-usage-example {
+    @apply bg-gray-900 rounded-lg border border-gray-700;
+  }
+
+  .storybook-usage-example .code-block-scrollable {
+    @apply max-h-96;
+    /* 縦スクロールも必要に応じて対応 */
+    overflow-y: auto;
+    /* 横スクロールバーの可視化強化 */
+    scrollbar-width: auto;
+    scrollbar-color: #9CA3AF #374151;
+  }
+
+  /* 使用例エリア専用のWebKit系スクロールバースタイル */
+  .storybook-usage-example .code-block-scrollable::-webkit-scrollbar {
+    @apply h-3;
+    width: 12px;
+  }
+
+  .storybook-usage-example .code-block-scrollable::-webkit-scrollbar-track {
+    @apply bg-gray-700 rounded-full;
+  }
+
+  .storybook-usage-example .code-block-scrollable::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded-full;
+    /* より見やすい薄い灰色 */
+    background-color: #9CA3AF;
+  }
+
+  .storybook-usage-example .code-block-scrollable::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-300;
+    background-color: #D1D5DB;
+  }
+
+  /* 縦スクロールバーも統一スタイル */
+  .storybook-usage-example .code-block-scrollable::-webkit-scrollbar:vertical {
+    width: 12px;
+  }
+
+  /* ストーリーブック差異表示（控えめなスタイル） */
+  .story-param-value-different {
+    @apply bg-blue-50 border-blue-200;
+    /* 控えめな差異表示 */
+  }
+
+  .story-param-value-same {
+    @apply bg-white border-gray-200;
+    /* 同じ値の場合の標準表示 */
+  }
+
+  /* デフォルト値表示（小さなテキスト） */
+  .story-default-value {
+    @apply text-xs text-gray-500;
+  }
+
+  /* プレースホルダスケルトンローディング */
+  .skeleton {
+    @apply bg-gray-300 animate-pulse rounded;
+  }
+
+  .skeleton-text {
+    @apply skeleton h-4 w-full mb-2;
+  }
+
+  .skeleton-text-short {
+    @apply skeleton h-4 w-32 mb-2;
+  }
+
+  .skeleton-text-medium {
+    @apply skeleton h-4 w-48 mb-2;
+  }
+
+  .skeleton-text-long {
+    @apply skeleton h-4 w-72 mb-2;
+  }
+
+  .skeleton-title {
+    @apply skeleton h-6 w-48 mb-4;
+  }
+
+  .skeleton-card {
+    @apply skeleton h-20 w-full rounded-lg mb-4;
+  }
+
+  .skeleton-stat {
+    @apply skeleton h-8 w-12 mb-2 mx-auto;
+  }
+
+  .skeleton-icon {
+    @apply skeleton w-8 h-8 rounded;
+  }
+
+  /* プレースホルダのフェードインアニメーション */
+  .placeholder-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+
+  .placeholder-fade-out {
+    animation: fadeOut 0.3s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  /* 遅延読み込み表示の改善 */
+  .loading-shimmer {
+    background: linear-gradient(90deg, 
+      rgba(255,255,255,0) 0%, 
+      rgba(255,255,255,0.4) 50%, 
+      rgba(255,255,255,0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* プレビュー背景色切り替えクラス */
+  .preview-background-white {
+    @apply bg-white flex items-center justify-center;
+  }
+
+  .preview-background-light {
+    @apply bg-gray-100 flex items-center justify-center;
+  }
+
+  .preview-background-gray {
+    @apply bg-gray-800 flex items-center justify-center;
+  }
+
+  /* レスポンシブ対応 */
+  @media (max-width: 1024px) {
+    .nav-sidebar {
+      @apply -translate-x-full transition-transform;
+    }
+    
+    .nav-sidebar.mobile-open {
+      @apply translate-x-0;
+    }
+    
+    .nav-main-content {
+      @apply ml-0;
+    }
+    
+    .nav-overlay {
+      @apply fixed inset-0 bg-black bg-opacity-50 z-30;
+    }
+  }
+}

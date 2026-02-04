@@ -1,0 +1,37 @@
+meta:
+  title: Cards
+  description: DaisyUI card examples
+
+storyGroups:
+  simpleCard:
+    title: Simple Card
+    description: Default card styles
+    stories:
+      - name: default
+        title: Default
+        preview:
+          wrapper: |
+            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+        parameters:
+          title: Card Title
+          description: Short description
+  infoCard:
+    title: Info Card
+    description: Info themed card
+    stories:
+      - name: info
+        title: Info
+        preview:
+          wrapper: |
+            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+        parameters:
+          title: Info
+          description: Informational message

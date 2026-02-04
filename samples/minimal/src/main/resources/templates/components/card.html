@@ -1,0 +1,37 @@
+<!--
+/**
+ * Simple card (simpleCard)
+ *
+ * @param title {@code String} [required] Card title
+ * @param description {@code String} [optional=] Card description
+ * @example <div th:replace="~{components/card :: simpleCard(title='Card Title', description='Short description')}"></div>
+ */
+-->
+<div th:fragment="simpleCard(title, description)" class="card w-full max-w-sm bg-base-100/90 shadow-xl border border-base-200/70">
+    <div class="card-body">
+        <h2 class="card-title" th:text="${title}">Card Title</h2>
+        <p th:if="${description != null}" th:text="${description}">Description</p>
+        <div class="card-actions justify-end">
+            <div th:replace="~{components/button :: primaryButton(label='Action', variant='primary')}"></div>
+        </div>
+    </div>
+</div>
+
+<!--
+/**
+ * Info card (infoCard)
+ *
+ * @param title {@code String} [required] Card title
+ * @param description {@code String} [optional=] Card description
+ * @example <div th:replace="~{components/card :: infoCard(title='Info', description='Info message')}"></div>
+ */
+-->
+<div th:fragment="infoCard(title, description)" class="card w-full max-w-sm bg-gradient-to-br from-info/90 to-primary/90 text-info-content shadow-xl">
+    <div class="card-body">
+        <h2 class="card-title" th:text="${title}">Info</h2>
+        <p th:if="${description != null}" th:text="${description}">Info message</p>
+        <div class="card-actions justify-end">
+            <div th:replace="~{components/button :: primaryButton(label='Got it', variant='secondary')}"></div>
+        </div>
+    </div>
+</div>
