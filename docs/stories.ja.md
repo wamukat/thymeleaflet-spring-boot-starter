@@ -111,6 +111,7 @@ Thymeleaflet は UI に **Custom** ストーリーを追加し、パラメータ
 - **保持先**: `sessionStorage` にフラグメント単位で保存。
 - **編集対象**: `parameters` と `model` の両方。
 - **適用範囲**: プレビュー表示のみ（`stories.yml` には書き戻しません）。
+- **予約名**: `custom` は UI で使用するため、stories.yml には定義しないでください。
 
 ## URL の挙動
 

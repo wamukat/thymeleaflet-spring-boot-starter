@@ -111,6 +111,7 @@ Thymeleaflet adds a **Custom** story entry in the UI so you can edit parameters 
 - **Persistence**: stored in `sessionStorage` per fragment.
 - **Editable fields**: both `parameters` and `model`.
 - **Scope**: affects preview rendering only (does not write back to `stories.yml`).
+- **Reserved name**: `custom` is reserved by the UI and should not be defined in stories.yml.
 
 ## URL Behavior
 
