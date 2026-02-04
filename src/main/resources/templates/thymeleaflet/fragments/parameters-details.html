@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * パラメータ詳細フラグメント
+ *
+ * JSDocによるパラメータ/モデル仕様の詳細表示を提供する。
+ *
+ * @example <div th:replace="~{thymeleaflet/fragments/parameters-details :: content()}"></div>
+ */
+-->
+<div th:fragment="content" th:if="${javadocInfo != null}" class="mb-6">
+    <div th:if="${javadocInfo.description != null and !#strings.isEmpty(javadocInfo.description)}" class="mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+        <p class="text-sm text-blue-800 whitespace-pre-line" th:text="${javadocInfo.description}">
+            Fragment description
+        </p>
+    </div>
+
+    <!-- JSDocパラメータ -->
+    <div th:if="${javadocInfo.parameters != null and !#lists.isEmpty(javadocInfo.parameters)}">
+        <p class="text-sm font-medium text-gray-700 mb-2" th:text="#{thymeleaflet.params.fragment}">Fragment parameters</p>
+        <h4 class="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span th:text="#{thymeleaflet.params.spec}">Parameter spec</span>
+        </h4>
+        <div class="space-y-4">
+            <div th:each="jsParam : ${javadocInfo.parameters}"
+                 class="border border-gray-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+
+                <!-- パラメータヘッダー -->
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-md text-sm font-mono font-semibold"
+                              th:text="${jsParam.name}"></span>
+                        <span class="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium uppercase tracking-wide"
+                              th:text="${jsParam.type}"></span>
+                    </div>
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                          th:classappend="${jsParam.required ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}"
+                          th:text="${jsParam.required ? #messages.msg('thymeleaflet.params.required') : #messages.msg('thymeleaflet.params.optional')}"></span>
+                </div>
+
+                <!-- パラメータ説明 -->
+                <div class="mb-3">
+                    <p class="text-sm text-gray-800 leading-relaxed font-medium whitespace-pre-line" th:text="${jsParam.description}">
+                        Parameter description
+                    </p>
+                </div>
+
+                <!-- 詳細情報 -->
+                <div class="space-y-2">
+                    <!-- デフォルト値 -->
+                    <div th:if="${jsParam.defaultValue != null and !#strings.isEmpty(jsParam.defaultValue)}"
+                         class="flex items-center gap-2">
+                        <span class="text-xs text-gray-500 font-medium min-w-0 flex-shrink-0" th:text="#{thymeleaflet.params.defaultValue}">
+                            Default value:
+                        </span>
+                        <code class="text-xs bg-slate-100 px-2 py-1 rounded border font-mono text-slate-700"
+                              th:text="${jsParam.defaultValue}"></code>
+                    </div>
+
+                    <!-- 許可値 -->
+                    <div th:if="${jsParam.allowedValues != null and !#lists.isEmpty(jsParam.allowedValues)}"
+                         class="space-y-1">
+                        <span class="text-xs text-gray-500 font-medium block" th:text="#{thymeleaflet.params.allowedValues}">
+                            Allowed values:
+                        </span>
+                        <div class="flex flex-wrap gap-1">
+                            <span th:each="allowedValue : ${jsParam.allowedValues}"
+                                  class="inline-block bg-amber-50 text-amber-800 px-2 py-1 rounded border border-amber-200 text-xs font-mono"
+                                  th:text="${allowedValue}"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JSDocモデル -->
+    <div th:if="${javadocInfo.models != null and !#lists.isEmpty(javadocInfo.models)}" class="mt-8">
+        <p class="text-sm font-medium text-gray-700 mb-2" th:text="#{thymeleaflet.model.title}">Fragment model</p>
+        <h4 class="text-md font-semibold text-gray-800 mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M5 12h14M7 6h10M7 18h10"></path>
+            </svg>
+            <span th:text="#{thymeleaflet.model.spec}">Model spec</span>
+        </h4>
+        <div class="space-y-4">
+            <div th:each="jsModel : ${javadocInfo.models}"
+                 class="border border-gray-200 rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+
+                <!-- モデルヘッダー -->
+                <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="inline-block bg-emerald-100 text-emerald-800 px-3 py-1 rounded-md text-sm font-mono font-semibold"
+                              th:text="${jsModel.name}"></span>
+                        <span class="inline-block bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium uppercase tracking-wide"
+                              th:text="${jsModel.type}"></span>
+                    </div>
+                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold"
+                          th:classappend="${jsModel.required ? 'bg-red-100 text-red-700 border border-red-200' : 'bg-emerald-100 text-emerald-700 border border-emerald-200'}"
+                          th:text="${jsModel.required ? #messages.msg('thymeleaflet.params.required') : #messages.msg('thymeleaflet.params.optional')}"></span>
+                </div>
+
+                <!-- モデル説明 -->
+                <div class="mb-3">
+                    <p class="text-sm text-gray-800 leading-relaxed font-medium whitespace-pre-line" th:text="${jsModel.description}">
+                        Model description
+                    </p>
+                </div>
+
+                <!-- 詳細情報 -->
+                <div class="space-y-2">
+                    <!-- デフォルト値 -->
+                    <div th:if="${jsModel.defaultValue != null and !#strings.isEmpty(jsModel.defaultValue)}"
+                         class="flex items-center gap-2">
+                        <span class="text-xs text-gray-500 font-medium min-w-0 flex-shrink-0" th:text="#{thymeleaflet.params.defaultValue}">
+                            Default value:
+                        </span>
+                        <code class="text-xs bg-slate-100 px-2 py-1 rounded border font-mono text-slate-700"
+                              th:text="${jsModel.defaultValue}"></code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
