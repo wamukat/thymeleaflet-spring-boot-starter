@@ -54,11 +54,12 @@ public class FragmentRenderingController {
             @PathVariable("storyName") String storyName,
             @RequestBody(required = false) RenderOverridesRequest request,
             Model model) {
-        Map<String, Object> overrides = request != null ? request.overrides() : null;
+        Map<String, Object> parameters = request != null ? request.parameters() : null;
+        Map<String, Object> modelOverrides = request != null ? request.model() : null;
         FragmentRenderingService.RenderingResult result =
-            fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model, overrides);
+            fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model, parameters, modelOverrides);
         return result.templateReference();
     }
 
-    public record RenderOverridesRequest(Map<String, Object> overrides) {}
+    public record RenderOverridesRequest(Map<String, Object> parameters, Map<String, Object> model) {}
 }
