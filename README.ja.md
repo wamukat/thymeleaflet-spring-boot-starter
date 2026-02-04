@@ -12,6 +12,8 @@ HTML テンプレート内の JavaDoc 風コメントを解析して、プレビ
 - YAML によるストーリー定義
 - Tailwind ベースの UI スタイル
 
+デモサイト: https://bad-siouxie-wamukat-977c4dc6.koyeb.app/thymeleaflet
+
 ## 位置づけ（開発者向けツール）
 
 Thymeleaflet は開発中の確認に使う補助ツールです。本番環境への公開は想定していません。
