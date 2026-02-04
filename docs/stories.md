@@ -103,6 +103,16 @@ preview:
     </div>
 ```
 
+## Custom Story (UI Overrides)
+
+Thymeleaflet adds a **Custom** story entry in the UI so you can edit parameters directly.
+
+- **Initial values**: copied from the `default` story if it exists, otherwise from the first story.
+- **Persistence**: stored in `sessionStorage` per fragment.
+- **Editable fields**: both `parameters` and `model`.
+- **Scope**: affects preview rendering only (does not write back to `stories.yml`).
+- **Reserved name**: `custom` is reserved by the UI and should not be defined in stories.yml.
+
 ## URL Behavior
 
 - Story URL: `/thymeleaflet/{templatePath}/{fragmentName}/{storyName}`

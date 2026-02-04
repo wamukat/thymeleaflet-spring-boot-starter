@@ -103,6 +103,16 @@ preview:
     </div>
 ```
 
+## Custom ストーリー（UI 上書き）
+
+Thymeleaflet は UI に **Custom** ストーリーを追加し、パラメータを編集できます。
+
+- **初期値**: `default` があればその値、なければ先頭ストーリーの値をコピー。
+- **保持先**: `sessionStorage` にフラグメント単位で保存。
+- **編集対象**: `parameters` と `model` の両方。
+- **適用範囲**: プレビュー表示のみ（`stories.yml` には書き戻しません）。
+- **予約名**: `custom` は UI で使用するため、stories.yml には定義しないでください。
+
 ## URL の挙動
 
 - URL: `/thymeleaflet/{templatePath}/{fragmentName}/{storyName}`

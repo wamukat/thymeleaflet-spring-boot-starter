@@ -112,6 +112,7 @@ public class FragmentJsonService {
                     storyData.put("displayDescription", story.getDisplayDescription());
                     storyData.put("hasStoryConfig", story.hasStoryConfig());
                     storyData.put("parameters", story.getParameters());
+                    storyData.put("model", story.getModel());
                     return storyData;
                 }).collect(Collectors.toList()));
                 

@@ -106,6 +106,44 @@ public class StoryDataAdapter implements StoryDataPort {
                 return createDefaultStory(templatePath, fragmentName, storyName);
             }
             
+            // Custom story: base storyから作成して返す
+            if ("custom".equals(storyName)) {
+                StoryItem baseStory = resolveBaseStory(storyGroup);
+                if (baseStory == null) {
+                    logger.debug("Base story not found for custom: {}::{}", templatePath, fragmentName);
+                    return createDefaultStory(templatePath, fragmentName, storyName);
+                }
+
+                // FragmentDiscoveryServiceから実際のFragmentInfoを取得
+                FragmentDiscoveryService.FragmentInfo fragmentInfo = fragmentDiscoveryService.discoverFragments()
+                    .stream()
+                    .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
+                    .findFirst()
+                    .orElse(null);
+                if (fragmentInfo == null) {
+                    logger.warn("FragmentInfo not found for {}::{}", templatePath, fragmentName);
+                    return null;
+                }
+
+                StoryItem customStory = new StoryItem(
+                    "custom",
+                    "Custom",
+                    "",
+                    baseStory.parameters(),
+                    baseStory.preview(),
+                    baseStory.model()
+                );
+
+                io.github.wamukat.thymeleaflet.domain.model.FragmentSummary domainFragmentSummary =
+                    fragmentSummaryMapper.toDomain(fragmentInfo);
+                return FragmentStoryInfo.of(
+                    domainFragmentSummary,
+                    fragmentName,
+                    "custom",
+                    customStory
+                );
+            }
+
             // StoryGroup.findStoryByName()を使用してストーリーを検索
             StoryItem storyItem = storyGroup.findStoryByName(storyName);
             if (storyItem == null) {
@@ -175,5 +213,16 @@ public class StoryDataAdapter implements StoryDataPort {
             resolvedStoryName,
             defaultStory
         );
+    }
+
+    private StoryItem resolveBaseStory(StoryGroup storyGroup) {
+        if (storyGroup == null || storyGroup.stories().isEmpty()) {
+            return null;
+        }
+        StoryItem defaultStory = storyGroup.findStoryByName("default");
+        if (defaultStory != null) {
+            return defaultStory;
+        }
+        return storyGroup.stories().get(0);
     }
 }

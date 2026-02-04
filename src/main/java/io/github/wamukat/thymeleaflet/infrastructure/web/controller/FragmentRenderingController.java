@@ -7,7 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.Map;
 
 /**
  * フラグメント動的レンダリング専用コントローラー
@@ -39,4 +43,23 @@ public class FragmentRenderingController {
         
         return result.templateReference();
     }
+
+    /**
+     * ストーリー動的プレビュー (POST: custom overrides)
+     */
+    @PostMapping("${thymeleaflet.base-path:/thymeleaflet}/{templatePath:.*}/{fragmentName}/{storyName}/render")
+    public String renderStoryWithOverrides(
+            @PathVariable("templatePath") String templatePath,
+            @PathVariable("fragmentName") String fragmentName,
+            @PathVariable("storyName") String storyName,
+            @RequestBody(required = false) RenderOverridesRequest request,
+            Model model) {
+        Map<String, Object> parameters = request != null ? request.parameters() : null;
+        Map<String, Object> modelOverrides = request != null ? request.model() : null;
+        FragmentRenderingService.RenderingResult result =
+            fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model, parameters, modelOverrides);
+        return result.templateReference();
+    }
+
+    public record RenderOverridesRequest(Map<String, Object> parameters, Map<String, Object> model) {}
 }
