@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thymeleaflet</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --fg: #0f172a;
+        --muted: #475569;
+        --bg: #f8fafc;
+        --card: #ffffff;
+        --border: #e2e8f0;
+        --accent: #16a34a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--fg);
+        background: radial-gradient(circle at top right, #e2fbe8, var(--bg));
+      }
+      .wrap {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 64px 20px 80px;
+      }
+      .hero {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 32px;
+        box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 36px;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0 0 16px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .links {
+        display: grid;
+        gap: 12px;
+        margin-top: 20px;
+      }
+      .link {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--fg);
+        background: #fff;
+      }
+      .link span {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .meta {
+        margin-top: 24px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hero">
+        <h1>Thymeleaflet</h1>
+        <p>
+          Thymeleaflet is a Storybook-like UI for Thymeleaf fragments.
+          It discovers fragments, renders previews, and generates usage examples
+          based on JavaDoc-like comments embedded in HTML templates.
+        </p>
+        <div class="links">
+          <a class="link" href="https://bad-siouxie-wamukat-977c4dc6.koyeb.app/thymeleaflet">
+            Live demo <span>→</span>
+          </a>
+          <a class="link" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter">
+            GitHub repository <span>→</span>
+          </a>
+          <a class="link" href="getting-started.md">
+            Getting started <span>→</span>
+          </a>
+          <a class="link" href="stories.md">
+            Stories guide <span>→</span>
+          </a>
+          <a class="link" href="configuration.md">
+            Configuration <span>→</span>
+          </a>
+        </div>
+        <p class="meta">
+          Note: Thymeleaflet is intended for development and internal environments.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
