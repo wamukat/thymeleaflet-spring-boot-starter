@@ -56,8 +56,11 @@ public class FragmentDiscoveryService {
                 logger.debug("[DEBUG_FRAGMENT_PARAMS] Found {} template resources in path: {}", resources.length, templatePath);
                 
                 for (Resource resource : resources) {
-                    String content = Files.readString(Paths.get(resource.getURI()));
                     String relativeTemplatePath = extractTemplatePath(resource.getURI().toString());
+                    String content;
+                    try (var inputStream = resource.getInputStream()) {
+                        content = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    }
                     
                     logger.debug("[DEBUG_FRAGMENT_PARAMS] Processing template: {} (URI: {})", relativeTemplatePath, resource.getURI());
                     
