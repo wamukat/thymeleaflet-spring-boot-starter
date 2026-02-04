@@ -34,6 +34,7 @@ function hierarchicalFragmentList() {
         hierarchyTree: hierarchicalData || {},
         originalHierarchyTree: originalHierarchyTree,
         selectedFragment: null,
+        customStoryValues: {},
 
         // Phase 4.3: SecureTemplatePath 対応 - templatePath変換ヘルパー
         templatePathForUrl: function(templatePath) {
@@ -61,6 +62,7 @@ function hierarchicalFragmentList() {
         searchQuery: '',
         sidebarOpen: false,
         expandedFolders: expandedFolders,
+        customStoryStoragePrefix: 'thymeleaflet:custom:',
 
         initializeFromServerState() {
             // サーバーサイドから渡された選択状態を使用
@@ -84,9 +86,50 @@ function hierarchicalFragmentList() {
                         const story = fragment.stories.find(s => s?.storyName === selectedStoryName);
                         if (story) {
                             this.selectedStory = story;
+                            if (story.storyName === 'custom') {
+                                this.customStoryValues = this.loadCustomStoryValues(fragment);
+                            }
                         }
                     }
                 }
+            }
+        },
+
+        getCustomStorageKey(fragment) {
+            if (!fragment) {
+                return null;
+            }
+            return `${this.customStoryStoragePrefix}${fragment.templatePath}/${fragment.fragmentName}`;
+        },
+
+        loadCustomStoryValues(fragment) {
+            const storageKey = this.getCustomStorageKey(fragment);
+            if (!storageKey) {
+                return {};
+            }
+            try {
+                const raw = sessionStorage.getItem(storageKey);
+                if (!raw) {
+                    return {};
+                }
+                const parsed = JSON.parse(raw);
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch (error) {
+                console.warn('Failed to load custom story values', error);
+                return {};
+            }
+        },
+
+        saveCustomStoryValues(fragment, values) {
+            const storageKey = this.getCustomStorageKey(fragment);
+            if (!storageKey) {
+                return;
+            }
+            try {
+                const payload = values && typeof values === 'object' ? values : {};
+                sessionStorage.setItem(storageKey, JSON.stringify(payload));
+            } catch (error) {
+                console.warn('Failed to save custom story values', error);
             }
         },
 
