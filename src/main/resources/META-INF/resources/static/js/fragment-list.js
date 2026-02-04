@@ -254,10 +254,15 @@ function hierarchicalFragmentList() {
         },
 
         applyCustomOverrides() {
-            if (this.isCustomStory(this.selectedStory) && window.__thymeleafletPreview?.setStoryOverrides) {
+            if (!this.isCustomStory(this.selectedStory)) {
+                return;
+            }
+            if (window.__thymeleafletPreview?.setStoryOverrides) {
                 window.__thymeleafletPreview.setStoryOverrides(this.customStoryValues);
                 window.__thymeleafletPreview.render();
+                return;
             }
+            window.__thymeleafletPendingOverrides = { ...this.customStoryValues };
         },
 
         resetPreviewOverrides() {
