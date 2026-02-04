@@ -28,11 +28,18 @@
                            th:hx-push-url="@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${story.storyName}}"
                            class="block p-3 rounded-lg border transition-colors duration-200"
                            th:classappend="${selectedStory != null && selectedStory.storyName == story.storyName ? 
-                                           'border-blue-500 bg-blue-50 text-blue-900' : 
+                                           (story.storyName == 'custom' ? 'border-orange-500 bg-orange-50 text-orange-900' : 'border-blue-500 bg-blue-50 text-blue-900') : 
                                            'border-gray-200 hover:border-gray-300 hover:bg-slate-50'}">
                             <div class="flex items-start justify-between">
                                 <div class="min-w-0 flex-1">
-                                    <h4 class="text-sm font-medium" th:text="${story.displayTitle ?: story.storyName}">Default</h4>
+                                    <div class="flex items-center gap-2">
+                                        <h4 class="text-sm font-medium" th:text="${story.displayTitle ?: story.storyName}">Default</h4>
+                                        <span th:if="${story.storyName == 'custom'}" class="text-orange-500" aria-label="Editable story">
+                                            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                <path d="M17.414 2.586a2 2 0 010 2.828l-9.193 9.193a1 1 0 01-.39.242l-3.5 1.25a1 1 0 01-1.272-1.272l1.25-3.5a1 1 0 01.242-.39l9.193-9.193a2 2 0 012.828 0zM15 4l-8.5 8.5-.5 1.5 1.5-.5L16 5l-1-1z"/>
+                                            </svg>
+                                        </span>
+                                    </div>
                                     <p class="text-xs text-gray-500 mt-1" th:text="${story.storyName}">default</p>
                                 </div>
                                 <div class="ml-2 flex-shrink-0">
@@ -52,10 +59,22 @@
         <div class="card-thymeleaflet" 
              th:if="${(displayParameters != null and !#maps.isEmpty(displayParameters)) or (displayModel != null and !#maps.isEmpty(displayModel)) or (selectedStory != null and selectedStory.storyName == 'custom')}">
             <div class="card-thymeleaflet-header">
-                <h3 class="text-lg font-semibold text-gray-900">
-                    <span th:text="#{thymeleaflet.story.values}">Story values</span>
-                    <span th:if="${selectedStory}" class="text-gray-500 font-normal" th:text="'- ' + ${selectedStory.displayTitle ?: selectedStory.storyName}">- Default</span>
-                </h3>
+                <div class="flex items-center justify-between gap-3">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        <span th:text="#{thymeleaflet.story.values}">Story values</span>
+                        <span th:if="${selectedStory}" class="text-gray-500 font-normal" th:text="'- ' + ${selectedStory.displayTitle ?: selectedStory.storyName}">- Default</span>
+                    </h3>
+                    <button type="button"
+                            class="text-xs inline-flex items-center gap-1 text-orange-700 hover:text-orange-800"
+                            th:if="${selectedStory != null and selectedStory.storyName == 'custom'}"
+                            @click="downloadCustomStoryYaml()">
+                        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path d="M3 14a2 2 0 002 2h10a2 2 0 002-2v-1h-2v1H5v-1H3v1z"/>
+                            <path d="M9 3h2v7.586l2.293-2.293 1.414 1.414L10 14.414 5.293 9.707l1.414-1.414L9 10.586V3z"/>
+                        </svg>
+                        <span th:text="#{thymeleaflet.custom.downloadYaml}">Download YAML</span>
+                    </button>
+                </div>
             </div>
             <div class="card-thymeleaflet-content">
                 <div class="space-y-4">
@@ -64,18 +83,22 @@
                         <div class="text-xs font-semibold tracking-wide text-blue-700 bg-blue-50 inline-flex px-2 py-1 rounded"
                              th:text="#{thymeleaflet.story.values.parameters}">Parameters</div>
                         <div class="space-y-3">
-                            <div th:each="storyParam : ${displayParameters}" 
-                                 th:with="isDifferent=${defaultParameters != null && defaultParameters.containsKey(storyParam.key) ? !#objects.nullSafe(defaultParameters[storyParam.key], '').toString().equals(storyParam.value.toString()) : false}"
+                            <div th:each="storyParam : ${displayParameters}"
                                  class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
-                                <div class="flex items-start gap-4">
+                                <div th:if="${storyParam.value != null and (storyParam.value.class.isArray() or storyParam.value instanceof T(java.util.List) or storyParam.value instanceof T(java.util.Map))}" class="space-y-3">
+                                    <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                         th:text="${storyParam.key}"></div>
+                                    <div class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
+                                         th:text="${storyParam.value}"></div>
+                                </div>
+                                <div th:unless="${storyParam.value != null and (storyParam.value.class.isArray() or storyParam.value instanceof T(java.util.List) or storyParam.value instanceof T(java.util.Map))}" class="flex items-start gap-4">
                                     <div class="flex-shrink-0">
-                                        <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200" 
+                                        <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
                                               th:text="${storyParam.key}"></span>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <code th:class="'text-sm font-medium px-2 py-1 rounded border break-all block ' + 
-                                                      (${isDifferent} ? 'bg-blue-50 border-blue-200 text-gray-800' : 'bg-white border-gray-200 text-gray-800')" 
-                                              th:text="${storyParam.value}"></code>
+                                        <div class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800"
+                                             th:text="${storyParam.value}"></div>
                                     </div>
                                 </div>
                             </div>
@@ -87,16 +110,22 @@
                         <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded"
                              th:text="#{thymeleaflet.story.values.model}">Model</div>
                         <div class="space-y-3">
-                            <div th:each="entry : ${displayModel}" 
+                            <div th:each="entry : ${displayModel}"
                                  class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
-                                <div class="flex items-start gap-4">
+                                <div th:if="${entry.value != null and (entry.value.class.isArray() or entry.value instanceof T(java.util.List) or entry.value instanceof T(java.util.Map))}" class="space-y-3">
+                                    <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                         th:text="${entry.key}"></div>
+                                    <div class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
+                                         th:text="${entry.value}"></div>
+                                </div>
+                                <div th:unless="${entry.value != null and (entry.value.class.isArray() or entry.value instanceof T(java.util.List) or entry.value instanceof T(java.util.Map))}" class="flex items-start gap-4">
                                     <div class="flex-shrink-0">
-                                        <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200" 
+                                        <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
                                               th:text="${entry.key}"></span>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <code class="text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800" 
-                                              th:text="${entry.value}"></code>
+                                        <div class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800"
+                                             th:text="${entry.value}"></div>
                                     </div>
                                 </div>
                             </div>
@@ -104,89 +133,113 @@
                     </div>
 
                     <!-- Custom story editor -->
-                    <div th:if="${selectedStory != null and selectedStory.storyName == 'custom'}" class="space-y-3">
-                        <div x-show="customStoryEntries('parameters').length > 0" class="space-y-4">
-                            <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded">
-                                Custom parameters
-                            </div>
-                            <template x-for="(entry, index) in customStoryEntries('parameters')" :key="entry.key || 'custom-param-' + index">
-                                <div class="flex flex-col gap-2 py-3 px-3 bg-green-50 rounded-lg">
-                                    <div class="flex items-center justify-between gap-3">
-                                        <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-mono" x-text="entry.key"></span>
-                                        <span class="text-xs text-gray-500 uppercase tracking-wide" x-text="entry.type"></span>
-                                    </div>
-                                    <div class="flex flex-col gap-2">
-                                        <input x-show="entry.type === 'string'"
-                                               type="text"
-                                               class="input input-bordered w-full"
-                                               :value="getCustomInputValue(entry)"
-                                               @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
-                                        <input x-show="entry.type === 'number'"
-                                               type="number"
-                                               step="any"
-                                               class="input input-bordered w-full"
-                                               :value="getCustomInputValue(entry)"
-                                               @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
-                                        <label x-show="entry.type === 'boolean'" class="flex items-center gap-2">
-                                            <input type="checkbox"
-                                                   class="checkbox"
-                                                   :checked="getCustomInputValue(entry)"
-                                                   @change="updateCustomValue(entry.kind, entry.key, $event.target.checked, entry.type, $event)">
-                                            <span class="text-sm text-gray-700">true / false</span>
-                                        </label>
-                                        <textarea x-show="entry.type === 'object' || entry.type === 'array'"
-                                                  rows="4"
-                                                  class="textarea textarea-bordered w-full font-mono text-xs"
-                                                  :value="getCustomInputValue(entry)"
-                                                  @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)"></textarea>
-                                        <p x-show="customStoryJsonErrors && customStoryJsonErrors[`${entry.kind}:${entry.key}`]" class="text-xs text-red-600">
-                                            Invalid JSON format.
-                                        </p>
-                                    </div>
+                    <div th:if="${selectedStory != null and selectedStory.storyName == 'custom'}">
+                        <template x-if="customStoryEntries('parameters').length > 0">
+                            <div>
+                                <div class="text-xs font-semibold tracking-wide text-blue-700 bg-blue-50 inline-flex px-2 py-1 rounded"
+                                     th:text="#{thymeleaflet.custom.parameters}">
+                                    Custom parameters
                                 </div>
-                            </template>
-                        </div>
-                        <div x-show="customStoryEntries('model').length > 0" class="space-y-4">
-                            <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded">
-                                Custom model
-                            </div>
-                            <template x-for="(entry, index) in customStoryEntries('model')" :key="entry.key || 'custom-model-' + index">
-                                <div class="flex flex-col gap-2 py-3 px-3 bg-green-50 rounded-lg">
-                                    <div class="flex items-center justify-between gap-3">
-                                        <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-mono" x-text="entry.key"></span>
-                                        <span class="text-xs text-gray-500 uppercase tracking-wide" x-text="entry.type"></span>
-                                    </div>
-                                    <div class="flex flex-col gap-2">
-                                        <input x-show="entry.type === 'string'"
-                                               type="text"
-                                               class="input input-bordered w-full"
-                                               :value="getCustomInputValue(entry)"
-                                               @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
-                                        <input x-show="entry.type === 'number'"
-                                               type="number"
-                                               step="any"
-                                               class="input input-bordered w-full"
-                                               :value="getCustomInputValue(entry)"
-                                               @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
-                                        <label x-show="entry.type === 'boolean'" class="flex items-center gap-2">
-                                            <input type="checkbox"
-                                                   class="checkbox"
-                                                   :checked="getCustomInputValue(entry)"
-                                                   @change="updateCustomValue(entry.kind, entry.key, $event.target.checked, entry.type, $event)">
-                                            <span class="text-sm text-gray-700">true / false</span>
-                                        </label>
-                                        <textarea x-show="entry.type === 'object' || entry.type === 'array'"
-                                                  rows="4"
-                                                  class="textarea textarea-bordered w-full font-mono text-xs"
-                                                  :value="getCustomInputValue(entry)"
-                                                  @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)"></textarea>
-                                        <p x-show="customStoryJsonErrors && customStoryJsonErrors[`${entry.kind}:${entry.key}`]" class="text-xs text-red-600">
-                                            Invalid JSON format.
-                                        </p>
-                                    </div>
+                                <div class="mt-3 space-y-3">
+                                    <template x-for="(entry, index) in customStoryEntries('parameters')" :key="entry.key || 'custom-param-' + index">
+                                        <div class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
+                                            <div x-show="entry.type === 'object' || entry.type === 'array'" class="space-y-3">
+                                                <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                     x-text="entry.key"></div>
+                                                <div class="flex-1 min-w-0">
+                                                    <textarea rows="4"
+                                                              class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 font-mono focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                              :value="getCustomInputValue(entry)"
+                                                              @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)"></textarea>
+                                                    <p x-show="customStoryJsonErrors && customStoryJsonErrors[`${entry.kind}:${entry.key}`]" class="text-xs text-red-600 mt-2">
+                                                        Invalid JSON format.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div x-show="entry.type !== 'object' && entry.type !== 'array'" class="flex items-start gap-4">
+                                                <div class="flex-shrink-0">
+                                                    <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                          x-text="entry.key"></span>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <input x-show="entry.type === 'string'"
+                                                           type="text"
+                                                           class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                           :value="getCustomInputValue(entry)"
+                                                           @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                                    <input x-show="entry.type === 'number'"
+                                                           type="number"
+                                                           step="any"
+                                                           class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                           :value="getCustomInputValue(entry)"
+                                                           @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                                    <label x-show="entry.type === 'boolean'" class="flex items-center gap-2 text-sm text-gray-700">
+                                                        <input type="checkbox"
+                                                               class="form-checkbox border-orange-300 text-orange-600 focus:ring-orange-200"
+                                                               :checked="getCustomInputValue(entry)"
+                                                               @change="updateCustomValue(entry.kind, entry.key, $event.target.checked, entry.type, $event)">
+                                                        <span>true / false</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
-                            </template>
-                        </div>
+                            </div>
+                        </template>
+                        <template x-if="customStoryEntries('model').length > 0">
+                            <div :class="customStoryEntries('parameters').length > 0 ? 'mt-6' : ''">
+                                <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded"
+                                     th:text="#{thymeleaflet.custom.model}">
+                                    Custom model
+                                </div>
+                                <div class="mt-3 space-y-3">
+                                    <template x-for="(entry, index) in customStoryEntries('model')" :key="entry.key || 'custom-model-' + index">
+                                        <div class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
+                                            <div x-show="entry.type === 'object' || entry.type === 'array'" class="space-y-3">
+                                                <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                     x-text="entry.key"></div>
+                                                <div class="flex-1 min-w-0">
+                                                    <textarea rows="4"
+                                                              class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 font-mono focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                              :value="getCustomInputValue(entry)"
+                                                              @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)"></textarea>
+                                                    <p x-show="customStoryJsonErrors && customStoryJsonErrors[`${entry.kind}:${entry.key}`]" class="text-xs text-red-600 mt-2">
+                                                        Invalid JSON format.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div x-show="entry.type !== 'object' && entry.type !== 'array'" class="flex items-start gap-4">
+                                                <div class="flex-shrink-0">
+                                                    <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                          x-text="entry.key"></span>
+                                                </div>
+                                                <div class="flex-1 min-w-0">
+                                                    <input x-show="entry.type === 'string'"
+                                                           type="text"
+                                                           class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                           :value="getCustomInputValue(entry)"
+                                                           @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                                    <input x-show="entry.type === 'number'"
+                                                           type="number"
+                                                           step="any"
+                                                           class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                           :value="getCustomInputValue(entry)"
+                                                           @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                                    <label x-show="entry.type === 'boolean'" class="flex items-center gap-2 text-sm text-gray-700">
+                                                        <input type="checkbox"
+                                                               class="form-checkbox border-orange-300 text-orange-600 focus:ring-orange-200"
+                                                               :checked="getCustomInputValue(entry)"
+                                                               @change="updateCustomValue(entry.kind, entry.key, $event.target.checked, entry.type, $event)">
+                                                        <span>true / false</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
                     </div>
                 </div>
             </div>
