@@ -8,8 +8,10 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * JavaDoc解析用のテンプレート読み込みと解析を集約するサービス。
@@ -22,6 +24,8 @@ public class JavaDocContentService {
     private final JavaDocAnalyzer javaDocAnalyzer;
     private final StorybookProperties storybookProperties;
     private final ResourcePathValidator resourcePathValidator;
+    private final Map<String, List<JavaDocAnalyzer.JavaDocInfo>> javaDocCache = new ConcurrentHashMap<>();
+    private final Map<String, String> templateCache = new ConcurrentHashMap<>();
 
     public JavaDocContentService(JavaDocAnalyzer javaDocAnalyzer,
                                  StorybookProperties storybookProperties,
@@ -32,6 +36,12 @@ public class JavaDocContentService {
     }
 
     public String loadTemplateContent(String templatePath) {
+        if (storybookProperties.getCache().isEnabled()) {
+            String cached = templateCache.get(templatePath);
+            if (cached != null) {
+                return cached;
+            }
+        }
         try {
             Resource resource = resourcePathValidator.findTemplate(
                 templatePath,
@@ -43,7 +53,11 @@ public class JavaDocContentService {
                 return null;
             }
 
-            return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            String content = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            if (storybookProperties.getCache().isEnabled()) {
+                templateCache.put(templatePath, content);
+            }
+            return content;
         } catch (Exception e) {
             logger.warn("Failed to read template content for {}: {}", templatePath, e.getMessage());
             return null;
@@ -51,13 +65,23 @@ public class JavaDocContentService {
     }
 
     public List<JavaDocAnalyzer.JavaDocInfo> loadJavaDocInfos(String templatePath) {
+        if (storybookProperties.getCache().isEnabled()) {
+            List<JavaDocAnalyzer.JavaDocInfo> cached = javaDocCache.get(templatePath);
+            if (cached != null) {
+                return cached;
+            }
+        }
         String htmlContent = loadTemplateContent(templatePath);
         if (htmlContent == null || htmlContent.isBlank()) {
             return Collections.emptyList();
         }
 
         try {
-            return javaDocAnalyzer.analyzeJavaDocFromHtml(htmlContent);
+            List<JavaDocAnalyzer.JavaDocInfo> docs = javaDocAnalyzer.analyzeJavaDocFromHtml(htmlContent);
+            if (storybookProperties.getCache().isEnabled()) {
+                javaDocCache.put(templatePath, docs);
+            }
+            return docs;
         } catch (Exception e) {
             logger.warn("Failed to analyze JavaDoc for {}: {}", templatePath, e.getMessage());
             return Collections.emptyList();

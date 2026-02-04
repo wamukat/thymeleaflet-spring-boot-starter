@@ -31,6 +31,11 @@ public class StorybookProperties {
      */
     private ResourceConfig resources = new ResourceConfig();
 
+    /**
+     * キャッシュ設定
+     */
+    private CacheConfig cache = new CacheConfig();
+
     // Getters and Setters
     
     public String getBasePath() {
@@ -55,6 +60,14 @@ public class StorybookProperties {
 
     public void setResources(ResourceConfig resources) {
         this.resources = resources;
+    }
+
+    public CacheConfig getCache() {
+        return cache;
+    }
+
+    public void setCache(CacheConfig cache) {
+        this.cache = cache;
     }
 
     /**
@@ -133,6 +146,37 @@ public class StorybookProperties {
                 throw new IllegalArgumentException("Cache duration must be positive");
             }
             this.cacheDurationSeconds = cacheDurationSeconds;
+        }
+    }
+
+    /**
+     * キャッシュ設定クラス
+     */
+    public static class CacheConfig {
+        /**
+         * キャッシュ有効/無効
+         */
+        private boolean enabled = true;
+
+        /**
+         * 起動時のプリロード有効/無効
+         */
+        private boolean preload = false;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public boolean isPreload() {
+            return preload;
+        }
+
+        public void setPreload(boolean preload) {
+            this.preload = preload;
         }
     }
 }
