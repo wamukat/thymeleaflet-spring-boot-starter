@@ -1,5 +1,9 @@
 # Thymeleaflet Spring Boot Starter
 
+<p align="center">
+  <img src="assets/logo/thymeleaflet-logo.png" width="320" alt="Thymeleaflet ロゴ">
+</p>
+
 Thymeleaflet は、Thymeleaf フラグメント向けの軽量 Storybook UI を提供します。
 HTML テンプレート内の JavaDoc 風コメントを解析して、プレビューや使用例を生成します。
 

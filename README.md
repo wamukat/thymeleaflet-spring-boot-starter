@@ -1,5 +1,9 @@
 # Thymeleaflet Spring Boot Starter
 
+<p align="center">
+  <img src="assets/logo/thymeleaflet-logo.png" width="320" alt="Thymeleaflet logo">
+</p>
+
 Thymeleaflet provides a lightweight Storybook-style UI for Thymeleaf fragments.
 It discovers fragments, renders previews, and generates usage examples based on
 JavaDoc-like comments embedded in HTML templates.
