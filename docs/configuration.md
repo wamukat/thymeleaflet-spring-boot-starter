@@ -17,15 +17,22 @@ This page covers *only* configuration. Usage details are in
 |---|---|---|---|
 | `thymeleaflet.resources.template-paths` | List<String> | [`/templates/`] | Paths to scan for templates (1-5) |
 | `thymeleaflet.resources.stylesheets` | List<String> | `[]` | CSS paths injected into preview (max 10) |
+| `thymeleaflet.resources.scripts` | List<String> | `[]` | JS paths injected into preview iframe (max 10) |
 | `thymeleaflet.resources.cache-duration-seconds` | int | `3600` | Cache duration for resources |
 
-`resources.stylesheets` are injected into the **Shadow DOM preview** only.
+`resources.stylesheets` and `resources.scripts` are injected into the **iframe preview** only.
 Use `preview.wrapper` in [stories.md](stories.md) to align layout and theme.
 The sample app injects `/css/mypage.css` and `/css/mypage/components.css`
 so the preview matches the app styling.
-To use JavaScript, load it in your app's normal layout (e.g. `layout.html`)
-and wrap the required DOM in `preview.wrapper`.
+To use JavaScript in previews, register it in `resources.scripts`.
 Example: `<div data-theme="light">{{content}}</div>`
+Preview iframes allow same-origin so cookies/localStorage and authenticated API calls work.
+
+### CSP note (permissive by design)
+
+Thymeleaflet sets a permissive CSP to allow external JS and CSS inside preview iframes.
+This is convenient for development but **reduces protection**. Keep Thymeleaflet
+behind authentication and use it only in trusted environments.
 
 ## Security
 
@@ -56,6 +63,8 @@ thymeleaflet:
       - /templates/
     stylesheets:
       - /css/app.css
+    scripts:
+      - /js/app.js
     cache-duration-seconds: 3600
   security:
     enabled: true

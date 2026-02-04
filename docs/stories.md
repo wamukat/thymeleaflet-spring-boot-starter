@@ -90,7 +90,7 @@ stories:
 ## Preview Wrapper
 
 Use `preview.wrapper` to align the preview with your app's layout, theme, or fonts.
-The wrapper is rendered inside the Shadow DOM and must include `{{content}}`.
+The wrapper is rendered inside the preview iframe and must include `{{content}}`.
 The sample stories use wrappers to match the daisyUI layout and spacing.
 
 ```yaml
