@@ -305,8 +305,14 @@
         }
 
         try {
+            const hasOverrides = previewState.storyOverrides && Object.keys(previewState.storyOverrides).length > 0;
             const response = await fetch(previewUrl, {
-                headers: { 'HX-Request': 'true' }
+                method: hasOverrides ? 'POST' : 'GET',
+                headers: {
+                    'HX-Request': 'true',
+                    'Content-Type': 'application/json'
+                },
+                body: hasOverrides ? JSON.stringify({ overrides: previewState.storyOverrides }) : undefined
             });
             if (!response.ok) {
                 throw new Error(`Preview response status ${response.status}`);
