@@ -99,9 +99,13 @@ function hierarchicalFragmentList() {
         },
 
         setSelectedStory(story) {
+            const wasCustom = this.isCustomStory(this.selectedStory);
             this.selectedStory = story;
             if (this.isCustomStory(story)) {
                 this.ensureCustomStoryValues(this.selectedFragment);
+                this.applyCustomOverrides();
+            } else if (wasCustom) {
+                this.resetPreviewOverrides();
             }
         },
 
@@ -246,6 +250,20 @@ function hierarchicalFragmentList() {
                 this.customStoryRawValues = restRaw;
             }
             this.saveCustomStoryValues(this.selectedFragment, this.customStoryValues);
+            this.applyCustomOverrides();
+        },
+
+        applyCustomOverrides() {
+            if (this.isCustomStory(this.selectedStory) && window.__thymeleafletPreview?.setStoryOverrides) {
+                window.__thymeleafletPreview.setStoryOverrides(this.customStoryValues);
+                window.__thymeleafletPreview.render();
+            }
+        },
+
+        resetPreviewOverrides() {
+            if (window.__thymeleafletPreview?.resetToDefaults) {
+                window.__thymeleafletPreview.resetToDefaults();
+            }
         },
 
 
