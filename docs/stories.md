@@ -49,6 +49,44 @@ storyGroups:
 - `model`: model values to inject
 - `preview.wrapper`: optional HTML wrapper for preview
 
+## Model
+
+Use `model` when a fragment expects objects rather than simple parameters.
+The `model` map is merged into the Thymeleaf model before rendering.
+
+### Example
+
+Fragment example (expects `profile`):
+
+```html
+<div th:fragment="profileCard()">
+  <h2 th:text="${profile.name}">Name</h2>
+  <p th:text="${profile.role}">Role</p>
+</div>
+```
+
+Story example:
+
+```yaml
+stories:
+  - name: default
+    title: Default
+    model:
+      profile:
+        name: Alex Morgan
+        role: Product Designer
+        plan: Pro
+        region: APAC
+        points: 1280
+        projects: 8
+```
+
+### Notes
+
+- `model` supports nested maps and lists (YAML objects/arrays).
+- `model` and `parameters` can be combined in the same story.
+- If a model key is missing, Thymeleaf expressions may evaluate to `null`.
+
 ## Preview Wrapper
 
 Use `preview.wrapper` to align the preview with your app's layout, theme, or fonts.
