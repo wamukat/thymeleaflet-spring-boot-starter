@@ -19,6 +19,10 @@
         storyOverrides: {},
         lastRenderAt: null
     };
+    if (window.__thymeleafletPendingOverrides && typeof window.__thymeleafletPendingOverrides === 'object') {
+        previewState.storyOverrides = { ...window.__thymeleafletPendingOverrides };
+        delete window.__thymeleafletPendingOverrides;
+    }
 
     function getPreviewHost() {
         return document.querySelector('#fragment-preview-host');
