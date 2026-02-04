@@ -49,6 +49,44 @@ storyGroups:
 - `model`: モデル値
 - `preview.wrapper`: プレビューのラッパー
 
+## Model（モデル）
+
+フラグメントが **オブジェクトを参照**する場合は `model` を使います。
+`model` の内容は Thymeleaf のモデルにマージされてからレンダリングされます。
+
+### 例
+
+フラグメント例（`profile` を参照）:
+
+```html
+<div th:fragment="profileCard()">
+  <h2 th:text="${profile.name}">Name</h2>
+  <p th:text="${profile.role}">Role</p>
+</div>
+```
+
+ストーリー例:
+
+```yaml
+stories:
+  - name: default
+    title: Default
+    model:
+      profile:
+        name: Alex Morgan
+        role: Product Designer
+        plan: Pro
+        region: APAC
+        points: 1280
+        projects: 8
+```
+
+### 補足
+
+- `model` はネストした Map / List を扱えます。
+- `model` と `parameters` は同一ストーリーで併用できます。
+- キーが不足すると、Thymeleaf の式は `null` になる可能性があります。
+
 ## プレビューラッパー
 
 `preview.wrapper` でアプリ本体のレイアウトやテーマを再現できます。
