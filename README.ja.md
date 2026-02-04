@@ -64,6 +64,8 @@ dependencies {
 http://localhost:6006/thymeleaflet
 ```
 
+サンプルはポート競合を避けるため `6006` を使っています。
+
 3) フラグメントテンプレートを通常の Thymeleaf テンプレート配下に配置します。
 4) （任意）ストーリー定義は以下に配置します:
 
@@ -116,7 +118,7 @@ thymeleaflet:
  * 会員情報詳細表示（memberDetail）
  *
  * @param variant {@code String} [optional=standard] 表示バリアント
- * @model memberProfile {@code MemberProfile} [required] 会員情報モデル
+ * @model memberProfile {@code List<Map<String, Object>>} [required] 会員情報モデル
  * @example <div th:replace="~{domain/member/organisms/member-profile :: memberDetail()}"></div>
  * @background gray-50
  */

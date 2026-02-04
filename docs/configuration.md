@@ -21,6 +21,8 @@ This page covers *only* configuration. Usage details are in
 
 `resources.stylesheets` are injected into the **Shadow DOM preview** only.
 Use `preview.wrapper` in [stories.md](stories.md) to align layout and theme.
+The sample app injects `/css/mypage.css` and `/css/mypage/components.css`
+so the preview matches the app styling.
 
 ## Security
 

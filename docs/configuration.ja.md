@@ -21,6 +21,8 @@
 
 `resources.stylesheets` は **Shadow DOM のプレビュー領域**にのみ注入されます。
 レイアウトやテーマの再現は [stories.ja.md](stories.ja.md) の `preview.wrapper` を使ってください。
+サンプルでは `/css/mypage.css` と `/css/mypage/components.css` を注入し、
+アプリと同じ見た目になるよう揃えています。
 
 ## セキュリティ
 

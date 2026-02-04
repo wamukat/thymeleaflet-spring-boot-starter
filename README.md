@@ -66,6 +66,8 @@ dependencies {
 http://localhost:6006/thymeleaflet
 ```
 
+Port `6006` is used by the sample to reduce clashes with common app ports.
+
 3) Place fragment templates under your normal Thymeleaf templates path.
 4) (Optional) Add story files under:
 
@@ -120,7 +122,7 @@ Thymeleaflet parses JavaDoc-style comments embedded in HTML templates. Example:
  * Member detail (memberDetail)
  *
  * @param variant {@code String} [optional=standard] Display variant
- * @model memberProfile {@code MemberProfile} [required] Member model
+ * @model memberProfile {@code List<Map<String, Object>>} [required] Member model
  * @example <div th:replace="~{domain/member/organisms/member-profile :: memberDetail()}"></div>
  * @background gray-50
  */
