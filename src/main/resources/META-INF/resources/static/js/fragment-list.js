@@ -34,7 +34,7 @@ function hierarchicalFragmentList() {
         hierarchyTree: hierarchicalData || {},
         originalHierarchyTree: originalHierarchyTree,
         selectedFragment: null,
-        customStoryValues: {},
+        customStoryState: { parameters: {}, model: {} },
 
         // Phase 4.3: SecureTemplatePath 対応 - templatePath変換ヘルパー
         templatePathForUrl: function(templatePath) {
@@ -123,18 +123,27 @@ function hierarchicalFragmentList() {
         loadCustomStoryValues(fragment) {
             const storageKey = this.getCustomStorageKey(fragment);
             if (!storageKey) {
-                return {};
+                return { parameters: {}, model: {} };
             }
             try {
                 const raw = sessionStorage.getItem(storageKey);
                 if (!raw) {
-                    return {};
+                    return { parameters: {}, model: {} };
                 }
                 const parsed = JSON.parse(raw);
-                return parsed && typeof parsed === 'object' ? parsed : {};
+                if (parsed && typeof parsed === 'object') {
+                    if ('parameters' in parsed || 'model' in parsed) {
+                        return {
+                            parameters: parsed.parameters && typeof parsed.parameters === 'object' ? parsed.parameters : {},
+                            model: parsed.model && typeof parsed.model === 'object' ? parsed.model : {}
+                        };
+                    }
+                    return { parameters: parsed, model: {} };
+                }
+                return { parameters: {}, model: {} };
             } catch (error) {
                 console.warn('Failed to load custom story values', error);
-                return {};
+                return { parameters: {}, model: {} };
             }
         },
 
@@ -144,7 +153,7 @@ function hierarchicalFragmentList() {
                 return;
             }
             try {
-                const payload = values && typeof values === 'object' ? values : {};
+                const payload = values && typeof values === 'object' ? values : { parameters: {}, model: {} };
                 sessionStorage.setItem(storageKey, JSON.stringify(payload));
             } catch (error) {
                 console.warn('Failed to save custom story values', error);
@@ -167,8 +176,8 @@ function hierarchicalFragmentList() {
                 return;
             }
             const stored = this.loadCustomStoryValues(fragment);
-            if (stored && Object.keys(stored).length > 0) {
-                this.customStoryValues = stored;
+            if (stored && (Object.keys(stored.parameters || {}).length > 0 || Object.keys(stored.model || {}).length > 0)) {
+                this.customStoryState = stored;
                 this.customStoryRawValues = this.buildRawValuesFromCustom(stored);
                 this.customStoryJsonErrors = {};
                 return;
@@ -178,28 +187,36 @@ function hierarchicalFragmentList() {
             const baseParams = baseStory && baseStory.parameters && !Array.isArray(baseStory.parameters)
                 ? baseStory.parameters
                 : {};
-            this.customStoryValues = { ...baseParams };
-            this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryValues);
+            const baseModel = baseStory && baseStory.model && !Array.isArray(baseStory.model)
+                ? baseStory.model
+                : {};
+            this.customStoryState = { parameters: { ...baseParams }, model: { ...baseModel } };
+            this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryState);
             this.customStoryJsonErrors = {};
-            this.saveCustomStoryValues(fragment, this.customStoryValues);
+            this.saveCustomStoryValues(fragment, this.customStoryState);
         },
 
-        buildRawValuesFromCustom(values) {
+        buildRawValuesFromCustom(state) {
             const rawValues = {};
-            Object.entries(values || {}).forEach(([key, value]) => {
-                if (value !== null && typeof value === 'object') {
-                    rawValues[key] = JSON.stringify(value, null, 2);
-                }
+            ['parameters', 'model'].forEach(kind => {
+                const bucket = state?.[kind] || {};
+                Object.entries(bucket).forEach(([key, value]) => {
+                    if (value !== null && typeof value === 'object') {
+                        rawValues[`${kind}:${key}`] = JSON.stringify(value, null, 2);
+                    }
+                });
             });
             return rawValues;
         },
 
-        customStoryEntries() {
-            return Object.entries(this.customStoryValues || {}).map(([key, value]) => ({
+        customStoryEntries(kind) {
+            const bucket = this.customStoryState?.[kind] || {};
+            return Object.entries(bucket).map(([key, value]) => ({
+                kind,
                 key,
                 value,
                 type: this.getCustomValueType(value),
-                rawValue: this.customStoryRawValues?.[key]
+                rawValue: this.customStoryRawValues?.[`${kind}:${key}`]
             }));
         },
 
@@ -226,30 +243,35 @@ function hierarchicalFragmentList() {
             return entry.value ?? '';
         },
 
-        updateCustomValue(key, rawValue, valueType, event) {
+        updateCustomValue(kind, key, rawValue, valueType, event) {
             let nextValue = rawValue;
             if (valueType === 'number') {
                 nextValue = rawValue === '' ? null : Number(rawValue);
             } else if (valueType === 'boolean') {
                 nextValue = event?.target?.checked === true;
             } else if (valueType === 'object' || valueType === 'array') {
-                this.customStoryRawValues = { ...this.customStoryRawValues, [key]: rawValue };
+                this.customStoryRawValues = { ...this.customStoryRawValues, [`${kind}:${key}`]: rawValue };
                 try {
                     nextValue = rawValue === '' ? (valueType === 'array' ? [] : {}) : JSON.parse(rawValue);
-                    const { [key]: _, ...rest } = this.customStoryJsonErrors || {};
+                    const { [`${kind}:${key}`]: _, ...rest } = this.customStoryJsonErrors || {};
                     this.customStoryJsonErrors = rest;
                 } catch (error) {
-                    this.customStoryJsonErrors = { ...this.customStoryJsonErrors, [key]: true };
+                    this.customStoryJsonErrors = { ...this.customStoryJsonErrors, [`${kind}:${key}`]: true };
                     return;
                 }
             }
 
-            this.customStoryValues = { ...this.customStoryValues, [key]: nextValue };
+            const nextState = {
+                parameters: { ...(this.customStoryState?.parameters || {}) },
+                model: { ...(this.customStoryState?.model || {}) }
+            };
+            nextState[kind][key] = nextValue;
+            this.customStoryState = nextState;
             if (valueType !== 'object' && valueType !== 'array') {
-                const { [key]: _, ...restRaw } = this.customStoryRawValues || {};
+                const { [`${kind}:${key}`]: _, ...restRaw } = this.customStoryRawValues || {};
                 this.customStoryRawValues = restRaw;
             }
-            this.saveCustomStoryValues(this.selectedFragment, this.customStoryValues);
+            this.saveCustomStoryValues(this.selectedFragment, this.customStoryState);
             this.applyCustomOverrides();
         },
 
@@ -258,11 +280,11 @@ function hierarchicalFragmentList() {
                 return;
             }
             if (window.__thymeleafletPreview?.setStoryOverrides) {
-                window.__thymeleafletPreview.setStoryOverrides(this.customStoryValues);
+                window.__thymeleafletPreview.setStoryOverrides(this.customStoryState);
                 window.__thymeleafletPreview.render();
                 return;
             }
-            window.__thymeleafletPendingOverrides = { ...this.customStoryValues };
+            window.__thymeleafletPendingOverrides = { ...this.customStoryState };
         },
 
         resetPreviewOverrides() {

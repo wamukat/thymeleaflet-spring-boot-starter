@@ -105,11 +105,11 @@
 
                     <!-- Custom story editor -->
                     <div th:if="${selectedStory != null and selectedStory.storyName == 'custom'}" class="space-y-3">
-                        <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded">
-                            Custom parameters
-                        </div>
-                        <div class="space-y-4">
-                            <template x-for="(entry, index) in customStoryEntries()" :key="entry.key || 'custom-' + index">
+                        <div x-show="customStoryEntries('parameters').length > 0" class="space-y-4">
+                            <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded">
+                                Custom parameters
+                            </div>
+                            <template x-for="(entry, index) in customStoryEntries('parameters')" :key="entry.key || 'custom-param-' + index">
                                 <div class="flex flex-col gap-2 py-3 px-3 bg-green-50 rounded-lg">
                                     <div class="flex items-center justify-between gap-3">
                                         <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-mono" x-text="entry.key"></span>
@@ -120,26 +120,67 @@
                                                type="text"
                                                class="input input-bordered w-full"
                                                :value="getCustomInputValue(entry)"
-                                               @input="updateCustomValue(entry.key, $event.target.value, entry.type, $event)">
+                                               @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
                                         <input x-show="entry.type === 'number'"
                                                type="number"
                                                step="any"
                                                class="input input-bordered w-full"
                                                :value="getCustomInputValue(entry)"
-                                               @input="updateCustomValue(entry.key, $event.target.value, entry.type, $event)">
+                                               @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
                                         <label x-show="entry.type === 'boolean'" class="flex items-center gap-2">
                                             <input type="checkbox"
                                                    class="checkbox"
                                                    :checked="getCustomInputValue(entry)"
-                                                   @change="updateCustomValue(entry.key, $event.target.checked, entry.type, $event)">
+                                                   @change="updateCustomValue(entry.kind, entry.key, $event.target.checked, entry.type, $event)">
                                             <span class="text-sm text-gray-700">true / false</span>
                                         </label>
                                         <textarea x-show="entry.type === 'object' || entry.type === 'array'"
                                                   rows="4"
                                                   class="textarea textarea-bordered w-full font-mono text-xs"
                                                   :value="getCustomInputValue(entry)"
-                                                  @input="updateCustomValue(entry.key, $event.target.value, entry.type, $event)"></textarea>
-                                        <p x-show="customStoryJsonErrors && customStoryJsonErrors[entry.key]" class="text-xs text-red-600">
+                                                  @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)"></textarea>
+                                        <p x-show="customStoryJsonErrors && customStoryJsonErrors[`${entry.kind}:${entry.key}`]" class="text-xs text-red-600">
+                                            Invalid JSON format.
+                                        </p>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                        <div x-show="customStoryEntries('model').length > 0" class="space-y-4">
+                            <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded">
+                                Custom model
+                            </div>
+                            <template x-for="(entry, index) in customStoryEntries('model')" :key="entry.key || 'custom-model-' + index">
+                                <div class="flex flex-col gap-2 py-3 px-3 bg-green-50 rounded-lg">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-mono" x-text="entry.key"></span>
+                                        <span class="text-xs text-gray-500 uppercase tracking-wide" x-text="entry.type"></span>
+                                    </div>
+                                    <div class="flex flex-col gap-2">
+                                        <input x-show="entry.type === 'string'"
+                                               type="text"
+                                               class="input input-bordered w-full"
+                                               :value="getCustomInputValue(entry)"
+                                               @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                        <input x-show="entry.type === 'number'"
+                                               type="number"
+                                               step="any"
+                                               class="input input-bordered w-full"
+                                               :value="getCustomInputValue(entry)"
+                                               @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                        <label x-show="entry.type === 'boolean'" class="flex items-center gap-2">
+                                            <input type="checkbox"
+                                                   class="checkbox"
+                                                   :checked="getCustomInputValue(entry)"
+                                                   @change="updateCustomValue(entry.kind, entry.key, $event.target.checked, entry.type, $event)">
+                                            <span class="text-sm text-gray-700">true / false</span>
+                                        </label>
+                                        <textarea x-show="entry.type === 'object' || entry.type === 'array'"
+                                                  rows="4"
+                                                  class="textarea textarea-bordered w-full font-mono text-xs"
+                                                  :value="getCustomInputValue(entry)"
+                                                  @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)"></textarea>
+                                        <p x-show="customStoryJsonErrors && customStoryJsonErrors[`${entry.kind}:${entry.key}`]" class="text-xs text-red-600">
                                             Invalid JSON format.
                                         </p>
                                     </div>
