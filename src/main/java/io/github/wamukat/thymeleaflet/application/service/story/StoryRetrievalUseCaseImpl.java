@@ -3,9 +3,11 @@ package io.github.wamukat.thymeleaflet.application.service.story;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.application.port.outbound.StoryDataPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfiguration;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryGroup;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
+import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,6 +27,8 @@ import java.util.List;
 @Component
 @Transactional(readOnly = true)
 public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
+
+    private static final String CUSTOM_STORY_NAME = "custom";
     
     @Autowired
     private StoryDataPort storyDataPort;
@@ -38,6 +43,7 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
         // StoryDataPortを使用してストーリー設定を取得
         StoryConfiguration config = storyDataPort.loadStoryConfiguration(fragmentInfo.getTemplatePath());
         
+        FragmentSummary domainFragmentSummary = fragmentSummaryMapper.toDomain(fragmentInfo);
         List<FragmentStoryInfo> stories = new ArrayList<>();
         
         if (config != null && config.storyGroups() != null) {
@@ -45,8 +51,6 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
             
             if (group != null && group.stories() != null) {
                 for (StoryItem story : group.stories()) {
-                    io.github.wamukat.thymeleaflet.domain.model.FragmentSummary domainFragmentSummary = 
-                        fragmentSummaryMapper.toDomain(fragmentInfo);
                     stories.add(FragmentStoryInfo.of(
                         domainFragmentSummary, 
                         fragmentInfo.getFragmentName(),
@@ -59,8 +63,6 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
         
         // ストーリーが定義されていない場合はデフォルトストーリーを作成
         if (stories.isEmpty()) {
-            io.github.wamukat.thymeleaflet.domain.model.FragmentSummary domainFragmentSummary = 
-                fragmentSummaryMapper.toDomain(fragmentInfo);
             stories.add(FragmentStoryInfo.of(
                 domainFragmentSummary, 
                 fragmentInfo.getFragmentName(),
@@ -68,8 +70,34 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
                 null
             ));
         }
+
+        appendCustomStoryIfMissing(stories, domainFragmentSummary, fragmentInfo.getFragmentName());
         
         return stories;
+    }
+
+    private void appendCustomStoryIfMissing(List<FragmentStoryInfo> stories,
+                                            FragmentSummary fragmentSummary,
+                                            String fragmentGroupName) {
+        boolean hasCustom = stories.stream()
+            .anyMatch(story -> CUSTOM_STORY_NAME.equals(story.getStoryName()));
+        if (hasCustom) {
+            return;
+        }
+        StoryItem customStory = new StoryItem(
+            CUSTOM_STORY_NAME,
+            "Custom",
+            "",
+            Collections.emptyMap(),
+            StoryPreview.empty(),
+            Collections.emptyMap()
+        );
+        stories.add(FragmentStoryInfo.of(
+            fragmentSummary,
+            fragmentGroupName,
+            CUSTOM_STORY_NAME,
+            customStory
+        ));
     }
 
     @Override

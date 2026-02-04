@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -54,6 +55,15 @@ public class FragmentRenderingService {
      * @return レンダリング結果
      */
     public RenderingResult renderStory(String templatePath, String fragmentName, String storyName, Model model) {
+        return renderStory(templatePath, fragmentName, storyName, model, null, null);
+    }
+
+    public RenderingResult renderStory(String templatePath,
+                                       String fragmentName,
+                                       String storyName,
+                                       Model model,
+                                       Map<String, Object> parameterOverrides,
+                                       Map<String, Object> modelOverrides) {
         try {
             logger.info("=== RENDER STORY START ===");
             logger.info("Request params: templatePath={}, fragmentName={}, storyName={}", 
@@ -83,11 +93,18 @@ public class FragmentRenderingService {
             logger.info("Fragment Type: {}", storyInfo.getFragmentSummary().getType());
 
             Map<String, Object> storyModel = storyInfo.getModel();
+            Map<String, Object> mergedModel = new HashMap<>();
             if (storyModel != null && !storyModel.isEmpty()) {
-                for (Map.Entry<String, Object> entry : storyModel.entrySet()) {
+                mergedModel.putAll(storyModel);
+            }
+            if (modelOverrides != null && !modelOverrides.isEmpty()) {
+                mergedModel.putAll(modelOverrides);
+            }
+            if (!mergedModel.isEmpty()) {
+                for (Map.Entry<String, Object> entry : mergedModel.entrySet()) {
                     model.addAttribute(entry.getKey(), thymeleafFragmentRenderer.resolveTemplateValue(entry.getValue()));
                 }
-                logger.info("Applied story model values: {}", storyModel.keySet());
+                logger.info("Applied story model values: {}", mergedModel.keySet());
             }
             
             // SIMPLEフラグメント（パラメータなし）の場合はstories.ymlは不要
@@ -114,8 +131,15 @@ public class FragmentRenderingService {
             
             // PARAMETERIZEDフラグメントの場合、ストーリー設定またはJavaDocフォールバックを試行
             Map<String, Object> parameters = storyParameterUseCase.getParametersForStory(storyInfo);
+            if (parameters == null) {
+                parameters = Map.of();
+            }
+            Map<String, Object> mergedParameters = new HashMap<>(parameters);
+            if (parameterOverrides != null && !parameterOverrides.isEmpty()) {
+                mergedParameters.putAll(parameterOverrides);
+            }
             
-            if (parameters.isEmpty() && (storyModel == null || storyModel.isEmpty())) {
+            if (mergedParameters.isEmpty() && mergedModel.isEmpty()) {
                 // Stories YAMLファイルもJavaDocも利用できない場合はエラー表示
                 model.addAttribute("fragmentName", fragmentName);
                 model.addAttribute("templatePath", fullTemplatePath);
@@ -123,12 +147,12 @@ public class FragmentRenderingService {
                 return RenderingResult.error("thymeleaflet/fragments/error-display :: error(type='warning', title=null, message=null, showActionButton=false, actionText=null, actionScript=null, templatePath=null)");
             }
             
-            logger.info("Parameters obtained: {} (from {})", parameters, 
+            logger.info("Parameters obtained: {} (from {})", mergedParameters, 
                        storyInfo.hasStoryConfig() ? "stories.yml" : "JavaDoc fallback");
             
             // ストーリーのパラメータを設定
             logger.info("=== PARAMETER SETTING START ===");
-            for (Map.Entry<String, Object> entry : parameters.entrySet()) {
+            for (Map.Entry<String, Object> entry : mergedParameters.entrySet()) {
                 logger.info("Setting parameter: {} = {} (type: {})", 
                            entry.getKey(), entry.getValue(), 
                            entry.getValue() != null ? entry.getValue().getClass().getSimpleName() : "null");

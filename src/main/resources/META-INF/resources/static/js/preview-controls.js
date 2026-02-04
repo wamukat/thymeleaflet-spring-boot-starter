@@ -19,6 +19,10 @@
         storyOverrides: {},
         lastRenderAt: null
     };
+    if (window.__thymeleafletPendingOverrides && typeof window.__thymeleafletPendingOverrides === 'object') {
+        previewState.storyOverrides = { ...window.__thymeleafletPendingOverrides };
+        delete window.__thymeleafletPendingOverrides;
+    }
 
     function getPreviewHost() {
         return document.querySelector('#fragment-preview-host');
@@ -305,8 +309,14 @@
         }
 
         try {
+            const hasOverrides = previewState.storyOverrides && Object.keys(previewState.storyOverrides).length > 0;
             const response = await fetch(previewUrl, {
-                headers: { 'HX-Request': 'true' }
+                method: hasOverrides ? 'POST' : 'GET',
+                headers: {
+                    'HX-Request': 'true',
+                    'Content-Type': 'application/json'
+                },
+                body: hasOverrides ? JSON.stringify(previewState.storyOverrides) : undefined
             });
             if (!response.ok) {
                 throw new Error(`Preview response status ${response.status}`);

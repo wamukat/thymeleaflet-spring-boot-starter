@@ -60,13 +60,13 @@ document.addEventListener('htmx:afterSettle', function(event) {
 
                 if (fragment) {
                     console.log('🔍 selectedFragment更新:', fragment);
-                    alpineData.selectedFragment = fragment;
+                    alpineData.setSelectedFragment(fragment);
 
                     // ストーリーも更新
                     if (storyName && fragment.stories) {
                         const story = fragment.stories.find(s => s?.storyName === storyName);
                         if (story) {
-                            alpineData.selectedStory = story;
+                            alpineData.setSelectedStory(story);
                         }
                     }
 

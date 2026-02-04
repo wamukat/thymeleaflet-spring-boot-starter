@@ -103,7 +103,7 @@
                     <!-- メタ情報 -->
                     <div class="lg:col-span-1 space-y-6">
                         <!-- ストーリー選択 -->
-                        <div class="card-thymeleaflet" x-show="selectedFragment?.stories && selectedFragment.stories.length > 0">
+                        <div class="card-thymeleaflet" x-show="hasFragmentStories()">
                             <div class="card-thymeleaflet-header">
                                 <h3 class="text-lg font-semibold text-gray-900" th:text="#{thymeleaflet.story.select}">Stories</h3>
                             </div>
@@ -111,20 +111,31 @@
                                 <div class="space-y-2">
                                     <template x-for="story in selectedFragment?.stories" :key="story.storyName">
                                         <a class="w-full text-left p-3 rounded-lg border transition-colors block"
-                                           :class="selectedStory?.storyName === story.storyName ? 
-                                                   'border-blue-500 bg-blue-50 text-blue-900' : 
-                                                   'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
+                                           :class="selectedStory?.storyName === story.storyName 
+                                                   ? (story.storyName === 'custom' 
+                                                       ? 'border-orange-500 bg-orange-50 text-orange-900' 
+                                                       : 'border-blue-500 bg-blue-50 text-blue-900')
+                                                   : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'"
                                            :href="`/thymeleaflet/${templatePathForUrl(selectedFragment.templatePath)}/${selectedFragment.fragmentName}/${encodeStoryName(story.storyName)}`"
                                            hx-get :hx-get="`/thymeleaflet/${templatePathForUrl(selectedFragment.templatePath)}/${selectedFragment.fragmentName}/${encodeStoryName(story.storyName)}/content`"
                                            hx-target="#main-content-area"
                                            :hx-push-url="`/thymeleaflet/${templatePathForUrl(selectedFragment.templatePath)}/${selectedFragment.fragmentName}/${encodeStoryName(story.storyName)}`">
                                             <div class="flex items-start justify-between">
                                                 <div class="flex-1 min-w-0">
-                                                    <h4 class="font-medium text-sm truncate" x-text="story.displayTitle"></h4>
+                                                    <div class="flex items-center gap-2">
+                                                        <h4 class="font-medium text-sm truncate" x-text="story.displayTitle"></h4>
+                                                        <span x-show="story.storyName === 'custom'" class="text-orange-500" aria-label="Editable story">
+                                                            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                                                <path d="M17.414 2.586a2 2 0 010 2.828l-9.193 9.193a1 1 0 01-.39.242l-3.5 1.25a1 1 0 01-1.272-1.272l1.25-3.5a1 1 0 01.242-.39l9.193-9.193a2 2 0 012.828 0zM15 4l-8.5 8.5-.5 1.5 1.5-.5L16 5l-1-1z"/>
+                                                            </svg>
+                                                        </span>
+                                                    </div>
                                                     <p class="text-xs text-gray-500 font-mono truncate" x-text="story.storyName"></p>
                                                 </div>
                                                 <!-- Story/Fallbackラベルは共有フラグメントに統一 -->
-                                                <div class="ml-2 flex-shrink-0 story-badge-placeholder\" data-has-story-config="\" x-bind:data-has-story-config="story.hasStoryConfig\"></div>
+                                                <div class="ml-2 flex-shrink-0 story-badge-placeholder"
+                                                     x-bind:data-has-story-config="story.hasStoryConfig"
+                                                     x-bind:data-story-name="story.storyName"></div>
                                             </div>
                                             <p x-show="story.displayDescription" 
                                                class="text-xs text-gray-600 mt-1" 
@@ -144,7 +155,7 @@
                                 <div class="flex justify-between items-center">
                                     <h3 class="text-lg font-semibold text-gray-900">
                                         <span th:text="#{thymeleaflet.preview.title}">Preview</span>
-                                        <span x-show="selectedStory && selectedStory.displayTitle" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-base font-normal text-gray-600"></span>
+                                        <span x-show="hasSelectedStoryTitle()" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-base font-normal text-gray-600"></span>
                                     </h3>
                                     <div class="flex items-center space-x-3">
                                         <span class="text-xs text-gray-500" th:text="#{thymeleaflet.livePreview}">Live Preview</span>
@@ -266,14 +277,28 @@
                         </div>
 
                         <!-- パラメータ説明 -->
-                        <div class="mt-6 card-thymeleaflet" x-show="selectedFragment && (selectedFragment.parameters?.length > 0 || storyParameters(selectedStory).length > 0)">
+                        <div class="mt-6 card-thymeleaflet" x-show="shouldShowParametersCard()">
                             <div class="card-thymeleaflet-header">
-                                <h3 class="text-lg font-semibold text-gray-900" th:text="#{thymeleaflet.params.title}">Parameters</h3>
-                                <span x-show="selectedStory && selectedStory.displayTitle" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-sm text-gray-500 ml-2"></span>
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="flex items-center">
+                                        <h3 class="text-lg font-semibold text-gray-900" th:text="#{thymeleaflet.params.title}">Parameters</h3>
+                                        <span x-show="hasSelectedStoryTitle()" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-sm text-gray-500 ml-2"></span>
+                                    </div>
+                                    <button type="button"
+                                            class="text-xs inline-flex items-center gap-1 text-orange-700 hover:text-orange-800"
+                                            x-show="isCustomSelected()"
+                                            @click="downloadCustomStoryYaml()">
+                                        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                            <path d="M3 14a2 2 0 002 2h10a2 2 0 002-2v-1h-2v1H5v-1H3v1z"/>
+                                            <path d="M9 3h2v7.586l2.293-2.293 1.414 1.414L10 14.414 5.293 9.707l1.414-1.414L9 10.586V3z"/>
+                                        </svg>
+                                        <span th:text="#{thymeleaflet.custom.downloadYaml}">Download YAML</span>
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-thymeleaflet-content">
                                 <!-- フラグメントのパラメータ -->
-                                <div x-show="selectedFragment?.parameters && selectedFragment.parameters.length > 0" class="mb-6">
+                                <div x-show="shouldShowFragmentParameters()" class="mb-6">
                                     <h4 class="text-md font-medium text-gray-800 mb-3" th:text="#{thymeleaflet.params.fragment}">
                                         Fragment parameters
                                     </h4>
@@ -294,33 +319,128 @@
                                 </div>
 
                                 <!-- 現在のストーリーパラメータ -->
-                                <div x-show="storyParameters(selectedStory).length > 0">
+                                <div x-show="shouldShowStoryValues()">
                                     <h4 class="text-md font-medium text-gray-800 mb-3" th:text="#{thymeleaflet.params.story}">
                                         Current story values
                                     </h4>
-                                    <div class="space-y-3">
+                                    <div class="space-y-3" x-show="!selectedStory || !isCustomStory(selectedStory)">
                                         <template x-for="(storyParameter, index) in storyParameters(selectedStory)" :key="storyParameter.key || 'param-' + index">
-                                            <div class="flex items-start gap-3 py-3 px-3 bg-green-50 rounded-lg">
-                                                <div class="flex-shrink-0">
-                                                    <span class="inline-block bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-mono" x-text="storyParameter.key"></span>
+                                            <div class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
+                                                <div x-show="isObjectStoryValue(storyParameter)" class="space-y-3">
+                                                    <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                         x-text="storyParameter.key"></div>
+                                                    <div class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
+                                                         x-text="storyParameter.value"></div>
                                                 </div>
-                                                <div class="flex-1 min-w-0">
-                                                    <div class="flex items-start justify-between">
-                                                        <div class="flex-1">
-                                                            <p class="text-sm font-medium text-gray-800 break-all" x-text="storyParameter.value"></p>
-                                                            <p class="text-xs text-gray-500 mt-1" th:text="#{thymeleaflet.params.storyDesc}">
-                                                                Values set for this story
-                                                            </p>
-                                                        </div>
+                                                <div x-show="!isObjectStoryValue(storyParameter)" class="flex items-start gap-4">
+                                                    <div class="flex-shrink-0">
+                                                        <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                              x-text="storyParameter.key"></span>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <div class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800"
+                                                             x-text="storyParameter.value"></div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </template>
                                     </div>
+                                    <div class="space-y-4" x-show="isCustomSelected()">
+                                        <div>
+                                            <div class="mt-3 space-y-3">
+                                                <template x-for="(entry, index) in customStoryEntries('parameters')" :key="entry.key || 'custom-param-' + index">
+                                                    <div class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
+                                                        <div x-show="entry.type === 'object' || entry.type === 'array'" class="space-y-3">
+                                                            <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                                 x-text="entry.key"></div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <textarea rows="4"
+                                                                          class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 font-mono focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                                          :value="getCustomInputValue(entry)"
+                                                                          @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)"></textarea>
+                                                                <p x-show="hasCustomJsonError(entry)" class="text-xs text-red-600 mt-2">
+                                                                    Invalid JSON format.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div x-show="entry.type !== 'object' &amp;&amp; entry.type !== 'array'" class="flex items-start gap-4">
+                                                            <div class="flex-shrink-0">
+                                                                <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                                      x-text="entry.key"></span>
+                                                            </div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <input x-show="entry.type === 'string'"
+                                                                       type="text"
+                                                                       class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                                       :value="getCustomInputValue(entry)"
+                                                                       @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                                                <input x-show="entry.type === 'number'"
+                                                                       type="number"
+                                                                       step="any"
+                                                                       class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                                       :value="getCustomInputValue(entry)"
+                                                                       @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                                                <label x-show="entry.type === 'boolean'" class="flex items-center gap-2 text-sm text-gray-700">
+                                                                    <input type="checkbox"
+                                                                           class="form-checkbox border-orange-300 text-orange-600 focus:ring-orange-200"
+                                                                           :checked="getCustomInputValue(entry)"
+                                                                           @change="updateCustomValue(entry.kind, entry.key, $event.target.checked, entry.type, $event)">
+                                                                    <span>true / false</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                                <template x-for="(entry, index) in customStoryEntries('model')" :key="entry.key || 'custom-model-' + index">
+                                                    <div class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
+                                                        <div x-show="entry.type === 'object' || entry.type === 'array'" class="space-y-3">
+                                                            <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                                 x-text="entry.key"></div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <textarea rows="4"
+                                                                          class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 font-mono focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                                          :value="getCustomInputValue(entry)"
+                                                                          @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)"></textarea>
+                                                                <p x-show="hasCustomJsonError(entry)" class="text-xs text-red-600 mt-2">
+                                                                    Invalid JSON format.
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <div x-show="entry.type !== 'object' &amp;&amp; entry.type !== 'array'" class="flex items-start gap-4">
+                                                            <div class="flex-shrink-0">
+                                                                <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                                                      x-text="entry.key"></span>
+                                                            </div>
+                                                            <div class="flex-1 min-w-0">
+                                                                <input x-show="entry.type === 'string'"
+                                                                       type="text"
+                                                                       class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                                       :value="getCustomInputValue(entry)"
+                                                                       @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                                                <input x-show="entry.type === 'number'"
+                                                                       type="number"
+                                                                       step="any"
+                                                                       class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-orange-200 text-gray-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100"
+                                                                       :value="getCustomInputValue(entry)"
+                                                                       @input="updateCustomValue(entry.kind, entry.key, $event.target.value, entry.type, $event)">
+                                                                <label x-show="entry.type === 'boolean'" class="flex items-center gap-2 text-sm text-gray-700">
+                                                                    <input type="checkbox"
+                                                                           class="form-checkbox border-orange-300 text-orange-600 focus:ring-orange-200"
+                                                                           :checked="getCustomInputValue(entry)"
+                                                                           @change="updateCustomValue(entry.kind, entry.key, $event.target.checked, entry.type, $event)">
+                                                                    <span>true / false</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- パラメータがない場合 -->
-                                <div x-show="(!selectedFragment?.parameters || selectedFragment.parameters.length === 0) && storyParameters(selectedStory).length === 0" class="text-center py-4">
+                                <div x-show="shouldShowNoParameters()" class="text-center py-4">
                                     <div class="text-gray-400 mb-2">
                                         <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
