@@ -648,6 +648,7 @@
             // JSONデータを読み込み
             const fragmentsData = JSON.parse(document.getElementById('fragmentsData')?.textContent || '[]');
             const hierarchicalData = JSON.parse(document.getElementById('hierarchicalData')?.textContent || '{}');
+            const originalHierarchyTree = JSON.parse(JSON.stringify(hierarchicalData || {}));
             
             const expandedFolders = {};
             const expandNode = (node, currentPath) => {
@@ -677,6 +678,7 @@
             return {
                 allFragments: fragmentsData || [],
                 hierarchyTree: hierarchicalData || {},
+                originalHierarchyTree: originalHierarchyTree,
                 selectedFragment: null,
                 
                 // Phase 4.3: SecureTemplatePath 対応 - templatePath変換ヘルパー
@@ -819,8 +821,66 @@
                 },
                 
                 filterFragments() {
-                    // サイドバーのフィルタリング機能は今回は簡素化
-                    // 必要に応じて後で実装
+                    const query = this.searchQuery?.trim().toLowerCase();
+                    if (!query) {
+                        this.hierarchyTree = this.originalHierarchyTree;
+                        return;
+                    }
+
+                    const matchesFragment = (fragment) => {
+                        if (!fragment) {
+                            return false;
+                        }
+                        const storyText = Array.isArray(fragment.stories)
+                            ? fragment.stories
+                                  .map(story => `${story?.storyName ?? ''} ${story?.displayTitle ?? ''} ${story?.displayDescription ?? ''}`)
+                                  .join(' ')
+                            : '';
+                        const haystack = `${fragment.templatePath ?? ''} ${fragment.fragmentName ?? ''} ${fragment.type ?? ''} ${storyText}`.toLowerCase();
+                        return haystack.includes(query);
+                    };
+
+                    const filterNode = (node) => {
+                        if (!node || typeof node !== 'object') {
+                            return null;
+                        }
+                        const result = {};
+                        if (node._fragments) {
+                            const filteredFragments = {};
+                            Object.entries(node._fragments).forEach(([templateName, fragmentGroup]) => {
+                                const filteredGroup = (fragmentGroup || []).filter(matchesFragment);
+                                if (filteredGroup.length > 0) {
+                                    filteredFragments[templateName] = filteredGroup;
+                                }
+                            });
+                            if (Object.keys(filteredFragments).length > 0) {
+                                result._fragments = filteredFragments;
+                            }
+                        }
+                        Object.keys(node).forEach(key => {
+                            if (key === '_fragments') {
+                                return;
+                            }
+                            const child = filterNode(node[key]);
+                            if (child && Object.keys(child).length > 0) {
+                                result[key] = child;
+                            }
+                        });
+                        return Object.keys(result).length > 0 ? result : null;
+                    };
+
+                    const filteredTree = {};
+                    Object.entries(this.originalHierarchyTree || {}).forEach(([key, value]) => {
+                        const filteredNode = filterNode(value);
+                        if (filteredNode) {
+                            filteredTree[key] = filteredNode;
+                        }
+                    });
+
+                    this.hierarchyTree = filteredTree;
+                    this.$nextTick(() => {
+                        this.expandAllFolders();
+                    });
                 },
                 
                 
