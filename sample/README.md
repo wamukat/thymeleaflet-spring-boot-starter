@@ -1,6 +1,6 @@
-# Thymeleaflet Sample (Minimal)
+# Thymeleaflet Sample
 
-This is a minimal sample app demonstrating Thymeleaflet with DaisyUI.
+This is a sample app demonstrating Thymeleaflet with DaisyUI.
 
 ## Setup
 
@@ -10,14 +10,14 @@ This is a minimal sample app demonstrating Thymeleaflet with DaisyUI.
 ./mvnw -pl thymeleaflet-spring-boot-starter -am install
 ```
 
-2) Build the sample CSS (DaisyUI + Tailwind):
+2) Build the sample CSS (DaisyUI + Tailwind) from this directory:
 
 ```bash
 npm install
 npm run build
 ```
 
-3) Run the sample app:
+3) Run the sample app from this directory:
 
 ```bash
 mvn spring-boot:run
