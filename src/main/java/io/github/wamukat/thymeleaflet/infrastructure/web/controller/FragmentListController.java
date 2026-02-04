@@ -32,7 +32,10 @@ public class FragmentListController {
     /**
      * Storybookメインエントリーポイント - フラグメント一覧ページ (プレースホルダ最適化版)
      */
-    @GetMapping("${thymeleaflet.base-path:/thymeleaflet}")
+    @GetMapping({
+            "${thymeleaflet.base-path:/thymeleaflet}",
+            "${thymeleaflet.base-path:/thymeleaflet}/"
+    })
     public String fragmentList(Model model) {
         long startTime = System.currentTimeMillis();
         logger.info("=== Fragment List (Placeholder Optimized) START ===");
