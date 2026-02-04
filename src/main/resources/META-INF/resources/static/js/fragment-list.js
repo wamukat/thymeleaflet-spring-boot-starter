@@ -63,6 +63,8 @@ function hierarchicalFragmentList() {
         sidebarOpen: false,
         expandedFolders: expandedFolders,
         customStoryStoragePrefix: 'thymeleaflet:custom:',
+        customStoryRawValues: {},
+        customStoryJsonErrors: {},
 
         initializeFromServerState() {
             // サーバーサイドから渡された選択状態を使用
@@ -78,21 +80,33 @@ function hierarchicalFragmentList() {
                 );
 
                 if (fragment) {
-                    this.selectedFragment = fragment;
+                    this.setSelectedFragment(fragment);
                     this.expandFoldersForFragment(fragment);
 
                     // ストーリーも選択
                     if (selectedStoryName && fragment.stories) {
                         const story = fragment.stories.find(s => s?.storyName === selectedStoryName);
                         if (story) {
-                            this.selectedStory = story;
-                            if (story.storyName === 'custom') {
-                                this.customStoryValues = this.loadCustomStoryValues(fragment);
-                            }
+                            this.setSelectedStory(story);
                         }
                     }
                 }
             }
+        },
+
+        setSelectedFragment(fragment) {
+            this.selectedFragment = fragment;
+        },
+
+        setSelectedStory(story) {
+            this.selectedStory = story;
+            if (this.isCustomStory(story)) {
+                this.ensureCustomStoryValues(this.selectedFragment);
+            }
+        },
+
+        isCustomStory(story) {
+            return story && story.storyName === 'custom';
         },
 
         getCustomStorageKey(fragment) {
@@ -131,6 +145,107 @@ function hierarchicalFragmentList() {
             } catch (error) {
                 console.warn('Failed to save custom story values', error);
             }
+        },
+
+        getCustomBaseStory(fragment) {
+            if (!fragment || !Array.isArray(fragment.stories)) {
+                return null;
+            }
+            const defaultStory = fragment.stories.find(story => story?.storyName === 'default');
+            if (defaultStory) {
+                return defaultStory;
+            }
+            return fragment.stories.find(story => story?.storyName !== 'custom') || null;
+        },
+
+        ensureCustomStoryValues(fragment) {
+            if (!fragment) {
+                return;
+            }
+            const stored = this.loadCustomStoryValues(fragment);
+            if (stored && Object.keys(stored).length > 0) {
+                this.customStoryValues = stored;
+                this.customStoryRawValues = this.buildRawValuesFromCustom(stored);
+                this.customStoryJsonErrors = {};
+                return;
+            }
+
+            const baseStory = this.getCustomBaseStory(fragment);
+            const baseParams = baseStory && baseStory.parameters && !Array.isArray(baseStory.parameters)
+                ? baseStory.parameters
+                : {};
+            this.customStoryValues = { ...baseParams };
+            this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryValues);
+            this.customStoryJsonErrors = {};
+            this.saveCustomStoryValues(fragment, this.customStoryValues);
+        },
+
+        buildRawValuesFromCustom(values) {
+            const rawValues = {};
+            Object.entries(values || {}).forEach(([key, value]) => {
+                if (value !== null && typeof value === 'object') {
+                    rawValues[key] = JSON.stringify(value, null, 2);
+                }
+            });
+            return rawValues;
+        },
+
+        customStoryEntries() {
+            return Object.entries(this.customStoryValues || {}).map(([key, value]) => ({
+                key,
+                value,
+                type: this.getCustomValueType(value),
+                rawValue: this.customStoryRawValues?.[key]
+            }));
+        },
+
+        getCustomValueType(value) {
+            if (Array.isArray(value)) {
+                return 'array';
+            }
+            if (value === null) {
+                return 'string';
+            }
+            return typeof value;
+        },
+
+        getCustomInputValue(entry) {
+            if (!entry) {
+                return '';
+            }
+            if (entry.type === 'object' || entry.type === 'array') {
+                return entry.rawValue ?? JSON.stringify(entry.value, null, 2);
+            }
+            if (entry.type === 'boolean') {
+                return !!entry.value;
+            }
+            return entry.value ?? '';
+        },
+
+        updateCustomValue(key, rawValue, valueType, event) {
+            let nextValue = rawValue;
+            if (valueType === 'number') {
+                nextValue = rawValue === '' ? null : Number(rawValue);
+            } else if (valueType === 'boolean') {
+                nextValue = event?.target?.checked === true;
+            } else if (valueType === 'object' || valueType === 'array') {
+                this.customStoryRawValues = { ...this.customStoryRawValues, [key]: rawValue };
+                try {
+                    nextValue = rawValue === '' ? (valueType === 'array' ? [] : {}) : JSON.parse(rawValue);
+                    const { [key]: _, ...rest } = this.customStoryJsonErrors || {};
+                    this.customStoryJsonErrors = rest;
+                } catch (error) {
+                    this.customStoryJsonErrors = { ...this.customStoryJsonErrors, [key]: true };
+                    return;
+                }
+            }
+
+            this.customStoryValues = { ...this.customStoryValues, [key]: nextValue };
+            if (valueType !== 'object' && valueType !== 'array') {
+                const { [key]: _, ...restRaw } = this.customStoryRawValues || {};
+                this.customStoryRawValues = restRaw;
+            }
+            this.saveCustomStoryValues(this.selectedFragment, this.customStoryValues);
         },
 
 
