@@ -3,7 +3,7 @@ spring:
     cache: false
 
 server:
-  port: 6006
+  port: ${PORT:6006}
 
 thymeleaflet:
   base-path: /thymeleaflet
