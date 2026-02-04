@@ -1,0 +1,35 @@
+<!--
+/**
+ * Select input (selectInput)
+ *
+ * @param label {@code String} [required] Field label
+ * @param name {@code String} [required] Select name
+ * @param selected {@code String} [optional=] Selected value
+ * @param help {@code String} [optional=] Help text
+ * @param error {@code String} [optional=] Error message
+ * @param required {@code Boolean} [optional=false] Required flag
+ * @param disabled {@code Boolean} [optional=false] Disabled flag
+ * @model options {@code List<Map<String, Object>>} [required] Options with value/label
+ * @example <div th:replace="~{components/form-select :: selectInput(label='Plan', name='plan', selected='pro', help='Choose your plan', error='', required=true, disabled=false)}"></div>
+ */
+-->
+<div th:fragment="selectInput(label, name, selected, help, error, required, disabled)"
+     class="form-control w-full max-w-md">
+    <label class="label">
+        <span class="label-text" th:text="${label}">Label</span>
+        <span class="label-text-alt text-error" th:if="${required}">Required</span>
+    </label>
+    <select class="select select-bordered w-full"
+            th:classappend="${error != null && !#strings.isEmpty(error)} ? ' select-error' : ''"
+            th:attr="name=${name}, required=${required}, disabled=${disabled}">
+        <option value="" th:if="${!required}">Select one</option>
+        <option th:each="opt : ${options}"
+                th:value="${opt.value}"
+                th:text="${opt.label}"
+                th:selected="${selected != null && selected == opt.value}">Option</option>
+    </select>
+    <label class="label" th:if="${help != null && !#strings.isEmpty(help)}">
+        <span class="label-text-alt" th:text="${help}">Help text</span>
+    </label>
+    <p class="text-xs text-error mt-1" th:if="${error != null && !#strings.isEmpty(error)}" th:text="${error}">Error</p>
+</div>
