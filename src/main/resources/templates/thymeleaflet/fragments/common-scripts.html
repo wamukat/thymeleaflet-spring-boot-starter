@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * 統一JavaScriptフラグメント
+ * 
+ * Thymeleafletで共通使用されるJavaScript関数群を統一管理する。
+ * コピー機能、背景色切替、色分析などの共通処理を提供。
+ * 
+ * @fragment scripts - 全JavaScript関数を含むメインフラグメント
+ * @fragment copyOnly - コピー機能のみのフラグメント
+ * @fragment backgroundOnly - 背景色切替機能のみのフラグメント
+ * @fragment analysisOnly - 色分析機能のみのフラグメント
+ * 
+ * @example
+ * // 全機能を使用
+ * <div th:replace="~{thymeleaflet/fragments/common-scripts :: scripts()}"></div>
+ * 
+ * @example
+ * // コピー機能のみ使用
+ * <div th:replace="~{thymeleaflet/fragments/common-scripts :: copyOnly()}"></div>
+*/
+-->
+
+<!-- 全JavaScript関数 -->
+<!--
+/**
+ * 統一JavaScriptフラグメント（全機能）
+ * 
+ * @fragment scripts - 全JavaScript関数を含むメインフラグメント
+ * @example <div th:replace="~{thymeleaflet/fragments/common-scripts :: scripts()}"></div>
+ */
+-->
+<th:block th:fragment="scripts">
+<script>
+    /**
+     * 使用例コードをクリップボードにコピー
+     * 
+     * @param {string} elementId - コピー対象要素のID (デフォルト: 'usage-example')
+     */
+    function copyUsageExample(elementId = 'usage-example') {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.warn(`Element with ID '${elementId}' not found`);
+            return;
+        }
+        
+        const codeElement = element.querySelector('code');
+        if (!codeElement) {
+            console.warn(`Code element not found in '${elementId}'`);
+            return;
+        }
+        
+        const text = codeElement.textContent || codeElement.innerText;
+        
+        if (navigator.clipboard && window.isSecureContext) {
+            // モダンブラウザでのクリップボードAPI使用
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyFeedback(elementId);
+            }).catch(err => {
+                console.error('コピーに失敗しました:', err);
+                fallbackCopyTextToClipboard(text, elementId);
+            });
+        } else {
+            // フォールバック方式
+            fallbackCopyTextToClipboard(text, elementId);
+        }
+    }
+    
+    /**
+     * フォールバック方式でテキストをクリップボードにコピー
+     * 
+     * @param {string} text - コピーするテキスト
+     * @param {string} elementId - フィードバック表示用要素ID
+     */
+    function fallbackCopyTextToClipboard(text, elementId) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopyFeedback(elementId);
+            } else {
+                console.error('フォールバック方式でのコピーに失敗しました');
+            }
+        } catch (err) {
+            console.error('フォールバック方式でコピー中にエラーが発生しました:', err);
+        }
+        
+        document.body.removeChild(textArea);
+    }
+    
+    /**
+     * コピー完了フィードバック表示
+     * 
+     * @param {string} elementId - 対象要素ID
+     */
+    function showCopyFeedback(elementId) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const button = element.querySelector('.copy-button');
+        if (!button) return;
+        
+        const originalText = button.innerHTML;
+        button.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>コピー完了';
+        button.classList.add('btn-thymeleaflet-success');
+        button.classList.remove('btn-thymeleaflet-secondary');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-thymeleaflet-success');
+            button.classList.add('btn-thymeleaflet-secondary');
+        }, 2000);
+    }
+    
+    /**
+     * プレビュー要素の色を自動分析
+     * 
+     * @param {string} containerId - 分析対象コンテナID (デフォルト: 'preview-container')
+     * @returns {Object} 分析結果オブジェクト
+     */
+    function getPreviewAnalysisRoot(container) {
+        if (!container) return null;
+        const host = container.querySelector('#fragment-preview-host');
+        if (host && host.shadowRoot) {
+            return host.shadowRoot;
+        }
+        return container;
+    }
+
+    function analyzePreviewColors(containerId = 'preview-container') {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.warn(`Container with ID '${containerId}' not found`);
+            return { colors: [], dominantColor: null, colorCount: 0 };
+        }
+
+        const analysisRoot = getPreviewAnalysisRoot(container);
+        if (!analysisRoot) {
+            return { colors: [], dominantColor: null, colorCount: 0 };
+        }
+
+        const elements = analysisRoot.querySelectorAll('[style*="color"], [class*="text-"], [class*="bg-"]');
+        const colorSet = new Set();
+        const bgColorSet = new Set();
+        
+        elements.forEach(element => {
+            // インライン色
+            const style = element.style;
+            if (style.color) {
+                colorSet.add(style.color);
+            }
+            if (style.backgroundColor) {
+                bgColorSet.add(style.backgroundColor);
+            }
+            
+            // Tailwind CSS色クラス抽出
+            const classes = element.className.split(' ');
+            classes.forEach(cls => {
+                if (cls.startsWith('text-') && !cls.includes('size') && !cls.includes('align')) {
+                    colorSet.add(cls);
+                }
+                if (cls.startsWith('bg-') && !cls.includes('opacity')) {
+                    bgColorSet.add(cls);
+                }
+            });
+        });
+        
+        const allColors = [...colorSet, ...bgColorSet];
+        const colorCount = allColors.length;
+        
+        // 簡易的な主要色判定（最初に見つかった色を主要色とする）
+        const dominantColor = allColors.length > 0 ? allColors[0] : null;
+        
+        const result = {
+            colors: allColors,
+            textColors: Array.from(colorSet),
+            backgroundColors: Array.from(bgColorSet),
+            dominantColor: dominantColor,
+            colorCount: colorCount,
+            hasColorVariety: colorCount > 3
+        };
+        
+        console.log('Color analysis result:', result);
+        return result;
+    }
+
+    /**
+     * HTMXのリダイレクト先URLをブラウザURLに反映
+     * hx-push-urlが/default固定でも、実際のレスポンスURLへ同期する
+     */
+    document.addEventListener('htmx:afterRequest', function(event) {
+        const xhr = event?.detail?.xhr;
+        if (!xhr || !xhr.responseURL) return;
+        if (!xhr.responseURL.includes('/thymeleaflet/')) return;
+
+        let responseUrl;
+        try {
+            responseUrl = new URL(xhr.responseURL, window.location.origin);
+        } catch (error) {
+            return;
+        }
+
+        const path = responseUrl.pathname;
+        if (path.endsWith('/usage') || path.endsWith('/render') || path.endsWith('/main-content')) {
+            return;
+        }
+
+        let nextPath = path;
+        if (path.endsWith('/content')) {
+            nextPath = path.slice(0, -'/content'.length);
+        }
+
+        const nextUrl = nextPath + responseUrl.search + responseUrl.hash;
+        if (window.location.pathname + window.location.search + window.location.hash === nextUrl) {
+            return;
+        }
+        window.history.replaceState(null, '', nextUrl);
+    });
+
+    
+    /**
+     * 色文字列から輝度を計算し、明るい色かどうかを判定
+     * currentColorの場合は実際の色を解決する
+     * 
+     * @param {string} colorStr - 色文字列 (例: "rgb(255, 255, 255)")
+     * @param {Element} element - 色の参照元要素（currentColor解決用）
+     * @returns {boolean} 明るい色の場合true
+     */
+    function isLightColor(colorStr, element = null) {
+        if (!colorStr || colorStr === 'none' || colorStr.startsWith('url')) return false;
+        
+        // currentColorの場合は実際の色を解決
+        if (colorStr === 'currentColor' && element) {
+            const computedStyle = window.getComputedStyle(element);
+            const actualColor = computedStyle.color;
+            console.log(`🔄 Resolving currentColor: ${colorStr} -> ${actualColor}`);
+            
+            if (actualColor && actualColor !== 'currentColor') {
+                return isLightColor(actualColor, null); // 再帰呼び出しでactualColorを分析
+            }
+        }
+        
+        // inheritの場合は親要素から色を取得
+        if (colorStr === 'inherit' && element && element.parentElement) {
+            const parentStyle = window.getComputedStyle(element.parentElement);
+            const parentColor = parentStyle.color;
+            console.log(`🔄 Resolving inherit: ${colorStr} -> ${parentColor}`);
+            
+            if (parentColor && parentColor !== 'inherit') {
+                return isLightColor(parentColor, element.parentElement);
+            }
+        }
+        
+        // currentColor/inheritで解決できない場合はfalse
+        if (colorStr === 'currentColor' || colorStr === 'inherit') {
+            console.log(`⚠️ Could not resolve ${colorStr}`);
+            return false;
+        }
+        
+        try {
+            // RGB値を抽出
+            const rgbMatch = colorStr.match(/\d+/g);
+            if (!rgbMatch || rgbMatch.length < 3) return false;
+            
+            const [r, g, b] = rgbMatch.map(Number);
+            
+            // 輝度 (Luminance) を計算
+            // 計算式: Y = 0.299*R + 0.587*G + 0.114*B
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+            
+            // 輝度の閾値 (0-255)。200以上を「明るい色」と判定
+            const isLight = luminance > 200;
+            
+            console.log(`🎨 Color analysis: ${colorStr} -> RGB(${r},${g},${b}) -> Luminance: ${luminance.toFixed(1)} -> ${isLight ? 'LIGHT' : 'DARK'}`);
+            
+            return isLight;
+        } catch (e) {
+            console.error('Could not parse color:', colorStr, e);
+            return false;
+        }
+    }
+    
+    /**
+     * 初期化処理
+     * DOMContentLoaded時に必要な初期設定を実行
+     */
+    function initializeCommonScripts() {
+        console.log('🚀 THYMELEAFLET: initializeCommonScripts started');
+        
+        const previewContainer = document.getElementById('preview-container');
+        if (previewContainer && !previewContainer.classList.contains('preview-background-light') && !previewContainer.classList.contains('preview-background-gray')) {
+            previewContainer.classList.remove('preview-background-white');
+            previewContainer.classList.add('preview-background-light');
+        }
+        
+        console.log('✅ THYMELEAFLET: Common scripts initialized with fixed light preview background');
+    }
+    
+    // DOMContentLoaded時の初期化
+    console.log('🔄 THYMELEAFLET: Script execution started, document ready state:', document.readyState);
+    
+    if (document.readyState === 'loading') {
+        console.log('📄 THYMELEAFLET: Document still loading, adding DOMContentLoaded listener');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('📄 THYMELEAFLET: DOMContentLoaded event fired');
+            initializeCommonScripts();
+        });
+    } else {
+        console.log('📄 THYMELEAFLET: Document already loaded, initializing immediately');
+        initializeCommonScripts();
+    }
+</script>
+<script th:replace="~{thymeleaflet/fragments/common-scripts :: backgroundFunction}"></script>
+</th:block>
+
+<!--
+/**
+ * コピー機能のみのJavaScriptフラグメント
+ * 
+ * @fragment copyOnly - コピー機能のみのフラグメント
+ * @example <div th:replace="~{thymeleaflet/fragments/common-scripts :: copyOnly()}"></div>
+ */
+-->
+<script th:fragment="copyOnly">
+    function copyUsageExample(elementId = 'usage-example') {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.warn(`Element with ID '${elementId}' not found`);
+            return;
+        }
+        
+        const codeElement = element.querySelector('code');
+        if (!codeElement) {
+            console.warn(`Code element not found in '${elementId}'`);
+            return;
+        }
+        
+        const text = codeElement.textContent || codeElement.innerText;
+        
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyFeedback(elementId);
+            }).catch(err => {
+                console.error('コピーに失敗しました:', err);
+                fallbackCopyTextToClipboard(text, elementId);
+            });
+        } else {
+            fallbackCopyTextToClipboard(text, elementId);
+        }
+    }
+    
+    function fallbackCopyTextToClipboard(text, elementId) {
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        textArea.style.top = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopyFeedback(elementId);
+            } else {
+                console.error('フォールバック方式でのコピーに失敗しました');
+            }
+        } catch (err) {
+            console.error('フォールバック方式でコピー中にエラーが発生しました:', err);
+        }
+        
+        document.body.removeChild(textArea);
+    }
+    
+    function showCopyFeedback(elementId) {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const button = element.querySelector('.copy-button');
+        if (!button) return;
+        
+        const originalText = button.innerHTML;
+        button.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>コピー完了';
+        button.classList.add('btn-thymeleaflet-success');
+        button.classList.remove('btn-thymeleaflet-secondary');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-thymeleaflet-success');
+            button.classList.add('btn-thymeleaflet-secondary');
+        }, 2000);
+    }
+</script>
+
+<!--
+/**
+ * 色分析機能のみのJavaScriptフラグメント
+ * 
+ * @fragment analysisOnly - 色分析機能のみのフラグメント
+ * @example <div th:replace="~{thymeleaflet/fragments/common-scripts :: analysisOnly()}"></div>
+ */
+-->
+<script th:fragment="analysisOnly">
+    function getPreviewAnalysisRoot(container) {
+        if (!container) return null;
+        const host = container.querySelector('#fragment-preview-host');
+        if (host && host.shadowRoot) {
+            return host.shadowRoot;
+        }
+        return container;
+    }
+
+    function analyzePreviewColors(containerId = 'preview-container') {
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.warn(`Container with ID '${containerId}' not found`);
+            return { colors: [], dominantColor: null, colorCount: 0 };
+        }
+
+        const analysisRoot = getPreviewAnalysisRoot(container);
+        if (!analysisRoot) {
+            return { colors: [], dominantColor: null, colorCount: 0 };
+        }
+
+        const elements = analysisRoot.querySelectorAll('[style*="color"], [class*="text-"], [class*="bg-"]');
+        const colorSet = new Set();
+        const bgColorSet = new Set();
+        
+        elements.forEach(element => {
+            const style = element.style;
+            if (style.color) {
+                colorSet.add(style.color);
+            }
+            if (style.backgroundColor) {
+                bgColorSet.add(style.backgroundColor);
+            }
+            
+            const classes = element.className.split(' ');
+            classes.forEach(cls => {
+                if (cls.startsWith('text-') && !cls.includes('size') && !cls.includes('align')) {
+                    colorSet.add(cls);
+                }
+                if (cls.startsWith('bg-') && !cls.includes('opacity')) {
+                    bgColorSet.add(cls);
+                }
+            });
+        });
+        
+        const allColors = [...colorSet, ...bgColorSet];
+        const colorCount = allColors.length;
+        const dominantColor = allColors.length > 0 ? allColors[0] : null;
+        
+        const result = {
+            colors: allColors,
+            textColors: Array.from(colorSet),
+            backgroundColors: Array.from(bgColorSet),
+            dominantColor: dominantColor,
+            colorCount: colorCount,
+            hasColorVariety: colorCount > 3
+        };
+        
+        console.log('Color analysis result:', result);
+        return result;
+    }
+</script>
+
+<!--
+/**
+ * 背景色切替機能のJavaScriptフラグメント
+ * 
+ * @fragment backgroundFunction - 背景色切替機能のみのフラグメント
+ * @example <div th:replace="~{thymeleaflet/fragments/common-scripts :: backgroundFunction()}"></div>
+ */
+-->
+<script th:fragment="backgroundFunction">
+    function togglePreviewBackground(containerId = 'preview-container') {
+        const container = document.getElementById(containerId);
+        const button = document.getElementById('background-toggle');
+        
+        if (!container) {
+            console.warn(`Container with ID '${containerId}' not found`);
+            return;
+        }
+        
+        const isDark = container.classList.contains('preview-background-gray');
+        
+        if (isDark) {
+            container.classList.remove('preview-background-gray');
+            container.classList.add('preview-background-light');
+            if (button) {
+                button.innerHTML = `<span id="toggle-icon">☀️</span> <span id="toggle-text">明るい</span>`;
+            }
+        } else {
+            container.classList.remove('preview-background-light', 'preview-background-white');
+            container.classList.add('preview-background-gray');
+            if (button) {
+                button.innerHTML = `<span id="toggle-icon">🌙</span> <span id="toggle-text">暗い</span>`;
+            }
+        }
+    }
+</script>
+<!--
+/**
+ * 背景色切替機能のみのJavaScriptフラグメント（エイリアス）
+ * 
+ * @fragment backgroundOnly - 背景色切替機能のみのフラグメント
+ * @example <div th:replace="~{thymeleaflet/fragments/common-scripts :: backgroundOnly()}"></div>
+ */
+-->
+<script th:fragment="backgroundOnly" th:replace="~{thymeleaflet/fragments/common-scripts :: backgroundFunction()}"></script>
+
+</body>
+</html>

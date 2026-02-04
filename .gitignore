@@ -1,0 +1,57 @@
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Node.js and npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.eclipse/
+.classpath
+.project
+.settings/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+*.pid
+logs/
+test-results/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Local env / caches
+.env
+.env.*
+.cache/
+coverage/
+dist/
+build/
+out/
+
+# Tailwind CSS build output (optional - you may want to commit this)
+# src/main/resources/META-INF/resources/static/css/thymeleaflet.css

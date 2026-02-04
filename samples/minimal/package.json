@@ -1,0 +1,14 @@
+{
+  "name": "thymeleaflet-sample-minimal",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tailwindcss -i src/main/resources/thymeleaflet/input.css -o src/main/resources/static/css/mypage.css --minify && tailwindcss -i src/main/resources/thymeleaflet/input.css -o src/main/resources/static/css/mypage/components.css --minify",
+    "build:dev": "tailwindcss -i src/main/resources/thymeleaflet/input.css -o src/main/resources/static/css/mypage.css && tailwindcss -i src/main/resources/thymeleaflet/input.css -o src/main/resources/static/css/mypage/components.css",
+    "watch": "tailwindcss -i src/main/resources/thymeleaflet/input.css -o src/main/resources/static/css/mypage.css --watch"
+  },
+  "devDependencies": {
+    "daisyui": "^4.12.14",
+    "tailwindcss": "^3.4.17"
+  }
+}

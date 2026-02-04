@@ -1,0 +1,19 @@
+spring:
+  thymeleaf:
+    cache: false
+
+server:
+  port: 6006
+
+thymeleaflet:
+  base-path: /thymeleaflet
+  debug: false
+  resources:
+    template-paths:
+      - /templates/
+    stylesheets:
+      - /css/mypage.css
+      - /css/mypage/components.css
+    cache-duration-seconds: 3600
+  security:
+    enabled: false
