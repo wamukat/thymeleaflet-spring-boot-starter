@@ -2,12 +2,16 @@
 
 This is a sample app demonstrating Thymeleaflet with DaisyUI.
 
-## Setup
+## Setup (for users)
 
-1) Build and install the starter to your local Maven repo (from repo root):
+1) Add the starter dependency (from Maven Central):
 
-```bash
-./mvnw -pl thymeleaflet-spring-boot-starter -am install
+```xml
+<dependency>
+  <groupId>io.github.wamukat</groupId>
+  <artifactId>thymeleaflet-spring-boot-starter</artifactId>
+  <version>0.0.2</version>
+</dependency>
 ```
 
 2) Build the sample CSS (DaisyUI + Tailwind) from this directory:
@@ -33,6 +37,29 @@ Form samples:
 
 ```
 http://localhost:6006/forms
+```
+
+## Setup (for contributors)
+
+If you want to test the latest starter code locally:
+
+1) Build and install the starter to your local Maven repo (from repo root):
+
+```bash
+./mvnw -DskipTests install
+```
+
+2) Build the sample CSS (DaisyUI + Tailwind) from this directory:
+
+```bash
+npm install
+npm run build
+```
+
+3) Run the sample app from this directory:
+
+```bash
+mvn spring-boot:run
 ```
 
 ## Notes
