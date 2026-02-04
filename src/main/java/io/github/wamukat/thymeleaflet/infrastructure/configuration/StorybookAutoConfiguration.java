@@ -116,6 +116,7 @@ public class StorybookAutoConfiguration {
     }
 
     @Bean
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean(LocaleChangeInterceptor.class)
     public LocaleChangeInterceptor thymeleafletLocaleChangeInterceptor() {
         LocaleChangeInterceptor interceptor = new LocaleChangeInterceptor();
         interceptor.setParamName("lang");
@@ -134,18 +135,10 @@ public class StorybookAutoConfiguration {
     }
 
     @Bean
-    public MessageSource thymeleafletMessageSource() {
-        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
-        messageSource.setBasename("messages");
-        messageSource.setDefaultLocale(Locale.ENGLISH);
-        messageSource.setFallbackToSystemLocale(false);
-        messageSource.setDefaultEncoding("UTF-8");
-        return messageSource;
-    }
-
-    @Bean
-    public BeanPostProcessor thymeleafletMessageSourcePostProcessor(MessageSource thymeleafletMessageSource) {
+    public BeanPostProcessor thymeleafletMessageSourcePostProcessor() {
         return new BeanPostProcessor() {
+            private final MessageSource thymeleafletMessageSource = createThymeleafletMessageSource();
+
             @Override
             public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
                 if (!"messageSource".equals(beanName)) {
@@ -165,5 +158,14 @@ public class StorybookAutoConfiguration {
                 return bean;
             }
         };
+    }
+
+    private static MessageSource createThymeleafletMessageSource() {
+        ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
+        messageSource.setBasename("messages");
+        messageSource.setDefaultLocale(Locale.ENGLISH);
+        messageSource.setFallbackToSystemLocale(false);
+        messageSource.setDefaultEncoding("UTF-8");
+        return messageSource;
     }
 }

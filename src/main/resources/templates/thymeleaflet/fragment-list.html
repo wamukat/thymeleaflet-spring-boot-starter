@@ -524,11 +524,17 @@
                             </div>
                             <div class="card-thymeleaflet-content">
                                 <div class="storybook-usage-example">
-                                    <div th:if="${selectedFragment != null and selectedStory != null}"
-                                         hx-get th:hx-get="@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${selectedStory.storyName} + '/usage'}"
-                                         hx-trigger="load"
-                                         hx-swap="innerHTML">
-                                        <!-- HTMXでロードされる使用例 -->
+                                    <div th:if="${selectedFragment != null}">
+                                        <div th:if="${selectedStory != null}"
+                                             th:hx-get="@{/thymeleaflet/{templatePath}/{fragmentName}/{storyName}/usage(templatePath=${templatePathEncoded}, fragmentName=${selectedFragment.fragmentName}, storyName=${selectedStory.storyName})}"
+                                             hx-trigger="load"
+                                             hx-swap="innerHTML">
+                                            <!-- HTMXでロードされる使用例 -->
+                                        </div>
+                                        <div th:if="${selectedStory == null}"
+                                             class="text-sm text-gray-500">
+                                            <span th:text="#{thymeleaflet.preview.selectStory}">Select a story to preview</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <button class="mt-3 btn-thymeleaflet-secondary btn-thymeleaflet-small" @click="copyUsageExample()"
