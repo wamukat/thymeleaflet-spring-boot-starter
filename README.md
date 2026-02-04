@@ -92,12 +92,6 @@ thymeleaflet:
     cache-duration-seconds: 3600
   security:
     enabled: true
-  migration:
-    phase: "4.0"
-    monitoring:
-      response-time-degradation-threshold: 10
-      error-rate-increase-threshold: 1
-      enforce-contract-tests: true
 ```
 
 ### Notes
@@ -105,6 +99,9 @@ thymeleaflet:
 - `thymeleaflet.base-path` controls the UI base path.
 - `resources.template-paths` must contain 1 to 5 entries.
 - `resources.stylesheets` supports up to 10 entries.
+- To use JavaScript, load it in your app's normal `<head>` (e.g. a shared layout template like `layout.html`).
+  Then use `preview.wrapper` to wrap the required DOM so the preview matches app behavior.
+  Example: `<div data-theme="light">{{content}}</div>`
 - `security.enabled` toggles the built-in security configuration for `/thymeleaflet/**`.
 
 ## Endpoints
