@@ -7,6 +7,19 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 - TBD
 
+## [0.1.0] - 2026-02-05
+
+- Added editable controls for story parameters/models and aligned custom/default story layouts.
+- Improved preview/controls structure and supporting UI fragments.
+
+### Issues
+
+- #11 refactor: split right-pane UI into dedicated fragments
+- #10 refactor: expose preview update API for interactive controls
+- #6 Controls UI: edit story/model parameters from the UI
+- #2 Refactor i18n integration to avoid host conflicts
+- #1 Refactor fragment-list UI into smaller templates/modules
+
 ## [0.0.2] - 2026-02-03
 
 - Switched preview rendering to iframe for better JS isolation
