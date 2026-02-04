@@ -509,6 +509,10 @@
                 button.innerHTML = `<span id="toggle-icon">🌙</span> <span id="toggle-text">暗い</span>`;
             }
         }
+
+        if (typeof window.__thymeleafletRefreshPreview === 'function') {
+            window.__thymeleafletRefreshPreview();
+        }
     }
 </script>
 <!--

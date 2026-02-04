@@ -141,11 +141,10 @@
                  */
                 -->
                 <th:block th:fragment="fragment-preview-content(render)" th:if="${render}">
-                    <!-- Shadow DOMプレビューコンテンツ -->
+                    <!-- iframeプレビューコンテンツ -->
                     <div th:if="${selectedFragment != null and selectedStory != null}"
                          id="fragment-preview-host"
-                         th:attr="data-preview-url=@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${selectedStory.storyName} + '/render'}, data-preview-wrapper=${selectedStory.story.preview.wrapper}"
-                         data-preview-stylesheets="/css/mypage.css,/css/mypage/components.css"
+                         th:attr="data-preview-url=@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${selectedStory.storyName} + '/render'}, data-preview-wrapper=${selectedStory.story.preview.wrapper}, data-preview-stylesheets=${previewStylesheets}, data-preview-scripts=${previewScripts}"
                          class="w-full bg-transparent transition-all duration-300"
                          style="min-height: 0; height: 0; display: block; overflow: hidden;"
                          aria-label="フラグメントプレビュー">
@@ -484,7 +483,7 @@
                         previewUrl: previewUrl
                     });
                     
-                    // Shadow DOMプレビューのコンテンツを更新
+                    // iframeプレビューのコンテンツを更新
                     const host = document.getElementById('fragment-preview-host');
                     if (host) {
                         const previousUrl = host.dataset.previewUrl || '';

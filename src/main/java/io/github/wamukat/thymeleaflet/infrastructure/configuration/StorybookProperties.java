@@ -69,10 +69,16 @@ public class StorybookProperties {
         private List<String> templatePaths = List.of("/templates/");
         
         /**
-         * CSS読み込みパス (Shadow DOM用)
+         * CSS読み込みパス (プレビュー用)
          * デフォルト: []
          */
         private List<String> stylesheets = new ArrayList<>();
+
+        /**
+         * JavaScript読み込みパス (プレビュー用)
+         * デフォルト: []
+         */
+        private List<String> scripts = new ArrayList<>();
         
         /**
          * キャッシュ期間（秒）
@@ -105,6 +111,17 @@ public class StorybookProperties {
                 throw new IllegalArgumentException("Maximum 10 stylesheets allowed");
             }
             this.stylesheets = stylesheets != null ? stylesheets : new ArrayList<>();
+        }
+
+        public List<String> getScripts() {
+            return scripts;
+        }
+
+        public void setScripts(List<String> scripts) {
+            if (scripts != null && scripts.size() > 10) {
+                throw new IllegalArgumentException("Maximum 10 scripts allowed");
+            }
+            this.scripts = scripts != null ? scripts : new ArrayList<>();
         }
 
         public int getCacheDurationSeconds() {

@@ -850,27 +850,16 @@
             const MIN_HEIGHT = 60;
             const MAX_HEIGHT = 1200;
             let previewContentHeight = INITIAL_PREVIEW_HEIGHT;
-            let previewObserver = null;
-            let previewResizeObserver = null;
-            let measureTimer = null;
             let stableTimer = null;
             let lastMeasurementTime = 0;
             let pendingHeight = null;
+            let previewIdCounter = 0;
             let fontsReadyPromise = null;
+            let iframeResizeObserver = null;
+            let iframeMutationObserver = null;
 
             function getPreviewHost() {
                 return document.querySelector('#fragment-preview-host');
-            }
-
-            function ensureShadowRoot(host) {
-                if (!host) return null;
-                const shadowRoot = host.shadowRoot || host.attachShadow({ mode: 'open' });
-                if (!shadowRoot.__thymeleafletClickGuard) {
-                    shadowRoot.__thymeleafletClickGuard = true;
-                    // Prevent click-away handlers outside the shadow root from misfiring.
-                    shadowRoot.addEventListener('click', event => event.stopPropagation());
-                }
-                return shadowRoot;
             }
 
             function setPreviewHeight(heightPx) {
@@ -885,28 +874,6 @@
                 setPreviewHeight(INITIAL_PREVIEW_HEIGHT);
             }
 
-            function getPreviewContentHeight(shadowRoot) {
-                if (!shadowRoot) return 0;
-                const frame = shadowRoot.getElementById('shadow-preview-frame');
-                if (!frame) return 0;
-                const frameRect = frame.getBoundingClientRect();
-                let maxBottom = frameRect.height;
-
-                const elements = frame.querySelectorAll('*:not(script):not(style)');
-                elements.forEach(element => {
-                    const rect = element.getBoundingClientRect();
-                    if (rect.width === 0 && rect.height === 0) {
-                        return;
-                    }
-                    const relativeBottom = rect.bottom - frameRect.top;
-                    if (relativeBottom > maxBottom) {
-                        maxBottom = relativeBottom;
-                    }
-                });
-
-                return Math.ceil(Math.max(0, maxBottom));
-            }
-
             function handleResize(height) {
                 const adjustedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height));
                 const roundedHeight = Math.round(adjustedHeight / 8) * 8;
@@ -914,16 +881,6 @@
 
                 previewContentHeight = stabilizedHeight;
                 setPreviewHeight(stabilizedHeight);
-            }
-
-            function scheduleMeasure(shadowRoot) {
-                if (measureTimer) {
-                    clearTimeout(measureTimer);
-                }
-                measureTimer = setTimeout(() => {
-                    const measuredHeight = getPreviewContentHeight(shadowRoot);
-                    queueStableHeight(measuredHeight > 0 ? measuredHeight : INITIAL_PREVIEW_HEIGHT);
-                }, 100);
             }
 
             function queueStableHeight(height) {
@@ -955,140 +912,231 @@
                 return fontsReadyPromise;
             }
 
-            function setupPreviewObservers(host, shadowRoot) {
-                if (!host || !shadowRoot) return;
-
-                if (previewObserver) {
-                    previewObserver.disconnect();
+            function cleanupIframeObservers() {
+                if (iframeResizeObserver) {
+                    iframeResizeObserver.disconnect();
+                    iframeResizeObserver = null;
                 }
-                previewObserver = new MutationObserver(() => {
-                    scheduleMeasure(shadowRoot);
-                });
-                previewObserver.observe(shadowRoot, {
-                    childList: true,
-                    subtree: true,
-                    attributes: true,
-                    characterData: true
-                });
-
-                if (previewResizeObserver) {
-                    previewResizeObserver.disconnect();
-                }
-                previewResizeObserver = new ResizeObserver(() => {
-                    scheduleMeasure(shadowRoot);
-                });
-                const frame = shadowRoot.getElementById('shadow-preview-frame');
-                if (frame) {
-                    previewResizeObserver.observe(frame);
+                if (iframeMutationObserver) {
+                    iframeMutationObserver.disconnect();
+                    iframeMutationObserver = null;
                 }
             }
 
-            function buildShadowContent(shadowRoot, host, html) {
-                shadowRoot.innerHTML = '';
-
-                const baseStyle = document.createElement('style');
-                baseStyle.textContent = `
-                    :host { display: block; }
-                    .shadow-preview-frame {
-                        width: 100%;
-                        min-height: 50px;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        padding: 20px;
-                        box-sizing: border-box;
+            function measureIframeHeight(iframe) {
+                try {
+                    const doc = iframe.contentDocument;
+                    if (!doc || !doc.documentElement || !doc.body) {
+                        return null;
                     }
-                    .shadow-preview-content {
-                        display: inline-block;
-                        width: fit-content;
-                        max-width: 100%;
-                    }
-                `;
-                shadowRoot.appendChild(baseStyle);
+                    return Math.ceil(Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight));
+                } catch (error) {
+                    return null;
+                }
+            }
 
-                const styles = (host.dataset.previewStylesheets || '')
+            function setupIframeObservers(iframe) {
+                cleanupIframeObservers();
+
+                const handle = () => {
+                    const height = measureIframeHeight(iframe);
+                    if (height != null) {
+                        queueStableHeight(height);
+                    }
+                };
+
+                const attach = () => {
+                    try {
+                        const doc = iframe.contentDocument;
+                        if (!doc) return;
+                        if ('ResizeObserver' in window) {
+                            iframeResizeObserver = new ResizeObserver(() => handle());
+                            iframeResizeObserver.observe(doc.documentElement);
+                        }
+                        if ('MutationObserver' in window && doc.body) {
+                            iframeMutationObserver = new MutationObserver(() => handle());
+                            iframeMutationObserver.observe(doc.body, {
+                                attributes: true,
+                                childList: true,
+                                subtree: true
+                            });
+                        }
+                        handle();
+                    } catch (error) {
+                        // ignore access errors
+                    }
+                };
+
+                iframe.addEventListener('load', attach, { once: true });
+                setTimeout(attach, 0);
+            }
+
+            function parseResourceList(rawValue) {
+                return (rawValue || '')
                     .split(',')
                     .map(value => value.trim())
                     .filter(Boolean);
+            }
 
-                styles.forEach(href => {
-                    const link = document.createElement('link');
-                    link.rel = 'stylesheet';
-                    link.href = href;
-                    shadowRoot.appendChild(link);
-                });
+            function getPreviewBackgroundColor(host) {
+                if (!host) return 'transparent';
+                const container = host.closest('#preview-container');
+                if (!container) return 'transparent';
+                return getComputedStyle(container).backgroundColor || 'transparent';
+            }
 
-                const contentWrapper = document.createElement('div');
-                contentWrapper.id = 'shadow-preview-content';
-                contentWrapper.className = 'shadow-preview-content';
+            function buildPreviewDocument(host, html, backgroundColor) {
+                const styles = parseResourceList(host.dataset.previewStylesheets);
+                const scripts = parseResourceList(host.dataset.previewScripts);
                 const wrapper = host?.dataset?.previewWrapper || '';
                 const wrappedHtml = wrapper && wrapper.includes('{{content}}')
                     ? wrapper.replace('{{content}}', html)
                     : html;
-                contentWrapper.innerHTML = wrappedHtml;
-                const frame = document.createElement('div');
-                frame.id = 'shadow-preview-frame';
-                frame.className = 'shadow-preview-frame';
-                frame.appendChild(contentWrapper);
-                shadowRoot.appendChild(frame);
+                const previewId = `preview-${Date.now()}-${previewIdCounter++}`;
+                const resolvedBackground = backgroundColor || 'transparent';
 
-                if (window.htmx && typeof window.htmx.process === 'function') {
-                    try {
-                        window.htmx.process(frame);
-                    } catch (error) {
-                        console.warn('HTMX process failed for shadow content:', error);
-                    }
-                }
-                if (window.Alpine && typeof window.Alpine.initTree === 'function') {
-                    const initAlpine = () => {
-                        try {
-                            if (typeof window.Alpine.mutateDom === 'function') {
-                                window.Alpine.mutateDom(() => window.Alpine.initTree(frame));
-                            } else {
-                                window.Alpine.initTree(frame);
-                            }
-                        } catch (error) {
-                            console.warn('Alpine init failed for shadow content:', error);
+                const headParts = [
+                    '<meta charset="utf-8">',
+                    '<meta name="viewport" content="width=device-width, initial-scale=1">'
+                ];
+                styles.forEach(href => {
+                    headParts.push(`<link rel="stylesheet" href="${href}">`);
+                });
+                    headParts.push(
+                    `<style>
+                        html, body { margin: 0; padding: 0; background: ${resolvedBackground} !important; }
+                        body { background-color: ${resolvedBackground} !important; }
+                        #preview-root {
+                            width: 100%;
+                            min-height: 50px;
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            padding: 20px;
+                            box-sizing: border-box;
+                            background: ${resolvedBackground};
                         }
-                    };
+                        #preview-content {
+                            display: inline-block;
+                            width: fit-content;
+                            max-width: 100%;
+                        }
+                    </style>`
+                );
 
-                    try {
-                        if (typeof window.Alpine.stopObservingMutations === 'function') {
-                            window.Alpine.stopObservingMutations();
-                            initAlpine();
-                            window.Alpine.startObservingMutations?.();
-                        } else {
-                            initAlpine();
+                const bodyParts = [
+                    `<div id="preview-root"><div id="preview-content">${wrappedHtml}</div></div>`
+                ];
+                scripts.forEach(src => {
+                    bodyParts.push(`<script src="${src}"></scr` + `ipt>`);
+                });
+                bodyParts.push(`<script>
+                    (function() {
+                        const previewId = ${JSON.stringify(previewId)};
+                        const postHeight = (height) => {
+                            const safeHeight = Number.isFinite(height) ? height : 0;
+                            parent.postMessage({ type: 'thymeleaflet:preview-height', id: previewId, height: safeHeight }, '*');
+                        };
+                        function notifyHeight() {
+                            const height = Math.ceil(
+                                Math.max(
+                                    document.documentElement.scrollHeight,
+                                    document.body.scrollHeight
+                                )
+                            );
+                            postHeight(height);
                         }
-                        document.addEventListener('alpine:initialized', initAlpine, { once: true });
-                    } catch (error) {
-                        console.warn('Alpine init failed for shadow content:', error);
-                    }
-                }
+                        if ('ResizeObserver' in window) {
+                            const observer = new ResizeObserver(() => notifyHeight());
+                            observer.observe(document.body);
+                        }
+                        if ('MutationObserver' in window) {
+                            const mutationObserver = new MutationObserver(() => notifyHeight());
+                            mutationObserver.observe(document.body, {
+                                attributes: true,
+                                childList: true,
+                                subtree: true
+                            });
+                        }
+                        document.addEventListener('click', () => {
+                            setTimeout(notifyHeight, 30);
+                            setTimeout(notifyHeight, 150);
+                        });
+                        window.addEventListener('load', notifyHeight);
+                        setTimeout(notifyHeight, 50);
+                        setTimeout(notifyHeight, 250);
+                    })();
+                </scr` + `ipt>`);
+
+                const doc = [
+                    '<!DOCTYPE html><html><head>',
+                    headParts.join(''),
+                    '</head><body>',
+                    bodyParts.join(''),
+                    '</body></html>'
+                ].join('');
+
+                return { doc, previewId };
             }
 
-            function renderPreviewError(shadowRoot, host, message) {
+            function ensurePreviewMessageListener() {
+                if (window.__thymeleafletPreviewMessageListener) {
+                    return;
+                }
+                window.__thymeleafletPreviewMessageListener = true;
+                window.addEventListener('message', event => {
+                    const data = event.data || {};
+                    if (data.type !== 'thymeleaflet:preview-height') {
+                        return;
+                    }
+                    const host = getPreviewHost();
+                    if (!host || host.dataset.previewId !== data.id) {
+                        return;
+                    }
+                    if (typeof data.height !== 'number') {
+                        return;
+                    }
+                    queueStableHeight(data.height);
+                });
+            }
+
+            function renderPreviewFrame(host, html) {
+                host.innerHTML = '';
+                const iframe = document.createElement('iframe');
+                iframe.className = 'w-full border-0 bg-transparent';
+                iframe.style.height = '100%';
+                iframe.setAttribute('scrolling', 'no');
+                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+                iframe.setAttribute('title', 'Thymeleaflet Preview');
+                const backgroundColor = getPreviewBackgroundColor(host);
+                iframe.style.backgroundColor = backgroundColor;
+                const { doc, previewId } = buildPreviewDocument(host, html, backgroundColor);
+                host.dataset.previewId = previewId;
+                iframe.srcdoc = doc;
+                host.appendChild(iframe);
+                setupIframeObservers(iframe);
+            }
+
+            function renderPreviewError(host, message) {
                 const safeMessage = message || 'プレビューの読み込みに失敗しました。';
                 const html = `
                     <div class="w-full rounded border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-700">
                         ${safeMessage}
                     </div>
                 `;
-                buildShadowContent(shadowRoot, host, html);
+                renderPreviewFrame(host, html);
             }
 
-            async function loadShadowPreview(host) {
+            async function loadPreview(host) {
                 const targetHost = host || getPreviewHost();
                 if (!targetHost) return;
 
-                const previewUrl = targetHost.dataset.previewUrl || '';
-                const shadowRoot = ensureShadowRoot(targetHost);
-                if (!shadowRoot) return;
-
+                ensurePreviewMessageListener();
                 resetPreviewHeight();
 
+                const previewUrl = targetHost.dataset.previewUrl || '';
                 if (!previewUrl) {
-                    shadowRoot.innerHTML = '';
+                    targetHost.innerHTML = '';
                     return;
                 }
 
@@ -1100,32 +1148,29 @@
                         throw new Error(`Preview response status ${response.status}`);
                     }
                     const html = await response.text();
-                    // If a full error page leaks in, keep the failure inside the preview.
                     if (html.includes('システムエラー') || html.includes('System Error')) {
                         throw new Error('Preview error page detected');
                     }
-                    buildShadowContent(shadowRoot, targetHost, html);
-                    setupPreviewObservers(targetHost, shadowRoot);
+                    renderPreviewFrame(targetHost, html);
                     await waitForFontsOnce();
-                    scheduleMeasure(shadowRoot);
                 } catch (error) {
                     const message = `プレビューの読み込みに失敗しました。${error?.message ? ` (${error.message})` : ''}`;
-                    renderPreviewError(shadowRoot, targetHost, message);
-                    setupPreviewObservers(targetHost, shadowRoot);
-                    scheduleMeasure(shadowRoot);
+                    renderPreviewError(targetHost, message);
                 }
             }
 
             window.__thymeleafletResetPreviewHeight = resetPreviewHeight;
-            window.__thymeleafletLoadShadowPreview = loadShadowPreview;
+            window.__thymeleafletLoadShadowPreview = loadPreview;
+            window.__thymeleafletLoadPreview = loadPreview;
+            window.__thymeleafletRefreshPreview = () => loadPreview();
 
             document.addEventListener('DOMContentLoaded', function() {
-                loadShadowPreview();
+                loadPreview();
             });
 
             document.addEventListener('htmx:afterSettle', function(event) {
                 if (event.detail.target && event.detail.target.id === 'main-content-area') {
-                    loadShadowPreview();
+                    loadPreview();
                 }
             });
         })();
