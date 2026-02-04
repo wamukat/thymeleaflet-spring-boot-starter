@@ -36,7 +36,6 @@ class TransactionBadgeTypeInferenceTest {
 
     @Test
     void testTransactionTypeEnumInference() {
-        System.out.println("=== Testing TransactionType ENUM inference ===");
         
         // Given: 実際のpoint-transaction-badge.htmlのJavaDoc内容を模擬
         JavaDocAnalyzer.ParameterInfo transactionTypeParam = JavaDocAnalyzer.ParameterInfo.of(
@@ -65,12 +64,6 @@ class TransactionBadgeTypeInferenceTest {
         assertThat(result).hasSize(1);
         
         TypeInfo typeInfo = result.get(0);
-        System.out.println("Parameter Name: " + typeInfo.getParameterName());
-        System.out.println("Java Type Name: " + typeInfo.getJavaTypeName());
-        System.out.println("Type Category: " + typeInfo.getTypeCategory());
-        System.out.println("Inference Level: " + typeInfo.getInferenceLevel());
-        System.out.println("Allowed Values: " + typeInfo.getAllowedValues());
-        System.out.println("Description: " + typeInfo.getDescription());
         
         // 重要: ENUM型として判定されること
         assertThat(typeInfo.getParameterName()).isEqualTo("transactionType");
@@ -80,13 +73,11 @@ class TransactionBadgeTypeInferenceTest {
         // TransactionType特別処理により、EARN/USEが設定されることを確認
         if (typeInfo.getTypeCategory() == TypeInfo.TypeCategory.ENUM) {
             assertThat(typeInfo.getAllowedValues()).containsExactlyInAnyOrder("EARN", "USE");
-            System.out.println("✅ ENUM values correctly inferred: " + typeInfo.getAllowedValues());
         }
     }
     
     @Test 
     void testTransactionTypeWithDescriptionPatterns() {
-        System.out.println("=== Testing with ENUM patterns in description ===");
         
         // Given: 説明文にENUM値パターンが含まれる場合
         JavaDocAnalyzer.ParameterInfo transactionTypeParam = JavaDocAnalyzer.ParameterInfo.of(
@@ -115,17 +106,13 @@ class TransactionBadgeTypeInferenceTest {
         assertThat(result).hasSize(1);
         
         TypeInfo typeInfo = result.get(0);
-        System.out.println("Type Category: " + typeInfo.getTypeCategory());
-        System.out.println("Allowed Values: " + typeInfo.getAllowedValues());
         
         assertThat(typeInfo.getTypeCategory()).isEqualTo(TypeInfo.TypeCategory.ENUM);
         assertThat(typeInfo.getAllowedValues()).containsExactlyInAnyOrder("EARN", "USE");
-        System.out.println("✅ ENUM values from allowedValues correctly set");
     }
     
     @Test
     void testFailureCaseTypeInference() {
-        System.out.println("=== Testing potential failure case ===");
         
         // Given: 型名のみでENUM判定が困難なケース
         JavaDocAnalyzer.ParameterInfo vagueTypeParam = JavaDocAnalyzer.ParameterInfo.of(
@@ -154,13 +141,8 @@ class TransactionBadgeTypeInferenceTest {
         assertThat(result).hasSize(1);
         
         TypeInfo typeInfo = result.get(0);
-        System.out.println("Parameter Name: " + typeInfo.getParameterName());
-        System.out.println("Java Type Name: " + typeInfo.getJavaTypeName());
-        System.out.println("Type Category: " + typeInfo.getTypeCategory());
-        System.out.println("Description Pattern Detection: " + typeInfo.getDescription());
         
         // String型はPRIMITIVEとして分類されるはず
         assertThat(typeInfo.getTypeCategory()).isEqualTo(TypeInfo.TypeCategory.PRIMITIVE);
-        System.out.println("⚠️ String typed as PRIMITIVE (expected for this test)");
     }
 }
