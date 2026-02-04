@@ -112,6 +112,42 @@ function hierarchicalFragmentList() {
         isCustomStory(story) {
             return story && story.storyName === 'custom';
         },
+        isCustomSelected() {
+            return this.isCustomStory(this.selectedStory);
+        },
+        hasFragmentStories() {
+            return !!(this.selectedFragment?.stories && this.selectedFragment.stories.length > 0);
+        },
+        hasSelectedStoryTitle() {
+            return !!(this.selectedStory && this.selectedStory.displayTitle);
+        },
+        shouldShowParametersCard() {
+            return !!(this.selectedFragment && (this.selectedFragment.parameters?.length > 0 || this.storyParameters(this.selectedStory).length > 0));
+        },
+        shouldShowFragmentParameters() {
+            return !!(this.selectedFragment?.parameters && this.selectedFragment.parameters.length > 0);
+        },
+        shouldShowStoryValues() {
+            if (!this.selectedStory || !this.isCustomStory(this.selectedStory)) {
+                return this.storyParameters(this.selectedStory).length > 0;
+            }
+            return this.customStoryEntries('parameters').length > 0 || this.customStoryEntries('model').length > 0;
+        },
+        isObjectStoryValue(storyParameter) {
+            return !!(storyParameter && typeof storyParameter.value === 'object' && storyParameter.value !== null);
+        },
+        hasCustomJsonError(entry) {
+            return !!(this.customStoryJsonErrors && this.customStoryJsonErrors[`${entry.kind}:${entry.key}`]);
+        },
+        shouldShowNoParameters() {
+            const noFragmentParams = !this.selectedFragment?.parameters || this.selectedFragment.parameters.length === 0;
+            if (!this.selectedStory || !this.isCustomStory(this.selectedStory)) {
+                return noFragmentParams && this.storyParameters(this.selectedStory).length === 0;
+            }
+            return noFragmentParams &&
+                this.customStoryEntries('parameters').length === 0 &&
+                this.customStoryEntries('model').length === 0;
+        },
 
         getCustomStorageKey(fragment) {
             if (!fragment) {
@@ -287,6 +323,102 @@ function hierarchicalFragmentList() {
             window.__thymeleafletPendingOverrides = { ...this.customStoryState };
         },
 
+        downloadCustomStoryYaml() {
+            if (!this.selectedFragment || !this.isCustomStory(this.selectedStory)) {
+                return;
+            }
+            const parameters = { ...(this.customStoryState?.parameters || {}) };
+            const model = { ...(this.customStoryState?.model || {}) };
+            const yaml = this.buildCustomStoryYaml(parameters, model);
+            const templatePart = this.sanitizeFilePart(this.selectedFragment.templatePath);
+            const fragmentPart = this.sanitizeFilePart(this.selectedFragment.fragmentName);
+            const fileName = `${templatePart}__${fragmentPart}__custom.yaml`;
+            const blob = new Blob([yaml], { type: 'text/yaml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        },
+
+        buildCustomStoryYaml(parameters, model) {
+            const lines = [
+                '# Paste into storyGroups.<fragmentName>.stories',
+                '# Rename "custom" before saving',
+                '- name: custom',
+                '  title: Custom'
+            ];
+            if (parameters && Object.keys(parameters).length > 0) {
+                lines.push('  parameters:');
+                lines.push(this.indentYaml(this.toYaml(parameters, 1), 2));
+            }
+            if (model && Object.keys(model).length > 0) {
+                lines.push('  model:');
+                lines.push(this.indentYaml(this.toYaml(model, 1), 2));
+            }
+            return lines.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
+        },
+
+        indentYaml(yaml, indentSize) {
+            const pad = ' '.repeat(indentSize);
+            return yaml
+                .split('\n')
+                .map(line => (line.length > 0 ? `${pad}${line}` : line))
+                .join('\n');
+        },
+
+        sanitizeFilePart(value) {
+            return String(value || '')
+                .replace(/\s+/g, '-')
+                .replace(/[^a-zA-Z0-9_-]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-+|-+$/g, '');
+        },
+
+        toYaml(value, indent = 0) {
+            const pad = '  '.repeat(indent);
+            if (value === null || value === undefined) {
+                return 'null';
+            }
+            if (Array.isArray(value)) {
+                if (value.length === 0) {
+                    return '[]';
+                }
+                return value
+                    .map(item => {
+                        const rendered = this.toYaml(item, indent + 1);
+                        if (typeof item === 'object' && item !== null) {
+                            return `${pad}- ${rendered.replace(/^\s*/, '')}`;
+                        }
+                        return `${pad}- ${rendered}`;
+                    })
+                    .join('\n');
+            }
+            if (typeof value === 'object') {
+                const entries = Object.entries(value);
+                if (entries.length === 0) {
+                    return '{}';
+                }
+                return entries
+                    .map(([key, val]) => {
+                        const rendered = this.toYaml(val, indent + 1);
+                        if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+                            return `${pad}${key}:\n${rendered}`;
+                        }
+                        return `${pad}${key}: ${rendered}`;
+                    })
+                    .join('\n');
+            }
+            if (typeof value === 'string') {
+                const needsQuote = value === '' || /[:#\n\r\t]|^\s|\s$/.test(value);
+                return needsQuote ? JSON.stringify(value) : value;
+            }
+            return String(value);
+        },
+
         resetPreviewOverrides() {
             if (window.__thymeleafletPreview?.resetToDefaults) {
                 window.__thymeleafletPreview.resetToDefaults();
@@ -456,8 +588,13 @@ function hierarchicalFragmentList() {
             const placeholders = document.querySelectorAll('.story-badge-placeholder');
             placeholders.forEach(placeholder => {
                 const hasStoryConfig = placeholder.dataset.hasStoryConfig === 'true';
-                const badgeClass = hasStoryConfig ? 'badge-story' : 'badge-fallback';
-                const badgeText = hasStoryConfig ? 'Story' : 'Fallback';
+                const storyName = placeholder.dataset.storyName;
+                const badgeClass = storyName === 'custom'
+                    ? 'badge-custom'
+                    : (hasStoryConfig ? 'badge-story' : 'badge-fallback');
+                const badgeText = storyName === 'custom'
+                    ? 'Custom'
+                    : (hasStoryConfig ? 'Story' : 'Fallback');
 
                 placeholder.innerHTML = `<span class="${badgeClass}">${badgeText}</span>`;
             });
@@ -492,8 +629,13 @@ function renderStoryBadges() {
     const placeholders = document.querySelectorAll('.story-badge-placeholder');
     placeholders.forEach(placeholder => {
         const hasStoryConfig = placeholder.dataset.hasStoryConfig === 'true';
-        const badgeClass = hasStoryConfig ? 'badge-story' : 'badge-fallback';
-        const badgeText = hasStoryConfig ? 'Story' : 'Fallback';
+        const storyName = placeholder.dataset.storyName;
+        const badgeClass = storyName === 'custom'
+            ? 'badge-custom'
+            : (hasStoryConfig ? 'badge-story' : 'badge-fallback');
+        const badgeText = storyName === 'custom'
+            ? 'Custom'
+            : (hasStoryConfig ? 'Story' : 'Fallback');
 
         placeholder.innerHTML = `<span class="${badgeClass}">${badgeText}</span>`;
     });
