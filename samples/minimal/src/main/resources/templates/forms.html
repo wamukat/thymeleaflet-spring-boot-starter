@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thymeleaflet Forms Sample</title>
+    <link rel="stylesheet" href="/css/mypage.css">
+    <link rel="stylesheet" href="/css/mypage/components.css">
+</head>
+<body class="bg-base-200 min-h-screen text-base-content">
+<div class="relative overflow-hidden">
+    <div class="pointer-events-none absolute -top-32 right-[-10%] h-80 w-80 rounded-full bg-primary/20 blur-3xl"></div>
+    <div class="pointer-events-none absolute top-40 left-[-10%] h-72 w-72 rounded-full bg-info/30 blur-3xl"></div>
+
+    <main class="relative max-w-5xl mx-auto px-6 py-12 lg:py-16 space-y-10">
+        <header class="space-y-4">
+            <div class="flex items-center gap-3">
+                <span class="badge badge-outline uppercase tracking-widest">Forms</span>
+                <a class="badge badge-ghost" href="/">Back to Home</a>
+            </div>
+            <h1 class="font-display text-4xl font-bold">Form components</h1>
+            <p class="text-base opacity-70 max-w-xl">
+                These components mirror the stories in Thymeleaflet. Use them to
+                build real screens and compare with isolated previews.
+            </p>
+        </header>
+
+        <section class="grid lg:grid-cols-[1.1fr_0.9fr] gap-8 items-start">
+            <div class="card bg-base-100/90 shadow-xl border border-base-200/70">
+                <div class="card-body space-y-6">
+                    <h2 class="font-display text-2xl font-semibold">Account setup</h2>
+                    <form class="space-y-5" onsubmit="return false;">
+                        <div th:replace="~{components/form-input :: textInput(label=${formInputLabel}, name='email', value=${formInputValue}, placeholder=${formInputPlaceholder}, help=${formInputHelp}, error=${formInputError}, required=${formInputRequired}, disabled=${formInputDisabled})}"></div>
+                        <div th:replace="~{components/form-select :: selectInput(label=${formSelectLabel}, name='plan', selected=${formSelectSelected}, help=${formSelectHelp}, error=${formSelectError}, required=${formSelectRequired}, disabled=${formSelectDisabled})}"></div>
+                        <div th:replace="~{components/form-checkbox :: checkboxInput(label=${formCheckboxLabel}, name='terms', checked=${formCheckboxChecked}, help=${formCheckboxHelp}, error=${formCheckboxError}, disabled=${formCheckboxDisabled})}"></div>
+                        <div class="flex flex-wrap gap-3">
+                            <button class="btn btn-primary" type="button">Create account</button>
+                            <a class="btn btn-outline" href="/thymeleaflet">Open Thymeleaflet</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div class="card bg-base-100/90 shadow-xl border border-base-200/70">
+                    <div class="card-body">
+                        <p class="text-xs uppercase tracking-widest opacity-50">Preview tips</p>
+                        <h3 class="font-display text-xl font-semibold">Compare with stories</h3>
+                        <p class="opacity-70">
+                            Each component has default, error, and disabled stories. Open
+                            /thymeleaflet to compare the form states side by side.
+                        </p>
+                    </div>
+                </div>
+                <div class="card bg-base-100/90 shadow-xl border border-base-200/70">
+                    <div class="card-body">
+                        <p class="text-xs uppercase tracking-widest opacity-50">Data model</p>
+                        <h3 class="font-display text-xl font-semibold">Select options</h3>
+                        <p class="opacity-70">
+                            The select options are injected via story model values, so
+                            complex inputs can still be previewed in isolation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+</body>
+</html>
