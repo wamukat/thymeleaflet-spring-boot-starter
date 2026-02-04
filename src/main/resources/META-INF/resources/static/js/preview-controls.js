@@ -15,6 +15,10 @@
     let fontsReadyPromise = null;
     let iframeResizeObserver = null;
     let iframeMutationObserver = null;
+    const previewState = {
+        storyOverrides: {},
+        lastRenderAt: null
+    };
 
     function getPreviewHost() {
         return document.querySelector('#fragment-preview-host');
@@ -292,6 +296,7 @@
 
         ensurePreviewMessageListener();
         resetPreviewHeight();
+        previewState.lastRenderAt = Date.now();
 
         const previewUrl = targetHost.dataset.previewUrl || '';
         if (!previewUrl) {
@@ -319,10 +324,30 @@
         }
     }
 
+    function setStoryOverrides(overrides) {
+        previewState.storyOverrides = overrides && typeof overrides === 'object'
+            ? { ...overrides }
+            : {};
+    }
+
+    function resetToDefaults() {
+        previewState.storyOverrides = {};
+        loadPreview();
+    }
+
+    function render() {
+        loadPreview();
+    }
+
     window.__thymeleafletResetPreviewHeight = resetPreviewHeight;
     window.__thymeleafletLoadShadowPreview = loadPreview;
     window.__thymeleafletLoadPreview = loadPreview;
     window.__thymeleafletRefreshPreview = () => loadPreview();
+    window.__thymeleafletPreview = {
+        setStoryOverrides,
+        render,
+        resetToDefaults
+    };
 
     document.addEventListener('DOMContentLoaded', function() {
         loadPreview();
