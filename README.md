@@ -89,6 +89,7 @@ thymeleaflet:
     template-paths:
       - /templates/
     stylesheets: []
+    scripts: []
     cache-duration-seconds: 3600
   security:
     enabled: true
@@ -99,9 +100,12 @@ thymeleaflet:
 - `thymeleaflet.base-path` controls the UI base path.
 - `resources.template-paths` must contain 1 to 5 entries.
 - `resources.stylesheets` supports up to 10 entries.
-- To use JavaScript, load it in your app's normal `<head>` (e.g. a shared layout template like `layout.html`).
-  Then use `preview.wrapper` to wrap the required DOM so the preview matches app behavior.
+- `resources.scripts` supports up to 10 entries (injection happens inside the preview iframe).
+- To use JavaScript, register it under `resources.scripts` and wrap the required DOM with `preview.wrapper`
+  so the preview matches app behavior.
   Example: `<div data-theme="light">{{content}}</div>`
+- CSP is intentionally permissive to allow external JS/CSS in previews. Use only in trusted environments.
+- Preview iframes allow same-origin so cookies/localStorage and authenticated API calls work.
 - `security.enabled` toggles the built-in security configuration for `/thymeleaflet/**`.
 
 ## Endpoints

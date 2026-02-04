@@ -90,7 +90,7 @@ stories:
 ## プレビューラッパー
 
 `preview.wrapper` でアプリ本体のレイアウトやテーマを再現できます。
-Shadow DOM 内で描画されるため、`{{content}}` を必ず含めてください。
+iframe プレビュー内で描画されるため、`{{content}}` を必ず含めてください。
 サンプルのストーリーでは daisyUI の見た目を合わせるために wrapper を使っています。
 
 ```yaml
