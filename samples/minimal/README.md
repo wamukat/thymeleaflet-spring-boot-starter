@@ -29,6 +29,12 @@ mvn spring-boot:run
 http://localhost:6006/
 ```
 
+Form samples:
+
+```
+http://localhost:6006/forms
+```
+
 ## Notes
 
 - The main page (`/`) uses the same fragments you can preview in Thymeleaflet.

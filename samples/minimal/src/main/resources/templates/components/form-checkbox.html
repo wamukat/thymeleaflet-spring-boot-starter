@@ -1,0 +1,27 @@
+<!--
+/**
+ * Checkbox input (checkboxInput)
+ *
+ * @param label {@code String} [required] Label text
+ * @param name {@code String} [required] Input name
+ * @param checked {@code Boolean} [optional=false] Checked flag
+ * @param help {@code String} [optional=] Help text
+ * @param error {@code String} [optional=] Error message
+ * @param disabled {@code Boolean} [optional=false] Disabled flag
+ * @example <div th:replace="~{components/form-checkbox :: checkboxInput(label='Accept terms', name='terms', checked=false, help='You must agree', error='', disabled=false)}"></div>
+ */
+-->
+<div th:fragment="checkboxInput(label, name, checked, help, error, disabled)"
+     class="form-control w-full max-w-md">
+    <label class="label cursor-pointer justify-start gap-3">
+        <input type="checkbox"
+               class="checkbox"
+               th:classappend="${error != null && !#strings.isEmpty(error)} ? ' checkbox-error' : ''"
+               th:attr="name=${name}, checked=${checked}, disabled=${disabled}" />
+        <span class="label-text" th:text="${label}">Label</span>
+    </label>
+    <label class="label" th:if="${help != null && !#strings.isEmpty(help)}">
+        <span class="label-text-alt" th:text="${help}">Help text</span>
+    </label>
+    <p class="text-xs text-error mt-1" th:if="${error != null && !#strings.isEmpty(error)}" th:text="${error}">Error</p>
+</div>
