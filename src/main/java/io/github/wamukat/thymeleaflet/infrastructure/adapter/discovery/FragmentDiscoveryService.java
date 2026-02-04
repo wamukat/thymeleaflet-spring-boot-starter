@@ -31,6 +31,8 @@ public class FragmentDiscoveryService {
     );
     
     private final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+
+    private volatile List<FragmentInfo> cachedFragments;
     
     @Autowired
     private FragmentDomainService fragmentDomainService;
@@ -43,6 +45,9 @@ public class FragmentDiscoveryService {
      */
     public List<FragmentInfo> discoverFragments() {
         logger.debug("[DEBUG_FRAGMENT_PARAMS] Starting fragment discovery process");
+        if (storybookProperties.getCache().isEnabled() && cachedFragments != null) {
+            return cachedFragments;
+        }
         List<FragmentInfo> fragments = new ArrayList<>();
         
         try {
@@ -85,6 +90,11 @@ public class FragmentDiscoveryService {
             logger.debug("[DEBUG_FRAGMENT_PARAMS] Final fragment: {}", fragment.toString());
         }
         
+        if (storybookProperties.getCache().isEnabled()) {
+            cachedFragments = Collections.unmodifiableList(new ArrayList<>(fragments));
+            return cachedFragments;
+        }
+
         return fragments;
     }
     

@@ -6,5 +6,13 @@ spring:
 
 logging:
   level:
-    root: INFO
-    io.github.wamukat.thymeleaflet: INFO
+    root: WARN
+    io.github.wamukat.thymeleaflet: WARN
+    io.github.wamukat.thymeleaflet.infrastructure.web.service: WARN
+    io.github.wamukat.thymeleaflet.application.service: WARN
+    io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery: WARN
+
+thymeleaflet:
+  cache:
+    enabled: true
+    preload: true

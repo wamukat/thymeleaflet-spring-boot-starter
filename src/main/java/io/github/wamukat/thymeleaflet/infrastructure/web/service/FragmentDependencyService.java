@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,7 +39,16 @@ public class FragmentDependencyService {
     @Autowired
     private ResourcePathValidator resourcePathValidator;
 
+    private final Map<String, List<DependencyComponent>> dependencyCache = new ConcurrentHashMap<>();
+
     public List<DependencyComponent> findDependencies(String templatePath, String fragmentName) {
+        if (storybookProperties.getCache().isEnabled()) {
+            String cacheKey = templatePath + "::" + fragmentName;
+            List<DependencyComponent> cached = dependencyCache.get(cacheKey);
+            if (cached != null) {
+                return cached;
+            }
+        }
         try {
             Resource resource = resourcePathValidator.findTemplate(
                 templatePath,
@@ -65,7 +75,11 @@ public class FragmentDependencyService {
                 dependencies.put(component.key(), component);
             }
 
-            return new ArrayList<>(dependencies.values());
+            List<DependencyComponent> result = new ArrayList<>(dependencies.values());
+            if (storybookProperties.getCache().isEnabled()) {
+                dependencyCache.put(templatePath + "::" + fragmentName, List.copyOf(result));
+            }
+            return result;
         } catch (Exception e) {
             logger.warn("Failed to extract dependencies for {}::{}: {}", templatePath, fragmentName, e.getMessage());
             return List.of();
