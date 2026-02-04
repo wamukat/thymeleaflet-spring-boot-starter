@@ -1,4 +1,4 @@
-package io.github.wamukat.thymeleaflet.samples.minimal;
+package io.github.wamukat.thymeleaflet.sample;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package io.github.wamukat.thymeleaflet.samples.minimal;
+package io.github.wamukat.thymeleaflet.sample;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
