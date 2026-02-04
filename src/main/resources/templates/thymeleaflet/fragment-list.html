@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" th:attr="lang=${#locale.language}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thymeleaflet - フラグメント一覧</title>
+    <title th:text="#{thymeleaflet.title.fragmentList}">Thymeleaflet - Fragment List</title>
     <link rel="icon" type="image/png" th:href="@{/favicon.png}">
     <link rel="stylesheet" th:href="@{/thymeleaflet/css/thymeleaflet.css}">
     <script th:src="@{/thymeleaflet/js/htmx.min.js}"></script>
@@ -19,7 +19,11 @@
     <meta name="selected-fragment-name" th:content="${selectedFragmentName ?: ''}">
     <meta name="selected-story-name" th:content="${selectedStoryName ?: ''}">
 </head>
-<body class="bg-gray-50" x-data="hierarchicalFragmentList()" x-init="$nextTick(() => { expandAllFolders(); initializeFromServerState(); })">
+<body class="bg-gray-50"
+      x-data="hierarchicalFragmentList()"
+      x-init="$nextTick(() => { expandAllFolders(); initializeFromServerState(); })"
+      th:attr="data-preview-load-failed=#{thymeleaflet.preview.loadFailed},
+               data-copy-done=#{thymeleaflet.copy.done}">
     <!-- モバイル用オーバーレイ -->
     <div x-show="sidebarOpen" 
          x-transition.opacity 
@@ -38,7 +42,7 @@
                              class="h-7 w-7 mr-2">
                         <span class="text-lg font-bold leading-none">Thymeleaflet</span>
                     </a>
-                    <p class="text-xs text-gray-500 mt-1">フラグメント一覧</p>
+                    <p class="text-xs text-gray-500 mt-1" th:text="#{thymeleaflet.sidebar.subtitle}">Fragment List</p>
                 </div>
                 <button class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
                         @click="sidebarOpen = false">
@@ -52,7 +56,7 @@
             <div class="mt-4 text-center">
                 <div class="bg-blue-50 rounded-lg p-2">
                     <div class="text-lg font-bold text-blue-600" th:text="${totalCount}">0</div>
-                    <div class="text-xs text-blue-700">Total</div>
+                    <div class="text-xs text-blue-700" th:text="#{thymeleaflet.stats.total}">Total</div>
                 </div>
             </div>
         </div>
@@ -60,7 +64,7 @@
         <!-- 検索フィルタ -->
         <div class="px-4 py-4 border-b border-gray-200">
             <input type="text" 
-                   placeholder="フラグメント検索..." 
+                   th:placeholder="#{thymeleaflet.search.placeholder}"
                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                    x-model="searchQuery" 
                    @input="filterFragments()">
@@ -295,10 +299,22 @@
                     
                     <!-- ブレッドクラム -->
                     <nav class="breadcrumb-thymeleaflet">
-                        <span class="text-gray-900" x-text="selectedFragment ? selectedFragment.fragmentName : 'フラグメント一覧'"></span>
+                        <span class="text-gray-900"
+                              th:attr="data-default-label=#{thymeleaflet.title.fragmentList}"
+                              x-text="selectedFragment ? selectedFragment.fragmentName : $el.dataset.defaultLabel"></span>
                     </nav>
                 </div>
-                
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-gray-500" th:text="#{thymeleaflet.language}">Language</span>
+                    <select id="lang-selector"
+                            class="border border-gray-300 rounded-md text-xs px-2 py-1"
+                            onchange="setThymeleafletLang(this.value)">
+                        <option value="en" th:selected="${#locale.language == 'en'}"
+                                th:text="#{thymeleaflet.language.en}">English</option>
+                        <option value="ja" th:selected="${#locale.language == 'ja'}"
+                                th:text="#{thymeleaflet.language.ja}">日本語</option>
+                    </select>
+                </div>
             </div>
         </div>
 
@@ -342,15 +358,19 @@
                          alt="Thymeleaflet"
                          class="h-28 w-28">
                 </div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-2">フラグメントを選択してください</h2>
-                <p class="text-gray-600 mb-6">左のサイドバーからフラグメントを選択すると、詳細情報が表示されます</p>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2" th:text="#{thymeleaflet.welcome.title}">
+                    Select a fragment
+                </h2>
+                <p class="text-gray-600 mb-6" th:text="#{thymeleaflet.welcome.description}">
+                    Select a fragment from the sidebar to view details.
+                </p>
                 
                 <!-- 統計情報 -->
                 <div class="max-w-2xl mx-auto">
                     <div class="card-thymeleaflet">
                         <div class="card-thymeleaflet-content text-center">
                             <div class="text-2xl font-bold text-blue-600" th:text="${totalCount}">0</div>
-                            <div class="text-sm text-gray-600">総フラグメント数</div>
+                            <div class="text-sm text-gray-600" th:text="#{thymeleaflet.stats.total}">Total fragments</div>
                         </div>
                     </div>
                 </div>
@@ -364,7 +384,7 @@
                         <!-- ストーリー選択 -->
                         <div class="card-thymeleaflet" x-show="selectedFragment?.stories && selectedFragment.stories.length > 0">
                             <div class="card-thymeleaflet-header">
-                                <h3 class="text-lg font-semibold text-gray-900">ストーリー選択</h3>
+                                <h3 class="text-lg font-semibold text-gray-900" th:text="#{thymeleaflet.story.select}">Stories</h3>
                             </div>
                             <div class="card-thymeleaflet-content">
                                 <div class="space-y-2">
@@ -402,22 +422,22 @@
                             <div class="card-thymeleaflet-header">
                                 <div class="flex justify-between items-center">
                                     <h3 class="text-lg font-semibold text-gray-900">
-                                        プレビュー
+                                        <span th:text="#{thymeleaflet.preview.title}">Preview</span>
                                         <span x-show="selectedStory && selectedStory.displayTitle" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-base font-normal text-gray-600"></span>
                                     </h3>
                                     <div class="flex items-center space-x-3">
-                                        <span class="text-xs text-gray-500">Live Preview</span>
+                                        <span class="text-xs text-gray-500" th:text="#{thymeleaflet.livePreview}">Live Preview</span>
                                         <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                                         
                                         <!-- 背景色切替スイッチ -->
                                         <div class="flex items-center space-x-2">
-                                            <span class="text-xs text-gray-500">背景色:</span>
+                                            <span class="text-xs text-gray-500" th:text="#{thymeleaflet.preview.background}">Background</span>
                                             <button id="background-toggle"
                                                     class="flex items-center space-x-1 px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
                                                     onclick="togglePreviewBackground()"
-                                                    title="プレビュー背景色を手動で切り替えます（明るい⇔暗い）">
+                                                    th:attr="title=#{thymeleaflet.preview.toggle.title},data-label-light=#{thymeleaflet.preview.light},data-label-dark=#{thymeleaflet.preview.dark}">
                                                 <span id="toggle-icon">☀️</span>
-                                                <span id="toggle-text">明るい</span>
+                                                <span id="toggle-text" th:text="#{thymeleaflet.preview.light}">Light</span>
                                             </button>
                                         </div>
                                     </div>
@@ -428,7 +448,7 @@
                                 <!-- 共通のloading-indicator（HTMXで使用） -->
                                 <div id="loading-indicator" class="flex items-center justify-center h-24 text-gray-500" style="display: none;">
                                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                                    <span class="ml-2">プレビューを読み込んでいます...</span>
+                                    <span class="ml-2" th:text="#{thymeleaflet.preview.loading}">Loading preview...</span>
                                 </div>
                                 
                                 <!--
@@ -446,8 +466,13 @@
                                         <!-- PARAMETERIZEDタイプで stories.yml も JavaDoc フォールバックも利用できない場合のエラー表示 -->
                                         <div th:if="${selectedFragment.type.name() == 'PARAMETERIZED' and !selectedStory.hasStoryConfig() and #maps.isEmpty(selectedStory.parameters)}" 
                                              style="padding: 16px; background: #fee; border: 1px solid #fcc; border-radius: 8px;">
-                                            <p style="color: #c33; font-weight: bold;">⚠️ stories.ymlとJavaDocフォールバックが利用できません</p>
-                                            <p style="color: #666; font-size: 14px;">フラグメント「<span th:text="${selectedFragment.fragmentName}"></span>」をプレビューするには stories.yml ファイルまたは @example 付きのJavaDocコメントが必要です。</p>
+                                            <p style="color: #c33; font-weight: bold;" th:text="#{thymeleaflet.preview.storyRequiredTitle}">
+                                                ⚠️ stories.yml or JavaDoc fallback is required
+                                            </p>
+                                            <p style="color: #666; font-size: 14px;"
+                                               th:text="#{thymeleaflet.preview.storyRequiredDetail(${selectedFragment.fragmentName})}">
+                                                To preview this fragment, a stories.yml file or JavaDoc comments with @example are required.
+                                            </p>
                                         </div>
                                         
                                         <!-- 動的フラグメントレンダリング（HTMXを使用） -->
@@ -469,7 +494,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                                                 </svg>
                                             </div>
-                                            <p class="text-gray-600">ストーリーを選択してプレビューを表示</p>
+                                            <p class="text-gray-600" th:text="#{thymeleaflet.preview.selectStory}">Select a story to preview</p>
                                         </div>
                                     </div>
                                     
@@ -481,7 +506,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
                                                 </svg>
                                             </div>
-                                            <p class="text-gray-600">フラグメントを選択してプレビューを表示</p>
+                                            <p class="text-gray-600" th:text="#{thymeleaflet.preview.selectFragment}">Select a fragment to preview</p>
                                         </div>
                                     </div>
                                 </th:block>
@@ -493,23 +518,24 @@
                         <!-- 使用例 -->
                         <div class="mt-6 card-thymeleaflet" th:if="${selectedFragment != null}">
                             <div class="card-thymeleaflet-header">
-                                <h3 class="text-lg font-semibold text-gray-900">使用例</h3>
+                                <h3 class="text-lg font-semibold text-gray-900" th:text="#{thymeleaflet.usage.title}">Usage Example</h3>
                                 <span th:if="${selectedStory != null}" class="text-sm text-gray-500 ml-2" 
-                                      th:text="'- ' + (${selectedStory.displayTitle != null ? selectedStory.displayTitle : (selectedStory.storyName != null ? selectedStory.storyName : 'デフォルト')})"></span>
+                                      th:text="'- ' + (${selectedStory.displayTitle != null ? selectedStory.displayTitle : (selectedStory.storyName != null ? selectedStory.storyName : #{thymeleaflet.story.default})})"></span>
                             </div>
                             <div class="card-thymeleaflet-content">
                                 <div class="storybook-usage-example">
                                     <div class="code-block-scrollable">
                                         <div id="usage-example">
                                             <!-- highlight.jsによる動的ハイライトのためのプレーンテキスト -->
-                                            <pre class="code-block-pre"><code class="language-html hljs"><!-- プレビューと同じパラメータ使用例 -->
+                                            <pre class="code-block-pre"><code class="language-html hljs"><!-- Example using the same parameters as the preview -->
 &lt;div th:replace="~{<span th:text="${selectedFragment.templatePath}">template</span> :: <span th:text="${selectedFragment.fragmentName}">fragment</span>}"<span th:if="${selectedStory != null and selectedStory.parameters != null and not #maps.isEmpty(selectedStory.parameters)}">
      <span th:each="storyParam : ${selectedStory.parameters}" th:text="${storyParam.key + '=&quot;' + storyParam.value + '&quot;'}">param="value"</span></span>&gt;&lt;/div&gt;</code></pre>
                                         </div>
                                     </div>
                                 </div>
-                                <button class="mt-3 btn-thymeleaflet-secondary btn-thymeleaflet-small" @click="copyUsageExample()">
-                                    使用例をコピー
+                                <button class="mt-3 btn-thymeleaflet-secondary btn-thymeleaflet-small" @click="copyUsageExample()"
+                                        th:text="#{thymeleaflet.usage.copy}">
+                                    Copy usage
                                 </button>
                             </div>
                         </div>
@@ -517,13 +543,15 @@
                         <!-- パラメータ説明 -->
                         <div class="mt-6 card-thymeleaflet" x-show="selectedFragment && (selectedFragment.parameters?.length > 0 || storyParameters(selectedStory).length > 0)">
                             <div class="card-thymeleaflet-header">
-                                <h3 class="text-lg font-semibold text-gray-900">パラメータ説明</h3>
+                                <h3 class="text-lg font-semibold text-gray-900" th:text="#{thymeleaflet.params.title}">Parameters</h3>
                                 <span x-show="selectedStory && selectedStory.displayTitle" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-sm text-gray-500 ml-2"></span>
                             </div>
                             <div class="card-thymeleaflet-content">
                                 <!-- フラグメントのパラメータ -->
                                 <div x-show="selectedFragment?.parameters && selectedFragment.parameters.length > 0" class="mb-6">
-                                    <h4 class="text-md font-medium text-gray-800 mb-3">フラグメントパラメータ</h4>
+                                    <h4 class="text-md font-medium text-gray-800 mb-3" th:text="#{thymeleaflet.params.fragment}">
+                                        Fragment parameters
+                                    </h4>
                                     <div class="space-y-3">
                                         <template x-for="parameter in selectedFragment?.parameters" :key="parameter">
                                             <div class="flex items-start gap-3 py-2 px-3 bg-gray-50 rounded-lg">
@@ -531,7 +559,9 @@
                                                     <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-mono" x-text="parameter"></span>
                                                 </div>
                                                 <div class="flex-1 min-w-0">
-                                                    <p class="text-sm text-gray-600">フラグメントで利用可能なパラメータです</p>
+                                                    <p class="text-sm text-gray-600" th:text="#{thymeleaflet.params.fragmentDesc}">
+                                                        Parameters available in this fragment
+                                                    </p>
                                                 </div>
                                             </div>
                                         </template>
@@ -540,7 +570,9 @@
 
                                 <!-- 現在のストーリーパラメータ -->
                                 <div x-show="storyParameters(selectedStory).length > 0">
-                                    <h4 class="text-md font-medium text-gray-800 mb-3">現在のストーリー値</h4>
+                                    <h4 class="text-md font-medium text-gray-800 mb-3" th:text="#{thymeleaflet.params.story}">
+                                        Current story values
+                                    </h4>
                                     <div class="space-y-3">
                                         <template x-for="(storyParameter, index) in storyParameters(selectedStory)" :key="storyParameter.key || 'param-' + index">
                                             <div class="flex items-start gap-3 py-3 px-3 bg-green-50 rounded-lg">
@@ -551,7 +583,9 @@
                                                     <div class="flex items-start justify-between">
                                                         <div class="flex-1">
                                                             <p class="text-sm font-medium text-gray-800 break-all" x-text="storyParameter.value"></p>
-                                                            <p class="text-xs text-gray-500 mt-1">このストーリーで設定されている値</p>
+                                                            <p class="text-xs text-gray-500 mt-1" th:text="#{thymeleaflet.params.storyDesc}">
+                                                                Values set for this story
+                                                            </p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -567,7 +601,9 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                                         </svg>
                                     </div>
-                                    <p class="text-sm text-gray-500">このフラグメントにはパラメータがありません</p>
+                                    <p class="text-sm text-gray-500" th:text="#{thymeleaflet.params.none}">
+                                        No parameters for this fragment
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -1118,7 +1154,8 @@
             }
 
             function renderPreviewError(host, message) {
-                const safeMessage = message || 'プレビューの読み込みに失敗しました。';
+                const defaultMessage = document.body.dataset.previewLoadFailed || 'Failed to load preview.';
+                const safeMessage = message || defaultMessage;
                 const html = `
                     <div class="w-full rounded border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-700">
                         ${safeMessage}
@@ -1154,7 +1191,8 @@
                     renderPreviewFrame(targetHost, html);
                     await waitForFontsOnce();
                 } catch (error) {
-                    const message = `プレビューの読み込みに失敗しました。${error?.message ? ` (${error.message})` : ''}`;
+                    const baseMessage = document.body.dataset.previewLoadFailed || 'Failed to load preview.';
+                    const message = `${baseMessage}${error?.message ? ` (${error.message})` : ''}`;
                     renderPreviewError(targetHost, message);
                 }
             }

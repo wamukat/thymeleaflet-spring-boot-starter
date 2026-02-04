@@ -112,7 +112,8 @@
         if (!button) return;
         
         const originalText = button.innerHTML;
-        button.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>コピー完了';
+        const copyDoneLabel = document.body?.dataset?.copyDone || 'Copied!';
+        button.innerHTML = `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${copyDoneLabel}`;
         button.classList.add('btn-thymeleaflet-success');
         button.classList.remove('btn-thymeleaflet-secondary');
         
@@ -290,6 +291,18 @@
             return false;
         }
     }
+
+    /**
+     * 言語を切り替える（Cookieに保存）
+     *
+     * @param {string} lang - 言語コード (例: "en", "ja")
+     */
+    function setThymeleafletLang(lang) {
+        if (!lang) return;
+        const url = new URL(window.location.href);
+        url.searchParams.set('lang', lang);
+        window.location.href = url.toString();
+    }
     
     /**
      * 初期化処理
@@ -392,7 +405,8 @@
         if (!button) return;
         
         const originalText = button.innerHTML;
-        button.innerHTML = '<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>コピー完了';
+        const copyDoneLabel = document.body?.dataset?.copyDone || 'Copied!';
+        button.innerHTML = `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${copyDoneLabel}`;
         button.classList.add('btn-thymeleaflet-success');
         button.classList.remove('btn-thymeleaflet-secondary');
         
@@ -495,18 +509,20 @@
         }
         
         const isDark = container.classList.contains('preview-background-gray');
+        const lightLabel = button?.dataset?.labelLight || 'Light';
+        const darkLabel = button?.dataset?.labelDark || 'Dark';
         
         if (isDark) {
             container.classList.remove('preview-background-gray');
             container.classList.add('preview-background-light');
             if (button) {
-                button.innerHTML = `<span id="toggle-icon">☀️</span> <span id="toggle-text">明るい</span>`;
+                button.innerHTML = `<span id="toggle-icon">☀️</span> <span id="toggle-text">${lightLabel}</span>`;
             }
         } else {
             container.classList.remove('preview-background-light', 'preview-background-white');
             container.classList.add('preview-background-gray');
             if (button) {
-                button.innerHTML = `<span id="toggle-icon">🌙</span> <span id="toggle-text">暗い</span>`;
+                button.innerHTML = `<span id="toggle-icon">🌙</span> <span id="toggle-text">${darkLabel}</span>`;
             }
         }
 
