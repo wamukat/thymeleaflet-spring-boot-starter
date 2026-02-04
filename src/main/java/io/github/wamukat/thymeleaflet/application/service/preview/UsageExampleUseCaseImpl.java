@@ -29,7 +29,7 @@ public class UsageExampleUseCaseImpl implements UsageExampleUseCase {
     public UsageExampleResponse generateUsageExample(FragmentStoryInfo storyInfo, Map<String, Object> parameters) {
         // 元の実装を復元: HTMLコメント + div th:replace形式
         StringBuilder example = new StringBuilder();
-        example.append("<!-- プレビューで実際に使用されているパラメータ -->");
+        example.append("<!-- Parameters used in the preview -->");
         example.append("\n");
         
         if (parameters.isEmpty()) {
@@ -67,7 +67,7 @@ public class UsageExampleUseCaseImpl implements UsageExampleUseCase {
     public ErrorUsageExampleResponse generateErrorUsageExample(FragmentStoryInfo storyInfo) {
         // エラー時の使用例生成
         String errorExample = String.format(
-            "<!-- パラメータが取得できませんでした -->\n<div th:replace=\"~{%s :: %s}\"></div>",
+            "<!-- Failed to load parameters -->\n<div th:replace=\"~{%s :: %s}\"></div>",
             storyInfo.getFragmentSummary().getTemplatePath(),
             storyInfo.getFragmentSummary().getFragmentName()
         );

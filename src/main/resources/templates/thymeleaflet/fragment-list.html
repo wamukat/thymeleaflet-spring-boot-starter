@@ -524,13 +524,11 @@
                             </div>
                             <div class="card-thymeleaflet-content">
                                 <div class="storybook-usage-example">
-                                    <div class="code-block-scrollable">
-                                        <div id="usage-example">
-                                            <!-- highlight.jsによる動的ハイライトのためのプレーンテキスト -->
-                                            <pre class="code-block-pre"><code class="language-html hljs"><!-- Example using the same parameters as the preview -->
-&lt;div th:replace="~{<span th:text="${selectedFragment.templatePath}">template</span> :: <span th:text="${selectedFragment.fragmentName}">fragment</span>}"<span th:if="${selectedStory != null and selectedStory.parameters != null and not #maps.isEmpty(selectedStory.parameters)}">
-     <span th:each="storyParam : ${selectedStory.parameters}" th:text="${storyParam.key + '=&quot;' + storyParam.value + '&quot;'}">param="value"</span></span>&gt;&lt;/div&gt;</code></pre>
-                                        </div>
+                                    <div th:if="${selectedFragment != null and selectedStory != null}"
+                                         hx-get th:hx-get="@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${selectedStory.storyName} + '/usage'}"
+                                         hx-trigger="load"
+                                         hx-swap="innerHTML">
+                                        <!-- HTMXでロードされる使用例 -->
                                     </div>
                                 </div>
                                 <button class="mt-3 btn-thymeleaflet-secondary btn-thymeleaflet-small" @click="copyUsageExample()"
