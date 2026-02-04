@@ -13,6 +13,8 @@ JavaDoc-like comments embedded in HTML templates.
 - YAML-driven story configuration
 - Built-in CSS (Tailwind) for the UI
 
+Live demo: https://bad-siouxie-wamukat-977c4dc6.koyeb.app/thymeleaflet
+
 ## Positioning (Development Tool)
 
 Thymeleaflet is a developer tool intended for local or internal use during
