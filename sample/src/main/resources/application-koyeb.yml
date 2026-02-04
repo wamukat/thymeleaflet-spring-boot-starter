@@ -1,0 +1,10 @@
+spring:
+  thymeleaf:
+    cache: true
+  main:
+    lazy-initialization: true
+
+logging:
+  level:
+    root: INFO
+    io.github.wamukat.thymeleaflet: INFO
