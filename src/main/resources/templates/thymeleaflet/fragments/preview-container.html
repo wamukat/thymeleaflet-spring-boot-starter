@@ -73,12 +73,6 @@
          th:class="'border-2 border-solid border-' + ${borderColorClass} + ' rounded-lg ' + ${minHeightClass} + ' preview-background-light ' + ${customClasses}"
          th:attr="hx-get=${hxGetValue}, hx-trigger=${hxTriggerValue}, hx-target=${hxTargetValue}, hx-swap=${hxSwapValue}">
         
-        <!-- ローディング表示 -->
-        <div class="preview-loading text-center py-8" style="display: none;">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p class="mt-2 text-gray-600" th:text="#{thymeleaflet.preview.loading.short}">Loading...</p>
-        </div>
-        
         <!-- プレビューコンテンツ -->
         <div class="preview-content w-full flex-1">
             <!-- HTMXまたは動的コンテンツがここに挿入される -->

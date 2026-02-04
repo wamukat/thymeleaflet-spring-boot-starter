@@ -185,12 +185,12 @@
                                     <div th:if="${selectedFragment != null and selectedStory != null}">
                                         
                                         <!-- PARAMETERIZEDタイプで stories.yml も JavaDoc フォールバックも利用できない場合のエラー表示 -->
-                                        <div th:if="${selectedFragment.type.name() == 'PARAMETERIZED' and !selectedStory.hasStoryConfig() and #maps.isEmpty(selectedStory.parameters)}" 
-                                             style="padding: 16px; background: #fee; border: 1px solid #fcc; border-radius: 8px;">
-                                            <p style="color: #c33; font-weight: bold;" th:text="#{thymeleaflet.preview.storyRequiredTitle}">
+                                        <div th:if="${selectedFragment.type.name() == 'PARAMETERIZED' and !selectedStory.hasStoryConfig() and #maps.isEmpty(selectedStory.parameters)}"
+                                             class="rounded-lg border border-red-200 bg-red-50 p-4">
+                                            <p class="font-bold text-red-700" th:text="#{thymeleaflet.preview.storyRequiredTitle}">
                                                 ⚠️ stories.yml or JavaDoc fallback is required
                                             </p>
-                                            <p style="color: #666; font-size: 14px;"
+                                            <p class="text-sm text-gray-600"
                                                th:text="#{thymeleaflet.preview.storyRequiredDetail(${selectedFragment.fragmentName})}">
                                                 To preview this fragment, a stories.yml file or JavaDoc comments with @example are required.
                                             </p>
@@ -347,8 +347,8 @@
     
     <!-- 遅延読み込み用HTMXトリガー（ストーリー未選択時のみ） -->
     <div th:unless="${selectedFragment != null and selectedStory != null}"
-         hx-get="/thymeleaflet/main-content" 
-         hx-target="#main-content-area" 
+         hx-get="/thymeleaflet/main-content"
+         hx-target="#main-content-area"
          hx-trigger="load delay:100ms"
          style="display: none;"></div>
 
