@@ -11,7 +11,7 @@ Thymeleaflet は HTML テンプレート内の JavaDoc 風コメントを解析�
  * 会員情報詳細表示（memberDetail）
  *
  * @param variant {@code String} [optional=standard] 表示バリアント
- * @model memberProfile {@code MemberProfile} [required] 会員情報モデル
+ * @model memberProfile {@code List<Map<String, Object>>} [required] 会員情報モデル
  * @example <div th:replace="~{domain/member/organisms/member-profile :: memberDetail()}"></div>
  * @background gray-50
  */
