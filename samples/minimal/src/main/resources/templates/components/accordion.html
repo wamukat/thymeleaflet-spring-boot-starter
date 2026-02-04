@@ -14,7 +14,7 @@
     <button type="button"
             class="w-full flex items-center justify-between px-4 py-3 text-left font-semibold text-base-content"
             th:attr="aria-expanded=${open}"
-            onclick="const expanded = this.getAttribute('aria-expanded') === 'true'; this.setAttribute('aria-expanded', (!expanded).toString()); const panel = this.nextElementSibling; if (panel) { panel.style.display = expanded ? 'none' : 'block'; } const icon = this.querySelector('[data-accordion-icon]'); if (icon) { icon.classList.toggle('rotate-180'); }">
+            data-accordion-trigger>
         <span th:text="${title}">Accordion title</span>
         <svg class="w-4 h-4 text-primary transition-transform duration-200"
              data-accordion-icon
@@ -24,6 +24,7 @@
         </svg>
     </button>
     <div class="px-4 pb-4 text-sm text-base-content/70"
+         data-accordion-panel
          th:style="${open} ? 'display: block;' : 'display: none;'"
          th:text="${body}">Accordion body</div>
 </div>
