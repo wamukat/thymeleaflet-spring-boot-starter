@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="sidebar(totalCount)">
+    <!-- サイドバーヘッダー -->
+    <div class="px-4 py-6 border-b border-gray-200">
+        <div class="flex items-center justify-between">
+            <div>
+                <a href="/thymeleaflet" class="flex items-center text-gray-900">
+                    <img th:src="@{/thymeleaflet/images/thymeleaflet-icon.png}"
+                         alt="Thymeleaflet"
+                         class="h-7 w-7 mr-2">
+                    <span class="text-lg font-bold leading-none">Thymeleaflet</span>
+                </a>
+                <p class="text-xs text-gray-500 mt-1" th:text="#{thymeleaflet.sidebar.subtitle}">Fragment List</p>
+            </div>
+            <button class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
+                    @click="sidebarOpen = false">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 統計サマリー -->
+        <div class="mt-4 text-center">
+            <div class="bg-blue-50 rounded-lg p-2">
+                <div class="text-lg font-bold text-blue-600" th:text="${totalCount}">0</div>
+                <div class="text-xs text-blue-700" th:text="#{thymeleaflet.stats.total}">Total</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 検索フィルタ -->
+    <div class="px-4 py-4 border-b border-gray-200">
+        <input type="text"
+               th:placeholder="#{thymeleaflet.search.placeholder}"
+               class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+               x-model="searchQuery"
+               @input="filterFragments()">
+    </div>
+
+    <!-- 階層ナビゲーション -->
+    <div class="px-2 py-4 pb-24">
+        <template x-for="(category, categoryName) in hierarchyTree" :key="categoryName">
+            <div class="mb-2">
+                <!-- カテゴリフォルダ -->
+                <div class="nav-tree-folder"
+                     :class="{ 'expanded': expandedFolders[categoryName] }"
+                     @click="toggleFolder(categoryName)">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <svg class="w-4 h-4 mr-2 transition-transform"
+                                 :class="{ 'rotate-90': expandedFolders[categoryName] }"
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                            <span x-text="categoryName" class="capitalize"></span>
+                        </div>
+                        <span class="nav-fragment-count" x-text="getCategoryCount(category)"></span>
+                    </div>
+                </div>
+
+                <!-- サブカテゴリとフラグメント -->
+                <div x-show="expandedFolders[categoryName]"
+                     x-transition:enter="transition ease-out duration-200"
+                     x-transition:enter-start="opacity-0 transform scale-95"
+                     x-transition:enter-end="opacity-100 transform scale-100">
+                    <template x-for="(subcategory, subcategoryName) in category" :key="subcategoryName">
+                        <div x-show="subcategoryName !== '_fragments'">
+                            <div class="nav-tree-folder nav-tree-indent-1"
+                                 :class="{ 'expanded': expandedFolders[categoryName + '/' + subcategoryName] }"
+                                 @click="toggleFolder(categoryName + '/' + subcategoryName)">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <svg class="w-3 h-3 mr-2 transition-transform"
+                                             :class="{ 'rotate-90': expandedFolders[categoryName + '/' + subcategoryName] }"
+                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                        <span x-text="subcategoryName"></span>
+                                    </div>
+                                    <span class="nav-fragment-count" x-text="getCategoryCount(subcategory)"></span>
+                                </div>
+                            </div>
+
+                            <!-- サブサブカテゴリと直接フラグメントリスト -->
+                            <div x-show="expandedFolders[categoryName + '/' + subcategoryName]"
+                                 x-transition:enter="transition ease-out duration-200">
+
+                                <!-- サブサブカテゴリ（atoms, molecules, organisms等）の処理 -->
+                                <template x-for="(subSubcategory, subSubcategoryName) in subcategory" :key="subSubcategoryName">
+                                    <div x-show="subSubcategoryName !== '_fragments'">
+                                        <div class="nav-tree-folder nav-tree-indent-2"
+                                             :class="{ 'expanded': expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName] }"
+                                             @click="toggleFolder(categoryName + '/' + subcategoryName + '/' + subSubcategoryName)">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center">
+                                                    <svg class="w-2 h-2 mr-2 transition-transform"
+                                                         :class="{ 'rotate-90': expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName] }"
+                                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                    </svg>
+                                                    <span x-text="subSubcategoryName" class="text-xs"></span>
+                                                </div>
+                                                <span class="nav-fragment-count" x-text="getCategoryCount(subSubcategory)"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- サブサブカテゴリ内のフラグメントリスト -->
+                                        <div x-show="expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName]"
+                                             x-transition:enter="transition ease-out duration-200">
+                                            <template x-for="(fragmentGroup, templateName) in subSubcategory._fragments" :key="templateName">
+                                                <div class="nav-tree-indent-3">
+                                                    <div class="nav-tree-folder"
+                                                         :class="{ 'expanded': expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName + '/' + templateName] }"
+                                                         @click="toggleFolder(categoryName + '/' + subcategoryName + '/' + subSubcategoryName + '/' + templateName)">
+                                                        <div class="flex items-center justify-between">
+                                                            <div class="flex items-center">
+                                                                <svg class="w-2 h-2 mr-2 transition-transform"
+                                                                     :class="{ 'rotate-90': expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName + '/' + templateName] }"
+                                                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                                </svg>
+                                                                <span x-text="templateName" class="text-xs font-mono"></span>
+                                                            </div>
+                                                            <span class="nav-fragment-count" x-text="fragmentGroup.length"></span>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- 個別フラグメント -->
+                                                    <div x-show="expandedFolders[categoryName + '/' + subcategoryName + '/' + subSubcategoryName + '/' + templateName]"
+                                                         x-transition:enter="transition ease-out duration-200">
+                                                        <template x-for="fragment in fragmentGroup" :key="fragment.templatePath + '::' + fragment.fragmentName">
+                                                            <a class="nav-tree-item nav-tree-indent-4 w-full block text-left"
+                                                               :class="{ 'active': selectedFragment && selectedFragment.templatePath === fragment.templatePath && selectedFragment.fragmentName === fragment.fragmentName }"
+                                                               :href="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`"
+                                                               hx-get :hx-get="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default/content`"
+                                                               hx-target="#main-content-area"
+                                                               :hx-push-url="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`">
+                                                                <div class="flex items-center justify-between">
+                                                                    <span x-text="fragment.fragmentName" class="font-mono text-xs"></span>
+                                                                    <span class="nav-fragment-badge"
+                                                                          :class="fragment.type === 'SIMPLE' ? 'bg-green-100 text-green-800' :
+                                                                                  fragment.type === 'PARAMETERIZED' ? 'bg-blue-100 text-blue-800' :
+                                                                                  'bg-purple-100 text-purple-800'"
+                                                                          x-text="fragment.type.charAt(0)">
+                                                                    </span>
+                                                                </div>
+                                                            </a>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <!-- 直接的なフラグメントリスト（サブカテゴリに直接_fragmentsがある場合）-->
+                                <template x-for="(fragmentGroup, templateName) in subcategory._fragments" :key="templateName">
+                                    <div class="nav-tree-indent-2">
+                                        <div class="nav-tree-folder"
+                                             :class="{ 'expanded': expandedFolders[categoryName + '/' + subcategoryName + '/' + templateName] }"
+                                             @click="toggleFolder(categoryName + '/' + subcategoryName + '/' + templateName)">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center">
+                                                    <svg class="w-3 h-3 mr-2 transition-transform"
+                                                         :class="{ 'rotate-90': expandedFolders[categoryName + '/' + subcategoryName + '/' + templateName] }"
+                                                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                                    </svg>
+                                                    <span x-text="templateName" class="text-xs font-mono"></span>
+                                                </div>
+                                                <span class="nav-fragment-count" x-text="fragmentGroup.length"></span>
+                                            </div>
+                                        </div>
+
+                                        <!-- 個別フラグメント -->
+                                        <div x-show="expandedFolders[categoryName + '/' + subcategoryName + '/' + templateName]"
+                                             x-transition:enter="transition ease-out duration-200">
+                                            <template x-for="fragment in fragmentGroup" :key="fragment.templatePath + '::' + fragment.fragmentName">
+                                                <a class="nav-tree-item nav-tree-indent-3 w-full block text-left"
+                                                   :class="{ 'active': selectedFragment && selectedFragment.templatePath === fragment.templatePath && selectedFragment.fragmentName === fragment.fragmentName }"
+                                                   :href="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`"
+                                                   hx-get :hx-get="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default/content`"
+                                                   hx-target="#main-content-area"
+                                                   :hx-push-url="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`">
+                                                    <div class="flex items-center justify-between">
+                                                        <span x-text="fragment.fragmentName" class="font-mono text-xs"></span>
+                                                        <span class="nav-fragment-badge"
+                                                              :class="fragment.type === 'SIMPLE' ? 'bg-green-100 text-green-800' :
+                                                                      fragment.type === 'PARAMETERIZED' ? 'bg-blue-100 text-blue-800' :
+                                                                      'bg-purple-100 text-purple-800'"
+                                                              x-text="fragment.type.charAt(0)">
+                                                        </span>
+                                                    </div>
+                                                </a>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 直接的なフラグメントリスト（カテゴリに直接_fragmentsがある場合）-->
+                    <template x-for="(fragmentGroup, templateName) in category._fragments" :key="templateName">
+                        <div class="nav-tree-indent-1">
+                            <div class="nav-tree-folder"
+                                 :class="{ 'expanded': expandedFolders[categoryName + '/' + templateName] }"
+                                 @click="toggleFolder(categoryName + '/' + templateName)">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <svg class="w-3 h-3 mr-2 transition-transform"
+                                             :class="{ 'rotate-90': expandedFolders[categoryName + '/' + templateName] }"
+                                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                        <span x-text="templateName" class="text-xs font-mono"></span>
+                                    </div>
+                                    <span class="nav-fragment-count" x-text="fragmentGroup.length"></span>
+                                </div>
+                            </div>
+
+                            <!-- 個別フラグメント -->
+                            <div x-show="expandedFolders[categoryName + '/' + templateName]"
+                                 x-transition:enter="transition ease-out duration-200">
+                                <template x-for="fragment in fragmentGroup" :key="fragment.templatePath + '::' + fragment.fragmentName">
+                                    <a class="nav-tree-item nav-tree-indent-2 w-full block text-left"
+                                       :class="{ 'active': selectedFragment && selectedFragment.templatePath === fragment.templatePath && selectedFragment.fragmentName === fragment.fragmentName }"
+                                       :href="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`"
+                                       hx-get :hx-get="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default/content`"
+                                       hx-target="#main-content-area"
+                                       :hx-push-url="`/thymeleaflet/${templatePathForUrl(fragment.templatePath)}/${fragment.fragmentName}/default`">
+                                        <div class="flex items-center justify-between">
+                                            <span x-text="fragment.fragmentName" class="font-mono text-xs"></span>
+                                            <span class="nav-fragment-badge"
+                                                  :class="fragment.type === 'SIMPLE' ? 'bg-green-100 text-green-800' :
+                                                          fragment.type === 'PARAMETERIZED' ? 'bg-blue-100 text-blue-800' :
+                                                          'bg-purple-100 text-purple-800'"
+                                                  x-text="fragment.type.charAt(0)">
+                                            </span>
+                                        </div>
+                                    </a>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+</body>
+</html>
