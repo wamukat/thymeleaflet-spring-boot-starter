@@ -1,0 +1,336 @@
+(function() {
+    if (window.__thymeleafletPreviewControlsInitialized) {
+        return;
+    }
+    window.__thymeleafletPreviewControlsInitialized = true;
+
+    const INITIAL_PREVIEW_HEIGHT = 80;
+    const MIN_HEIGHT = 60;
+    const MAX_HEIGHT = 1200;
+    let previewContentHeight = INITIAL_PREVIEW_HEIGHT;
+    let stableTimer = null;
+    let lastMeasurementTime = 0;
+    let pendingHeight = null;
+    let previewIdCounter = 0;
+    let fontsReadyPromise = null;
+    let iframeResizeObserver = null;
+    let iframeMutationObserver = null;
+
+    function getPreviewHost() {
+        return document.querySelector('#fragment-preview-host');
+    }
+
+    function setPreviewHeight(heightPx) {
+        const host = getPreviewHost();
+        if (host) {
+            host.style.height = heightPx + 'px';
+        }
+    }
+
+    function resetPreviewHeight() {
+        previewContentHeight = INITIAL_PREVIEW_HEIGHT;
+        setPreviewHeight(INITIAL_PREVIEW_HEIGHT);
+    }
+
+    function handleResize(height) {
+        const adjustedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height));
+        const roundedHeight = Math.round(adjustedHeight / 8) * 8;
+        const stabilizedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, roundedHeight));
+
+        previewContentHeight = stabilizedHeight;
+        setPreviewHeight(stabilizedHeight);
+    }
+
+    function queueStableHeight(height) {
+        pendingHeight = height;
+        lastMeasurementTime = Date.now();
+        if (stableTimer) {
+            clearTimeout(stableTimer);
+        }
+        stableTimer = setTimeout(() => {
+            if (pendingHeight != null && Date.now() - lastMeasurementTime >= 300) {
+                handleResize(pendingHeight);
+                pendingHeight = null;
+            }
+        }, 320);
+    }
+
+    function waitForFontsOnce() {
+        if (fontsReadyPromise) {
+            return fontsReadyPromise;
+        }
+        if (document.fonts && typeof document.fonts.ready === 'object') {
+            fontsReadyPromise = Promise.race([
+                document.fonts.ready,
+                new Promise(resolve => setTimeout(resolve, 1000))
+            ]);
+        } else {
+            fontsReadyPromise = Promise.resolve();
+        }
+        return fontsReadyPromise;
+    }
+
+    function cleanupIframeObservers() {
+        if (iframeResizeObserver) {
+            iframeResizeObserver.disconnect();
+            iframeResizeObserver = null;
+        }
+        if (iframeMutationObserver) {
+            iframeMutationObserver.disconnect();
+            iframeMutationObserver = null;
+        }
+    }
+
+    function measureIframeHeight(iframe) {
+        try {
+            const doc = iframe.contentDocument;
+            if (!doc || !doc.documentElement || !doc.body) {
+                return null;
+            }
+            return Math.ceil(Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight));
+        } catch (error) {
+            return null;
+        }
+    }
+
+    function setupIframeObservers(iframe) {
+        cleanupIframeObservers();
+
+        const handle = () => {
+            const height = measureIframeHeight(iframe);
+            if (height != null) {
+                queueStableHeight(height);
+            }
+        };
+
+        const attach = () => {
+            try {
+                const doc = iframe.contentDocument;
+                if (!doc) return;
+                if ('ResizeObserver' in window) {
+                    iframeResizeObserver = new ResizeObserver(() => handle());
+                    iframeResizeObserver.observe(doc.documentElement);
+                }
+                if ('MutationObserver' in window && doc.body) {
+                    iframeMutationObserver = new MutationObserver(() => handle());
+                    iframeMutationObserver.observe(doc.body, {
+                        attributes: true,
+                        childList: true,
+                        subtree: true
+                    });
+                }
+                handle();
+            } catch (error) {
+                // ignore access errors
+            }
+        };
+
+        iframe.addEventListener('load', attach, { once: true });
+        setTimeout(attach, 0);
+    }
+
+    function parseResourceList(rawValue) {
+        return (rawValue || '')
+            .split(',')
+            .map(value => value.trim())
+            .filter(Boolean);
+    }
+
+    function getPreviewBackgroundColor(host) {
+        if (!host) return 'transparent';
+        const container = host.closest('#preview-container');
+        if (!container) return 'transparent';
+        return getComputedStyle(container).backgroundColor || 'transparent';
+    }
+
+    function buildPreviewDocument(host, html, backgroundColor) {
+        const styles = parseResourceList(host.dataset.previewStylesheets);
+        const scripts = parseResourceList(host.dataset.previewScripts);
+        const wrapper = host?.dataset?.previewWrapper || '';
+        const wrappedHtml = wrapper && wrapper.includes('{{content}}')
+            ? wrapper.replace('{{content}}', html)
+            : html;
+        const previewId = `preview-${Date.now()}-${previewIdCounter++}`;
+        const resolvedBackground = backgroundColor || 'transparent';
+
+        const headParts = [
+            '<meta charset="utf-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1">'
+        ];
+        styles.forEach(href => {
+            headParts.push(`<link rel="stylesheet" href="${href}">`);
+        });
+        headParts.push(
+            `<style>
+                html, body { margin: 0; padding: 0; background: ${resolvedBackground} !important; }
+                body { background-color: ${resolvedBackground} !important; }
+                #preview-root {
+                    width: 100%;
+                    min-height: 50px;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    padding: 20px;
+                    box-sizing: border-box;
+                    background: ${resolvedBackground};
+                }
+                #preview-content {
+                    display: inline-block;
+                    width: fit-content;
+                    max-width: 100%;
+                }
+            </style>`
+        );
+
+        const bodyParts = [
+            `<div id="preview-root"><div id="preview-content">${wrappedHtml}</div></div>`
+        ];
+        scripts.forEach(src => {
+            bodyParts.push(`<script src="${src}"></scr` + `ipt>`);
+        });
+        bodyParts.push(`<script>
+            (function() {
+                const previewId = ${JSON.stringify(previewId)};
+                const postHeight = (height) => {
+                    const safeHeight = Number.isFinite(height) ? height : 0;
+                    parent.postMessage({ type: 'thymeleaflet:preview-height', id: previewId, height: safeHeight }, '*');
+                };
+                function notifyHeight() {
+                    const height = Math.ceil(
+                        Math.max(
+                            document.documentElement.scrollHeight,
+                            document.body.scrollHeight
+                        )
+                    );
+                    postHeight(height);
+                }
+                if ('ResizeObserver' in window) {
+                    const observer = new ResizeObserver(() => notifyHeight());
+                    observer.observe(document.body);
+                }
+                if ('MutationObserver' in window) {
+                    const mutationObserver = new MutationObserver(() => notifyHeight());
+                    mutationObserver.observe(document.body, {
+                        attributes: true,
+                        childList: true,
+                        subtree: true
+                    });
+                }
+                document.addEventListener('click', () => {
+                    setTimeout(notifyHeight, 30);
+                    setTimeout(notifyHeight, 150);
+                });
+                window.addEventListener('load', notifyHeight);
+                setTimeout(notifyHeight, 50);
+                setTimeout(notifyHeight, 250);
+            })();
+        </scr` + `ipt>`);
+
+        const doc = [
+            '<!DOCTYPE html><html><head>',
+            headParts.join(''),
+            '</head><body>',
+            bodyParts.join(''),
+            '</body></html>'
+        ].join('');
+
+        return { doc, previewId };
+    }
+
+    function ensurePreviewMessageListener() {
+        if (window.__thymeleafletPreviewMessageListener) {
+            return;
+        }
+        window.__thymeleafletPreviewMessageListener = true;
+        window.addEventListener('message', event => {
+            const data = event.data || {};
+            if (data.type !== 'thymeleaflet:preview-height') {
+                return;
+            }
+            const host = getPreviewHost();
+            if (!host || host.dataset.previewId !== data.id) {
+                return;
+            }
+            if (typeof data.height !== 'number') {
+                return;
+            }
+            queueStableHeight(data.height);
+        });
+    }
+
+    function renderPreviewFrame(host, html) {
+        host.innerHTML = '';
+        const iframe = document.createElement('iframe');
+        iframe.className = 'w-full border-0 bg-transparent';
+        iframe.style.height = '100%';
+        iframe.setAttribute('scrolling', 'no');
+        iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+        iframe.setAttribute('title', 'Thymeleaflet Preview');
+        const backgroundColor = getPreviewBackgroundColor(host);
+        iframe.style.backgroundColor = backgroundColor;
+        const { doc, previewId } = buildPreviewDocument(host, html, backgroundColor);
+        host.dataset.previewId = previewId;
+        iframe.srcdoc = doc;
+        host.appendChild(iframe);
+        setupIframeObservers(iframe);
+    }
+
+    function renderPreviewError(host, message) {
+        const defaultMessage = document.body.dataset.previewLoadFailed || 'Failed to load preview.';
+        const safeMessage = message || defaultMessage;
+        const html = `
+            <div class="w-full rounded border border-red-200 bg-red-50 px-4 py-3 text-left text-sm text-red-700">
+                ${safeMessage}
+            </div>
+        `;
+        renderPreviewFrame(host, html);
+    }
+
+    async function loadPreview(host) {
+        const targetHost = host || getPreviewHost();
+        if (!targetHost) return;
+
+        ensurePreviewMessageListener();
+        resetPreviewHeight();
+
+        const previewUrl = targetHost.dataset.previewUrl || '';
+        if (!previewUrl) {
+            targetHost.innerHTML = '';
+            return;
+        }
+
+        try {
+            const response = await fetch(previewUrl, {
+                headers: { 'HX-Request': 'true' }
+            });
+            if (!response.ok) {
+                throw new Error(`Preview response status ${response.status}`);
+            }
+            const html = await response.text();
+            if (html.includes('システムエラー') || html.includes('System Error')) {
+                throw new Error('Preview error page detected');
+            }
+            renderPreviewFrame(targetHost, html);
+            await waitForFontsOnce();
+        } catch (error) {
+            const baseMessage = document.body.dataset.previewLoadFailed || 'Failed to load preview.';
+            const message = `${baseMessage}${error?.message ? ` (${error.message})` : ''}`;
+            renderPreviewError(targetHost, message);
+        }
+    }
+
+    window.__thymeleafletResetPreviewHeight = resetPreviewHeight;
+    window.__thymeleafletLoadShadowPreview = loadPreview;
+    window.__thymeleafletLoadPreview = loadPreview;
+    window.__thymeleafletRefreshPreview = () => loadPreview();
+
+    document.addEventListener('DOMContentLoaded', function() {
+        loadPreview();
+    });
+
+    document.addEventListener('htmx:afterSettle', function(event) {
+        if (event.detail.target && event.detail.target.id === 'main-content-area') {
+            loadPreview();
+        }
+    });
+})();
