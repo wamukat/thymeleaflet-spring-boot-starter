@@ -1,7 +1,8 @@
 # Configuration
 
 All properties are under the `thymeleaflet` prefix.
-This page covers *only* configuration. Usage details are in `getting-started.md` and `stories.md`.
+This page covers *only* configuration. Usage details are in
+[getting-started.md](getting-started.md) and [stories.md](stories.md).
 
 ## Base Properties
 
@@ -19,7 +20,7 @@ This page covers *only* configuration. Usage details are in `getting-started.md`
 | `thymeleaflet.resources.cache-duration-seconds` | int | `3600` | Cache duration for resources |
 
 `resources.stylesheets` are injected into the **Shadow DOM preview** only.
-Use `preview.wrapper` in `stories.md` to align layout and theme.
+Use `preview.wrapper` in [stories.md](stories.md) to align layout and theme.
 
 ## Security
 

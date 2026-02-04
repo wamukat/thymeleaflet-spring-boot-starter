@@ -5,14 +5,14 @@ Use this guide when integrating Thymeleaf fragments into a Storybook-style workf
 
 ## Recommended Reading Paths
 
-- **Try it quickly**: `getting-started.md` → `stories.md`
-- **Configure behavior**: `configuration.md` → `security.md`
-- **Document fragments**: `javadoc.md` → `stories.md`
+- **Try it quickly**: [getting-started.md](getting-started.md) → [stories.md](stories.md)
+- **Configure behavior**: [configuration.md](configuration.md) → [security.md](security.md)
+- **Document fragments**: [javadoc.md](javadoc.md) → [stories.md](stories.md)
 
 ## Contents
 
-- `getting-started.md` — installation, quick start, project layout
-- `configuration.md` — all configuration properties and examples
-- `stories.md` — story file format, preview wrapper, URL behavior
-- `javadoc.md` — JavaDoc-style annotations in HTML templates
-- `security.md` — security defaults and production guidance
+- [getting-started.md](getting-started.md) — installation, quick start, project layout
+- [configuration.md](configuration.md) — all configuration properties and examples
+- [stories.md](stories.md) — story file format, preview wrapper, URL behavior
+- [javadoc.md](javadoc.md) — JavaDoc-style annotations in HTML templates
+- [security.md](security.md) — security defaults and production guidance
