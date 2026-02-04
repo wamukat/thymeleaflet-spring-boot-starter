@@ -73,3 +73,8 @@ preview:
 
 - オブジェクトが必要な場合は `model` を使います。
 - `default` は推奨ですが必須ではありません。
+
+## 関連
+
+- はじめに: [getting-started.ja.md](getting-started.ja.md)
+- 設定（stylesheets）: [configuration.ja.md](configuration.ja.md)

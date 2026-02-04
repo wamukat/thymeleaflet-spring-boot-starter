@@ -135,11 +135,12 @@ npm run build
 
 以下を参照してください。
 
-- `docs/getting-started.md`
-- `docs/configuration.md`
-- `docs/javadoc.md`
-- `docs/stories.md`
-- `docs/security.md`
+- [docs/README.ja.md](docs/README.ja.md)
+- [docs/getting-started.ja.md](docs/getting-started.ja.md)
+- [docs/configuration.ja.md](docs/configuration.ja.md)
+- [docs/javadoc.ja.md](docs/javadoc.ja.md)
+- [docs/stories.ja.md](docs/stories.ja.md)
+- [docs/security.ja.md](docs/security.ja.md)
 
 ## コントリビューション
 

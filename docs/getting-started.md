@@ -66,10 +66,10 @@ Alternatively, remove the dependency from production builds.
 2) Add a story file for the same template path.
 3) Reload the UI and select your fragment.
 
-See `stories.md` for the YAML format.
+See [stories.md](stories.md) for the YAML format.
 
 ## Next Steps
 
-- Configure base path and resources: `configuration.md`
-- Add JavaDoc-style annotations: `javadoc.md`
-- Define stories and preview wrappers: `stories.md`
+- Configure base path and resources: [configuration.md](configuration.md)
+- Add JavaDoc-style annotations: [javadoc.md](javadoc.md)
+- Define stories and preview wrappers: [stories.md](stories.md)

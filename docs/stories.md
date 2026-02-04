@@ -74,3 +74,8 @@ preview:
 
 - Use `model` for fragments that require objects (not simple parameters).
 - `default` is recommended but not required.
+
+## Related
+
+- Getting started: [getting-started.md](getting-started.md)
+- Configuration (stylesheets): [configuration.md](configuration.md)

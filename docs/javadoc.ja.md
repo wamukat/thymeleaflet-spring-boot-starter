@@ -30,3 +30,8 @@ Thymeleaflet は HTML テンプレート内の JavaDoc 風コメントを解析�
 - `@example` がフラグメントの紐付けに使われます。
 - 型と必須/任意の記載を推奨します。
 - コメントは HTML コメント内（`<!-- ... -->`）に置いてください。
+
+## 関連
+
+- はじめに: [getting-started.ja.md](getting-started.ja.md)
+- ストーリー: [stories.ja.md](stories.ja.md)
