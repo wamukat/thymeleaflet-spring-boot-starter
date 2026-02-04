@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * プレビューパネルフラグメント
+ *
+ * 右ペインのプレビューカードを提供する。
+ *
+ * @example <div th:replace="~{thymeleaflet/fragments/preview-panel :: panel()}"></div>
+ */
+-->
+<div th:fragment="panel" class="card-thymeleaflet">
+    <div class="card-thymeleaflet-header flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-gray-900">
+            <span th:text="#{thymeleaflet.preview.title}">Preview</span>
+            <span th:if="${selectedStory}" class="text-gray-500 font-normal" th:text="'- ' + ${selectedStory.displayTitle ?: selectedStory.storyName}">- Default</span>
+        </h3>
+        <div class="flex items-center space-x-3">
+            <span class="text-xs text-gray-500" th:text="#{thymeleaflet.livePreview}">Live Preview</span>
+            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+
+            <!-- 背景色切替スイッチ -->
+            <div class="flex items-center space-x-2">
+                <span class="text-xs text-gray-500" th:text="#{thymeleaflet.preview.background}">Background</span>
+                <button id="background-toggle"
+                        class="flex items-center space-x-1 px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                        onclick="togglePreviewBackground()"
+                        th:attr="title=#{thymeleaflet.preview.toggle.title},data-label-light=#{thymeleaflet.preview.light},data-label-dark=#{thymeleaflet.preview.dark}">
+                    <span id="toggle-icon">☀️</span>
+                    <span id="toggle-text" th:text="#{thymeleaflet.preview.light}">Light</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-thymeleaflet-content">
+        <!--
+        /**
+         * プレビュー表示用の内部フラグメント
+         *
+         * @param render {@code Boolean} [required] レンダリング制御フラグ
+         * @example <th:block th:replace="~{::fragment-preview-content(true)}"></th:block>
+         */
+        -->
+        <th:block th:fragment="fragment-preview-content(render)" th:if="${render}">
+            <!-- iframeプレビューコンテンツ -->
+            <div th:if="${selectedFragment != null and selectedStory != null}"
+                 id="fragment-preview-host"
+                 th:attr="data-preview-url=@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${selectedStory.storyName} + '/render'}, data-preview-wrapper=${selectedStory.story.preview.wrapper}, data-preview-stylesheets=${previewStylesheets}, data-preview-scripts=${previewScripts}, aria-label=#{thymeleaflet.preview.ariaLabel}"
+                 class="w-full bg-transparent transition-all duration-300"
+                 style="min-height: 0; height: 0; display: block; overflow: hidden;"
+                 >
+            </div>
+
+            <!-- プレースホルダー表示 -->
+            <div th:if="${selectedFragment == null or selectedStory == null}"
+                 class="flex items-center justify-center p-8 text-gray-500">
+                <div class="text-center">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                    <p class="text-sm" th:text="#{thymeleaflet.preview.selectFragmentAndStory}">
+                        Select a fragment and story to preview
+                    </p>
+                </div>
+            </div>
+        </th:block>
+
+        <div th:replace="~{thymeleaflet/fragments/preview-container :: container(false, null, 'preview-container', 'gray-200', 'min-h-16', null, null, null, null, ~{::fragment-preview-content(true)})}"></div>
+    </div>
+</div>
+
+</body>
+</html>
