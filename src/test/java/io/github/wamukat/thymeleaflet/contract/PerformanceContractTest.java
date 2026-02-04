@@ -1,6 +1,5 @@
 package io.github.wamukat.thymeleaflet.contract;
 
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.MigrationProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,8 +38,6 @@ class PerformanceContractTest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
-    @Autowired
-    private MigrationProperties migrationProperties;
 
     private MockMvc mockMvc;
 
@@ -89,7 +86,7 @@ class PerformanceContractTest {
         
         double avgResponseTime = averageTime.getAsDouble();
         double allowedThreshold = FRAGMENT_LIST_BASELINE_MS * 
-                (1.0 + migrationProperties.getMonitoring().getResponseTimeDegradationThreshold() / 100.0);
+                (1.0 + 10 / 100.0);
         
         // パフォーマンス契約の検証
         assertTrue(avgResponseTime <= allowedThreshold, 
@@ -135,7 +132,7 @@ class PerformanceContractTest {
         
         double avgResponseTime = averageTime.getAsDouble();
         double allowedThreshold = STORY_PREVIEW_BASELINE_MS * 
-                (1.0 + migrationProperties.getMonitoring().getResponseTimeDegradationThreshold() / 100.0);
+                (1.0 + 10 / 100.0);
         
         // パフォーマンス契約の検証
         assertTrue(avgResponseTime <= allowedThreshold, 
@@ -176,7 +173,7 @@ class PerformanceContractTest {
         
         double avgValidationTime = averageTime.getAsDouble();
         double allowedThreshold = SECURITY_VALIDATION_BASELINE_MS * 
-                (1.0 + migrationProperties.getMonitoring().getResponseTimeDegradationThreshold() / 100.0);
+                (1.0 + 10 / 100.0);
         
         // セキュリティ検証パフォーマンス契約の検証
         assertTrue(avgValidationTime <= allowedThreshold, 
