@@ -99,4 +99,20 @@
   .category-organisms .sidebar-stats-icon {
     @apply bg-pink-100 text-pink-600;
   }
+
+  .thymeleaflet-main {
+    @apply flex flex-col min-h-screen;
+  }
+
+  .thymeleaflet-main-body {
+    @apply flex flex-col flex-1;
+  }
+
+  .thymeleaflet-footer {
+    @apply mt-auto pt-6;
+  }
+
+  .thymeleaflet-footer-inner {
+    @apply border-t border-gray-200 bg-white/70;
+  }
 }
