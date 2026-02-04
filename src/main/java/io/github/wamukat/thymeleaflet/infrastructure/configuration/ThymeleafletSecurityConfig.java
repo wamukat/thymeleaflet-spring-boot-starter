@@ -58,9 +58,9 @@ public class ThymeleafletSecurityConfig {
                 // 除外対象（API エンドポイントなど）
                 .ignoringRequestMatchers(
                     "/thymeleaflet/main-content",  // メインコンテンツ遅延読み込み
-                    "/thymeleaflet/*/render",      // HTMX プレビュー
-                    "/thymeleaflet/*/usage",       // 使用例表示
-                    "/thymeleaflet/*/content"      // コンテンツ片取得
+                    "/thymeleaflet/**/render",      // HTMX プレビュー
+                    "/thymeleaflet/**/usage",       // 使用例表示
+                    "/thymeleaflet/**/content"      // コンテンツ片取得
                 )
             )
             
