@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * 使用例パネルフラグメント
+ *
+ * 右ペインの使用例カードを提供する。
+ *
+ * @example <div th:replace="~{thymeleaflet/fragments/usage-panel :: panel()}"></div>
+ */
+-->
+<div th:fragment="panel" class="card-thymeleaflet">
+    <div class="card-thymeleaflet-header">
+        <h3 class="text-lg font-semibold text-gray-900">
+            <span th:text="#{thymeleaflet.usage.title}">Usage Example</span>
+            <span th:if="${selectedStory}" class="text-gray-500 font-normal" th:text="'- ' + ${selectedStory.displayTitle ?: selectedStory.storyName}">- Default</span>
+        </h3>
+    </div>
+    <div class="card-thymeleaflet-content">
+        <div th:if="${displayModel != null and !#maps.isEmpty(displayModel)}" class="mb-3 text-xs text-gray-500">
+            <span th:text="#{thymeleaflet.storyPreview.model.description}">
+                Model values are injected via story.model.
+            </span>
+        </div>
+        <div th:if="${selectedFragment != null and selectedStory != null}"
+             hx-get th:hx-get="@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${selectedStory.storyName} + '/usage'}"
+             hx-trigger="load"
+             hx-swap="innerHTML">
+            <!-- HTMXでロードされる使用例 -->
+        </div>
+
+        <!-- 統一コピーボタンコンポーネント使用 -->
+        <button class="mt-4 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg font-medium transition-colors"
+                onclick="copyUsageExample('usage-example')">
+            <span th:text="#{thymeleaflet.usage.copy}">Copy usage</span>
+        </button>
+    </div>
+</div>
+
+</body>
+</html>
