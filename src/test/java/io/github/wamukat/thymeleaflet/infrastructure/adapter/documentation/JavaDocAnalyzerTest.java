@@ -256,14 +256,14 @@ class JavaDocAnalyzerTest {
         assertThat(result).hasSize(1);
         
         JavaDocAnalyzer.JavaDocInfo docInfo = result.get(0);
-        assertThat(docInfo.getExamples()).hasSize(1);
+        assertThat(docInfo.getExamples()).hasSize(2);
         
         List<JavaDocAnalyzer.ExampleInfo> examples = docInfo.getExamples();
-        if (!examples.isEmpty()) {
-            assertThat(examples.get(0).getTemplatePath()).isEqualTo("button");
-            assertThat(examples.get(0).getFragmentName()).isEqualTo("primary-button");
-            assertThat(examples.get(0).getArguments()).contains("'Cancel'", "'secondary'"); // 実際の値に修正
-        }
-        // 現状の実装では @example の複数抽出が安定していないため 1件のみを仕様とする
+        assertThat(examples.get(0).getTemplatePath()).isEqualTo("button");
+        assertThat(examples.get(0).getFragmentName()).isEqualTo("primary-button");
+        assertThat(examples.get(0).getArguments()).contains("'Save'", "'primary'");
+        assertThat(examples.get(1).getTemplatePath()).isEqualTo("button");
+        assertThat(examples.get(1).getFragmentName()).isEqualTo("primary-button");
+        assertThat(examples.get(1).getArguments()).contains("'Cancel'", "'secondary'");
     }
 }
