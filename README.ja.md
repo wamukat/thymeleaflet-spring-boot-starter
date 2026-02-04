@@ -1,5 +1,7 @@
 # Thymeleaflet Spring Boot Starter
 
+[![Maven Central](https://img.shields.io/maven-central/v/io.github.wamukat/thymeleaflet-spring-boot-starter.svg)](https://central.sonatype.com/artifact/io.github.wamukat/thymeleaflet-spring-boot-starter)
+
 <p align="center">
   <img src="assets/logo/thymeleaflet-logo.png" width="320" alt="Thymeleaflet ロゴ">
 </p>
