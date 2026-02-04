@@ -80,7 +80,7 @@
         </div>
         
         <!-- プレビューコンテンツ -->
-        <div class="preview-content">
+        <div class="preview-content w-full flex-1">
             <!-- HTMXまたは動的コンテンツがここに挿入される -->
             <div th:if="${previewContentFragment != null}" th:replace="${previewContentFragment}"></div>
         </div>
@@ -115,7 +115,7 @@
      th:class="'border-2 border-solid border-' + ${borderColorClass} + ' p-8 rounded-lg min-h-20 preview-background-light ' + ${customClasses}">
     
     <!-- プレビューコンテンツ -->
-    <div class="preview-content">
+    <div class="preview-content w-full flex-1">
         <!-- 静的コンテンツがここに挿入される -->
     </div>
 </div>

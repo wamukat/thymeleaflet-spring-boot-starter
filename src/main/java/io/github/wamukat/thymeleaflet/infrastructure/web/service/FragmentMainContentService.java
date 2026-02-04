@@ -6,6 +6,7 @@ import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class FragmentMainContentService {
     
     @Autowired
     private FragmentSummaryMapper fragmentSummaryMapper;
+
+    @Autowired
+    private StorybookProperties storybookProperties;
     
     /**
      * メインコンテンツ遅延読み込み処理
@@ -90,6 +94,8 @@ public class FragmentMainContentService {
             model.addAttribute("uniquePaths", uniquePaths);
             model.addAttribute("hierarchicalFragments", hierarchicalFragments);
             model.addAttribute("totalCount", allFragments.size());
+            model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
+            model.addAttribute("previewScripts", joinResources(storybookProperties.getResources().getScripts()));
             
             long totalTime = System.currentTimeMillis() - startTime;
             logger.info("=== Main Content (Delayed Loading) COMPLETED in {} ms ===", totalTime);
@@ -130,5 +136,15 @@ public class FragmentMainContentService {
         public String errorMessage() { return errorMessage; }
         public int fragmentCount() { return fragmentCount; }
         public long processingTime() { return processingTime; }
+    }
+
+    private String joinResources(List<String> resources) {
+        if (resources == null || resources.isEmpty()) {
+            return "";
+        }
+        return resources.stream()
+            .map(value -> value == null ? "" : value.trim())
+            .filter(value -> !value.isEmpty())
+            .collect(Collectors.joining(","));
     }
 }
