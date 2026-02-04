@@ -316,7 +316,7 @@
                     'HX-Request': 'true',
                     'Content-Type': 'application/json'
                 },
-                body: hasOverrides ? JSON.stringify({ overrides: previewState.storyOverrides }) : undefined
+                body: hasOverrides ? JSON.stringify(previewState.storyOverrides) : undefined
             });
             if (!response.ok) {
                 throw new Error(`Preview response status ${response.status}`);

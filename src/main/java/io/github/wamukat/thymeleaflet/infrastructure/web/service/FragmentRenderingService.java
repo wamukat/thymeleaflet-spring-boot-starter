@@ -55,14 +55,15 @@ public class FragmentRenderingService {
      * @return レンダリング結果
      */
     public RenderingResult renderStory(String templatePath, String fragmentName, String storyName, Model model) {
-        return renderStory(templatePath, fragmentName, storyName, model, null);
+        return renderStory(templatePath, fragmentName, storyName, model, null, null);
     }
 
     public RenderingResult renderStory(String templatePath,
                                        String fragmentName,
                                        String storyName,
                                        Model model,
-                                       Map<String, Object> overrides) {
+                                       Map<String, Object> parameterOverrides,
+                                       Map<String, Object> modelOverrides) {
         try {
             logger.info("=== RENDER STORY START ===");
             logger.info("Request params: templatePath={}, fragmentName={}, storyName={}", 
@@ -92,11 +93,18 @@ public class FragmentRenderingService {
             logger.info("Fragment Type: {}", storyInfo.getFragmentSummary().getType());
 
             Map<String, Object> storyModel = storyInfo.getModel();
+            Map<String, Object> mergedModel = new HashMap<>();
             if (storyModel != null && !storyModel.isEmpty()) {
-                for (Map.Entry<String, Object> entry : storyModel.entrySet()) {
+                mergedModel.putAll(storyModel);
+            }
+            if (modelOverrides != null && !modelOverrides.isEmpty()) {
+                mergedModel.putAll(modelOverrides);
+            }
+            if (!mergedModel.isEmpty()) {
+                for (Map.Entry<String, Object> entry : mergedModel.entrySet()) {
                     model.addAttribute(entry.getKey(), thymeleafFragmentRenderer.resolveTemplateValue(entry.getValue()));
                 }
-                logger.info("Applied story model values: {}", storyModel.keySet());
+                logger.info("Applied story model values: {}", mergedModel.keySet());
             }
             
             // SIMPLEフラグメント（パラメータなし）の場合はstories.ymlは不要
@@ -127,11 +135,11 @@ public class FragmentRenderingService {
                 parameters = Map.of();
             }
             Map<String, Object> mergedParameters = new HashMap<>(parameters);
-            if (overrides != null && !overrides.isEmpty()) {
-                mergedParameters.putAll(overrides);
+            if (parameterOverrides != null && !parameterOverrides.isEmpty()) {
+                mergedParameters.putAll(parameterOverrides);
             }
             
-            if (mergedParameters.isEmpty() && (storyModel == null || storyModel.isEmpty())) {
+            if (mergedParameters.isEmpty() && mergedModel.isEmpty()) {
                 // Stories YAMLファイルもJavaDocも利用できない場合はエラー表示
                 model.addAttribute("fragmentName", fragmentName);
                 model.addAttribute("templatePath", fullTemplatePath);
