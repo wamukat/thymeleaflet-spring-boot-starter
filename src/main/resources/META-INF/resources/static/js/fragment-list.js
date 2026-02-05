@@ -319,22 +319,79 @@ function hierarchicalFragmentList() {
 
         updateCustomModelJson(rawValue) {
             this.customModelJson = rawValue;
-            try {
-                const parsed = rawValue === '' ? {} : JSON.parse(rawValue);
-                if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
-                    this.customStoryState = {
-                        parameters: { ...(this.customStoryState?.parameters || {}) },
-                        model: parsed
-                    };
-                    this.customModelJsonError = false;
-                    this.saveCustomStoryValues(this.selectedFragment, this.customStoryState);
-                    this.applyCustomOverrides();
-                    return;
-                }
-            } catch (error) {
-                // handled below
+            const parsed = this.parseCustomModelValue(rawValue);
+            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                this.customStoryState = {
+                    parameters: { ...(this.customStoryState?.parameters || {}) },
+                    model: parsed
+                };
+                this.customModelJsonError = false;
+                this.saveCustomStoryValues(this.selectedFragment, this.customStoryState);
+                this.applyCustomOverrides();
+                return;
             }
             this.customModelJsonError = true;
+        },
+
+        parseCustomModelValue(rawValue) {
+            if (rawValue === '') {
+                return {};
+            }
+            try {
+                const parsed = JSON.parse(rawValue);
+                if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    return parsed;
+                }
+            } catch (error) {
+                // fall through to map-style parser
+            }
+            const mapParsed = this.parseMapStyleModel(rawValue);
+            return mapParsed;
+        },
+
+        parseMapStyleModel(rawValue) {
+            if (!rawValue) {
+                return null;
+            }
+            let text = String(rawValue).trim();
+            if (!text) {
+                return null;
+            }
+            if (text.startsWith('{') && text.endsWith('}')) {
+                text = text.slice(1, -1).trim();
+            }
+            if (!text) {
+                return {};
+            }
+            const result = {};
+            const pairs = text.split(',').map(part => part.trim()).filter(Boolean);
+            for (const pair of pairs) {
+                const eqIndex = pair.indexOf('=');
+                if (eqIndex === -1) {
+                    return null;
+                }
+                const key = pair.slice(0, eqIndex).trim();
+                const rawValuePart = pair.slice(eqIndex + 1).trim();
+                if (!key) {
+                    return null;
+                }
+                result[key] = this.coerceScalar(rawValuePart);
+            }
+            return result;
+        },
+
+        coerceScalar(value) {
+            if (value === '') {
+                return '';
+            }
+            const lower = value.toLowerCase();
+            if (lower === 'true') return true;
+            if (lower === 'false') return false;
+            if (lower === 'null') return null;
+            if (!Number.isNaN(Number(value)) && /^[+-]?\d+(\.\d+)?$/.test(value)) {
+                return Number(value);
+            }
+            return value;
         },
 
         applyCustomOverrides() {
