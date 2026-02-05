@@ -240,7 +240,8 @@
                                 </div>
                             </div>
                         </template>
-                        <template x-if="customStoryEntries('model').length === 0">
+                        <template x-if="customStoryEntries('model').length === 0"
+                                  th:if="${javadocInfo != null and !#lists.isEmpty(javadocInfo.models)}">
                             <div :class="customStoryEntries('parameters').length > 0 ? 'mt-6' : ''">
                                 <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded"
                                      th:text="#{thymeleaflet.custom.model}">
