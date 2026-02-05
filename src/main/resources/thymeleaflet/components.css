@@ -129,7 +129,7 @@
   }
 
   .nav-main-content {
-    @apply ml-80 min-h-screen bg-gray-50;
+    @apply ml-80 min-h-screen bg-gray-50 flex flex-col;
   }
 
   .nav-tree {
