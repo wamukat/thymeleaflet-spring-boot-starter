@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.preview.FragmentPreviewUseCase;
+import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
@@ -37,7 +38,10 @@ public class FragmentJsonService {
     
     @Autowired
     private FragmentSummaryMapper fragmentSummaryMapper;
-    
+
+    @Autowired
+    private StoryParameterUseCase storyParameterUseCase;
+
     /**
      * フラグメントリストを拡張JSON形式に変換してModel属性に設定
      * 型安全性を向上: Object型で受け取り実行時に適切に処理
@@ -107,11 +111,24 @@ public class FragmentJsonService {
                 List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(infraFragment);
                 fragmentData.put("stories", stories.stream().map(story -> {
                     Map<String, Object> storyData = new HashMap<>();
+                    Map<String, Object> storyParameters = story.getParameters();
+                    if (storyParameters == null || storyParameters.isEmpty()) {
+                        Map<String, Object> fallbackParameters = storyParameterUseCase.getParametersForStory(story);
+                        if (fallbackParameters != null && !fallbackParameters.isEmpty()) {
+                            storyParameters = fallbackParameters;
+                        }
+                    }
                     storyData.put("storyName", story.getStoryName());
                     storyData.put("displayTitle", story.getDisplayTitle());
                     storyData.put("displayDescription", story.getDisplayDescription());
                     storyData.put("hasStoryConfig", story.hasStoryConfig());
-                    storyData.put("parameters", story.getParameters());
+                    if (storyParameters != null && !storyParameters.isEmpty()) {
+                        Map<String, Object> sanitizedParameters = new HashMap<>();
+                        storyParameters.forEach((key, value) -> sanitizedParameters.put(key, sanitizeParameterValue(value)));
+                        storyData.put("parameters", sanitizedParameters);
+                    } else {
+                        storyData.put("parameters", storyParameters);
+                    }
                     storyData.put("model", story.getModel());
                     return storyData;
                 }).collect(Collectors.toList()));
@@ -123,5 +140,33 @@ public class FragmentJsonService {
         // hierarchicalFragmentsをListに変換
         List<Map<String, Object>> hierarchicalFragmentsList = List.of(hierarchicalFragments);
         fragmentPreviewUseCase.setupFragmentJsonAttributes(enrichedFragments, hierarchicalFragmentsList, model);
+    }
+
+    private Object sanitizeParameterValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof String || value instanceof Number || value instanceof Boolean || value instanceof Character) {
+            return value;
+        }
+        if (value instanceof Map<?, ?> mapValue) {
+            Map<String, Object> sanitized = new HashMap<>();
+            mapValue.forEach((key, entryValue) -> sanitized.put(String.valueOf(key), sanitizeParameterValue(entryValue)));
+            return sanitized;
+        }
+        if (value instanceof Iterable<?> iterable) {
+            List<Object> sanitized = new java.util.ArrayList<>();
+            iterable.forEach(entryValue -> sanitized.add(sanitizeParameterValue(entryValue)));
+            return sanitized;
+        }
+        if (value.getClass().isArray()) {
+            int length = java.lang.reflect.Array.getLength(value);
+            List<Object> sanitized = new java.util.ArrayList<>(length);
+            for (int i = 0; i < length; i++) {
+                sanitized.add(sanitizeParameterValue(java.lang.reflect.Array.get(value, i)));
+            }
+            return sanitized;
+        }
+        return value.toString();
     }
 }
