@@ -65,6 +65,8 @@ function hierarchicalFragmentList() {
         customStoryStoragePrefix: 'thymeleaflet:custom:',
         customStoryRawValues: {},
         customStoryJsonErrors: {},
+        customModelJson: '{}',
+        customModelJsonError: false,
 
         initializeFromServerState() {
             // サーバーサイドから渡された選択状態を使用
@@ -216,6 +218,8 @@ function hierarchicalFragmentList() {
                 this.customStoryState = stored;
                 this.customStoryRawValues = this.buildRawValuesFromCustom(stored);
                 this.customStoryJsonErrors = {};
+                this.customModelJson = JSON.stringify(this.customStoryState.model || {}, null, 2);
+                this.customModelJsonError = false;
                 return;
             }
 
@@ -229,6 +233,8 @@ function hierarchicalFragmentList() {
             this.customStoryState = { parameters: { ...baseParams }, model: { ...baseModel } };
             this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryState);
             this.customStoryJsonErrors = {};
+            this.customModelJson = JSON.stringify(this.customStoryState.model || {}, null, 2);
+            this.customModelJsonError = false;
             this.saveCustomStoryValues(fragment, this.customStoryState);
         },
 
@@ -309,6 +315,26 @@ function hierarchicalFragmentList() {
             }
             this.saveCustomStoryValues(this.selectedFragment, this.customStoryState);
             this.applyCustomOverrides();
+        },
+
+        updateCustomModelJson(rawValue) {
+            this.customModelJson = rawValue;
+            try {
+                const parsed = rawValue === '' ? {} : JSON.parse(rawValue);
+                if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                    this.customStoryState = {
+                        parameters: { ...(this.customStoryState?.parameters || {}) },
+                        model: parsed
+                    };
+                    this.customModelJsonError = false;
+                    this.saveCustomStoryValues(this.selectedFragment, this.customStoryState);
+                    this.applyCustomOverrides();
+                    return;
+                }
+            } catch (error) {
+                // handled below
+            }
+            this.customModelJsonError = true;
         },
 
         applyCustomOverrides() {
