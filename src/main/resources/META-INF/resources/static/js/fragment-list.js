@@ -65,6 +65,8 @@ function hierarchicalFragmentList() {
         customStoryStoragePrefix: 'thymeleaflet:custom:',
         customStoryRawValues: {},
         customStoryJsonErrors: {},
+        customModelJson: '{}',
+        customModelJsonError: false,
 
         initializeFromServerState() {
             // サーバーサイドから渡された選択状態を使用
@@ -216,6 +218,8 @@ function hierarchicalFragmentList() {
                 this.customStoryState = stored;
                 this.customStoryRawValues = this.buildRawValuesFromCustom(stored);
                 this.customStoryJsonErrors = {};
+                this.customModelJson = this.stringifyObjectLiteral(this.customStoryState.model || {});
+                this.customModelJsonError = false;
                 return;
             }
 
@@ -229,6 +233,8 @@ function hierarchicalFragmentList() {
             this.customStoryState = { parameters: { ...baseParams }, model: { ...baseModel } };
             this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryState);
             this.customStoryJsonErrors = {};
+            this.customModelJson = this.stringifyObjectLiteral(this.customStoryState.model || {});
+            this.customModelJsonError = false;
             this.saveCustomStoryValues(fragment, this.customStoryState);
         },
 
@@ -303,12 +309,117 @@ function hierarchicalFragmentList() {
             };
             nextState[kind][key] = nextValue;
             this.customStoryState = nextState;
+            if (kind === 'model') {
+                this.customModelJson = this.stringifyObjectLiteral(nextState.model || {});
+                this.customModelJsonError = false;
+            }
             if (valueType !== 'object' && valueType !== 'array') {
                 const { [`${kind}:${key}`]: _, ...restRaw } = this.customStoryRawValues || {};
                 this.customStoryRawValues = restRaw;
             }
             this.saveCustomStoryValues(this.selectedFragment, this.customStoryState);
             this.applyCustomOverrides();
+        },
+
+        updateCustomModelJson(rawValue) {
+            this.customModelJson = rawValue;
+            const parsed = this.parseCustomModelValue(rawValue);
+            if (parsed && typeof parsed === 'object') {
+                this.customStoryState = {
+                    parameters: { ...(this.customStoryState?.parameters || {}) },
+                    model: parsed
+                };
+                this.customModelJsonError = false;
+                this.saveCustomStoryValues(this.selectedFragment, this.customStoryState);
+                this.applyCustomOverrides();
+                return;
+            }
+            this.customModelJsonError = true;
+        },
+
+        parseCustomModelValue(rawValue) {
+            if (rawValue === '') {
+                return {};
+            }
+            const text = String(rawValue).trim();
+            if (!text) {
+                return null;
+            }
+            const normalized = this.normalizeObjectLiteral(text);
+            if (!normalized) {
+                return null;
+            }
+            try {
+                const parsed = JSON.parse(normalized);
+                if (parsed === null || parsed === undefined) {
+                    return null;
+                }
+                if (typeof parsed === 'object') {
+                    return parsed;
+                }
+            } catch (error) {
+                return null;
+            }
+            return null;
+        },
+
+        normalizeObjectLiteral(text) {
+            const trimmed = String(text || '').trim();
+            if (!trimmed) {
+                return null;
+            }
+            if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
+                return null;
+            }
+            // Quote unquoted keys: {name: "A"} -> {"name": "A"}
+            const withQuotedKeys = trimmed.replace(/([{\[,]\s*)([A-Za-z_$][\w$]*)\s*:/g, '$1"$2":');
+            // Convert single-quoted strings to double-quoted strings
+            const withDoubleQuotes = withQuotedKeys.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, value) => {
+                const normalizedValue = value.replace(/\\'/g, "'").replace(/\"/g, '\\"');
+                return `"${normalizedValue}"`;
+            });
+            return withDoubleQuotes;
+        },
+
+        stringifyObjectLiteral(value, indent = 0) {
+            const pad = '  '.repeat(indent);
+            if (value === null || value === undefined) {
+                return 'null';
+            }
+            if (Array.isArray(value)) {
+                if (value.length === 0) {
+                    return '[]';
+                }
+                const items = value.map(item => this.stringifyObjectLiteral(item, indent + 1));
+                const multiline = items.some(item => item.includes('\n'));
+                if (!multiline && items.join(', ').length <= 80) {
+                    return `[${items.join(', ')}]`;
+                }
+                return `[\n${items.map(item => `${'  '.repeat(indent + 1)}${item}`).join(',\n')}\n${pad}]`;
+            }
+            if (typeof value === 'object') {
+                const entries = Object.entries(value);
+                if (entries.length === 0) {
+                    return '{}';
+                }
+                const rendered = entries.map(([key, val]) => {
+                    const safeKey = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) ? key : JSON.stringify(key);
+                    const renderedValue = this.stringifyObjectLiteral(val, indent + 1);
+                    if (renderedValue.includes('\n')) {
+                        return `${safeKey}: ${renderedValue}`;
+                    }
+                    return `${safeKey}: ${renderedValue}`;
+                });
+                const multiline = rendered.some(item => item.includes('\n')) || rendered.join(', ').length > 80;
+                if (!multiline) {
+                    return `{${rendered.join(', ')}}`;
+                }
+                return `{\n${rendered.map(item => `${'  '.repeat(indent + 1)}${item}`).join(',\n')}\n${pad}}`;
+            }
+            if (typeof value === 'string') {
+                return JSON.stringify(value);
+            }
+            return String(value);
         },
 
         applyCustomOverrides() {
