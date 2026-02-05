@@ -7,6 +7,16 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 - TBD
 
+## [0.1.1] - 2026-02-05
+
+- Allow custom model editing when `stories.yml` is missing.
+- Accept object literal input for custom model values.
+- Tidy Custom badges to icon-only cues and stop tracking generated sample CSS.
+
+### Issues
+
+- #18 Custom story cannot edit model when stories.yml is missing
+
 ## [0.1.0] - 2026-02-05
 
 - Added editable controls for story parameters/models and aligned custom/default story layouts.
