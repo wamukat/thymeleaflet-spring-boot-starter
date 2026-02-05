@@ -15,4 +15,4 @@
 
 ## Release Flow
 - 「新しいバージョンとしてリリースする」と依頼されたら、現在のバージョン番号を添えて「バージョン番号はどうする？」と確認する。
-- 確定後は `RELEASE.md` の手順に従い、`pom.xml` と `CHANGELOG.md` を更新してリリースを進める。
+- 確定後は `RELEASE.md` の手順に従い、`pom.xml` と `sample/pom.xml` のバージョンを更新し、`CHANGELOG.md` を更新してリリースを進める。
