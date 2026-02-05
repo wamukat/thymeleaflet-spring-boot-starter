@@ -44,6 +44,32 @@ You can change it via `server.port` if needed.
 - Forms page: `http://localhost:6006/forms`
 - Thymeleaflet UI: `http://localhost:6006/thymeleaflet`
 
+### UI Layout (Reference)
+
+```
+[Global Header]
+  - Logo / Title
+  - Page Tools (language switch etc.)
+
+[Main Layout]
+  ├─ [Left Sidebar] Fragment List
+  │    ├─ [Fragment Search]
+  │    └─ [Fragment Tree/List]
+  │
+  ├─ [Center Pane] Story Panel
+  │    ├─ [Story List]
+  │    └─ [Story Values]
+  │         ├─ [Custom Parameters]
+  │         └─ [Custom Model]
+  │
+  └─ [Right Pane] Preview & Details
+       ├─ [Preview Panel]
+       │    ├─ [Preview Toolbar]
+       │    └─ [Preview Canvas] (iframe)
+       ├─ [Usage Panel]
+       └─ [Fragment Details Panel]
+```
+
 ## Sample Styling (Tailwind + daisyUI)
 
 The sample UI uses Tailwind CSS and daisyUI. Build CSS assets before running:

@@ -44,6 +44,32 @@ http://localhost:6006/thymeleaflet
 - フォーム画面: `http://localhost:6006/forms`
 - Thymeleaflet UI: `http://localhost:6006/thymeleaflet`
 
+### UI 画面構成（参照用）
+
+```
+[Global Header]
+  - ロゴ / タイトル
+  - ページツール（言語切替など）
+
+[Main Layout]
+  ├─ [Left Sidebar] Fragment List
+  │    ├─ [Fragment Search]
+  │    └─ [Fragment Tree/List]
+  │
+  ├─ [Center Pane] Story Panel
+  │    ├─ [Story List]
+  │    └─ [Story Values]
+  │         ├─ [Custom Parameters]
+  │         └─ [Custom Model]
+  │
+  └─ [Right Pane] Preview & Details
+       ├─ [Preview Panel]
+       │    ├─ [Preview Toolbar]
+       │    └─ [Preview Canvas] (iframe)
+       ├─ [Usage Panel]
+       └─ [Fragment Details Panel]
+```
+
 ## サンプルのスタイル（Tailwind + daisyUI）
 
 サンプルは Tailwind CSS と daisyUI を使用しています。起動前に CSS をビルドしてください。
