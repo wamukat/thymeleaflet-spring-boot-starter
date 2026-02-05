@@ -12,3 +12,7 @@
 - 改行付きで確実に登録する方法（例）:
   - PR: `gh pr edit <PR番号> --body-file /tmp/pr_body.md`
   - Issue: `gh issue create --title "..." --body-file /tmp/issue_body.md`
+
+## Release Flow
+- 「新しいバージョンとしてリリースする」と依頼されたら、最初に「バージョン番号はどうする？」と確認する。
+- 確定後は `RELEASE.md` の手順に従い、`pom.xml` と `CHANGELOG.md` を更新してリリースを進める。
