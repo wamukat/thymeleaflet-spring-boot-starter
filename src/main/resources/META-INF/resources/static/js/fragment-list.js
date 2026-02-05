@@ -345,11 +345,12 @@ function hierarchicalFragmentList() {
             if (!text) {
                 return null;
             }
-            if (/[;]|\\b(function|=>|new|this|window|document)\\b/.test(text)) {
+            const normalized = this.normalizeObjectLiteral(text);
+            if (!normalized) {
                 return null;
             }
             try {
-                const parsed = Function(`"use strict"; return (${text});`)();
+                const parsed = JSON.parse(normalized);
                 if (parsed === null || parsed === undefined) {
                     return null;
                 }
@@ -360,6 +361,24 @@ function hierarchicalFragmentList() {
                 return null;
             }
             return null;
+        },
+
+        normalizeObjectLiteral(text) {
+            const trimmed = String(text || '').trim();
+            if (!trimmed) {
+                return null;
+            }
+            if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
+                return null;
+            }
+            // Quote unquoted keys: {name: "A"} -> {"name": "A"}
+            const withQuotedKeys = trimmed.replace(/([{\[,]\s*)([A-Za-z_$][\w$]*)\s*:/g, '$1"$2":');
+            // Convert single-quoted strings to double-quoted strings
+            const withDoubleQuotes = withQuotedKeys.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, value) => {
+                const normalizedValue = value.replace(/\\'/g, "'").replace(/\"/g, '\\"');
+                return `"${normalizedValue}"`;
+            });
+            return withDoubleQuotes;
         },
 
         stringifyObjectLiteral(value, indent = 0) {
