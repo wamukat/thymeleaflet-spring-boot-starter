@@ -218,7 +218,7 @@ function hierarchicalFragmentList() {
                 this.customStoryState = stored;
                 this.customStoryRawValues = this.buildRawValuesFromCustom(stored);
                 this.customStoryJsonErrors = {};
-                this.customModelJson = JSON.stringify(this.customStoryState.model || {}, null, 2);
+                this.customModelJson = this.stringifyObjectLiteral(this.customStoryState.model || {});
                 this.customModelJsonError = false;
                 return;
             }
@@ -233,7 +233,7 @@ function hierarchicalFragmentList() {
             this.customStoryState = { parameters: { ...baseParams }, model: { ...baseModel } };
             this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryState);
             this.customStoryJsonErrors = {};
-            this.customModelJson = JSON.stringify(this.customStoryState.model || {}, null, 2);
+            this.customModelJson = this.stringifyObjectLiteral(this.customStoryState.model || {});
             this.customModelJsonError = false;
             this.saveCustomStoryValues(fragment, this.customStoryState);
         },
@@ -309,6 +309,10 @@ function hierarchicalFragmentList() {
             };
             nextState[kind][key] = nextValue;
             this.customStoryState = nextState;
+            if (kind === 'model') {
+                this.customModelJson = this.stringifyObjectLiteral(nextState.model || {});
+                this.customModelJsonError = false;
+            }
             if (valueType !== 'object' && valueType !== 'array') {
                 const { [`${kind}:${key}`]: _, ...restRaw } = this.customStoryRawValues || {};
                 this.customStoryRawValues = restRaw;
@@ -356,6 +360,47 @@ function hierarchicalFragmentList() {
                 return null;
             }
             return null;
+        },
+
+        stringifyObjectLiteral(value, indent = 0) {
+            const pad = '  '.repeat(indent);
+            if (value === null || value === undefined) {
+                return 'null';
+            }
+            if (Array.isArray(value)) {
+                if (value.length === 0) {
+                    return '[]';
+                }
+                const items = value.map(item => this.stringifyObjectLiteral(item, indent + 1));
+                const multiline = items.some(item => item.includes('\n'));
+                if (!multiline && items.join(', ').length <= 80) {
+                    return `[${items.join(', ')}]`;
+                }
+                return `[\n${items.map(item => `${'  '.repeat(indent + 1)}${item}`).join(',\n')}\n${pad}]`;
+            }
+            if (typeof value === 'object') {
+                const entries = Object.entries(value);
+                if (entries.length === 0) {
+                    return '{}';
+                }
+                const rendered = entries.map(([key, val]) => {
+                    const safeKey = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) ? key : JSON.stringify(key);
+                    const renderedValue = this.stringifyObjectLiteral(val, indent + 1);
+                    if (renderedValue.includes('\n')) {
+                        return `${safeKey}: ${renderedValue}`;
+                    }
+                    return `${safeKey}: ${renderedValue}`;
+                });
+                const multiline = rendered.some(item => item.includes('\n')) || rendered.join(', ').length > 80;
+                if (!multiline) {
+                    return `{${rendered.join(', ')}}`;
+                }
+                return `{\n${rendered.map(item => `${'  '.repeat(indent + 1)}${item}`).join(',\n')}\n${pad}}`;
+            }
+            if (typeof value === 'string') {
+                return JSON.stringify(value);
+            }
+            return String(value);
         },
 
         applyCustomOverrides() {
