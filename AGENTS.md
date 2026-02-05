@@ -9,3 +9,6 @@
 
 ## PR/Issue Formatting
 - PR/Issue本文に書く改行は `\n`（LF）であることを確認する。
+- 改行付きで確実に登録する方法（例）:
+  - PR: `gh pr edit <PR番号> --body-file /tmp/pr_body.md`
+  - Issue: `gh issue create --title "..." --body-file /tmp/issue_body.md`
