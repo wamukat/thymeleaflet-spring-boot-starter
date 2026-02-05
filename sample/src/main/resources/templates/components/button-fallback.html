@@ -1,0 +1,14 @@
+<!--
+/**
+ * Fallback button (fallbackButton)
+ *
+ * @param label {@code String} [required] Button label
+ * @param variant {@code Mode} [optional=primary] DaisyUI button variant。 values: "primary", "outline", "ghost"
+ * @example <div th:replace="~{components/button-fallback :: fallbackButton(label='Try it', variant='outline')}"></div>
+ */
+-->
+<div th:fragment="fallbackButton(label, variant)"
+     class="btn"
+     th:classappend="' btn-' + ${variant}">
+    <span th:text="${label}">Button</span>
+</div>
