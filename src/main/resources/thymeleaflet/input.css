@@ -109,7 +109,7 @@
   }
 
   .thymeleaflet-footer {
-    @apply mt-auto pt-6;
+    @apply mt-auto py-6 -mb-6 sticky bottom-0;
   }
 
   .thymeleaflet-footer-inner {
