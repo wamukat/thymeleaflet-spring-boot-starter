@@ -320,7 +320,7 @@ function hierarchicalFragmentList() {
         updateCustomModelJson(rawValue) {
             this.customModelJson = rawValue;
             const parsed = this.parseCustomModelValue(rawValue);
-            if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+            if (parsed && typeof parsed === 'object') {
                 this.customStoryState = {
                     parameters: { ...(this.customStoryState?.parameters || {}) },
                     model: parsed
@@ -337,61 +337,25 @@ function hierarchicalFragmentList() {
             if (rawValue === '') {
                 return {};
             }
+            const text = String(rawValue).trim();
+            if (!text) {
+                return null;
+            }
+            if (/[;]|\\b(function|=>|new|this|window|document)\\b/.test(text)) {
+                return null;
+            }
             try {
-                const parsed = JSON.parse(rawValue);
-                if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                const parsed = Function(`"use strict"; return (${text});`)();
+                if (parsed === null || parsed === undefined) {
+                    return null;
+                }
+                if (typeof parsed === 'object') {
                     return parsed;
                 }
             } catch (error) {
-                // fall through to map-style parser
-            }
-            const mapParsed = this.parseMapStyleModel(rawValue);
-            return mapParsed;
-        },
-
-        parseMapStyleModel(rawValue) {
-            if (!rawValue) {
                 return null;
             }
-            let text = String(rawValue).trim();
-            if (!text) {
-                return null;
-            }
-            if (text.startsWith('{') && text.endsWith('}')) {
-                text = text.slice(1, -1).trim();
-            }
-            if (!text) {
-                return {};
-            }
-            const result = {};
-            const pairs = text.split(',').map(part => part.trim()).filter(Boolean);
-            for (const pair of pairs) {
-                const eqIndex = pair.indexOf('=');
-                if (eqIndex === -1) {
-                    return null;
-                }
-                const key = pair.slice(0, eqIndex).trim();
-                const rawValuePart = pair.slice(eqIndex + 1).trim();
-                if (!key) {
-                    return null;
-                }
-                result[key] = this.coerceScalar(rawValuePart);
-            }
-            return result;
-        },
-
-        coerceScalar(value) {
-            if (value === '') {
-                return '';
-            }
-            const lower = value.toLowerCase();
-            if (lower === 'true') return true;
-            if (lower === 'false') return false;
-            if (lower === 'null') return null;
-            if (!Number.isNaN(Number(value)) && /^[+-]?\d+(\.\d+)?$/.test(value)) {
-                return Number(value);
-            }
-            return value;
+            return null;
         },
 
         applyCustomOverrides() {
