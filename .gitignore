@@ -58,3 +58,5 @@ out/
 
 # Generated UI CSS
 src/main/resources/META-INF/resources/static/css/thymeleaflet.css
+sample/src/main/resources/static/css/mypage.css
+sample/src/main/resources/static/css/mypage/components.css
