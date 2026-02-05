@@ -7,5 +7,5 @@
 ## PR/Issue Notes
 - PR本文に「どのIssueをクローズするか（例: `Closes #123`）」を明記する。
 
-## Line Endings
-- AGENTS.md を含むドキュメントの改行は `LF`（`\n`）であることを確認する。
+## PR/Issue Formatting
+- PR/Issue本文に書く改行は `\n`（LF）であることを確認する。
