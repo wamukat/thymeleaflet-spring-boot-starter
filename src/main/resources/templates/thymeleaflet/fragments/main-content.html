@@ -195,9 +195,14 @@
                             </div>
                         </template>
                         <div th:if="${javadocInfo != null and !#lists.isEmpty(javadocInfo.models)}" :class="customStoryEntries('parameters').length > 0 ? 'mt-6' : ''">
-                            <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded"
-                                 th:text="#{thymeleaflet.custom.model}">
-                                Custom model
+                            <div class="inline-flex items-center gap-2 rounded bg-emerald-50 px-2 py-1 text-xs font-semibold tracking-wide text-emerald-700">
+                                <span th:text="#{thymeleaflet.custom.model}">Custom model</span>
+                                <span class="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
+                                    <svg class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path d="M17.414 2.586a2 2 0 010 2.828l-9.193 9.193a1 1 0 01-.39.242l-3.5 1.25a1 1 0 01-1.272-1.272l1.25-3.5a1 1 0 01.242-.39l9.193-9.193a2 2 0 012.828 0zM15 4l-8.5 8.5-.5 1.5 1.5-.5L16 5l-1-1z"/>
+                                    </svg>
+                                    <span>Editable</span>
+                                </span>
                             </div>
                             <div class="mt-3 space-y-3">
                                 <div class="border border-orange-200 rounded-lg p-4 transition-colors duration-200 hover:bg-orange-50/40">
