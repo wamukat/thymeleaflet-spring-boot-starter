@@ -624,6 +624,56 @@ document.addEventListener('htmx:afterSettle', function() {
     }, 50);
 });
 
+// HTMX更新後に選択状態をAlpine.jsに同期
+document.addEventListener('htmx:afterSettle', function(event) {
+    if (!event?.detail?.target || event.detail.target.id !== 'main-content-area') {
+        return;
+    }
+    if (typeof Alpine === 'undefined') {
+        return;
+    }
+    const root = document.querySelector('[x-data]');
+    if (!root) {
+        return;
+    }
+    const alpineData = Alpine.$data(root);
+    if (!alpineData) {
+        return;
+    }
+    const urlMatch = window.location.pathname.match(/\/thymeleaflet\/([^\/]+)\/([^\/]+)\/([^\/]+)/);
+    if (!urlMatch) {
+        alpineData.selectedFragment = null;
+        alpineData.selectedStory = null;
+        return;
+    }
+    const templatePathEncoded = urlMatch[1];
+    const fragmentName = decodeURIComponent(urlMatch[2]);
+    const storyName = decodeURIComponent(urlMatch[3]);
+    const templatePath = typeof alpineData.templatePathForFilePath === 'function'
+        ? alpineData.templatePathForFilePath(templatePathEncoded)
+        : templatePathEncoded.replace(/\./g, '/');
+    const fragment = (alpineData.allFragments || []).find(f =>
+        f?.templatePath === templatePath && f?.fragmentName === fragmentName
+    );
+    if (!fragment) {
+        return;
+    }
+    if (typeof alpineData.setSelectedFragment === 'function') {
+        alpineData.setSelectedFragment(fragment);
+    } else {
+        alpineData.selectedFragment = fragment;
+    }
+    if (typeof alpineData.expandFoldersForFragment === 'function') {
+        alpineData.expandFoldersForFragment(fragment);
+    }
+    if (Array.isArray(fragment.stories) && typeof alpineData.setSelectedStory === 'function') {
+        const story = fragment.stories.find(s => s?.storyName === storyName);
+        if (story) {
+            alpineData.setSelectedStory(story);
+        }
+    }
+});
+
 // バッジレンダリング関数（グローバル）
 function renderStoryBadges() {
     const placeholders = document.querySelectorAll('.story-badge-placeholder');
