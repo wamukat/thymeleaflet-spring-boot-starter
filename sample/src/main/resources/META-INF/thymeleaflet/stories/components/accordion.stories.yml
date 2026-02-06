@@ -15,7 +15,7 @@ storyGroups:
           open: false
         preview:
           wrapper: |
-            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+            <div class="px-6 py-6 text-base-content font-display">
               <div class="max-w-2xl mx-auto">
                 {{content}}
               </div>
@@ -28,7 +28,7 @@ storyGroups:
           open: true
         preview:
           wrapper: |
-            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+            <div class="px-6 py-6 text-base-content font-display">
               <div class="max-w-2xl mx-auto">
                 {{content}}
               </div>
