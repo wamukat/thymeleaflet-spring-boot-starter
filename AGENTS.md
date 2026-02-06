@@ -8,10 +8,11 @@
 - PR本文に「どのIssueをクローズするか（例: `Closes #123`）」を明記する。
 
 ## PR/Issue Formatting
-- PR/Issue本文に書く改行は `\n`（LF）であることを確認する。
+- PR/Issue本文は「`\n` の文字列」ではなく、実際の改行（LF）で記載する。
 - 改行付きで確実に登録する方法（例）:
-  - PR: `gh pr edit <PR番号> --body-file /tmp/pr_body.md`
-  - Issue: `gh issue create --title "..." --body-file /tmp/issue_body.md`
+  - PR: `cat > /tmp/pr_body.md <<'EOF' ... EOF` → `gh pr edit <PR番号> --body-file /tmp/pr_body.md`
+  - Issue: `cat > /tmp/issue_body.md <<'EOF' ... EOF` → `gh issue create --title "..." --body-file /tmp/issue_body.md`
+  - Release: `cat > /tmp/release.md <<'EOF' ... EOF` → `gh release edit <tag> --notes-file /tmp/release.md`
 
 ## Release Flow
 - 「新しいバージョンとしてリリースする」と依頼されたら、現在のバージョン番号を添えて「バージョン番号はどうする？」と確認する。
@@ -23,6 +24,7 @@
 
 ## Branching Rule
 - ソース修正を始める前に、必ず作業用ブランチを作成してから作業する。
+- 作業が切り替わる指示を受けたら、`main` に戻ってから指示内容に応じたブランチを作成する。
 
 ## Browser Tooling
 - ブラウザ確認・操作は `agent-browser` を優先して利用する。
