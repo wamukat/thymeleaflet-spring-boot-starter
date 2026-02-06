@@ -24,10 +24,12 @@
                 <select id="preview-viewport-select"
                         class="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:bg-gray-50 transition-colors">
                     <option value="responsive" data-width="" data-height="" th:text="#{thymeleaflet.preview.viewport.responsive}">Responsive</option>
-                    <option value="mobileSmall" data-width="320" data-height="568" th:text="#{thymeleaflet.preview.viewport.mobileSmall}">Mobile Small</option>
-                    <option value="mobileLarge" data-width="414" data-height="896" th:text="#{thymeleaflet.preview.viewport.mobileLarge}">Mobile Large</option>
-                    <option value="tablet" data-width="834" data-height="1112" th:text="#{thymeleaflet.preview.viewport.tablet}">Tablet</option>
-                    <option value="desktop" data-width="1024" data-height="1280" th:text="#{thymeleaflet.preview.viewport.desktop}">Desktop</option>
+                    <option th:each="preset : ${previewViewportPresets}"
+                            th:value="${preset.id}"
+                            th:attr="data-width=${preset.width},data-height=${preset.height}"
+                            th:text="${preset.label}">
+                        Preset
+                    </option>
                 </select>
                 <button id="preview-viewport-rotate"
                         class="flex items-center justify-center w-7 h-7 rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
@@ -43,6 +45,26 @@
                         th:attr="title=#{thymeleaflet.preview.toggle.title},data-label-light=#{thymeleaflet.preview.light},data-label-dark=#{thymeleaflet.preview.dark}">
                     <span id="toggle-icon">☀️</span>
                     <span id="toggle-text" th:text="#{thymeleaflet.preview.light}">Light</span>
+                </button>
+                <button id="preview-fullscreen-toggle"
+                        class="flex items-center justify-center w-7 h-7 rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                        th:attr="title=#{thymeleaflet.preview.fullscreen.enter},aria-label=#{thymeleaflet.preview.fullscreen.enter},data-label-enter=#{thymeleaflet.preview.fullscreen.enter},data-label-exit=#{thymeleaflet.preview.fullscreen.exit}">
+                    <span data-fullscreen-icon="enter" class="inline-flex">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M3 9V5a2 2 0 0 1 2-2h4"/>
+                            <path d="M15 3h4a2 2 0 0 1 2 2v4"/>
+                            <path d="M21 15v4a2 2 0 0 1-2 2h-4"/>
+                            <path d="M9 21H5a2 2 0 0 1-2-2v-4"/>
+                        </svg>
+                    </span>
+                    <span data-fullscreen-icon="exit" class="inline-flex" style="display: none;">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 9L5 5M5 9V5h4"/>
+                            <path d="M15 9l4-4m0 4V5h-4"/>
+                            <path d="M9 15l-4 4m0-4v4h4"/>
+                            <path d="M15 15l4 4m0-4v4h-4"/>
+                        </svg>
+                    </span>
                 </button>
             </div>
         </div>

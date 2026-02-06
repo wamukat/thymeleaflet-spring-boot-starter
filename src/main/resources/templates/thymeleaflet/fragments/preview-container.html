@@ -56,7 +56,8 @@
     <!-- プレビューコンテナ本体 -->
     <div th:id="${containerIdName}" 
          th:class="'relative border-2 border-solid border-' + ${borderColorClass} + ' rounded-lg ' + ${minHeightClass} + ' preview-background-light ' + ${customClasses}"
-         th:attr="hx-get=${hxGetValue}, hx-trigger=${hxTriggerValue}, hx-target=${hxTargetValue}, hx-swap=${hxSwapValue}">
+         th:attr="hx-get=${hxGetValue}, hx-trigger=${hxTriggerValue}, hx-target=${hxTargetValue}, hx-swap=${hxSwapValue}"
+         th:style="'--thymeleaflet-preview-light:' + (${previewLightColor} ?: '#f3f4f6') + '; --thymeleaflet-preview-dark:' + (${previewDarkColor} ?: '#1f2937') + ';'">
         
         <div class="preview-viewport-frame relative flex justify-center items-start overflow-auto">
             <div id="preview-viewport" class="preview-viewport w-full flex-none overflow-hidden transition-all duration-200 flex flex-col">
@@ -72,6 +73,66 @@
             Fit
         </div>
     </div>
+
+    <div id="preview-fullscreen-overlay" aria-hidden="true">
+        <div id="preview-fullscreen-frame">
+            <div id="preview-fullscreen-host"></div>
+        </div>
+    </div>
+
+    <style>
+        #preview-fullscreen-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.55);
+        }
+        #preview-fullscreen-overlay.preview-fullscreen-active {
+            display: flex;
+        }
+        #preview-fullscreen-frame {
+            position: relative;
+            width: 98vw;
+            height: 94vh;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+            background: #f3f4f6;
+            border-radius: 18px;
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+        }
+        #preview-fullscreen-host {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+        }
+        #preview-container.preview-fullscreen {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+        }
+        #preview-container.preview-fullscreen .preview-viewport-frame {
+            display: inline-flex;
+            width: fit-content;
+            height: fit-content;
+            max-width: none;
+            max-height: none;
+            overflow: visible;
+        }
+        #preview-container.preview-background-light {
+            background-color: var(--thymeleaflet-preview-light, #f3f4f6);
+        }
+        #preview-container.preview-background-gray {
+            background-color: var(--thymeleaflet-preview-dark, #1f2937);
+        }
+    </style>
 </div>
 
 <!--

@@ -24,6 +24,23 @@
       "type": "java.lang.Boolean",
       "description": "Enable debug mode for Thymeleaflet",
       "defaultValue": false
+    },
+    {
+      "name": "thymeleaflet.preview.background-light",
+      "type": "java.lang.String",
+      "description": "Light background color for the preview canvas",
+      "defaultValue": "#f3f4f6"
+    },
+    {
+      "name": "thymeleaflet.preview.background-dark",
+      "type": "java.lang.String",
+      "description": "Dark background color for the preview canvas",
+      "defaultValue": "#1f2937"
+    },
+    {
+      "name": "thymeleaflet.preview.viewports",
+      "type": "java.util.List",
+      "description": "Viewport presets (name + width + height), excluding Fit"
     }
   ]
 }
