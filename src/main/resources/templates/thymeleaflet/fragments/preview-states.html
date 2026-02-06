@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * プレビュー状態フラグメント
+ *
+ * ローディングや空状態などを共通化する。
+ */
+-->
+
+<!--
+/**
+ * ローディングインジケーター
+ *
+ * @fragment loadingIndicator
+ * @param indicatorId {@code String} [optional] ルート要素のID
+ * @param hidden {@code Boolean} [optional=false] 非表示スタイルを付与
+ * @param spinnerClass {@code String} [optional=border-blue-500] スピナー色
+ * @param textClass {@code String} [optional=ml-2 text-gray-500] テキストクラス
+ * @param containerClass {@code String} [optional=flex items-center justify-center h-24] コンテナクラス
+ */
+-->
+<div th:fragment="loadingIndicator(indicatorId, hidden, spinnerClass, textClass, containerClass)"
+     th:with="
+        elementId=${indicatorId},
+        isHidden=${hidden ?: false},
+        spinnerColor=${spinnerClass ?: 'border-blue-500'},
+        textStyle=${textClass ?: 'ml-2 text-gray-500'},
+        containerStyle=${containerClass ?: 'flex items-center justify-center h-24'}
+     "
+     th:id="${elementId}"
+     th:class="${containerStyle}"
+     th:style="${isHidden} ? 'display: none;' : null">
+    <div th:class="'animate-spin rounded-full h-8 w-8 border-b-2 ' + ${spinnerColor}"></div>
+    <span th:class="${textStyle}" th:text="#{thymeleaflet.preview.loading}">Loading preview...</span>
+</div>
+
+<!--
+/**
+ * ストーリー未選択の空状態
+ *
+ * @fragment emptySelectStory
+ */
+-->
+<div th:fragment="emptySelectStory" class="flex items-center justify-center h-24">
+    <div class="text-center">
+        <div class="text-gray-400 mb-2">
+            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+        </div>
+        <p class="text-gray-600" th:text="#{thymeleaflet.preview.selectStory}">Select a story to preview</p>
+    </div>
+</div>
+
+<!--
+/**
+ * フラグメント未選択の空状態
+ *
+ * @fragment emptySelectFragment
+ */
+-->
+<div th:fragment="emptySelectFragment" class="flex items-center justify-center h-24">
+    <div class="text-center">
+        <div class="text-gray-400 mb-2">
+            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
+            </svg>
+        </div>
+        <p class="text-gray-600" th:text="#{thymeleaflet.preview.selectFragment}">Select a fragment to preview</p>
+    </div>
+</div>
+
+</body>
+</html>
