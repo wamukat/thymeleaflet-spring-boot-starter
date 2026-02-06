@@ -34,9 +34,9 @@ Preview iframes allow same-origin so cookies/localStorage and authenticated API 
 |---|---|---|---|
 | `thymeleaflet.preview.background-light` | String | `#f3f4f6` | Light background color for the preview canvas |
 | `thymeleaflet.preview.background-dark` | String | `#1f2937` | Dark background color for the preview canvas |
-| `thymeleaflet.preview.viewports` | List | Built-in presets | Viewport presets (name + width + height), excluding Fit |
+| `thymeleaflet.preview.viewports` | List | Built-in presets | Viewport presets (name + width). Height is currently ignored, excluding Fit |
 
-Viewport presets are used by the viewport dropdown. Fit is always available and is not part of this list.
+Viewport presets are used by the viewport dropdown. Fit is always available and is not part of this list. Height values are currently ignored by the UI.
 Each item supports `id`, `label`, `width`, and `height`.
 
 ## Cache Configuration
