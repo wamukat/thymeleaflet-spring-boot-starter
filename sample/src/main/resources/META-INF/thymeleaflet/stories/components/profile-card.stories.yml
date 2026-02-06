@@ -11,11 +11,7 @@ storyGroups:
         title: Default
         preview:
           wrapper: |
-            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
-              <div class="max-w-6xl mx-auto">
-                {{content}}
-              </div>
-            </div>
+            {{content}}
         model:
           profile:
             name: Default User
@@ -28,11 +24,7 @@ storyGroups:
         title: Alex
         preview:
           wrapper: |
-            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
-              <div class="max-w-6xl mx-auto">
-                {{content}}
-              </div>
-            </div>
+            {{content}}
         model:
           profile:
             name: Alex Morgan
@@ -45,11 +37,7 @@ storyGroups:
         title: Yumi
         preview:
           wrapper: |
-            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
-              <div class="max-w-6xl mx-auto">
-                {{content}}
-              </div>
-            </div>
+            {{content}}
         model:
           profile:
             name: Yumi Tanaka
