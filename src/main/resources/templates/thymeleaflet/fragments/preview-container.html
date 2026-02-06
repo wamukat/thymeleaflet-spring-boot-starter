@@ -40,7 +40,7 @@
  * <div th:replace="~{thymeleaflet/fragments/preview-container :: container(null, null, null, null, '/path', 'load', 'this', 'innerHTML', ~{::#preview-content-slot})}"></div>
  */
 -->
-<div th:fragment="container(additionalClasses, containerId, borderColor, minHeight, hxGet, hxTrigger, hxTarget, hxSwap, contentFragment)"
+    <div th:fragment="container(additionalClasses, containerId, borderColor, minHeight, hxGet, hxTrigger, hxTarget, hxSwap, contentFragment)"
      th:with="
         customClasses=${additionalClasses ?: ''},
         containerIdName=${containerId ?: 'preview-container'},
@@ -55,7 +55,7 @@
     
     <!-- プレビューコンテナ本体 -->
     <div th:id="${containerIdName}" 
-         th:class="'border-2 border-solid border-' + ${borderColorClass} + ' rounded-lg ' + ${minHeightClass} + ' preview-background-light ' + ${customClasses}"
+         th:class="'relative border-2 border-solid border-' + ${borderColorClass} + ' rounded-lg ' + ${minHeightClass} + ' preview-background-light ' + ${customClasses}"
          th:attr="hx-get=${hxGetValue}, hx-trigger=${hxTriggerValue}, hx-target=${hxTargetValue}, hx-swap=${hxSwapValue}">
         
         <div class="preview-viewport-frame relative flex justify-center items-start overflow-auto">
