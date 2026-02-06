@@ -45,6 +45,15 @@
                 <span id="toggle-icon">☀️</span>
                 <span id="toggle-text" th:text="#{thymeleaflet.preview.light}">Light</span>
             </button>
+            <button id="preview-ruler-toggle"
+                    class="flex items-center justify-center w-7 h-7 rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                    th:attr="title=#{thymeleaflet.preview.ruler},aria-label=#{thymeleaflet.preview.ruler}">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 7h16"/>
+                    <path d="M4 12h10"/>
+                    <path d="M4 17h13"/>
+                </svg>
+            </button>
             <button id="preview-fullscreen-toggle"
                     class="flex items-center justify-center w-7 h-7 rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
                     th:attr="title=#{thymeleaflet.preview.fullscreen.enter},aria-label=#{thymeleaflet.preview.fullscreen.enter},data-label-enter=#{thymeleaflet.preview.fullscreen.enter},data-label-exit=#{thymeleaflet.preview.fullscreen.exit}">

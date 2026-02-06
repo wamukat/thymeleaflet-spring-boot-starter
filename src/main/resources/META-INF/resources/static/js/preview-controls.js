@@ -28,6 +28,10 @@
         originalNextSibling: null,
         previousBodyOverflow: ''
     };
+    const rulerState = {
+        enabled: false,
+        lastHeight: 0
+    };
     const previewState = {
         storyOverrides: {},
         lastRenderAt: null
@@ -43,6 +47,8 @@
         previewViewportFrame: () => document.querySelector('.preview-viewport-frame'),
         viewportSelect: () => document.getElementById('preview-viewport-select'),
         viewportRotateButton: () => document.getElementById('preview-viewport-rotate'),
+        rulerToggleButton: () => document.getElementById('preview-ruler-toggle'),
+        previewRuler: () => document.getElementById('preview-ruler'),
         fullscreenToggleButton: () => document.getElementById('preview-fullscreen-toggle'),
         fullscreenOverlay: () => document.getElementById('preview-fullscreen-overlay'),
         fullscreenHost: () => document.getElementById('preview-fullscreen-host'),
@@ -50,28 +56,32 @@
     };
 
     const viewportControls = {
-        isFixed() {
-            return Number.isFinite(viewportState.width) && Number.isFinite(viewportState.height);
+        hasWidthPreset() {
+            return Number.isFinite(viewportState.width);
+        },
+        isHeightFixed() {
+            return Number.isFinite(viewportState.height);
         },
         getEffectiveSize() {
-            if (!viewportControls.isFixed()) {
+            if (!viewportControls.hasWidthPreset()) {
                 return null;
             }
-            const width = viewportState.rotated ? viewportState.height : viewportState.width;
-            const height = viewportState.rotated ? viewportState.width : viewportState.height;
+            const width = viewportState.width;
+            const height = viewportState.height;
             return { width, height };
         }
     };
     const iframeControls = {};
 
     function setPreviewHeight(heightPx) {
-        if (viewportControls.isFixed()) {
+        if (viewportControls.isHeightFixed()) {
             return;
         }
         const host = dom.previewHost();
         if (host) {
             host.style.height = heightPx + 'px';
         }
+        updateRuler();
     }
 
     function resetPreviewHeight() {
@@ -80,7 +90,7 @@
     }
 
     function handleResize(height) {
-        if (viewportControls.isFixed()) {
+        if (viewportControls.isHeightFixed()) {
             return;
         }
         const adjustedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height));
@@ -92,7 +102,7 @@
     }
 
     function queueStableHeight(height) {
-        if (viewportControls.isFixed()) {
+        if (viewportControls.isHeightFixed()) {
             return;
         }
         pendingHeight = height;
@@ -106,6 +116,60 @@
                 pendingHeight = null;
             }
         }, 320);
+    }
+
+    function getRulerHeight() {
+        const frame = dom.previewViewportFrame();
+        if (!frame) {
+            return 0;
+        }
+        return Math.max(frame.scrollHeight, frame.clientHeight);
+    }
+
+    function renderRuler(height) {
+        const ruler = dom.previewRuler();
+        if (!ruler) {
+            return;
+        }
+        const nextHeight = Math.max(height, MIN_HEIGHT);
+        if (rulerState.lastHeight === nextHeight) {
+            return;
+        }
+        rulerState.lastHeight = nextHeight;
+        ruler.style.height = `${nextHeight}px`;
+        const lines = [];
+        for (let y = 0; y <= nextHeight; y += 100) {
+            lines.push(
+                `<div class="preview-ruler-line" style="top:${y}px;"><span class="preview-ruler-label">${y}</span></div>`
+            );
+        }
+        ruler.innerHTML = lines.join('');
+    }
+
+    function updateRuler() {
+        if (!rulerState.enabled) {
+            return;
+        }
+        renderRuler(getRulerHeight());
+    }
+
+    function setRulerEnabled(enabled) {
+        rulerState.enabled = enabled;
+        const ruler = dom.previewRuler();
+        if (!ruler) {
+            return;
+        }
+        if (enabled) {
+            ruler.classList.remove('hidden');
+            updateRuler();
+        } else {
+            ruler.classList.add('hidden');
+        }
+        const button = dom.rulerToggleButton();
+        if (button) {
+            button.classList.toggle('ring-2', enabled);
+            button.classList.toggle('ring-blue-500', enabled);
+        }
     }
 
     function waitForFontsOnce() {
@@ -355,7 +419,7 @@
     };
 
     iframeControls.refreshResponsiveHeight = function() {
-        if (viewportControls.isFixed()) {
+        if (viewportControls.isHeightFixed()) {
             return;
         }
         const host = dom.previewHost();
@@ -383,7 +447,7 @@
         if (!iframe) {
             return;
         }
-        iframe.setAttribute('scrolling', viewportControls.isFixed() ? 'yes' : 'no');
+        iframe.setAttribute('scrolling', viewportControls.isHeightFixed() ? 'yes' : 'no');
     };
 
     Object.assign(viewportControls, {
@@ -416,7 +480,7 @@
                 }
             } else {
                 viewport.style.width = `${effective.width}px`;
-                viewport.style.height = `${effective.height}px`;
+                viewport.style.height = 'auto';
                 viewport.classList.remove('preview-viewport-responsive');
                 viewport.classList.add('preview-viewport-fixed');
                 viewport.classList.add('bg-white');
@@ -425,11 +489,18 @@
                 }
                 if (host) {
                     host.style.width = '100%';
-                    host.style.height = '100%';
+                    const iframe = host.querySelector('iframe');
+                    const measuredHeight = iframe ? iframeControls.measureHeight(iframe) : null;
+                    if (measuredHeight != null) {
+                        handleResize(measuredHeight);
+                    } else {
+                        resetPreviewHeight();
+                    }
                 }
             }
             iframeControls.updateScrolling();
             viewportControls.updateBadge();
+            updateRuler();
         },
         updateFromSelect() {
             const select = dom.viewportSelect();
@@ -439,9 +510,8 @@
             const option = select.options[select.selectedIndex];
             viewportState.preset = select.value || 'responsive';
             const width = option?.dataset?.width ? Number(option.dataset.width) : null;
-            const height = option?.dataset?.height ? Number(option.dataset.height) : null;
             viewportState.width = Number.isFinite(width) ? width : null;
-            viewportState.height = Number.isFinite(height) ? height : null;
+            viewportState.height = null;
             viewportState.rotated = false;
             viewportControls.applyState();
             viewportControls.updateRotateButton();
@@ -459,9 +529,8 @@
             }
             const option = select.options[select.selectedIndex];
             const width = option?.dataset?.width ? Number(option.dataset.width) : null;
-            const height = option?.dataset?.height ? Number(option.dataset.height) : null;
             viewportState.width = Number.isFinite(width) ? width : null;
-            viewportState.height = Number.isFinite(height) ? height : null;
+            viewportState.height = null;
         }
     });
 
@@ -480,13 +549,16 @@
         bindControls() {
             bindOnce(dom.viewportSelect(), 'boundViewportSelect', 'change', viewportControls.updateFromSelect);
             bindOnce(dom.viewportRotateButton(), 'boundViewportRotate', 'click', viewportControls.toggleRotation);
+            bindOnce(dom.rulerToggleButton(), 'boundRulerToggle', 'click', () => {
+                setRulerEnabled(!rulerState.enabled);
+            });
         },
         updateRotateButton() {
             const button = dom.viewportRotateButton();
             if (!button) {
                 return;
             }
-            const disabled = !viewportControls.isFixed();
+            const disabled = !viewportControls.isHeightFixed();
             button.disabled = disabled;
             button.classList.toggle('opacity-50', disabled);
             button.classList.toggle('pointer-events-none', disabled);
@@ -582,7 +654,7 @@
 
     Object.assign(viewportControls, {
         toggleRotation() {
-            if (!viewportControls.isFixed()) {
+            if (!viewportControls.isHeightFixed()) {
                 return;
             }
             viewportState.rotated = !viewportState.rotated;
@@ -599,9 +671,9 @@
                 return;
             }
             badge.classList.remove('hidden');
-            if (viewportControls.isFixed()) {
+            if (viewportControls.hasWidthPreset()) {
                 const size = viewportControls.getEffectiveSize();
-                badge.textContent = size ? `${size.width}×${size.height}` : option.textContent;
+                badge.textContent = size ? `${size.width}px` : option.textContent;
             } else {
                 badge.textContent = option.textContent;
             }
@@ -682,6 +754,7 @@
         viewportControls.applyState();
         viewportControls.updateRotateButton();
         fullscreenControls.updateToggleButton();
+        setRulerEnabled(false);
     }
 
     window.__thymeleafletResetPreviewHeight = resetPreviewHeight;

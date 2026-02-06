@@ -67,6 +67,7 @@
                     <div th:if="${previewContentFragment != null}" th:replace="${previewContentFragment}"></div>
                 </div>
             </div>
+            <div id="preview-ruler" class="preview-ruler hidden" aria-hidden="true"></div>
         </div>
         <div id="preview-viewport-badge"
              class="pointer-events-none absolute right-3 top-3 hidden rounded-full border border-gray-200 bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 shadow-sm">
@@ -132,6 +133,30 @@
         }
         #preview-container.preview-background-gray {
             background-color: var(--thymeleaflet-preview-dark, #1f2937);
+        }
+        .preview-ruler {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            color: rgba(51, 65, 85, 0.75);
+            font-size: 10px;
+            line-height: 1;
+        }
+        .preview-ruler-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            border-top: 1px dashed rgba(148, 163, 184, 0.7);
+        }
+        .preview-ruler-label {
+            position: absolute;
+            right: 6px;
+            top: -6px;
+            padding: 1px 4px;
+            border-radius: 9999px;
+            background: rgba(248, 250, 252, 0.85);
+            color: rgba(51, 65, 85, 0.9);
+            font-weight: 600;
         }
     </style>
 </div>
