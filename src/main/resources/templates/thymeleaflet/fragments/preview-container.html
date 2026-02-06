@@ -58,10 +58,10 @@
          th:class="'border-2 border-solid border-' + ${borderColorClass} + ' rounded-lg ' + ${minHeightClass} + ' preview-background-light ' + ${customClasses}"
          th:attr="hx-get=${hxGetValue}, hx-trigger=${hxTriggerValue}, hx-target=${hxTargetValue}, hx-swap=${hxSwapValue}">
         
-        <div class="preview-viewport-frame flex justify-center items-start">
-            <div id="preview-viewport" class="preview-viewport w-full overflow-hidden transition-all duration-200">
+        <div class="preview-viewport-frame flex justify-center items-start overflow-auto">
+            <div id="preview-viewport" class="preview-viewport w-full flex-none overflow-hidden transition-all duration-200 flex flex-col">
                 <!-- プレビューコンテンツ -->
-                <div class="preview-content w-full flex-1">
+                <div class="preview-content w-full flex-1 min-h-0">
                     <!-- HTMXまたは動的コンテンツがここに挿入される -->
                     <div th:if="${previewContentFragment != null}" th:replace="${previewContentFragment}"></div>
                 </div>
