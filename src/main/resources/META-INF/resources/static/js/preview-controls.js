@@ -37,60 +37,38 @@
         delete window.__thymeleafletPendingOverrides;
     }
 
-    function getPreviewHost() {
-        return document.querySelector('#fragment-preview-host');
-    }
+    const dom = {
+        previewHost: () => document.querySelector('#fragment-preview-host'),
+        previewViewport: () => document.querySelector('#preview-viewport'),
+        previewViewportFrame: () => document.querySelector('.preview-viewport-frame'),
+        viewportSelect: () => document.getElementById('preview-viewport-select'),
+        viewportRotateButton: () => document.getElementById('preview-viewport-rotate'),
+        fullscreenToggleButton: () => document.getElementById('preview-fullscreen-toggle'),
+        fullscreenOverlay: () => document.getElementById('preview-fullscreen-overlay'),
+        fullscreenHost: () => document.getElementById('preview-fullscreen-host'),
+        previewContainer: () => document.getElementById('preview-container')
+    };
 
-    function getPreviewViewport() {
-        return document.querySelector('#preview-viewport');
-    }
-
-    function getPreviewViewportFrame() {
-        return document.querySelector('.preview-viewport-frame');
-    }
-
-    function getViewportSelect() {
-        return document.getElementById('preview-viewport-select');
-    }
-
-    function getViewportRotateButton() {
-        return document.getElementById('preview-viewport-rotate');
-    }
-
-    function getFullscreenToggleButton() {
-        return document.getElementById('preview-fullscreen-toggle');
-    }
-
-    function getFullscreenOverlay() {
-        return document.getElementById('preview-fullscreen-overlay');
-    }
-
-    function getFullscreenHost() {
-        return document.getElementById('preview-fullscreen-host');
-    }
-
-    function getPreviewContainer() {
-        return document.getElementById('preview-container');
-    }
-
-    function isFixedViewport() {
-        return Number.isFinite(viewportState.width) && Number.isFinite(viewportState.height);
-    }
-
-    function getEffectiveViewportSize() {
-        if (!isFixedViewport()) {
-            return null;
+    const viewportControls = {
+        isFixed() {
+            return Number.isFinite(viewportState.width) && Number.isFinite(viewportState.height);
+        },
+        getEffectiveSize() {
+            if (!viewportControls.isFixed()) {
+                return null;
+            }
+            const width = viewportState.rotated ? viewportState.height : viewportState.width;
+            const height = viewportState.rotated ? viewportState.width : viewportState.height;
+            return { width, height };
         }
-        const width = viewportState.rotated ? viewportState.height : viewportState.width;
-        const height = viewportState.rotated ? viewportState.width : viewportState.height;
-        return { width, height };
-    }
+    };
+    const iframeControls = {};
 
     function setPreviewHeight(heightPx) {
-        if (isFixedViewport()) {
+        if (viewportControls.isFixed()) {
             return;
         }
-        const host = getPreviewHost();
+        const host = dom.previewHost();
         if (host) {
             host.style.height = heightPx + 'px';
         }
@@ -102,7 +80,7 @@
     }
 
     function handleResize(height) {
-        if (isFixedViewport()) {
+        if (viewportControls.isFixed()) {
             return;
         }
         const adjustedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height));
@@ -114,7 +92,7 @@
     }
 
     function queueStableHeight(height) {
-        if (isFixedViewport()) {
+        if (viewportControls.isFixed()) {
             return;
         }
         pendingHeight = height;
@@ -156,7 +134,7 @@
         }
     }
 
-    function measureIframeHeight(iframe) {
+    iframeControls.measureHeight = function(iframe) {
         try {
             const doc = iframe.contentDocument;
             if (!doc || !doc.documentElement || !doc.body) {
@@ -176,13 +154,13 @@
         } catch (error) {
             return null;
         }
-    }
+    };
 
-    function setupIframeObservers(iframe) {
+    iframeControls.setupObservers = function(iframe) {
         cleanupIframeObservers();
 
         const handle = () => {
-            const height = measureIframeHeight(iframe);
+            const height = iframeControls.measureHeight(iframe);
             if (height != null) {
                 queueStableHeight(height);
             }
@@ -212,7 +190,7 @@
 
         iframe.addEventListener('load', attach, { once: true });
         setTimeout(attach, 0);
-    }
+    };
 
     function parseResourceList(rawValue) {
         return (rawValue || '')
@@ -221,14 +199,14 @@
             .filter(Boolean);
     }
 
-    function getPreviewBackgroundColor(host) {
+    iframeControls.getBackgroundColor = function(host) {
         if (!host) return 'transparent';
         const container = host.closest('#preview-container');
         if (!container) return 'transparent';
         return getComputedStyle(container).backgroundColor || 'transparent';
-    }
+    };
 
-    function buildPreviewDocument(host, html, backgroundColor) {
+    iframeControls.buildDocument = function(host, html, backgroundColor) {
         const styles = parseResourceList(host.dataset.previewStylesheets);
         const scripts = parseResourceList(host.dataset.previewScripts);
         const wrapper = host?.dataset?.previewWrapper || '';
@@ -334,9 +312,9 @@
         ].join('');
 
         return { doc, previewId };
-    }
+    };
 
-    function ensurePreviewMessageListener() {
+    iframeControls.ensureMessageListener = function() {
         if (window.__thymeleafletPreviewMessageListener) {
             return;
         }
@@ -346,7 +324,7 @@
             if (data.type !== 'thymeleaflet:preview-height') {
                 return;
             }
-            const host = getPreviewHost();
+            const host = dom.previewHost();
             if (!host || host.dataset.previewId !== data.id) {
                 return;
             }
@@ -355,9 +333,9 @@
             }
             queueStableHeight(data.height);
         });
-    }
+    };
 
-    function renderPreviewFrame(host, html) {
+    iframeControls.renderFrame = function(host, html) {
         host.innerHTML = '';
         const iframe = document.createElement('iframe');
         iframe.className = 'w-full border-0 bg-transparent';
@@ -365,28 +343,28 @@
         iframe.style.width = '100%';
         iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
         iframe.setAttribute('title', 'Thymeleaflet Preview');
-        const backgroundColor = getPreviewBackgroundColor(host);
+        const backgroundColor = iframeControls.getBackgroundColor(host);
         iframe.style.backgroundColor = backgroundColor;
-        const { doc, previewId } = buildPreviewDocument(host, html, backgroundColor);
+        const { doc, previewId } = iframeControls.buildDocument(host, html, backgroundColor);
         host.dataset.previewId = previewId;
         iframe.srcdoc = doc;
         host.appendChild(iframe);
-        setupIframeObservers(iframe);
-        applyViewportState();
-        refreshResponsiveHeight();
-    }
+        iframeControls.setupObservers(iframe);
+        viewportControls.applyState();
+        iframeControls.refreshResponsiveHeight();
+    };
 
-    function refreshResponsiveHeight() {
-        if (isFixedViewport()) {
+    iframeControls.refreshResponsiveHeight = function() {
+        if (viewportControls.isFixed()) {
             return;
         }
-        const host = getPreviewHost();
+        const host = dom.previewHost();
         const iframe = host?.querySelector('iframe');
         if (!iframe) {
             return;
         }
         const attempt = () => {
-            const height = measureIframeHeight(iframe);
+            const height = iframeControls.measureHeight(iframe);
             if (height != null) {
                 handleResize(height);
             }
@@ -394,10 +372,10 @@
         setTimeout(attempt, 50);
         setTimeout(attempt, 200);
         setTimeout(attempt, 600);
-    }
+    };
 
-    function updateIframeScrolling() {
-        const host = getPreviewHost();
+    iframeControls.updateScrolling = function() {
+        const host = dom.previewHost();
         if (!host) {
             return;
         }
@@ -405,134 +383,120 @@
         if (!iframe) {
             return;
         }
-        iframe.setAttribute('scrolling', isFixedViewport() ? 'yes' : 'no');
-    }
+        iframe.setAttribute('scrolling', viewportControls.isFixed() ? 'yes' : 'no');
+    };
 
-    function applyViewportState() {
-        const viewport = getPreviewViewport();
-        if (!viewport) {
-            return;
-        }
-        const frame = getPreviewViewportFrame();
-        const host = getPreviewHost();
-        const effective = getEffectiveViewportSize();
-        if (!effective) {
-            viewport.style.width = '100%';
-            viewport.style.height = 'auto';
-            viewport.classList.remove('preview-viewport-fixed');
-            viewport.classList.add('preview-viewport-responsive');
-            viewport.classList.remove('bg-white');
-            if (frame) {
-                frame.classList.remove('border', 'border-dashed', 'border-gray-300', 'bg-white');
+    Object.assign(viewportControls, {
+        applyState() {
+            const viewport = dom.previewViewport();
+            if (!viewport) {
+                return;
             }
-            if (host) {
-                host.style.width = '100%';
-                const iframe = host.querySelector('iframe');
-                const measuredHeight = iframe ? measureIframeHeight(iframe) : null;
-                if (measuredHeight != null) {
-                    handleResize(measuredHeight);
-                } else {
-                    resetPreviewHeight();
+            const frame = dom.previewViewportFrame();
+            const host = dom.previewHost();
+            const effective = viewportControls.getEffectiveSize();
+            if (!effective) {
+                viewport.style.width = '100%';
+                viewport.style.height = 'auto';
+                viewport.classList.remove('preview-viewport-fixed');
+                viewport.classList.add('preview-viewport-responsive');
+                viewport.classList.remove('bg-white');
+                if (frame) {
+                    frame.classList.remove('border', 'border-dashed', 'border-gray-300', 'bg-white');
+                }
+                if (host) {
+                    host.style.width = '100%';
+                    const iframe = host.querySelector('iframe');
+                    const measuredHeight = iframe ? iframeControls.measureHeight(iframe) : null;
+                    if (measuredHeight != null) {
+                        handleResize(measuredHeight);
+                    } else {
+                        resetPreviewHeight();
+                    }
+                }
+            } else {
+                viewport.style.width = `${effective.width}px`;
+                viewport.style.height = `${effective.height}px`;
+                viewport.classList.remove('preview-viewport-responsive');
+                viewport.classList.add('preview-viewport-fixed');
+                viewport.classList.add('bg-white');
+                if (frame) {
+                    frame.classList.add('border', 'border-dashed', 'border-gray-300', 'bg-white');
+                }
+                if (host) {
+                    host.style.width = '100%';
+                    host.style.height = '100%';
                 }
             }
-        } else {
-            viewport.style.width = `${effective.width}px`;
-            viewport.style.height = `${effective.height}px`;
-            viewport.classList.remove('preview-viewport-responsive');
-            viewport.classList.add('preview-viewport-fixed');
-            viewport.classList.add('bg-white');
-            if (frame) {
-                frame.classList.add('border', 'border-dashed', 'border-gray-300', 'bg-white');
+            iframeControls.updateScrolling();
+            viewportControls.updateBadge();
+        },
+        updateFromSelect() {
+            const select = dom.viewportSelect();
+            if (!select) {
+                return;
             }
-            if (host) {
-                host.style.width = '100%';
-                host.style.height = '100%';
+            const option = select.options[select.selectedIndex];
+            viewportState.preset = select.value || 'responsive';
+            const width = option?.dataset?.width ? Number(option.dataset.width) : null;
+            const height = option?.dataset?.height ? Number(option.dataset.height) : null;
+            viewportState.width = Number.isFinite(width) ? width : null;
+            viewportState.height = Number.isFinite(height) ? height : null;
+            viewportState.rotated = false;
+            viewportControls.applyState();
+            viewportControls.updateRotateButton();
+        },
+        syncSelectFromState() {
+            const select = dom.viewportSelect();
+            if (!select) {
+                return;
             }
+            if (viewportState.preset && select.querySelector(`option[value="${viewportState.preset}"]`)) {
+                select.value = viewportState.preset;
+            } else {
+                select.value = 'responsive';
+                viewportState.preset = 'responsive';
+            }
+            const option = select.options[select.selectedIndex];
+            const width = option?.dataset?.width ? Number(option.dataset.width) : null;
+            const height = option?.dataset?.height ? Number(option.dataset.height) : null;
+            viewportState.width = Number.isFinite(width) ? width : null;
+            viewportState.height = Number.isFinite(height) ? height : null;
         }
-        updateIframeScrolling();
-        updateViewportBadge();
-    }
+    });
 
-    function updateViewportFromSelect() {
-        const select = getViewportSelect();
-        if (!select) {
+    function bindOnce(element, key, eventName, handler) {
+        if (!element) {
             return;
         }
-        const option = select.options[select.selectedIndex];
-        viewportState.preset = select.value || 'responsive';
-        const width = option?.dataset?.width ? Number(option.dataset.width) : null;
-        const height = option?.dataset?.height ? Number(option.dataset.height) : null;
-        viewportState.width = Number.isFinite(width) ? width : null;
-        viewportState.height = Number.isFinite(height) ? height : null;
-        viewportState.rotated = false;
-        applyViewportState();
-        updateViewportRotateButton();
-    }
-
-    function syncViewportSelectFromState() {
-        const select = getViewportSelect();
-        if (!select) {
+        if (element.dataset[key]) {
             return;
         }
-        if (viewportState.preset && select.querySelector(`option[value="${viewportState.preset}"]`)) {
-            select.value = viewportState.preset;
-        } else {
-            select.value = 'responsive';
-            viewportState.preset = 'responsive';
-        }
-        const option = select.options[select.selectedIndex];
-        const width = option?.dataset?.width ? Number(option.dataset.width) : null;
-        const height = option?.dataset?.height ? Number(option.dataset.height) : null;
-        viewportState.width = Number.isFinite(width) ? width : null;
-        viewportState.height = Number.isFinite(height) ? height : null;
+        element.addEventListener(eventName, handler);
+        element.dataset[key] = 'true';
     }
 
-    function bindViewportControls() {
-        const select = getViewportSelect();
-        if (select && !select.dataset.boundViewport) {
-            select.addEventListener('change', updateViewportFromSelect);
-            select.dataset.boundViewport = 'true';
+    Object.assign(viewportControls, {
+        bindControls() {
+            bindOnce(dom.viewportSelect(), 'boundViewportSelect', 'change', viewportControls.updateFromSelect);
+            bindOnce(dom.viewportRotateButton(), 'boundViewportRotate', 'click', viewportControls.toggleRotation);
+        },
+        updateRotateButton() {
+            const button = dom.viewportRotateButton();
+            if (!button) {
+                return;
+            }
+            const disabled = !viewportControls.isFixed();
+            button.disabled = disabled;
+            button.classList.toggle('opacity-50', disabled);
+            button.classList.toggle('pointer-events-none', disabled);
         }
-        const rotate = getViewportRotateButton();
-        if (rotate && !rotate.dataset.boundViewport) {
-            rotate.addEventListener('click', toggleViewportRotation);
-            rotate.dataset.boundViewport = 'true';
-        }
-    }
-
-    function updateViewportRotateButton() {
-        const button = getViewportRotateButton();
-        if (!button) {
-            return;
-        }
-        const disabled = !isFixedViewport();
-        button.disabled = disabled;
-        button.classList.toggle('opacity-50', disabled);
-        button.classList.toggle('pointer-events-none', disabled);
-    }
-
-    function updateFullscreenToggleButton() {
-        const button = getFullscreenToggleButton();
-        if (!button) {
-            return;
-        }
-        const enterLabel = button.dataset.labelEnter || 'Enter fullscreen';
-        const exitLabel = button.dataset.labelExit || 'Exit fullscreen';
-        const label = fullscreenState.active ? exitLabel : enterLabel;
-        button.setAttribute('title', label);
-        button.setAttribute('aria-label', label);
-        const enterIcon = button.querySelector('[data-fullscreen-icon="enter"]');
-        const exitIcon = button.querySelector('[data-fullscreen-icon="exit"]');
-        if (enterIcon && exitIcon) {
-            enterIcon.style.display = fullscreenState.active ? 'none' : 'inline-flex';
-            exitIcon.style.display = fullscreenState.active ? 'inline-flex' : 'none';
-        }
-    }
+    });
 
     function setPreviewFullscreen(active) {
-        const overlay = getFullscreenOverlay();
-        const host = getFullscreenHost();
-        const container = getPreviewContainer();
+        const overlay = dom.fullscreenOverlay();
+        const host = dom.fullscreenHost();
+        const container = dom.previewContainer();
         if (!overlay || !host || !container) {
             return;
         }
@@ -569,66 +533,80 @@
             fullscreenState.active = false;
         }
 
-        applyViewportState();
-        updateViewportRotateButton();
-        updateFullscreenToggleButton();
+        viewportControls.applyState();
+        viewportControls.updateRotateButton();
+        fullscreenControls.updateToggleButton();
     }
 
-    function togglePreviewFullscreen() {
-        setPreviewFullscreen(!fullscreenState.active);
-    }
-
-    function bindFullscreenControls() {
-        const button = getFullscreenToggleButton();
-        if (button && !button.dataset.boundFullscreen) {
-            button.addEventListener('click', togglePreviewFullscreen);
-            button.dataset.boundFullscreen = 'true';
-        }
-        const overlay = getFullscreenOverlay();
-        if (overlay && !overlay.dataset.boundFullscreen) {
-            overlay.addEventListener('click', (event) => {
-                if (event.target === overlay) {
-                    setPreviewFullscreen(false);
+    const fullscreenControls = {
+        updateToggleButton() {
+            const button = dom.fullscreenToggleButton();
+            if (!button) {
+                return;
+            }
+            const enterLabel = button.dataset.labelEnter || 'Enter fullscreen';
+            const exitLabel = button.dataset.labelExit || 'Exit fullscreen';
+            const label = fullscreenState.active ? exitLabel : enterLabel;
+            button.setAttribute('title', label);
+            button.setAttribute('aria-label', label);
+            const enterIcon = button.querySelector('[data-fullscreen-icon="enter"]');
+            const exitIcon = button.querySelector('[data-fullscreen-icon="exit"]');
+            if (enterIcon && exitIcon) {
+                enterIcon.style.display = fullscreenState.active ? 'none' : 'inline-flex';
+                exitIcon.style.display = fullscreenState.active ? 'inline-flex' : 'none';
+            }
+        },
+        setActive(active) {
+            setPreviewFullscreen(active);
+        },
+        toggle() {
+            setPreviewFullscreen(!fullscreenState.active);
+        },
+        bindControls() {
+            bindOnce(dom.fullscreenToggleButton(), 'boundFullscreenToggle', 'click', fullscreenControls.toggle);
+            bindOnce(dom.fullscreenOverlay(), 'boundFullscreenOverlay', 'click', (event) => {
+                if (event.target === event.currentTarget) {
+                    fullscreenControls.setActive(false);
                 }
             });
-            overlay.dataset.boundFullscreen = 'true';
+            if (!document.body.dataset.boundFullscreenEsc) {
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape' && fullscreenState.active) {
+                        fullscreenControls.setActive(false);
+                    }
+                });
+                document.body.dataset.boundFullscreenEsc = 'true';
+            }
         }
-        if (!document.body.dataset.boundFullscreenEsc) {
-            document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && fullscreenState.active) {
-                    setPreviewFullscreen(false);
-                }
-            });
-            document.body.dataset.boundFullscreenEsc = 'true';
-        }
-    }
+    };
 
-    function toggleViewportRotation() {
-        if (!isFixedViewport()) {
-            return;
+    Object.assign(viewportControls, {
+        toggleRotation() {
+            if (!viewportControls.isFixed()) {
+                return;
+            }
+            viewportState.rotated = !viewportState.rotated;
+            viewportControls.applyState();
+        },
+        updateBadge() {
+            const badge = document.getElementById('preview-viewport-badge');
+            const select = dom.viewportSelect();
+            if (!badge || !select) {
+                return;
+            }
+            const option = select.options[select.selectedIndex];
+            if (!option) {
+                return;
+            }
+            badge.classList.remove('hidden');
+            if (viewportControls.isFixed()) {
+                const size = viewportControls.getEffectiveSize();
+                badge.textContent = size ? `${size.width}×${size.height}` : option.textContent;
+            } else {
+                badge.textContent = option.textContent;
+            }
         }
-        viewportState.rotated = !viewportState.rotated;
-        applyViewportState();
-    }
-
-    function updateViewportBadge() {
-        const badge = document.getElementById('preview-viewport-badge');
-        const select = getViewportSelect();
-        if (!badge || !select) {
-            return;
-        }
-        const option = select.options[select.selectedIndex];
-        if (!option) {
-            return;
-        }
-        badge.classList.remove('hidden');
-        if (isFixedViewport()) {
-            const size = getEffectiveViewportSize();
-            badge.textContent = size ? `${size.width}×${size.height}` : option.textContent;
-        } else {
-            badge.textContent = option.textContent;
-        }
-    }
+    });
 
     function renderPreviewError(host, message) {
         const defaultMessage = document.body.dataset.previewLoadFailed || 'Failed to load preview.';
@@ -638,14 +616,14 @@
                 ${safeMessage}
             </div>
         `;
-        renderPreviewFrame(host, html);
+        iframeControls.renderFrame(host, html);
     }
 
     async function loadPreview(host) {
-        const targetHost = host || getPreviewHost();
+        const targetHost = host || dom.previewHost();
         if (!targetHost) return;
 
-        ensurePreviewMessageListener();
+        iframeControls.ensureMessageListener();
         resetPreviewHeight();
         previewState.lastRenderAt = Date.now();
 
@@ -672,7 +650,7 @@
             if (html.includes('システムエラー') || html.includes('System Error')) {
                 throw new Error('Preview error page detected');
             }
-            renderPreviewFrame(targetHost, html);
+            iframeControls.renderFrame(targetHost, html);
             await waitForFontsOnce();
         } catch (error) {
             const baseMessage = document.body.dataset.previewLoadFailed || 'Failed to load preview.';
@@ -696,6 +674,16 @@
         loadPreview();
     }
 
+    function initializePreviewUI() {
+        loadPreview();
+        viewportControls.bindControls();
+        fullscreenControls.bindControls();
+        viewportControls.syncSelectFromState();
+        viewportControls.applyState();
+        viewportControls.updateRotateButton();
+        fullscreenControls.updateToggleButton();
+    }
+
     window.__thymeleafletResetPreviewHeight = resetPreviewHeight;
     window.__thymeleafletLoadShadowPreview = loadPreview;
     window.__thymeleafletLoadPreview = loadPreview;
@@ -706,25 +694,11 @@
         resetToDefaults
     };
 
-    document.addEventListener('DOMContentLoaded', function() {
-        loadPreview();
-        bindViewportControls();
-        bindFullscreenControls();
-        syncViewportSelectFromState();
-        applyViewportState();
-        updateViewportRotateButton();
-        updateFullscreenToggleButton();
-    });
+    document.addEventListener('DOMContentLoaded', initializePreviewUI);
 
     document.addEventListener('htmx:afterSettle', function(event) {
         if (event.detail.target && event.detail.target.id === 'main-content-area') {
-            loadPreview();
-            bindViewportControls();
-            bindFullscreenControls();
-            syncViewportSelectFromState();
-            applyViewportState();
-            updateViewportRotateButton();
-            updateFullscreenToggleButton();
+            initializePreviewUI();
         }
     });
 })();

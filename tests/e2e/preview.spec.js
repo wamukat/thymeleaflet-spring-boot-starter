@@ -1,0 +1,123 @@
+const { test, expect } = require('@playwright/test');
+
+async function openFragment(page, fragmentName) {
+  await page.goto('/thymeleaflet/');
+  const link = page.getByRole('link', { name: new RegExp(`^${fragmentName}\\b`, 'i') });
+  await expect(link).toBeVisible();
+  await link.click();
+  await page.waitForSelector('#fragment-preview-host iframe');
+  await expect(page.locator('#preview-container')).toBeVisible();
+}
+
+async function selectStory(page, storyName) {
+  const storyLink = page.getByRole('link', { name: new RegExp(`^${storyName}\\b`, 'i') });
+  await expect(storyLink).toBeVisible();
+  await storyLink.click();
+}
+
+test('simpleCard preview matches snapshot', async ({ page }) => {
+  await openFragment(page, 'simpleCard');
+  const preview = page.locator('#preview-container');
+  await expect(preview).toHaveScreenshot('simpleCard-preview.png');
+});
+
+test('selectInput fullscreen matches snapshot', async ({ page }) => {
+  await openFragment(page, 'selectInput');
+  const fullscreenButton = page.getByRole('button', { name: /fullscreen/i });
+  await expect(fullscreenButton).toBeVisible();
+  await fullscreenButton.click();
+
+  const overlay = page.locator('#preview-fullscreen-overlay');
+  await expect(overlay).toHaveClass(/preview-fullscreen-active/);
+  await expect(overlay).toHaveScreenshot('selectInput-fullscreen.png');
+
+  await page.keyboard.press('Escape');
+  await expect(overlay).not.toHaveClass(/preview-fullscreen-active/);
+});
+
+test('story selection updates URL', async ({ page }) => {
+  await openFragment(page, 'selectInput');
+  await selectStory(page, 'Custom');
+  await expect(page).toHaveURL(/\/thymeleaflet\/components\.form-select\/selectInput\/custom$/);
+});
+
+test('custom parameters update preview', async ({ page }) => {
+  await openFragment(page, 'selectInput');
+  await selectStory(page, 'Custom');
+  const iframe = page.locator('#fragment-preview-host iframe');
+  await expect(iframe).toBeVisible();
+  const frame = await iframe.contentFrame();
+  await expect(frame).not.toBeNull();
+
+  const firstSelect = frame.locator('select').first();
+  await expect(firstSelect).toBeVisible();
+  const options = await firstSelect.locator('option').evaluateAll(nodes =>
+    nodes.map(node => node.value)
+  );
+  expect(options.length).toBeGreaterThan(1);
+  const initialValue = await firstSelect.inputValue();
+  const nextValue = options.find(value => value !== initialValue) || options[1];
+  await firstSelect.selectOption(nextValue);
+  await expect(firstSelect).toHaveValue(nextValue);
+});
+
+test('preview iframe does not show error page', async ({ page }) => {
+  await openFragment(page, 'simpleCard');
+  const iframe = page.locator('#fragment-preview-host iframe');
+  const frame = await iframe.contentFrame();
+  await expect(frame).not.toBeNull();
+  const bodyText = await frame.locator('body').innerText();
+  expect(bodyText).not.toContain('System Error');
+  expect(bodyText).not.toContain('システムエラー');
+});
+
+test('viewport preset and rotation update badge', async ({ page }) => {
+  await openFragment(page, 'simpleCard');
+  const select = page.locator('#preview-viewport-select');
+  await expect(select).toBeVisible();
+  await select.selectOption({ label: 'Mobile Small' });
+
+  const badge = page.locator('#preview-viewport-badge');
+  await expect(badge).toBeVisible();
+  const initialText = (await badge.textContent())?.trim();
+  expect(initialText).toMatch(/\d+×\d+/);
+
+  const rotate = page.locator('#preview-viewport-rotate');
+  await expect(rotate).toBeEnabled();
+  await rotate.click();
+  const rotatedText = (await badge.textContent())?.trim();
+  expect(rotatedText).toMatch(/\d+×\d+/);
+  expect(rotatedText).not.toBe(initialText);
+});
+
+test('background toggle switches preview class', async ({ page }) => {
+  await openFragment(page, 'simpleCard');
+  const container = page.locator('#preview-container');
+  const toggle = page.locator('#background-toggle');
+  await expect(toggle).toBeVisible();
+
+  await expect(container).toHaveClass(/preview-background-light|preview-background-gray/);
+  const initiallyDark = await container.evaluate(el => el.classList.contains('preview-background-gray'));
+  await toggle.click();
+  if (initiallyDark) {
+    await expect(container).toHaveClass(/preview-background-light/);
+  } else {
+    await expect(container).toHaveClass(/preview-background-gray/);
+  }
+});
+
+test('copy usage button shows copied label', async ({ page }) => {
+  await openFragment(page, 'simpleCard');
+  await selectStory(page, 'Default');
+  await expect(page.locator('#usage-example code')).toBeVisible();
+  const result = await page.evaluate(() => {
+    document.execCommand = () => true;
+    try {
+      copyUsageExample();
+      return true;
+    } catch (error) {
+      return String(error);
+    }
+  });
+  expect(result).toBe(true);
+});

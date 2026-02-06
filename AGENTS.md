@@ -4,6 +4,11 @@
 - スターターをビルドした後（`mvn -DskipTests install`）は、サンプルアプリを再起動しないと変更が反映されない。
   - 例: `sample` ディレクトリで `mvn spring-boot:run`
 
+## E2E Testing
+- 実装後は必ずE2Eテストを実施する。
+  - 例: `npm run test:e2e`
+- リリース前にも必ずE2Eテストを実施する（必須）。
+
 ## PR/Issue Notes
 - PR本文に「どのIssueをクローズするか（例: `Closes #123`）」を明記する。
 
