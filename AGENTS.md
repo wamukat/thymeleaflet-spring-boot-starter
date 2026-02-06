@@ -26,3 +26,19 @@
 
 ## Browser Tooling
 - ブラウザ確認・操作は `agent-browser` を優先して利用する。
+
+## Docs Screenshot Workflow
+- キャプチャは Playwright を使って取得する（`npx -p playwright` で依存を一時的に利用）。
+- 目安の設定:
+  - ビューポート: `1440x900`
+  - `deviceScaleFactor: 2` で高解像度にする。
+- 画面遷移:
+  - 該当フラグメントをクリックして選択。
+  - ストーリー切り替えはストーリーリンクをクリック。
+  - ビューポート切り替えは `<select>` の `option[value=...]` を `selectOption` で変更。
+  - 画面回転は `Rotate viewport` ボタンをクリック。
+- 取得対象:
+  - 全体: `page.screenshot`
+  - カード: `.card-thymeleaflet` を `h3` 見出しテキストで絞り込み、`locator.screenshot`。
+  - プレビューは `Preview` カードを撮影。
+  - フルスクリーンは `Fullscreen` ボタン → `.preview-fullscreen` を撮影。

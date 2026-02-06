@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="ja">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -146,9 +146,8 @@
         <img src="assets/thymeleaflet-logo.png" alt="Thymeleaflet logo" style="width: 220px; display: block; margin: 0 auto 18px;">
         <h1>Thymeleaflet</h1>
         <p>
-          A Storybook-like UI for Thymeleaf fragments.<br>
-          Discover fragments, preview them instantly, and auto-generate usage examples<br>
-          from JavaDoc-style comments embedded in your HTML templates.
+          Thymeleaflet は Thymeleaf フラグメント向けの Storybook 風 UI です。<br>
+          フラグメントを見つけてサクッとプレビューし、HTML 内の JavaDoc 風コメントから使用例も自動生成します。
         </p>
         <div class="links">
           <a class="link" href="https://bad-siouxie-wamukat-977c4dc6.koyeb.app/thymeleaflet">
@@ -170,24 +169,24 @@
       </div>
 
       <section class="section">
-        <h2>Overview</h2>
+        <h2>概要</h2>
         <p>
-          A fast preview UI for verifying Thymeleaf fragments with confidence.<br>
-          Stories and live previews keep the intent visible while you build.
+          Thymeleaf フラグメントを素早く、しかも確実に確認できるプレビュー UI です。<br>
+          ストーリーとライブプレビューで、実装の意図をいつでも見える化します。
         </p>
         <div class="card">
           <div class="shot">
-            <img src="assets/feature-overview.png" alt="Overview of the Thymeleaflet UI" loading="lazy">
+            <img src="assets/feature-overview-ja.png" alt="Thymeleaflet UI の全体像" loading="lazy">
           </div>
-          <div class="caption">Full UI view: Stories, preview, and fragment details.</div>
+          <div class="caption">ストーリー、プレビュー、フラグメント詳細をまとめて確認。</div>
         </div>
       </section>
 
       <section class="section">
-        <h2>Story Authoring (stories.yml)</h2>
+        <h2>ストーリー作成 (stories.yml)</h2>
         <p>
-          Define UI variations in <code>stories.yml</code> so states stay explicit and reviewable.<br>
-          Details: <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/stories.md">stories.md</a>.
+          <code>stories.yml</code> で UI のバリエーションを定義し、状態をわかりやすく管理できます。<br>
+          詳細は <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/stories.ja.md">stories.ja.md</a> を参照してください。
         </p>
         <div class="grid-2">
           <div class="card">
@@ -208,139 +207,137 @@
           title: Returns
           body: Returns are accepted within 14 days of delivery.
           open: true</pre>
-            <div class="caption">Story definitions in the actual stories.yml.</div>
+            <div class="caption">実際の stories.yml での定義例。</div>
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-live-preview.png" alt="Story list rendered in the UI" loading="lazy">
+              <img src="assets/feature-live-preview-ja.png" alt="UI 上に表示されたストーリー一覧" loading="lazy">
             </div>
-            <div class="caption">Stories rendered in the UI</div>
+            <div class="caption">UI に反映されたストーリー一覧。</div>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <h2>Live Preview Experience</h2>
+        <h2>ライブプレビュー</h2>
         <p>
-          Pick a story and the preview updates instantly.<br>
-          Edit parameters and models in the same view, no context switch.<br>
-          Missing story? You still get a fallback preview for quick checks.
+          ストーリーを選ぶとプレビューがすぐに更新され、パラメータやモデルの編集も同じ画面で完結します。<br>
+          ストーリーが無い場合でもフォールバックでプレビューできるので安心です。
         </p>
         <div class="card">
           <div class="shot">
-            <img src="assets/feature-live-preview-open.png" alt="Live preview with the Open story selected" loading="lazy">
+            <img src="assets/feature-live-preview-open-ja.png" alt="Open ストーリー選択時のライブプレビュー" loading="lazy">
           </div>
-          <div class="caption">Story selection with live preview updates.</div>
+          <div class="caption">ストーリー選択と同時にプレビューが更新。</div>
         </div>
       </section>
 
 
 
       <section class="section">
-        <h2>Viewport Presets &amp; Fit</h2>
+        <h2>ビューポート切替</h2>
         <p>
-          Switch between presets (Fit / Mobile Small / rotate) to validate responsive layouts fast.<br>
-          Great for quick edge-case checks.
+          Fit / Mobile Small / 回転などのプリセットで、レスポンシブ表示を手早く確認できます。<br>
+          ちょっとした崩れもすぐ見つかります。
         </p>
         <div class="grid-2">
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-viewport-mobile.png" alt="Responsive header on Mobile Small (portrait)" loading="lazy">
+              <img src="assets/feature-viewport-mobile-ja.png" alt="Mobile Small (縦) のレスポンシブヘッダー" loading="lazy">
             </div>
-            <div class="caption">Mobile Small (portrait)</div>
+            <div class="caption">Mobile Small（縦）</div>
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-viewport-tablet.png" alt="Responsive header on Mobile Small (landscape)" loading="lazy">
+              <img src="assets/feature-viewport-tablet-ja.png" alt="Mobile Small (横) のレスポンシブヘッダー" loading="lazy">
             </div>
-            <div class="caption">Mobile Small (landscape)</div>
+            <div class="caption">Mobile Small（横）</div>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <h2>Fullscreen Preview</h2>
+        <h2>フルスクリーン</h2>
         <p>
-          Pop the preview into fullscreen when you want maximum space.<br>
-          Perfect for detailed QA.
+          もっと広く見たいときはフルスクリーン表示に切り替えれば、細部までじっくり確認できます。
         </p>
         <div class="card">
           <div class="shot">
-            <img src="assets/feature-fullscreen.png" alt="Fullscreen preview mode" loading="lazy">
+            <img src="assets/feature-fullscreen-ja.png" alt="フルスクリーンプレビュー" loading="lazy">
           </div>
-          <div class="caption">Floating fullscreen preview mode.</div>
+          <div class="caption">フローティングのフルスクリーンプレビュー。</div>
         </div>
       </section>
 
       <section class="section">
-        <h2>Custom Parameters</h2>
+        <h2>カスタムパラメータ</h2>
         <p>
-          Edit parameters directly, even when no story exists.<br>
-          Quick sanity checks without extra setup.
+          ストーリーが無くても、パラメータを直接編集して検証できます。<br>
+          すぐ試したいときに便利です。
         </p>
         <div class="grid-2">
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-custom-params-form.png" alt="Custom parameter input form" loading="lazy">
+              <img src="assets/feature-custom-params-form-ja.png" alt="カスタムパラメータ入力フォーム" loading="lazy">
             </div>
-            <div class="caption">Custom parameter input form.</div>
+            <div class="caption">カスタムパラメータの入力。</div>
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-custom-params-preview.png" alt="Live preview after applying custom parameters" loading="lazy">
+              <img src="assets/feature-custom-params-preview-ja.png" alt="カスタムパラメータ適用後のライブプレビュー" loading="lazy">
             </div>
-            <div class="caption">Live preview updated with custom parameters.</div>
+            <div class="caption">入力内容がプレビューに反映。</div>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <h2>Custom Model</h2>
+        <h2>カスタムモデル</h2>
         <p>
-          Provide Object-style models and validate model-dependent fragments in-place.<br>
-          No leaving the UI.
+          Object 形式のモデルを渡して、モデル依存のフラグメントも UI 内で検証できます。<br>
+          画面を切り替えずに完結します。
         </p>
         <div class="grid-2">
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-custom-model-form.png" alt="Custom model input form" loading="lazy">
+              <img src="assets/feature-custom-model-form-ja.png" alt="カスタムモデル入力フォーム" loading="lazy">
             </div>
-            <div class="caption">Custom model input aligned with the model spec.</div>
+            <div class="caption">モデル仕様に合わせた入力。</div>
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-custom-model-preview.png" alt="Live preview after applying custom model" loading="lazy">
+              <img src="assets/feature-custom-model-preview-ja.png" alt="カスタムモデル適用後のライブプレビュー" loading="lazy">
             </div>
-            <div class="caption">Live preview updated with custom model values.</div>
+            <div class="caption">モデル値がプレビューに反映。</div>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <h2>Background Toggle</h2>
+        <h2>背景切り替え</h2>
         <p>
-          Toggle light/dark backgrounds to confirm contrast and edge clarity.<br>
-          Handy for UI polish.
+          明るい/暗い背景を切り替えて、コントラストや輪郭の見え方をチェックできます。<br>
+          仕上げの確認にぴったりです。
         </p>
         <div class="grid-2">
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-background-light.png" alt="Light background preview" loading="lazy">
+              <img src="assets/feature-background-light-ja.png" alt="明るい背景のプレビュー" loading="lazy">
             </div>
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-background-dark.png" alt="Dark background preview" loading="lazy">
+              <img src="assets/feature-background-dark-ja.png" alt="暗い背景のプレビュー" loading="lazy">
             </div>
           </div>
         </div>
       </section>
 
       <section class="section">
-        <h2>Fragment Details (JavaDoc)</h2>
+        <h2>フラグメント詳細 (JavaDoc)</h2>
         <p>
-          JavaDoc-style comments surface fragment descriptions and model specs.<br>
-          Keep intent visible and shareable.
+          JavaDoc 風コメントから説明やモデル仕様を抽出し、意図をそのまま UI に表示します。<br>
+          共有もしやすくなります。
         </p>
         <div class="card">
           <pre class="code">/**
@@ -356,25 +353,24 @@
  * @model options {@code List<Map<String, Object>>} [required] Options with value/label
  * @example &lt;div th:replace="~{components/form-select :: selectInput(label='Plan', name='plan', selected='pro', help='Choose your plan', error='', required=true, disabled=false)}"&gt;&lt;/div&gt;
  */</pre>
-          <div class="caption">JavaDoc comment in the fragment source.</div>
+          <div class="caption">フラグメントのソースに記載した JavaDoc コメント。</div>
         </div>
         <div class="card">
           <div class="shot">
-            <img src="assets/feature-fragment-details.png" alt="Fragment details and model specification panel" loading="lazy">
+            <img src="assets/feature-fragment-details-ja.png" alt="フラグメント詳細とモデル仕様パネル" loading="lazy">
           </div>
-          <div class="caption">Fragment details and model specification panel.</div>
+          <div class="caption">抽出されたフラグメント詳細とモデル仕様。</div>
         </div>
       </section>
 
       <section class="section">
-        <h2>Getting Started</h2>
+        <h2>はじめに</h2>
         <p>
-          No need to build the starter first.<br>
-          Add the dependency and start exploring right away.<br>
-          Details: <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/getting-started.md">getting-started.md</a>.
+          スターターをビルドせずに使えるので、依存を追加したらすぐ試せます。<br>
+          詳細は <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/getting-started.ja.md">getting-started.ja.md</a> を参照してください。
         </p>
         <div class="card stack">
-          <div class="pill">Dependency</div>
+          <div class="pill">依存関係</div>
           <div>
             <p>Maven</p>
             <pre class="code">&lt;dependency&gt;
@@ -391,10 +387,10 @@
       </section>
 
       <section class="section">
-        <h2>Configuration at a Glance</h2>
+        <h2>設定の概要</h2>
         <p>
-          Configure preview viewports and background colors via <code>application.yml</code>.<br>
-          Details: <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/configuration.md">configuration.md</a>.
+          <code>application.yml</code> でプレビューのビューポートや背景色を設定できます。<br>
+          詳細は <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/configuration.ja.md">configuration.ja.md</a> を参照してください。
         </p>
         <div class="card">
           <pre class="code">thymeleaflet:
