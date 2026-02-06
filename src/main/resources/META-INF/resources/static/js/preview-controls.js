@@ -18,7 +18,6 @@
     let viewportState = {
         width: null,
         height: null,
-        rotated: false,
         preset: 'responsive'
     };
     let fullscreenState = {
@@ -27,10 +26,6 @@
         originalParent: null,
         originalNextSibling: null,
         previousBodyOverflow: ''
-    };
-    const rulerState = {
-        enabled: false,
-        lastHeight: 0
     };
     const previewState = {
         storyOverrides: {},
@@ -46,9 +41,6 @@
         previewViewport: () => document.querySelector('#preview-viewport'),
         previewViewportFrame: () => document.querySelector('.preview-viewport-frame'),
         viewportSelect: () => document.getElementById('preview-viewport-select'),
-        viewportRotateButton: () => document.getElementById('preview-viewport-rotate'),
-        rulerToggleButton: () => document.getElementById('preview-ruler-toggle'),
-        previewRuler: () => document.getElementById('preview-ruler'),
         fullscreenToggleButton: () => document.getElementById('preview-fullscreen-toggle'),
         fullscreenOverlay: () => document.getElementById('preview-fullscreen-overlay'),
         fullscreenHost: () => document.getElementById('preview-fullscreen-host'),
@@ -66,9 +58,7 @@
             if (!viewportControls.hasWidthPreset()) {
                 return null;
             }
-            const width = viewportState.width;
-            const height = viewportState.height;
-            return { width, height };
+            return { width: viewportState.width };
         }
     };
     const iframeControls = {};
@@ -81,7 +71,6 @@
         if (host) {
             host.style.height = heightPx + 'px';
         }
-        updateRuler();
     }
 
     function resetPreviewHeight() {
@@ -118,59 +107,6 @@
         }, 320);
     }
 
-    function getRulerHeight() {
-        const frame = dom.previewViewportFrame();
-        if (!frame) {
-            return 0;
-        }
-        return Math.max(frame.scrollHeight, frame.clientHeight);
-    }
-
-    function renderRuler(height) {
-        const ruler = dom.previewRuler();
-        if (!ruler) {
-            return;
-        }
-        const nextHeight = Math.max(height, MIN_HEIGHT);
-        if (rulerState.lastHeight === nextHeight) {
-            return;
-        }
-        rulerState.lastHeight = nextHeight;
-        ruler.style.height = `${nextHeight}px`;
-        const lines = [];
-        for (let y = 0; y <= nextHeight; y += 100) {
-            lines.push(
-                `<div class="preview-ruler-line" style="top:${y}px;"><span class="preview-ruler-label">${y}</span></div>`
-            );
-        }
-        ruler.innerHTML = lines.join('');
-    }
-
-    function updateRuler() {
-        if (!rulerState.enabled) {
-            return;
-        }
-        renderRuler(getRulerHeight());
-    }
-
-    function setRulerEnabled(enabled) {
-        rulerState.enabled = enabled;
-        const ruler = dom.previewRuler();
-        if (!ruler) {
-            return;
-        }
-        if (enabled) {
-            ruler.classList.remove('hidden');
-            updateRuler();
-        } else {
-            ruler.classList.add('hidden');
-        }
-        const button = dom.rulerToggleButton();
-        if (button) {
-            button.classList.toggle('ring-2', enabled);
-            button.classList.toggle('ring-blue-500', enabled);
-        }
-    }
 
     function waitForFontsOnce() {
         if (fontsReadyPromise) {
@@ -500,7 +436,6 @@
             }
             iframeControls.updateScrolling();
             viewportControls.updateBadge();
-            updateRuler();
         },
         updateFromSelect() {
             const select = dom.viewportSelect();
@@ -512,9 +447,7 @@
             const width = option?.dataset?.width ? Number(option.dataset.width) : null;
             viewportState.width = Number.isFinite(width) ? width : null;
             viewportState.height = null;
-            viewportState.rotated = false;
             viewportControls.applyState();
-            viewportControls.updateRotateButton();
         },
         syncSelectFromState() {
             const select = dom.viewportSelect();
@@ -548,21 +481,7 @@
     Object.assign(viewportControls, {
         bindControls() {
             bindOnce(dom.viewportSelect(), 'boundViewportSelect', 'change', viewportControls.updateFromSelect);
-            bindOnce(dom.viewportRotateButton(), 'boundViewportRotate', 'click', viewportControls.toggleRotation);
-            bindOnce(dom.rulerToggleButton(), 'boundRulerToggle', 'click', () => {
-                setRulerEnabled(!rulerState.enabled);
-            });
         },
-        updateRotateButton() {
-            const button = dom.viewportRotateButton();
-            if (!button) {
-                return;
-            }
-            const disabled = !viewportControls.isHeightFixed();
-            button.disabled = disabled;
-            button.classList.toggle('opacity-50', disabled);
-            button.classList.toggle('pointer-events-none', disabled);
-        }
     });
 
     function setPreviewFullscreen(active) {
@@ -606,7 +525,6 @@
         }
 
         viewportControls.applyState();
-        viewportControls.updateRotateButton();
         fullscreenControls.updateToggleButton();
     }
 
@@ -653,13 +571,6 @@
     };
 
     Object.assign(viewportControls, {
-        toggleRotation() {
-            if (!viewportControls.isHeightFixed()) {
-                return;
-            }
-            viewportState.rotated = !viewportState.rotated;
-            viewportControls.applyState();
-        },
         updateBadge() {
             const badge = document.getElementById('preview-viewport-badge');
             const select = dom.viewportSelect();
@@ -752,9 +663,7 @@
         fullscreenControls.bindControls();
         viewportControls.syncSelectFromState();
         viewportControls.applyState();
-        viewportControls.updateRotateButton();
         fullscreenControls.updateToggleButton();
-        setRulerEnabled(false);
     }
 
     window.__thymeleafletResetPreviewHeight = resetPreviewHeight;
