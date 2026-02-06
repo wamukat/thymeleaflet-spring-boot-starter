@@ -463,17 +463,20 @@
         viewportState.height = Number.isFinite(height) ? height : null;
     }
 
+    function bindOnce(element, key, eventName, handler) {
+        if (!element) {
+            return;
+        }
+        if (element.dataset[key]) {
+            return;
+        }
+        element.addEventListener(eventName, handler);
+        element.dataset[key] = 'true';
+    }
+
     function bindViewportControls() {
-        const select = dom.viewportSelect();
-        if (select && !select.dataset.boundViewport) {
-            select.addEventListener('change', updateViewportFromSelect);
-            select.dataset.boundViewport = 'true';
-        }
-        const rotate = dom.viewportRotateButton();
-        if (rotate && !rotate.dataset.boundViewport) {
-            rotate.addEventListener('click', toggleViewportRotation);
-            rotate.dataset.boundViewport = 'true';
-        }
+        bindOnce(dom.viewportSelect(), 'boundViewportSelect', 'change', updateViewportFromSelect);
+        bindOnce(dom.viewportRotateButton(), 'boundViewportRotate', 'click', toggleViewportRotation);
     }
 
     function updateViewportRotateButton() {
@@ -555,20 +558,12 @@
     }
 
     function bindFullscreenControls() {
-        const button = dom.fullscreenToggleButton();
-        if (button && !button.dataset.boundFullscreen) {
-            button.addEventListener('click', togglePreviewFullscreen);
-            button.dataset.boundFullscreen = 'true';
-        }
-        const overlay = dom.fullscreenOverlay();
-        if (overlay && !overlay.dataset.boundFullscreen) {
-            overlay.addEventListener('click', (event) => {
-                if (event.target === overlay) {
-                    setPreviewFullscreen(false);
-                }
-            });
-            overlay.dataset.boundFullscreen = 'true';
-        }
+        bindOnce(dom.fullscreenToggleButton(), 'boundFullscreenToggle', 'click', togglePreviewFullscreen);
+        bindOnce(dom.fullscreenOverlay(), 'boundFullscreenOverlay', 'click', (event) => {
+            if (event.target === event.currentTarget) {
+                setPreviewFullscreen(false);
+            }
+        });
         if (!document.body.dataset.boundFullscreenEsc) {
             document.addEventListener('keydown', (event) => {
                 if (event.key === 'Escape' && fullscreenState.active) {
@@ -672,6 +667,16 @@
         loadPreview();
     }
 
+    function initializePreviewUI() {
+        loadPreview();
+        bindViewportControls();
+        bindFullscreenControls();
+        syncViewportSelectFromState();
+        applyViewportState();
+        updateViewportRotateButton();
+        updateFullscreenToggleButton();
+    }
+
     window.__thymeleafletResetPreviewHeight = resetPreviewHeight;
     window.__thymeleafletLoadShadowPreview = loadPreview;
     window.__thymeleafletLoadPreview = loadPreview;
@@ -682,25 +687,11 @@
         resetToDefaults
     };
 
-    document.addEventListener('DOMContentLoaded', function() {
-        loadPreview();
-        bindViewportControls();
-        bindFullscreenControls();
-        syncViewportSelectFromState();
-        applyViewportState();
-        updateViewportRotateButton();
-        updateFullscreenToggleButton();
-    });
+    document.addEventListener('DOMContentLoaded', initializePreviewUI);
 
     document.addEventListener('htmx:afterSettle', function(event) {
         if (event.detail.target && event.detail.target.id === 'main-content-area') {
-            loadPreview();
-            bindViewportControls();
-            bindFullscreenControls();
-            syncViewportSelectFromState();
-            applyViewportState();
-            updateViewportRotateButton();
-            updateFullscreenToggleButton();
+            initializePreviewUI();
         }
     });
 })();
