@@ -79,6 +79,9 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
     private void appendCustomStoryIfMissing(List<FragmentStoryInfo> stories,
                                             FragmentSummary fragmentSummary,
                                             String fragmentGroupName) {
+        if (!canUseCustomStory(stories, fragmentSummary)) {
+            return;
+        }
         boolean hasCustom = stories.stream()
             .anyMatch(story -> CUSTOM_STORY_NAME.equals(story.getStoryName()));
         if (hasCustom) {
@@ -98,6 +101,18 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
             CUSTOM_STORY_NAME,
             customStory
         ));
+    }
+
+    private boolean canUseCustomStory(List<FragmentStoryInfo> stories, FragmentSummary fragmentSummary) {
+        boolean hasParameters = fragmentSummary != null
+            && fragmentSummary.getParameters() != null
+            && !fragmentSummary.getParameters().isEmpty();
+        if (hasParameters) {
+            return true;
+        }
+        return stories.stream()
+            .map(FragmentStoryInfo::getModel)
+            .anyMatch(model -> model != null && !model.isEmpty());
     }
 
     @Override
