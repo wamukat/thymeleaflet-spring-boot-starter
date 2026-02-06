@@ -7,6 +7,16 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 - TBD
 
+## [0.2.0] - 2026-02-06
+
+- Make preview viewport presets and preview background colors configurable.
+- Add fullscreen preview mode and responsive header sample for layout verification.
+- Refine preview viewport sizing, fit behavior, and labels.
+
+### Issues
+
+- #7 Viewport presets: switch preview size
+
 ## [0.1.1] - 2026-02-05
 
 - Allow custom model editing when `stories.yml` is missing.

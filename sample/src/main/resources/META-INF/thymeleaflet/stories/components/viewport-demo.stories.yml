@@ -1,0 +1,6 @@
+name: Viewport Demo
+description: Viewport preset test fragment
+stories:
+  - name: default
+    title: Default
+    description: Wide and tall content for viewport preset checks.

@@ -17,5 +17,25 @@ thymeleaflet:
     scripts:
       - /js/accordion.js
     cache-duration-seconds: 3600
+  preview:
+    background-light: "#f3f4f6"
+    background-dark: "#1f2937"
+    viewports:
+      - id: mobileSmall
+        label: Mobile Small
+        width: 320
+        height: 568
+      - id: mobileLarge
+        label: Mobile Large
+        width: 414
+        height: 896
+      - id: tablet
+        label: Tablet
+        width: 834
+        height: 1112
+      - id: desktop
+        label: Desktop
+        width: 1024
+        height: 1280
   security:
     enabled: false

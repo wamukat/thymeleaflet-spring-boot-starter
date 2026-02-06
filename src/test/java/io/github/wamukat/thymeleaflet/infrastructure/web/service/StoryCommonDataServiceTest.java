@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.support.StaticMessageSource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
@@ -51,6 +52,7 @@ class StoryCommonDataServiceTest {
         resources.setStylesheets(List.of(" /css/app.css ", "/css/theme.css"));
         resources.setScripts(List.of("/js/app.js", " /js/vendor.js "));
         properties.setResources(resources);
+        PreviewConfigService previewConfigService = buildPreviewConfigService(properties);
 
         ReflectionTestUtils.setField(service, "storybookProperties", properties);
         ReflectionTestUtils.setField(service, "storyParameterUseCase", storyParameterUseCase);
@@ -58,6 +60,7 @@ class StoryCommonDataServiceTest {
         ReflectionTestUtils.setField(service, "storyRetrievalUseCase", storyRetrievalUseCase);
         ReflectionTestUtils.setField(service, "javaDocLookupService", javaDocLookupService);
         ReflectionTestUtils.setField(service, "fragmentDependencyService", fragmentDependencyService);
+        ReflectionTestUtils.setField(service, "previewConfigService", previewConfigService);
 
         FragmentSummary summary = FragmentSummary.of(
             "components/button",
@@ -86,5 +89,13 @@ class StoryCommonDataServiceTest {
 
         assertThat(model.getAttribute("previewStylesheets")).isEqualTo("/css/app.css,/css/theme.css");
         assertThat(model.getAttribute("previewScripts")).isEqualTo("/js/app.js,/js/vendor.js");
+    }
+
+    private PreviewConfigService buildPreviewConfigService(StorybookProperties properties) {
+        PreviewConfigService previewConfigService = new PreviewConfigService();
+        StaticMessageSource messageSource = new StaticMessageSource();
+        ReflectionTestUtils.setField(previewConfigService, "storybookProperties", properties);
+        ReflectionTestUtils.setField(previewConfigService, "messageSource", messageSource);
+        return previewConfigService;
     }
 }
