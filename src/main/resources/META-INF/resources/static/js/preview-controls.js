@@ -229,9 +229,9 @@
                     margin: 0;
                     padding: 0;
                     min-height: 100%;
-                    background: ${resolvedBackground} !important;
+                    background: transparent !important;
                 }
-                body { background-color: ${resolvedBackground} !important; }
+                body { background-color: transparent !important; }
                 #preview-root {
                     width: 100%;
                     min-height: 100%;
@@ -240,7 +240,7 @@
                     align-items: flex-start;
                     padding: 20px;
                     box-sizing: border-box;
-                    background: ${resolvedBackground};
+                    background: transparent;
                 }
                 #preview-content {
                     display: inline-block;
