@@ -7,6 +7,18 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 - TBD
 
+## [0.2.1] - 2026-02-06
+
+- Switch viewport controls to width-only presets and remove rotate/ruler-related UI.
+- Fix fullscreen and fit preview sizing behavior so fragments render without clipping.
+- Refactor preview controls/templates and strengthen E2E coverage.
+- Refresh English/Japanese documentation and screenshots for the updated preview behavior.
+
+### Issues
+
+- #25 Fullscreen preview clipping fix
+- #31 Viewport width-only update and docs refresh
+
 ## [0.2.0] - 2026-02-06
 
 - Make preview viewport presets and preview background colors configurable.
