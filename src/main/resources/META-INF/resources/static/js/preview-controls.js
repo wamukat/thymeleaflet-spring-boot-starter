@@ -348,21 +348,30 @@
             viewport.style.height = 'auto';
             viewport.classList.remove('preview-viewport-fixed');
             viewport.classList.add('preview-viewport-responsive');
+            viewport.classList.remove('border', 'border-dashed', 'border-gray-300', 'bg-white');
             if (host) {
                 host.style.width = '100%';
-                setPreviewHeight(previewContentHeight);
+                const iframe = host.querySelector('iframe');
+                const measuredHeight = iframe ? measureIframeHeight(iframe) : null;
+                if (measuredHeight != null) {
+                    handleResize(measuredHeight);
+                } else {
+                    resetPreviewHeight();
+                }
             }
         } else {
             viewport.style.width = `${effective.width}px`;
             viewport.style.height = `${effective.height}px`;
             viewport.classList.remove('preview-viewport-responsive');
             viewport.classList.add('preview-viewport-fixed');
+            viewport.classList.add('border', 'border-dashed', 'border-gray-300', 'bg-white');
             if (host) {
                 host.style.width = '100%';
                 host.style.height = '100%';
             }
         }
         updateIframeScrolling();
+        updateViewportBadge();
     }
 
     function updateViewportFromSelect() {
@@ -429,6 +438,25 @@
         }
         viewportState.rotated = !viewportState.rotated;
         applyViewportState();
+    }
+
+    function updateViewportBadge() {
+        const badge = document.getElementById('preview-viewport-badge');
+        const select = getViewportSelect();
+        if (!badge || !select) {
+            return;
+        }
+        const option = select.options[select.selectedIndex];
+        if (!option) {
+            return;
+        }
+        badge.classList.remove('hidden');
+        if (isFixedViewport()) {
+            const size = getEffectiveViewportSize();
+            badge.textContent = size ? `${size.width}×${size.height}` : option.textContent;
+        } else {
+            badge.textContent = option.textContent;
+        }
     }
 
     function renderPreviewError(host, message) {
