@@ -216,23 +216,6 @@
                                 Preview
                             </h3>
                             <div class="flex flex-wrap items-center gap-3">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-xs text-gray-500" th:text="#{thymeleaflet.livePreview}">Live Preview</span>
-                                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                                </div>
-
-                                <!-- 背景色切替 -->
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-xs text-gray-500" th:text="#{thymeleaflet.preview.background}">Background</span>
-                                    <button id="background-toggle"
-                                            class="flex items-center space-x-1 px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
-                                            onclick="togglePreviewBackground()"
-                                            th:attr="title=#{thymeleaflet.preview.toggle.title},data-label-light=#{thymeleaflet.preview.light},data-label-dark=#{thymeleaflet.preview.dark}">
-                                        <span id="toggle-icon">☀️</span>
-                                        <span id="toggle-text" th:text="#{thymeleaflet.preview.light}">Light</span>
-                                    </button>
-                                </div>
-
                                 <!-- Viewport プリセット -->
                                 <div class="flex items-center space-x-2">
                                     <span class="text-xs text-gray-500" th:text="#{thymeleaflet.preview.viewport}">Viewport</span>
@@ -251,6 +234,13 @@
                                             <path d="M4 7h8a5 5 0 1 1 0 10h-1"/>
                                             <path d="M4 7l3-3M4 7l3 3"/>
                                         </svg>
+                                    </button>
+                                    <button id="background-toggle"
+                                            class="flex items-center space-x-1 px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                                            onclick="togglePreviewBackground()"
+                                            th:attr="title=#{thymeleaflet.preview.toggle.title},data-label-light=#{thymeleaflet.preview.light},data-label-dark=#{thymeleaflet.preview.dark}">
+                                        <span id="toggle-icon">☀️</span>
+                                        <span id="toggle-text" th:text="#{thymeleaflet.preview.light}">Light</span>
                                     </button>
                                 </div>
                             </div>
