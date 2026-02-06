@@ -32,6 +32,22 @@
         border-radius: 18px;
         padding: 32px;
         box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+        position: relative;
+      }
+      .lang-switch {
+        position: absolute;
+        top: 18px;
+        right: 20px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .lang-switch a {
+        color: inherit;
+        text-decoration: none;
+        font-weight: 600;
+      }
+      .lang-switch a:hover {
+        color: var(--fg);
       }
       h1 {
         margin: 0 0 8px;
@@ -143,6 +159,7 @@
   <body>
     <div class="wrap">
       <div class="hero">
+        <div class="lang-switch"><a href="index.html">English</a></div>
         <img src="assets/thymeleaflet-logo.png" alt="Thymeleaflet logo" style="width: 220px; display: block; margin: 0 auto 18px;">
         <h1>Thymeleaflet</h1>
         <p>
