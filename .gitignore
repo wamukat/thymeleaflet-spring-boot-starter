@@ -39,6 +39,7 @@ Thumbs.db
 *.pid
 logs/
 test-results/
+playwright-report/
 
 # Temporary files
 *.tmp

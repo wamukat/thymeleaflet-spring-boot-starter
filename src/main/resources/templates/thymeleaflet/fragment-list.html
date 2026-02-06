@@ -146,72 +146,14 @@
                     <!-- プレビューエリア -->
                     <div class="lg:col-span-2">
                         <div class="card-thymeleaflet">
-                            <div class="card-thymeleaflet-header">
-                                <div class="flex justify-between items-center">
-                                    <h3 class="text-lg font-semibold text-gray-900">
-                                        <span th:text="#{thymeleaflet.preview.title}">Preview</span>
-                                        <span x-show="hasSelectedStoryTitle()" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-base font-normal text-gray-600"></span>
-                                    </h3>
-                                    <div class="flex flex-wrap items-center gap-3">
-                                        <!-- Viewport プリセット -->
-                                        <div class="flex items-center space-x-2">
-                                            <span class="text-xs text-gray-500" th:text="#{thymeleaflet.preview.viewport}">Viewport</span>
-                                            <select id="preview-viewport-select"
-                                                    class="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:bg-gray-50 transition-colors">
-                                                <option value="responsive" data-width="" data-height="" th:text="#{thymeleaflet.preview.viewport.responsive}">Responsive</option>
-                                                <option th:each="preset : ${previewViewportPresets}"
-                                                        th:value="${preset.id}"
-                                                        th:attr="data-width=${preset.width},data-height=${preset.height}"
-                                                        th:text="${preset.label}">
-                                                    Preset
-                                                </option>
-                                            </select>
-                                            <button id="preview-viewport-rotate"
-                                                    class="flex items-center justify-center w-7 h-7 rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
-                                                    th:attr="title=#{thymeleaflet.preview.viewport.rotate},aria-label=#{thymeleaflet.preview.viewport.rotate}">
-                                                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <path d="M4 7h8a5 5 0 1 1 0 10h-1"/>
-                                                    <path d="M4 7l3-3M4 7l3 3"/>
-                                                </svg>
-                                            </button>
-                                            <button id="background-toggle"
-                                                    class="flex items-center space-x-1 px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
-                                                    onclick="togglePreviewBackground()"
-                                                    th:attr="title=#{thymeleaflet.preview.toggle.title},data-label-light=#{thymeleaflet.preview.light},data-label-dark=#{thymeleaflet.preview.dark}">
-                                                <span id="toggle-icon">☀️</span>
-                                                <span id="toggle-text" th:text="#{thymeleaflet.preview.light}">Light</span>
-                                            </button>
-                                            <button id="preview-fullscreen-toggle"
-                                                    class="flex items-center justify-center w-7 h-7 rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
-                                                    th:attr="title=#{thymeleaflet.preview.fullscreen.enter},aria-label=#{thymeleaflet.preview.fullscreen.enter},data-label-enter=#{thymeleaflet.preview.fullscreen.enter},data-label-exit=#{thymeleaflet.preview.fullscreen.exit}">
-                                                <span data-fullscreen-icon="enter" class="inline-flex">
-                                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <path d="M3 9V5a2 2 0 0 1 2-2h4"/>
-                                                        <path d="M15 3h4a2 2 0 0 1 2 2v4"/>
-                                                        <path d="M21 15v4a2 2 0 0 1-2 2h-4"/>
-                                                        <path d="M9 21H5a2 2 0 0 1-2-2v-4"/>
-                                                    </svg>
-                                                </span>
-                                                <span data-fullscreen-icon="exit" class="inline-flex" style="display: none;">
-                                                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                        <path d="M9 9L5 5M5 9V5h4"/>
-                                                        <path d="M15 9l4-4m0 4V5h-4"/>
-                                                        <path d="M9 15l-4 4m0-4v4h4"/>
-                                                        <path d="M15 15l4 4m0-4v4h-4"/>
-                                                    </svg>
-                                                </span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <th:block th:fragment="preview-title-suffix">
+                                <span x-show="hasSelectedStoryTitle()" x-text="selectedStory ? '- ' + selectedStory.displayTitle : ''" class="text-base font-normal text-gray-600"></span>
+                            </th:block>
+                            <div th:replace="~{thymeleaflet/fragments/preview-panel :: header(~{::preview-title-suffix})}"></div>
                             
                             <div class="card-thymeleaflet-content">
                                 <!-- 共通のloading-indicator（HTMXで使用） -->
-                                <div id="loading-indicator" class="flex items-center justify-center h-24 text-gray-500" style="display: none;">
-                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                                    <span class="ml-2" th:text="#{thymeleaflet.preview.loading}">Loading preview...</span>
-                                </div>
+                                <div th:replace="~{thymeleaflet/fragments/preview-states :: loadingIndicator('loading-indicator', true, 'border-blue-500', 'ml-2 text-gray-500', 'flex items-center justify-center h-24')}"></div>
                                 
                                 <!--
                                 /**
@@ -248,29 +190,12 @@
                                     </div>
                                     
                                     <!-- フラグメント選択されているがストーリー未選択 -->
-                                    <div th:if="${selectedFragment != null and selectedStory == null}" class="flex items-center justify-center h-24">
-                                        <div class="text-center">
-                                            <div class="text-gray-400 mb-2">
-                                                <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                                </svg>
-                                            </div>
-                                            <p class="text-gray-600" th:text="#{thymeleaflet.preview.selectStory}">Select a story to preview</p>
-                                        </div>
-                                    </div>
+                                    <div th:if="${selectedFragment != null and selectedStory == null}"
+                                         th:replace="~{thymeleaflet/fragments/preview-states :: emptySelectStory}"></div>
                                     
                                     <!-- 何も選択されていない場合 -->
-                                    <div th:if="${selectedFragment == null}" class="flex items-center justify-center h-24">
-                                        <div class="text-center">
-                                            <div class="text-gray-400 mb-2">
-                                                <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
-                                                </svg>
-                                            </div>
-                                            <p class="text-gray-600" th:text="#{thymeleaflet.preview.selectFragment}">Select a fragment to preview</p>
-                                        </div>
-                                    </div>
+                                    <div th:if="${selectedFragment == null}"
+                                         th:replace="~{thymeleaflet/fragments/preview-states :: emptySelectFragment}"></div>
                                 </th:block>
                                 
                                 <div th:replace="~{thymeleaflet/fragments/preview-container :: container('border-dashed p-8', 'preview-container', 'zinc-300', 'min-h-32', null, null, null, null, ~{::fragment-preview-content(true)})}"></div>
@@ -278,33 +203,8 @@
                         </div>
 
                         <!-- 使用例 -->
-                        <div class="mt-6 card-thymeleaflet" th:if="${selectedFragment != null}">
-                            <div class="card-thymeleaflet-header">
-                                <h3 class="text-lg font-semibold text-gray-900" th:text="#{thymeleaflet.usage.title}">Usage Example</h3>
-                                <span th:if="${selectedStory != null}" class="text-sm text-gray-500 ml-2" 
-                                      th:text="'- ' + (${selectedStory.displayTitle != null ? selectedStory.displayTitle : (selectedStory.storyName != null ? selectedStory.storyName : #{thymeleaflet.story.default})})"></span>
-                            </div>
-                            <div class="card-thymeleaflet-content">
-                                <div class="storybook-usage-example">
-                                    <div th:if="${selectedFragment != null}">
-                                        <div th:if="${selectedStory != null}"
-                                             th:hx-get="@{/thymeleaflet/{templatePath}/{fragmentName}/{storyName}/usage(templatePath=${templatePathEncoded}, fragmentName=${selectedFragment.fragmentName}, storyName=${selectedStory.storyName})}"
-                                             hx-trigger="load"
-                                             hx-swap="innerHTML">
-                                            <!-- HTMXでロードされる使用例 -->
-                                        </div>
-                                        <div th:if="${selectedStory == null}"
-                                             class="text-sm text-gray-500">
-                                            <span th:text="#{thymeleaflet.preview.selectStory}">Select a story to preview</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button class="mt-3 btn-thymeleaflet-secondary btn-thymeleaflet-small" @click="copyUsageExample()"
-                                        th:text="#{thymeleaflet.usage.copy}">
-                                    Copy usage
-                                </button>
-                            </div>
-                        </div>
+                        <div class="mt-6" th:if="${selectedFragment != null}"
+                             th:replace="~{thymeleaflet/fragments/usage-panel :: fragmentList}"></div>
 
                         <!-- パラメータ説明 -->
                         <div class="mt-6 card-thymeleaflet" x-show="shouldShowParametersCard()">
