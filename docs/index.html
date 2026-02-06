@@ -115,11 +115,18 @@
       .stack {
         display: grid;
         gap: 18px;
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .stack > * {
+        min-width: 0;
       }
       .grid-2 {
         display: grid;
         gap: 18px;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .grid-2 > div {
+        min-width: 0;
       }
       .shot {
         padding: 0;
@@ -142,6 +149,11 @@
         font-size: 13px;
         line-height: 1.6;
         overflow-x: auto;
+        max-width: 100%;
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        display: block;
       }
       .pill {
         display: inline-flex;
@@ -153,6 +165,10 @@
         color: #166534;
         font-size: 12px;
         font-weight: 600;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     </style>
   </head>
@@ -256,21 +272,21 @@
       <section class="section">
         <h2>Viewport Presets &amp; Fit</h2>
         <p>
-          Switch between presets (Fit / Mobile Small / rotate) to validate responsive layouts fast.<br>
-          Great for quick edge-case checks.
+          Switch between width presets (Fit / Mobile Small / Tablet / Desktop) to validate responsive layouts fast.<br>
+          Height stays automatic, so you can review full layouts without clipping.
         </p>
         <div class="grid-2">
           <div class="card">
             <div class="shot">
               <img src="assets/feature-viewport-mobile.png" alt="Responsive header on Mobile Small (portrait)" loading="lazy">
             </div>
-            <div class="caption">Mobile Small (portrait)</div>
+            <div class="caption">Mobile Small width</div>
           </div>
           <div class="card">
             <div class="shot">
               <img src="assets/feature-viewport-tablet.png" alt="Responsive header on Mobile Small (landscape)" loading="lazy">
             </div>
-            <div class="caption">Mobile Small (landscape)</div>
+            <div class="caption">Tablet width</div>
           </div>
         </div>
       </section>
@@ -370,7 +386,7 @@
  * @param error {@code String} [optional=] Error message
  * @param required {@code Boolean} [optional=false] Required flag
  * @param disabled {@code Boolean} [optional=false] Disabled flag
- * @model options {@code List<Map<String, Object>>} [required] Options with value/label
+* @model options {@code List&lt;Map&lt;String, Object&gt;&gt;} [required] Options with value/label
  * @example &lt;div th:replace="~{components/form-select :: selectInput(label='Plan', name='plan', selected='pro', help='Choose your plan', error='', required=true, disabled=false)}"&gt;&lt;/div&gt;
  */</pre>
           <div class="caption">JavaDoc comment in the fragment source.</div>
@@ -410,7 +426,8 @@
       <section class="section">
         <h2>Configuration at a Glance</h2>
         <p>
-          Configure preview viewports and background colors via <code>application.yml</code>.<br>
+          Configure preview viewport widths and background colors via <code>application.yml</code>.<br>
+          Height values are currently ignored in the UI.<br>
           Details: <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/configuration.md">configuration.md</a>.
         </p>
         <div class="card">

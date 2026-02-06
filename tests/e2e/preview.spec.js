@@ -44,13 +44,14 @@ test('story selection updates URL', async ({ page }) => {
 test('custom parameters update preview', async ({ page }) => {
   await openFragment(page, 'selectInput');
   await selectStory(page, 'Custom');
-  const iframe = page.locator('#fragment-preview-host iframe');
-  await expect(iframe).toBeVisible();
-  const frame = await iframe.contentFrame();
-  await expect(frame).not.toBeNull();
-
-  const firstSelect = frame.locator('select').first();
-  await expect(firstSelect).toBeVisible();
+  await expect(page).toHaveURL(/\/thymeleaflet\/components\.form-select\/selectInput\/custom$/);
+  await page.waitForSelector('#fragment-preview-host iframe');
+  await page.waitForFunction(() => {
+    const iframe = document.querySelector('#fragment-preview-host iframe');
+    return iframe && iframe.contentDocument && iframe.contentDocument.readyState === 'complete';
+  });
+  const frameLocator = page.frameLocator('#fragment-preview-host iframe');
+  const firstSelect = frameLocator.locator('select').first();
   const options = await firstSelect.locator('option').evaluateAll(nodes =>
     nodes.map(node => node.value)
   );
@@ -71,7 +72,7 @@ test('preview iframe does not show error page', async ({ page }) => {
   expect(bodyText).not.toContain('システムエラー');
 });
 
-test('viewport preset and rotation update badge', async ({ page }) => {
+test('viewport preset updates width badge', async ({ page }) => {
   await openFragment(page, 'simpleCard');
   const select = page.locator('#preview-viewport-select');
   await expect(select).toBeVisible();
@@ -79,15 +80,8 @@ test('viewport preset and rotation update badge', async ({ page }) => {
 
   const badge = page.locator('#preview-viewport-badge');
   await expect(badge).toBeVisible();
-  const initialText = (await badge.textContent())?.trim();
-  expect(initialText).toMatch(/\d+×\d+/);
-
-  const rotate = page.locator('#preview-viewport-rotate');
-  await expect(rotate).toBeEnabled();
-  await rotate.click();
-  const rotatedText = (await badge.textContent())?.trim();
-  expect(rotatedText).toMatch(/\d+×\d+/);
-  expect(rotatedText).not.toBe(initialText);
+  const text = (await badge.textContent())?.trim();
+  expect(text).toMatch(/\d+px/);
 });
 
 test('background toggle switches preview class', async ({ page }) => {

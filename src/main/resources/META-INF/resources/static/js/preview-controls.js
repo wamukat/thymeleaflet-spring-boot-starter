@@ -18,7 +18,6 @@
     let viewportState = {
         width: null,
         height: null,
-        rotated: false,
         preset: 'responsive'
     };
     let fullscreenState = {
@@ -42,7 +41,6 @@
         previewViewport: () => document.querySelector('#preview-viewport'),
         previewViewportFrame: () => document.querySelector('.preview-viewport-frame'),
         viewportSelect: () => document.getElementById('preview-viewport-select'),
-        viewportRotateButton: () => document.getElementById('preview-viewport-rotate'),
         fullscreenToggleButton: () => document.getElementById('preview-fullscreen-toggle'),
         fullscreenOverlay: () => document.getElementById('preview-fullscreen-overlay'),
         fullscreenHost: () => document.getElementById('preview-fullscreen-host'),
@@ -50,22 +48,23 @@
     };
 
     const viewportControls = {
-        isFixed() {
-            return Number.isFinite(viewportState.width) && Number.isFinite(viewportState.height);
+        hasWidthPreset() {
+            return Number.isFinite(viewportState.width);
+        },
+        isHeightFixed() {
+            return Number.isFinite(viewportState.height);
         },
         getEffectiveSize() {
-            if (!viewportControls.isFixed()) {
+            if (!viewportControls.hasWidthPreset()) {
                 return null;
             }
-            const width = viewportState.rotated ? viewportState.height : viewportState.width;
-            const height = viewportState.rotated ? viewportState.width : viewportState.height;
-            return { width, height };
+            return { width: viewportState.width };
         }
     };
     const iframeControls = {};
 
     function setPreviewHeight(heightPx) {
-        if (viewportControls.isFixed()) {
+        if (viewportControls.isHeightFixed()) {
             return;
         }
         const host = dom.previewHost();
@@ -80,7 +79,7 @@
     }
 
     function handleResize(height) {
-        if (viewportControls.isFixed()) {
+        if (viewportControls.isHeightFixed()) {
             return;
         }
         const adjustedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height));
@@ -92,7 +91,7 @@
     }
 
     function queueStableHeight(height) {
-        if (viewportControls.isFixed()) {
+        if (viewportControls.isHeightFixed()) {
             return;
         }
         pendingHeight = height;
@@ -107,6 +106,7 @@
             }
         }, 320);
     }
+
 
     function waitForFontsOnce() {
         if (fontsReadyPromise) {
@@ -355,7 +355,7 @@
     };
 
     iframeControls.refreshResponsiveHeight = function() {
-        if (viewportControls.isFixed()) {
+        if (viewportControls.isHeightFixed()) {
             return;
         }
         const host = dom.previewHost();
@@ -383,7 +383,7 @@
         if (!iframe) {
             return;
         }
-        iframe.setAttribute('scrolling', viewportControls.isFixed() ? 'yes' : 'no');
+        iframe.setAttribute('scrolling', viewportControls.isHeightFixed() ? 'yes' : 'no');
     };
 
     Object.assign(viewportControls, {
@@ -416,7 +416,7 @@
                 }
             } else {
                 viewport.style.width = `${effective.width}px`;
-                viewport.style.height = `${effective.height}px`;
+                viewport.style.height = 'auto';
                 viewport.classList.remove('preview-viewport-responsive');
                 viewport.classList.add('preview-viewport-fixed');
                 viewport.classList.add('bg-white');
@@ -425,7 +425,13 @@
                 }
                 if (host) {
                     host.style.width = '100%';
-                    host.style.height = '100%';
+                    const iframe = host.querySelector('iframe');
+                    const measuredHeight = iframe ? iframeControls.measureHeight(iframe) : null;
+                    if (measuredHeight != null) {
+                        handleResize(measuredHeight);
+                    } else {
+                        resetPreviewHeight();
+                    }
                 }
             }
             iframeControls.updateScrolling();
@@ -439,12 +445,9 @@
             const option = select.options[select.selectedIndex];
             viewportState.preset = select.value || 'responsive';
             const width = option?.dataset?.width ? Number(option.dataset.width) : null;
-            const height = option?.dataset?.height ? Number(option.dataset.height) : null;
             viewportState.width = Number.isFinite(width) ? width : null;
-            viewportState.height = Number.isFinite(height) ? height : null;
-            viewportState.rotated = false;
+            viewportState.height = null;
             viewportControls.applyState();
-            viewportControls.updateRotateButton();
         },
         syncSelectFromState() {
             const select = dom.viewportSelect();
@@ -459,9 +462,8 @@
             }
             const option = select.options[select.selectedIndex];
             const width = option?.dataset?.width ? Number(option.dataset.width) : null;
-            const height = option?.dataset?.height ? Number(option.dataset.height) : null;
             viewportState.width = Number.isFinite(width) ? width : null;
-            viewportState.height = Number.isFinite(height) ? height : null;
+            viewportState.height = null;
         }
     });
 
@@ -479,18 +481,7 @@
     Object.assign(viewportControls, {
         bindControls() {
             bindOnce(dom.viewportSelect(), 'boundViewportSelect', 'change', viewportControls.updateFromSelect);
-            bindOnce(dom.viewportRotateButton(), 'boundViewportRotate', 'click', viewportControls.toggleRotation);
         },
-        updateRotateButton() {
-            const button = dom.viewportRotateButton();
-            if (!button) {
-                return;
-            }
-            const disabled = !viewportControls.isFixed();
-            button.disabled = disabled;
-            button.classList.toggle('opacity-50', disabled);
-            button.classList.toggle('pointer-events-none', disabled);
-        }
     });
 
     function setPreviewFullscreen(active) {
@@ -534,7 +525,6 @@
         }
 
         viewportControls.applyState();
-        viewportControls.updateRotateButton();
         fullscreenControls.updateToggleButton();
     }
 
@@ -581,13 +571,6 @@
     };
 
     Object.assign(viewportControls, {
-        toggleRotation() {
-            if (!viewportControls.isFixed()) {
-                return;
-            }
-            viewportState.rotated = !viewportState.rotated;
-            viewportControls.applyState();
-        },
         updateBadge() {
             const badge = document.getElementById('preview-viewport-badge');
             const select = dom.viewportSelect();
@@ -599,9 +582,9 @@
                 return;
             }
             badge.classList.remove('hidden');
-            if (viewportControls.isFixed()) {
+            if (viewportControls.hasWidthPreset()) {
                 const size = viewportControls.getEffectiveSize();
-                badge.textContent = size ? `${size.width}×${size.height}` : option.textContent;
+                badge.textContent = size ? `${size.width}px` : option.textContent;
             } else {
                 badge.textContent = option.textContent;
             }
@@ -680,7 +663,6 @@
         fullscreenControls.bindControls();
         viewportControls.syncSelectFromState();
         viewportControls.applyState();
-        viewportControls.updateRotateButton();
         fullscreenControls.updateToggleButton();
     }
 

@@ -115,11 +115,18 @@
       .stack {
         display: grid;
         gap: 18px;
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .stack > * {
+        min-width: 0;
       }
       .grid-2 {
         display: grid;
         gap: 18px;
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .grid-2 > div {
+        min-width: 0;
       }
       .shot {
         padding: 0;
@@ -142,6 +149,11 @@
         font-size: 13px;
         line-height: 1.6;
         overflow-x: auto;
+        max-width: 100%;
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        display: block;
       }
       .pill {
         display: inline-flex;
@@ -153,6 +165,10 @@
         color: #166534;
         font-size: 12px;
         font-weight: 600;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     </style>
   </head>
@@ -193,7 +209,7 @@
         </p>
         <div class="card">
           <div class="shot">
-            <img src="assets/feature-overview-ja.png" alt="Thymeleaflet UI の全体像" loading="lazy">
+            <img src="assets/feature-overview.png" alt="Thymeleaflet UI の全体像" loading="lazy">
           </div>
           <div class="caption">ストーリー、プレビュー、フラグメント詳細をまとめて確認。</div>
         </div>
@@ -228,7 +244,7 @@
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-live-preview-ja.png" alt="UI 上に表示されたストーリー一覧" loading="lazy">
+              <img src="assets/feature-live-preview.png" alt="UI 上に表示されたストーリー一覧" loading="lazy">
             </div>
             <div class="caption">UI に反映されたストーリー一覧。</div>
           </div>
@@ -243,7 +259,7 @@
         </p>
         <div class="card">
           <div class="shot">
-            <img src="assets/feature-live-preview-open-ja.png" alt="Open ストーリー選択時のライブプレビュー" loading="lazy">
+            <img src="assets/feature-live-preview-open.png" alt="Open ストーリー選択時のライブプレビュー" loading="lazy">
           </div>
           <div class="caption">ストーリー選択と同時にプレビューが更新。</div>
         </div>
@@ -254,21 +270,21 @@
       <section class="section">
         <h2>ビューポート切替</h2>
         <p>
-          Fit / Mobile Small / 回転などのプリセットで、レスポンシブ表示を手早く確認できます。<br>
-          ちょっとした崩れもすぐ見つかります。
+          Fit / Mobile Small / Tablet / Desktop など、幅のプリセットでレスポンシブ表示を手早く確認できます。<br>
+          高さは自動なので、全体の見え方をそのまま確認できます。
         </p>
         <div class="grid-2">
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-viewport-mobile-ja.png" alt="Mobile Small (縦) のレスポンシブヘッダー" loading="lazy">
+              <img src="assets/feature-viewport-mobile.png" alt="Mobile Small (縦) のレスポンシブヘッダー" loading="lazy">
             </div>
-            <div class="caption">Mobile Small（縦）</div>
+            <div class="caption">Mobile Small 幅</div>
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-viewport-tablet-ja.png" alt="Mobile Small (横) のレスポンシブヘッダー" loading="lazy">
+              <img src="assets/feature-viewport-tablet.png" alt="Mobile Small (横) のレスポンシブヘッダー" loading="lazy">
             </div>
-            <div class="caption">Mobile Small（横）</div>
+            <div class="caption">Tablet 幅</div>
           </div>
         </div>
       </section>
@@ -280,7 +296,7 @@
         </p>
         <div class="card">
           <div class="shot">
-            <img src="assets/feature-fullscreen-ja.png" alt="フルスクリーンプレビュー" loading="lazy">
+            <img src="assets/feature-fullscreen.png" alt="フルスクリーンプレビュー" loading="lazy">
           </div>
           <div class="caption">フローティングのフルスクリーンプレビュー。</div>
         </div>
@@ -295,13 +311,13 @@
         <div class="grid-2">
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-custom-params-form-ja.png" alt="カスタムパラメータ入力フォーム" loading="lazy">
+              <img src="assets/feature-custom-params-form.png" alt="カスタムパラメータ入力フォーム" loading="lazy">
             </div>
             <div class="caption">カスタムパラメータの入力。</div>
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-custom-params-preview-ja.png" alt="カスタムパラメータ適用後のライブプレビュー" loading="lazy">
+              <img src="assets/feature-custom-params-preview.png" alt="カスタムパラメータ適用後のライブプレビュー" loading="lazy">
             </div>
             <div class="caption">入力内容がプレビューに反映。</div>
           </div>
@@ -317,13 +333,13 @@
         <div class="grid-2">
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-custom-model-form-ja.png" alt="カスタムモデル入力フォーム" loading="lazy">
+              <img src="assets/feature-custom-model-form.png" alt="カスタムモデル入力フォーム" loading="lazy">
             </div>
             <div class="caption">モデル仕様に合わせた入力。</div>
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-custom-model-preview-ja.png" alt="カスタムモデル適用後のライブプレビュー" loading="lazy">
+              <img src="assets/feature-custom-model-preview.png" alt="カスタムモデル適用後のライブプレビュー" loading="lazy">
             </div>
             <div class="caption">モデル値がプレビューに反映。</div>
           </div>
@@ -339,12 +355,12 @@
         <div class="grid-2">
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-background-light-ja.png" alt="明るい背景のプレビュー" loading="lazy">
+              <img src="assets/feature-background-light.png" alt="明るい背景のプレビュー" loading="lazy">
             </div>
           </div>
           <div class="card">
             <div class="shot">
-              <img src="assets/feature-background-dark-ja.png" alt="暗い背景のプレビュー" loading="lazy">
+              <img src="assets/feature-background-dark.png" alt="暗い背景のプレビュー" loading="lazy">
             </div>
           </div>
         </div>
@@ -367,14 +383,14 @@
  * @param error {@code String} [optional=] Error message
  * @param required {@code Boolean} [optional=false] Required flag
  * @param disabled {@code Boolean} [optional=false] Disabled flag
- * @model options {@code List<Map<String, Object>>} [required] Options with value/label
+* @model options {@code List&lt;Map&lt;String, Object&gt;&gt;} [required] Options with value/label
  * @example &lt;div th:replace="~{components/form-select :: selectInput(label='Plan', name='plan', selected='pro', help='Choose your plan', error='', required=true, disabled=false)}"&gt;&lt;/div&gt;
  */</pre>
           <div class="caption">フラグメントのソースに記載した JavaDoc コメント。</div>
         </div>
         <div class="card">
           <div class="shot">
-            <img src="assets/feature-fragment-details-ja.png" alt="フラグメント詳細とモデル仕様パネル" loading="lazy">
+            <img src="assets/feature-fragment-details.png" alt="フラグメント詳細とモデル仕様パネル" loading="lazy">
           </div>
           <div class="caption">抽出されたフラグメント詳細とモデル仕様。</div>
         </div>
@@ -406,7 +422,8 @@
       <section class="section">
         <h2>設定の概要</h2>
         <p>
-          <code>application.yml</code> でプレビューのビューポートや背景色を設定できます。<br>
+          <code>application.yml</code> でプレビューの幅プリセットや背景色を設定できます。<br>
+          高さの値は UI では現在利用しません。<br>
           詳細は <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/configuration.ja.md">configuration.ja.md</a> を参照してください。
         </p>
         <div class="card">
