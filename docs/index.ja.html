@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Thymeleaflet</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --fg: #0f172a;
+        --muted: #475569;
+        --bg: #f8fafc;
+        --card: #ffffff;
+        --border: #e2e8f0;
+        --accent: #16a34a;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: var(--fg);
+        background: radial-gradient(circle at top right, #e2fbe8, var(--bg));
+      }
+      .wrap {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 64px 20px 80px;
+      }
+      .hero {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 32px;
+        box-shadow: 0 8px 30px rgba(15, 23, 42, 0.08);
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 36px;
+        letter-spacing: -0.02em;
+      }
+      p {
+        margin: 0 0 16px;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+      .links {
+        display: grid;
+        gap: 12px;
+        margin-top: 20px;
+      }
+      .link-sub {
+        display: grid;
+        gap: 10px;
+        margin-left: 26px;
+        padding-left: 14px;
+        border-left: 1px solid rgba(15, 23, 42, 0.12);
+      }
+      .link-subitem {
+        font-size: 0.95rem;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.8);
+      }
+      .link {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 12px 16px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        text-decoration: none;
+        color: var(--fg);
+        background: #fff;
+      }
+      .link svg {
+        width: 20px;
+        height: 20px;
+        color: var(--accent);
+      }
+      .link span {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .meta {
+        margin-top: 24px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .section {
+        margin-top: 56px;
+      }
+      .section h2 {
+        margin: 0 0 10px;
+        font-size: 24px;
+        letter-spacing: -0.01em;
+      }
+      .section p {
+        margin-bottom: 14px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        background: var(--card);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+      }
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+      .grid-2 {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .shot {
+        padding: 0;
+      }
+      .shot img {
+        width: 100%;
+        display: block;
+      }
+      .caption {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .code {
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-x: auto;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #ecfdf3;
+        color: #166534;
+        font-size: 12px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="hero">
+        <img src="assets/thymeleaflet-logo.png" alt="Thymeleaflet logo" style="width: 220px; display: block; margin: 0 auto 18px;">
+        <h1>Thymeleaflet</h1>
+        <p>
+          Thymeleaflet は Thymeleaf フラグメント向けの Storybook 風 UI です。
+          フラグメントを検出してプレビューを表示し、HTML テンプレート内の
+          JavaDoc 風コメントから使用例を生成します。
+        </p>
+        <div class="links">
+          <a class="link" href="https://bad-siouxie-wamukat-977c4dc6.koyeb.app/thymeleaflet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="14" rx="2"></rect>
+              <path d="M8 21h8"></path>
+              <path d="M12 17v4"></path>
+              <path d="M7 8h10"></path>
+            </svg>
+            Live demo <span>→</span>
+          </a>
+          <a class="link" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 19c-4.3 1.3-4.3-2.4-6-3"></path>
+              <path d="M15 19c0 1 .1 2-.6 2.7-.7.7-1.8.9-2.4.3"></path>
+              <path d="M15 19v-3.5c0-1 .2-2-1-2.7"></path>
+              <path d="M9 15.5V19"></path>
+              <path d="M7 9c1-2 4-2 5-2s4 0 5 2"></path>
+              <path d="M6 9c-1-1-1-3 0-4"></path>
+              <path d="M18 9c1-1 1-3 0-4"></path>
+            </svg>
+            GitHub repository <span>→</span>
+          </a>
+          <div class="link-sub">
+            <a class="link link-subitem" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/getting-started.ja.md">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5C5.5 18 8 18 10 19V6C8 5 5.5 5 4 6.5z"></path>
+                <path d="M20 19.5C18.5 18 16 18 14 19V6c2-1 4.5-1 6 0.5z"></path>
+              </svg>
+              はじめに <span>→</span>
+            </a>
+            <a class="link link-subitem" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/stories.ja.md">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 6h8"></path>
+                <path d="M4 12h14"></path>
+                <path d="M4 18h10"></path>
+              </svg>
+              Stories ガイド <span>→</span>
+            </a>
+            <a class="link link-subitem" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/configuration.ja.md">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v3"></path>
+                <path d="M12 19v3"></path>
+                <path d="M4.9 4.9l2.1 2.1"></path>
+                <path d="M17 17l2.1 2.1"></path>
+                <path d="M2 12h3"></path>
+                <path d="M19 12h3"></path>
+                <path d="M4.9 19.1l2.1-2.1"></path>
+                <path d="M17 7l2.1-2.1"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              設定 <span>→</span>
+            </a>
+          </div>
+        </div>
+        <p class="meta">
+          注: Thymeleaflet は開発環境・社内環境向けの UI です。
+        </p>
+      </div>
+
+      <section class="section">
+        <h2>概要</h2>
+        <p>
+          Thymeleaflet は Thymeleaf フラグメントを素早く確実に確認するためのプレビュー UI です。
+          ストーリーとライブプレビューで実装の意図を常に見える状態にします。
+        </p>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-overview-ja.png" alt="Thymeleaflet UI の全体像" loading="lazy">
+          </div>
+          <div class="caption">ストーリー、プレビュー、フラグメント詳細をまとめて確認。</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>ストーリー作成 (stories.yml)</h2>
+        <p>
+          <code>stories.yml</code> で UI のバリエーションを定義し、期待する状態を明示的に管理します。
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <pre class="code">storyGroups:
+  accordionItem:
+    title: Accordion Item
+    description: Vanilla JS accordion using inline handlers
+    stories:
+      - name: default
+        title: Closed
+        parameters:
+          title: Shipping details
+          body: Ships in 2-3 business days.
+          open: false
+      - name: open
+        title: Open
+        parameters:
+          title: Returns
+          body: Returns are accepted within 14 days of delivery.
+          open: true</pre>
+            <div class="caption">実際の stories.yml での定義例。</div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-live-preview-ja.png" alt="UI 上に表示されたストーリー一覧" loading="lazy">
+            </div>
+            <div class="caption">UI に反映されたストーリー一覧。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>ライブプレビュー</h2>
+        <p>
+          ストーリーを選ぶとプレビューが即時更新されます。パラメータやモデルの編集も同じ画面で完結します。
+        </p>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-live-preview-open-ja.png" alt="Open ストーリー選択時のライブプレビュー" loading="lazy">
+          </div>
+          <div class="caption">ストーリー選択と同時にプレビューが更新。</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>フラグメント詳細 (JavaDoc)</h2>
+        <p>
+          JavaDoc 風コメントからフラグメントの説明やモデル仕様を抽出し、意図を見える化します。
+        </p>
+        <div class="card">
+          <pre class="code">/**
+ * Select input (selectInput)
+ *
+ * @param label {@code String} [required] Field label
+ * @param name {@code String} [required] Select name
+ * @param selected {@code String} [optional=] Selected value
+ * @param help {@code String} [optional=] Help text
+ * @param error {@code String} [optional=] Error message
+ * @param required {@code Boolean} [optional=false] Required flag
+ * @param disabled {@code Boolean} [optional=false] Disabled flag
+ * @model options {@code List<Map<String, Object>>} [required] Options with value/label
+ * @example &lt;div th:replace="~{components/form-select :: selectInput(label='Plan', name='plan', selected='pro', help='Choose your plan', error='', required=true, disabled=false)}"&gt;&lt;/div&gt;
+ */</pre>
+          <div class="caption">フラグメントのソースに記載した JavaDoc コメント。</div>
+        </div>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-fragment-details-ja.png" alt="フラグメント詳細とモデル仕様パネル" loading="lazy">
+          </div>
+          <div class="caption">抽出されたフラグメント詳細とモデル仕様。</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>ビューポート切替</h2>
+        <p>
+          Fit / Mobile Small などのプリセットや回転を使い、レスポンシブな表示を素早く確認できます。
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-viewport-mobile-ja.png" alt="Mobile Small (縦) のレスポンシブヘッダー" loading="lazy">
+            </div>
+            <div class="caption">Mobile Small（縦）</div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-viewport-tablet-ja.png" alt="Mobile Small (横) のレスポンシブヘッダー" loading="lazy">
+            </div>
+            <div class="caption">Mobile Small（横）</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>フルスクリーン</h2>
+        <p>
+          最大の作業スペースが必要なときはフルスクリーン表示を利用します。
+        </p>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-fullscreen-ja.png" alt="フルスクリーンプレビュー" loading="lazy">
+          </div>
+          <div class="caption">フローティングのフルスクリーンプレビュー。</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>カスタムパラメータ</h2>
+        <p>
+          ストーリーがなくてもパラメータを直接編集して検証できます。
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-custom-params-form-ja.png" alt="カスタムパラメータ入力フォーム" loading="lazy">
+            </div>
+            <div class="caption">カスタムパラメータの入力。</div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-custom-params-preview-ja.png" alt="カスタムパラメータ適用後のライブプレビュー" loading="lazy">
+            </div>
+            <div class="caption">入力内容がプレビューに反映。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>カスタムモデル</h2>
+        <p>
+          Object 形式のモデルを与えて、モデル依存のフラグメントを UI 内で検証できます。
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-custom-model-form-ja.png" alt="カスタムモデル入力フォーム" loading="lazy">
+            </div>
+            <div class="caption">モデル仕様に合わせた入力。</div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-custom-model-preview-ja.png" alt="カスタムモデル適用後のライブプレビュー" loading="lazy">
+            </div>
+            <div class="caption">モデル値がプレビューに反映。</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>ストーリーフォールバック</h2>
+        <p>
+          ストーリーがない場合でも、フォールバックでプレビューを表示してすぐに確認できます。
+        </p>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-fallback-ja.png" alt="ストーリー一覧のフォールバック表示" loading="lazy">
+          </div>
+          <div class="caption">ストーリーが無い場合にフォールバックが表示。</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>背景切り替え</h2>
+        <p>
+          明るい/暗い背景を切り替えて、コントラストや輪郭の見え方を確認します。
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-background-light-ja.png" alt="明るい背景のプレビュー" loading="lazy">
+            </div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-background-dark-ja.png" alt="暗い背景のプレビュー" loading="lazy">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>はじめに</h2>
+        <p>
+          スターターをビルドせずに利用できます。依存を追加すればすぐに試せます。
+        </p>
+        <div class="card stack">
+          <div class="pill">依存関係</div>
+          <div>
+            <p>Maven</p>
+            <pre class="code">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.wamukat&lt;/groupId&gt;
+  &lt;artifactId&gt;thymeleaflet-spring-boot-starter&lt;/artifactId&gt;
+  &lt;version&gt;x.y.z&lt;/version&gt;
+&lt;/dependency&gt;</pre>
+          </div>
+          <div>
+            <p>Gradle (Groovy)</p>
+            <pre class="code">implementation 'io.github.wamukat:thymeleaflet-spring-boot-starter:x.y.z'</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>設定の概要</h2>
+        <p>
+          <code>application.yml</code> でプレビューのビューポートや背景色を設定できます。
+        </p>
+        <div class="card">
+          <pre class="code">thymeleaflet:
+  preview:
+    backgroundLight: "#f6f7fb"
+    backgroundDark: "#1f2331"
+    viewports:
+      - id: mobileSmall
+        labelKey: thymeleaflet.preview.viewport.mobileSmall
+        width: 360
+        height: 640
+      - id: tablet
+        labelKey: thymeleaflet.preview.viewport.tablet
+        width: 834
+        height: 1194</pre>
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
