@@ -18,7 +18,8 @@
     let viewportState = {
         width: null,
         height: null,
-        rotated: false
+        rotated: false,
+        preset: 'responsive'
     };
     const previewState = {
         storyOverrides: {},
@@ -370,6 +371,7 @@
             return;
         }
         const option = select.options[select.selectedIndex];
+        viewportState.preset = select.value || 'responsive';
         const width = option?.dataset?.width ? Number(option.dataset.width) : null;
         const height = option?.dataset?.height ? Number(option.dataset.height) : null;
         viewportState.width = Number.isFinite(width) ? width : null;
@@ -377,6 +379,37 @@
         viewportState.rotated = false;
         applyViewportState();
         updateViewportRotateButton();
+    }
+
+    function syncViewportSelectFromState() {
+        const select = getViewportSelect();
+        if (!select) {
+            return;
+        }
+        if (viewportState.preset && select.querySelector(`option[value="${viewportState.preset}"]`)) {
+            select.value = viewportState.preset;
+        } else {
+            select.value = 'responsive';
+            viewportState.preset = 'responsive';
+        }
+        const option = select.options[select.selectedIndex];
+        const width = option?.dataset?.width ? Number(option.dataset.width) : null;
+        const height = option?.dataset?.height ? Number(option.dataset.height) : null;
+        viewportState.width = Number.isFinite(width) ? width : null;
+        viewportState.height = Number.isFinite(height) ? height : null;
+    }
+
+    function bindViewportControls() {
+        const select = getViewportSelect();
+        if (select && !select.dataset.boundViewport) {
+            select.addEventListener('change', updateViewportFromSelect);
+            select.dataset.boundViewport = 'true';
+        }
+        const rotate = getViewportRotateButton();
+        if (rotate && !rotate.dataset.boundViewport) {
+            rotate.addEventListener('click', toggleViewportRotation);
+            rotate.dataset.boundViewport = 'true';
+        }
     }
 
     function updateViewportRotateButton() {
@@ -476,22 +509,19 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         loadPreview();
-        updateViewportFromSelect();
-
-        const select = getViewportSelect();
-        if (select) {
-            select.addEventListener('change', updateViewportFromSelect);
-        }
-        const rotate = getViewportRotateButton();
-        if (rotate) {
-            rotate.addEventListener('click', toggleViewportRotation);
-        }
+        bindViewportControls();
+        syncViewportSelectFromState();
+        applyViewportState();
+        updateViewportRotateButton();
     });
 
     document.addEventListener('htmx:afterSettle', function(event) {
         if (event.detail.target && event.detail.target.id === 'main-content-area') {
             loadPreview();
-            updateViewportFromSelect();
+            bindViewportControls();
+            syncViewportSelectFromState();
+            applyViewportState();
+            updateViewportRotateButton();
         }
     });
 })();
