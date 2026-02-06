@@ -311,7 +311,6 @@
         iframe.className = 'w-full border-0 bg-transparent';
         iframe.style.height = '100%';
         iframe.style.width = '100%';
-        iframe.setAttribute('scrolling', 'no');
         iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
         iframe.setAttribute('title', 'Thymeleaflet Preview');
         const backgroundColor = getPreviewBackgroundColor(host);
@@ -321,6 +320,7 @@
         iframe.srcdoc = doc;
         host.appendChild(iframe);
         setupIframeObservers(iframe);
+        applyViewportState();
     }
 
     function updateIframeScrolling() {
