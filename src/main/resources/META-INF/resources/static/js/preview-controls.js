@@ -6,7 +6,7 @@
 
     const INITIAL_PREVIEW_HEIGHT = 80;
     const MIN_HEIGHT = 60;
-    const MAX_HEIGHT = 1200;
+    const MAX_HEIGHT = 2000;
     let previewContentHeight = INITIAL_PREVIEW_HEIGHT;
     let stableTimer = null;
     let lastMeasurementTime = 0;
@@ -250,17 +250,16 @@
                 html, body {
                     margin: 0;
                     padding: 0;
-                    height: 100%;
+                    min-height: 100%;
                     background: ${resolvedBackground} !important;
                 }
                 body { background-color: ${resolvedBackground} !important; }
                 #preview-root {
                     width: 100%;
-                    height: 100%;
                     min-height: 100%;
                     display: flex;
                     justify-content: center;
-                    align-items: center;
+                    align-items: flex-start;
                     padding: 20px;
                     box-sizing: border-box;
                     background: ${resolvedBackground};
