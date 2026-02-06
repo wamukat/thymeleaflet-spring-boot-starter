@@ -59,8 +59,8 @@
          th:attr="hx-get=${hxGetValue}, hx-trigger=${hxTriggerValue}, hx-target=${hxTargetValue}, hx-swap=${hxSwapValue}"
          th:style="'--thymeleaflet-preview-light:' + (${previewLightColor} ?: '#f3f4f6') + '; --thymeleaflet-preview-dark:' + (${previewDarkColor} ?: '#1f2937') + ';'">
         
-        <div class="preview-viewport-frame relative flex justify-center items-start overflow-auto">
-            <div id="preview-viewport" class="preview-viewport w-full flex-none overflow-hidden transition-all duration-200 flex flex-col">
+        <div class="preview-viewport-frame relative flex justify-start items-start overflow-auto">
+            <div id="preview-viewport" class="preview-viewport w-full flex-none overflow-auto transition-all duration-200 flex flex-col">
                 <!-- プレビューコンテンツ -->
                 <div class="preview-content w-full flex-1 min-h-0">
                     <!-- HTMXまたは動的コンテンツがここに挿入される -->
@@ -109,8 +109,8 @@
             flex: 1;
             min-height: 0;
             display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: stretch;
+            justify-content: stretch;
             overflow: auto;
         }
         #preview-container.preview-fullscreen {
@@ -119,12 +119,13 @@
             max-height: 100%;
         }
         #preview-container.preview-fullscreen .preview-viewport-frame {
-            display: inline-flex;
-            width: fit-content;
-            height: fit-content;
-            max-width: none;
-            max-height: none;
-            overflow: visible;
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            overflow: auto;
+            justify-content: flex-start;
+            align-items: flex-start;
         }
         #preview-container.preview-background-light {
             background-color: var(--thymeleaflet-preview-light, #f3f4f6);
