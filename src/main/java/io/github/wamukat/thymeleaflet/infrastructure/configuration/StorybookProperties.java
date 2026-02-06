@@ -36,6 +36,11 @@ public class StorybookProperties {
      */
     private CacheConfig cache = new CacheConfig();
 
+    /**
+     * プレビュー設定
+     */
+    private PreviewConfig preview = new PreviewConfig();
+
     // Getters and Setters
     
     public String getBasePath() {
@@ -68,6 +73,14 @@ public class StorybookProperties {
 
     public void setCache(CacheConfig cache) {
         this.cache = cache;
+    }
+
+    public PreviewConfig getPreview() {
+        return preview;
+    }
+
+    public void setPreview(PreviewConfig preview) {
+        this.preview = preview != null ? preview : new PreviewConfig();
     }
 
     /**
@@ -177,6 +190,139 @@ public class StorybookProperties {
 
         public void setPreload(boolean preload) {
             this.preload = preload;
+        }
+    }
+
+    /**
+     * プレビュー設定クラス
+     */
+    public static class PreviewConfig {
+
+        /**
+         * 背景色（明るい）
+         * デフォルト: #f3f4f6
+         */
+        private String backgroundLight = "#f3f4f6";
+
+        /**
+         * 背景色（暗い）
+         * デフォルト: #1f2937
+         */
+        private String backgroundDark = "#1f2937";
+
+        /**
+         * ビューポート一覧（Fit以外）
+         */
+        private List<ViewportPreset> viewports = defaultViewports();
+
+        public String getBackgroundLight() {
+            return backgroundLight;
+        }
+
+        public void setBackgroundLight(String backgroundLight) {
+            this.backgroundLight = (backgroundLight == null || backgroundLight.isBlank())
+                ? "#f3f4f6"
+                : backgroundLight.trim();
+        }
+
+        public String getBackgroundDark() {
+            return backgroundDark;
+        }
+
+        public void setBackgroundDark(String backgroundDark) {
+            this.backgroundDark = (backgroundDark == null || backgroundDark.isBlank())
+                ? "#1f2937"
+                : backgroundDark.trim();
+        }
+
+        public List<ViewportPreset> getViewports() {
+            return viewports;
+        }
+
+        public void setViewports(List<ViewportPreset> viewports) {
+            if (viewports == null || viewports.isEmpty()) {
+                this.viewports = new ArrayList<>();
+                return;
+            }
+            if (viewports.size() > 10) {
+                throw new IllegalArgumentException("Maximum 10 viewport presets allowed");
+            }
+            this.viewports = viewports;
+        }
+
+        private static List<ViewportPreset> defaultViewports() {
+            List<ViewportPreset> presets = new ArrayList<>();
+            presets.add(ViewportPreset.withLabelKey("mobileSmall", "thymeleaflet.preview.viewport.mobileSmall", 320, 568));
+            presets.add(ViewportPreset.withLabelKey("mobileLarge", "thymeleaflet.preview.viewport.mobileLarge", 414, 896));
+            presets.add(ViewportPreset.withLabelKey("tablet", "thymeleaflet.preview.viewport.tablet", 834, 1112));
+            presets.add(ViewportPreset.withLabelKey("desktop", "thymeleaflet.preview.viewport.desktop", 1024, 1280));
+            return presets;
+        }
+    }
+
+    /**
+     * ビューポートプリセット
+     */
+    public static class ViewportPreset {
+        private String id;
+        private String label;
+        private String labelKey;
+        private Integer width;
+        private Integer height;
+
+        public ViewportPreset() {
+        }
+
+        public ViewportPreset(String id, String label, String labelKey, Integer width, Integer height) {
+            this.id = id;
+            this.label = label;
+            this.labelKey = labelKey;
+            this.width = width;
+            this.height = height;
+        }
+
+        public static ViewportPreset withLabelKey(String id, String labelKey, Integer width, Integer height) {
+            return new ViewportPreset(id, null, labelKey, width, height);
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public void setLabel(String label) {
+            this.label = label;
+        }
+
+        public String getLabelKey() {
+            return labelKey;
+        }
+
+        public void setLabelKey(String labelKey) {
+            this.labelKey = labelKey;
+        }
+
+        public Integer getWidth() {
+            return width;
+        }
+
+        public void setWidth(Integer width) {
+            this.width = width;
+        }
+
+        public Integer getHeight() {
+            return height;
+        }
+
+        public void setHeight(Integer height) {
+            this.height = height;
         }
     }
 }

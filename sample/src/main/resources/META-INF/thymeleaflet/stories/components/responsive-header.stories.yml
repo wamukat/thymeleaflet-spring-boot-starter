@@ -1,0 +1,18 @@
+meta:
+  title: Responsive Header
+  description: Header menu that changes layout between mobile and tablet
+
+storyGroups:
+  responsiveHeader:
+    title: Responsive Header
+    description: Mobile shows hamburger + quick links, tablet shows horizontal nav
+    stories:
+      - name: default
+        title: Default
+        preview:
+          wrapper: |
+            <div data-theme="light" class="bg-base-200 px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>

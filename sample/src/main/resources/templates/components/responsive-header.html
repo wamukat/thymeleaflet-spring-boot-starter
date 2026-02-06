@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+/**
+ * レスポンシブヘッダーフラグメント（モバイル/タブレットでレイアウトが変わる）
+ */
+-->
+<div th:fragment="responsiveHeader">
+    <div class="tl-header-demo">
+        <header class="tl-header">
+            <div class="tl-brand">
+                <span class="tl-brand-badge">TL</span>
+                <span>Thymeleaflet UI</span>
+            </div>
+            <nav class="tl-nav">
+                <a href="#" class="tl-nav-item">Overview</a>
+                <a href="#" class="tl-nav-item">Components</a>
+                <a href="#" class="tl-nav-item">Layouts</a>
+                <a href="#" class="tl-nav-item">Support</a>
+            </nav>
+            <button class="tl-burger" aria-label="Open menu">☰</button>
+            <div class="tl-actions">
+                <button class="tl-ghost">Sign in</button>
+                <button class="tl-primary">Get started</button>
+            </div>
+        </header>
+        <div class="tl-mobile-panel">
+            <div class="tl-mobile-title">Quick links</div>
+            <div class="tl-mobile-links">
+                <span>Overview</span>
+                <span>Components</span>
+                <span>Layouts</span>
+                <span>Support</span>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .tl-header-demo {
+            width: min(100%, 920px);
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.4);
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+        }
+        .tl-header {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 18px;
+            background: linear-gradient(135deg, #eef2ff, #f8fafc);
+        }
+        .tl-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .tl-brand-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: #6366f1;
+            color: #fff;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+        }
+        .tl-nav {
+            display: none;
+            gap: 18px;
+            font-weight: 600;
+            color: #334155;
+        }
+        .tl-nav-item {
+            text-decoration: none;
+            color: inherit;
+        }
+        .tl-burger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            background: #fff;
+            font-size: 18px;
+            color: #1f2937;
+        }
+        .tl-actions {
+            display: none;
+            gap: 10px;
+        }
+        .tl-ghost {
+            border: 1px solid rgba(148, 163, 184, 0.6);
+            background: #fff;
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-weight: 600;
+            color: #475569;
+        }
+        .tl-primary {
+            border: 1px solid transparent;
+            background: #0f172a;
+            padding: 8px 16px;
+            border-radius: 999px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .tl-mobile-panel {
+            padding: 16px 18px 20px;
+            background: #ffffff;
+            border-top: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .tl-mobile-title {
+            font-size: 12px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #94a3b8;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .tl-mobile-links {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            font-weight: 600;
+            color: #334155;
+        }
+        .tl-mobile-links span {
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        @media (max-width: 360px) {
+            .tl-mobile-links span {
+                font-size: 13px;
+            }
+        }
+
+        @media (min-width: 420px) {
+            .tl-mobile-links {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (min-width: 720px) {
+            .tl-header {
+                grid-template-columns: auto 1fr auto;
+                padding: 18px 22px;
+            }
+            .tl-nav {
+                display: flex;
+            }
+            .tl-burger {
+                display: none;
+            }
+            .tl-actions {
+                display: flex;
+            }
+            .tl-mobile-panel {
+                display: none;
+            }
+        }
+    </style>
+</div>
+
+</body>
+</html>

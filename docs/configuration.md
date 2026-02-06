@@ -28,6 +28,17 @@ To use JavaScript in previews, register it in `resources.scripts`.
 Example: `<div data-theme="light">{{content}}</div>`
 Preview iframes allow same-origin so cookies/localStorage and authenticated API calls work.
 
+## Preview Configuration
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `thymeleaflet.preview.background-light` | String | `#f3f4f6` | Light background color for the preview canvas |
+| `thymeleaflet.preview.background-dark` | String | `#1f2937` | Dark background color for the preview canvas |
+| `thymeleaflet.preview.viewports` | List | Built-in presets | Viewport presets (name + width + height), excluding Fit |
+
+Viewport presets are used by the viewport dropdown. Fit is always available and is not part of this list.
+Each item supports `id`, `label`, `width`, and `height`.
+
 ## Cache Configuration
 
 | Property | Type | Default | Description |
@@ -73,6 +84,18 @@ thymeleaflet:
     scripts:
       - /js/app.js
     cache-duration-seconds: 3600
+  preview:
+    background-light: "#f7f7f9"
+    background-dark: "#1f2937"
+    viewports:
+      - id: mobileSmall
+        label: Mobile Small
+        width: 320
+        height: 568
+      - id: tablet
+        label: Tablet
+        width: 834
+        height: 1112
   cache:
     enabled: true
     preload: false
