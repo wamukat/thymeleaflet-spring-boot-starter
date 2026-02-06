@@ -23,3 +23,6 @@
 
 ## Branching Rule
 - ソース修正を始める前に、必ず作業用ブランチを作成してから作業する。
+
+## Browser Tooling
+- ブラウザ確認・操作は `agent-browser` を優先して利用する。
