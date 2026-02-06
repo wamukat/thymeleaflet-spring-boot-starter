@@ -1,10 +1,4 @@
-function hierarchicalFragmentList() {
-    // JSONデータを読み込み
-    const fragmentsData = JSON.parse(document.getElementById('fragmentsData')?.textContent || '[]');
-    const hierarchicalData = JSON.parse(document.getElementById('hierarchicalData')?.textContent || '{}');
-    const originalHierarchyTree = JSON.parse(JSON.stringify(hierarchicalData || {}));
-
-    const expandedFolders = {};
+function expandFolderTree(tree, expandedFolders) {
     const expandNode = (node, currentPath) => {
         if (currentPath) {
             expandedFolders[currentPath] = true;
@@ -25,9 +19,219 @@ function hierarchicalFragmentList() {
             });
         }
     };
-    Object.keys(hierarchicalData || {}).forEach(rootKey => {
-        expandNode(hierarchicalData[rootKey], rootKey);
+
+    Object.keys(tree || {}).forEach(rootKey => {
+        expandNode(tree[rootKey], rootKey);
     });
+}
+
+function buildExpandedFolders(hierarchicalData) {
+    const expandedFolders = {};
+    expandFolderTree(hierarchicalData, expandedFolders);
+    return expandedFolders;
+}
+
+function normalizeObjectLiteral(text) {
+    const trimmed = String(text || '').trim();
+    if (!trimmed) {
+        return null;
+    }
+    if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
+        return null;
+    }
+    // Quote unquoted keys: {name: "A"} -> {"name": "A"}
+    const withQuotedKeys = trimmed.replace(/([{\[,]\s*)([A-Za-z_$][\w$]*)\s*:/g, '$1"$2":');
+    // Convert single-quoted strings to double-quoted strings
+    const withDoubleQuotes = withQuotedKeys.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, value) => {
+        const normalizedValue = value.replace(/\\'/g, "'").replace(/\"/g, '\\"');
+        return `"${normalizedValue}"`;
+    });
+    return withDoubleQuotes;
+}
+
+function parseCustomModelValue(rawValue) {
+    if (rawValue === '') {
+        return {};
+    }
+    const text = String(rawValue).trim();
+    if (!text) {
+        return null;
+    }
+    const normalized = normalizeObjectLiteral(text);
+    if (!normalized) {
+        return null;
+    }
+    try {
+        const parsed = JSON.parse(normalized);
+        if (parsed === null || parsed === undefined) {
+            return null;
+        }
+        if (typeof parsed === 'object') {
+            return parsed;
+        }
+    } catch (error) {
+        return null;
+    }
+    return null;
+}
+
+function stringifyObjectLiteral(value, indent = 0) {
+    const pad = '  '.repeat(indent);
+    if (value === null || value === undefined) {
+        return 'null';
+    }
+    if (Array.isArray(value)) {
+        if (value.length === 0) {
+            return '[]';
+        }
+        const items = value.map(item => stringifyObjectLiteral(item, indent + 1));
+        const multiline = items.some(item => item.includes('\n'));
+        if (!multiline && items.join(', ').length <= 80) {
+            return `[${items.join(', ')}]`;
+        }
+        return `[\n${items.map(item => `${'  '.repeat(indent + 1)}${item}`).join(',\n')}\n${pad}]`;
+    }
+    if (typeof value === 'object') {
+        const entries = Object.entries(value);
+        if (entries.length === 0) {
+            return '{}';
+        }
+        const rendered = entries.map(([key, val]) => {
+            const safeKey = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) ? key : JSON.stringify(key);
+            const renderedValue = stringifyObjectLiteral(val, indent + 1);
+            if (renderedValue.includes('\n')) {
+                return `${safeKey}: ${renderedValue}`;
+            }
+            return `${safeKey}: ${renderedValue}`;
+        });
+        const multiline = rendered.some(item => item.includes('\n')) || rendered.join(', ').length > 80;
+        if (!multiline) {
+            return `{${rendered.join(', ')}}`;
+        }
+        return `{\n${rendered.map(item => `${'  '.repeat(indent + 1)}${item}`).join(',\n')}\n${pad}}`;
+    }
+    if (typeof value === 'string') {
+        return JSON.stringify(value);
+    }
+    return String(value);
+}
+
+function indentYaml(yaml, indentSize) {
+    const pad = ' '.repeat(indentSize);
+    return yaml
+        .split('\n')
+        .map(line => (line.length > 0 ? `${pad}${line}` : line))
+        .join('\n');
+}
+
+function sanitizeFilePart(value) {
+    return String(value || '')
+        .replace(/\s+/g, '-')
+        .replace(/[^a-zA-Z0-9_-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+function toYaml(value, indent = 0) {
+    const pad = '  '.repeat(indent);
+    if (value === null || value === undefined) {
+        return 'null';
+    }
+    if (Array.isArray(value)) {
+        if (value.length === 0) {
+            return '[]';
+        }
+        return value
+            .map(item => {
+                const rendered = toYaml(item, indent + 1);
+                if (typeof item === 'object' && item !== null) {
+                    return `${pad}- ${rendered.replace(/^\s*/, '')}`;
+                }
+                return `${pad}- ${rendered}`;
+            })
+            .join('\n');
+    }
+    if (typeof value === 'object') {
+        const entries = Object.entries(value);
+        if (entries.length === 0) {
+            return '{}';
+        }
+        return entries
+            .map(([key, val]) => {
+                const rendered = toYaml(val, indent + 1);
+                if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
+                    return `${pad}${key}:\n${rendered}`;
+                }
+                return `${pad}${key}: ${rendered}`;
+            })
+            .join('\n');
+    }
+    if (typeof value === 'string') {
+        const needsQuote = value === '' || /[:#\n\r\t]|^\s|\s$/.test(value);
+        return needsQuote ? JSON.stringify(value) : value;
+    }
+    return String(value);
+}
+
+function renderStoryBadges() {
+    const placeholders = document.querySelectorAll('.story-badge-placeholder');
+    placeholders.forEach(placeholder => {
+        const hasStoryConfig = placeholder.dataset.hasStoryConfig === 'true';
+        const storyName = placeholder.dataset.storyName;
+        const badgeClass = storyName === 'custom'
+            ? 'badge-custom'
+            : (hasStoryConfig ? 'badge-story' : 'badge-fallback');
+        const badgeText = storyName === 'custom'
+            ? 'Custom'
+            : (hasStoryConfig ? 'Story' : 'Fallback');
+
+        placeholder.innerHTML = `<span class="${badgeClass}">${badgeText}</span>`;
+    });
+}
+
+function syncSelectionFromUrl(alpineData) {
+    if (!alpineData) {
+        return;
+    }
+    const urlMatch = window.location.pathname.match(/\/thymeleaflet\/([^\/]+)\/([^\/]+)\/([^\/]+)/);
+    if (!urlMatch) {
+        alpineData.selectedFragment = null;
+        alpineData.selectedStory = null;
+        return;
+    }
+    const templatePathEncoded = urlMatch[1];
+    const fragmentName = decodeURIComponent(urlMatch[2]);
+    const storyName = decodeURIComponent(urlMatch[3]);
+    const templatePath = typeof alpineData.templatePathForFilePath === 'function'
+        ? alpineData.templatePathForFilePath(templatePathEncoded)
+        : templatePathEncoded.replace(/\./g, '/');
+    const fragment = (alpineData.allFragments || []).find(f =>
+        f?.templatePath === templatePath && f?.fragmentName === fragmentName
+    );
+    if (!fragment) {
+        return;
+    }
+    if (typeof alpineData.setSelectedFragment === 'function') {
+        alpineData.setSelectedFragment(fragment);
+    } else {
+        alpineData.selectedFragment = fragment;
+    }
+    if (typeof alpineData.expandFoldersForFragment === 'function') {
+        alpineData.expandFoldersForFragment(fragment);
+    }
+    if (Array.isArray(fragment.stories) && typeof alpineData.setSelectedStory === 'function') {
+        const story = fragment.stories.find(s => s?.storyName === storyName);
+        if (story) {
+            alpineData.setSelectedStory(story);
+        }
+    }
+}
+
+function hierarchicalFragmentList() {
+    // JSONデータを読み込み
+    const fragmentsData = JSON.parse(document.getElementById('fragmentsData')?.textContent || '[]');
+    const hierarchicalData = JSON.parse(document.getElementById('hierarchicalData')?.textContent || '{}');
+    const originalHierarchyTree = JSON.parse(JSON.stringify(hierarchicalData || {}));
 
     return {
         allFragments: fragmentsData || [],
@@ -61,7 +265,7 @@ function hierarchicalFragmentList() {
         selectedStory: null,
         searchQuery: '',
         sidebarOpen: false,
-        expandedFolders: expandedFolders,
+        expandedFolders: buildExpandedFolders(hierarchicalData),
         customStoryStoragePrefix: 'thymeleaflet:custom:',
         customStoryRawValues: {},
         customStoryJsonErrors: {},
@@ -218,7 +422,7 @@ function hierarchicalFragmentList() {
                 this.customStoryState = stored;
                 this.customStoryRawValues = this.buildRawValuesFromCustom(stored);
                 this.customStoryJsonErrors = {};
-                this.customModelJson = this.stringifyObjectLiteral(this.customStoryState.model || {});
+                this.customModelJson = stringifyObjectLiteral(this.customStoryState.model || {});
                 this.customModelJsonError = false;
                 return;
             }
@@ -233,7 +437,7 @@ function hierarchicalFragmentList() {
             this.customStoryState = { parameters: { ...baseParams }, model: { ...baseModel } };
             this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryState);
             this.customStoryJsonErrors = {};
-            this.customModelJson = this.stringifyObjectLiteral(this.customStoryState.model || {});
+            this.customModelJson = stringifyObjectLiteral(this.customStoryState.model || {});
             this.customModelJsonError = false;
             this.saveCustomStoryValues(fragment, this.customStoryState);
         },
@@ -310,7 +514,7 @@ function hierarchicalFragmentList() {
             nextState[kind][key] = nextValue;
             this.customStoryState = nextState;
             if (kind === 'model') {
-                this.customModelJson = this.stringifyObjectLiteral(nextState.model || {});
+                this.customModelJson = stringifyObjectLiteral(nextState.model || {});
                 this.customModelJsonError = false;
             }
             if (valueType !== 'object' && valueType !== 'array') {
@@ -323,7 +527,7 @@ function hierarchicalFragmentList() {
 
         updateCustomModelJson(rawValue) {
             this.customModelJson = rawValue;
-            const parsed = this.parseCustomModelValue(rawValue);
+            const parsed = parseCustomModelValue(rawValue);
             if (parsed && typeof parsed === 'object') {
                 this.customStoryState = {
                     parameters: { ...(this.customStoryState?.parameters || {}) },
@@ -335,91 +539,6 @@ function hierarchicalFragmentList() {
                 return;
             }
             this.customModelJsonError = true;
-        },
-
-        parseCustomModelValue(rawValue) {
-            if (rawValue === '') {
-                return {};
-            }
-            const text = String(rawValue).trim();
-            if (!text) {
-                return null;
-            }
-            const normalized = this.normalizeObjectLiteral(text);
-            if (!normalized) {
-                return null;
-            }
-            try {
-                const parsed = JSON.parse(normalized);
-                if (parsed === null || parsed === undefined) {
-                    return null;
-                }
-                if (typeof parsed === 'object') {
-                    return parsed;
-                }
-            } catch (error) {
-                return null;
-            }
-            return null;
-        },
-
-        normalizeObjectLiteral(text) {
-            const trimmed = String(text || '').trim();
-            if (!trimmed) {
-                return null;
-            }
-            if (!(trimmed.startsWith('{') || trimmed.startsWith('['))) {
-                return null;
-            }
-            // Quote unquoted keys: {name: "A"} -> {"name": "A"}
-            const withQuotedKeys = trimmed.replace(/([{\[,]\s*)([A-Za-z_$][\w$]*)\s*:/g, '$1"$2":');
-            // Convert single-quoted strings to double-quoted strings
-            const withDoubleQuotes = withQuotedKeys.replace(/'([^'\\]*(?:\\.[^'\\]*)*)'/g, (_, value) => {
-                const normalizedValue = value.replace(/\\'/g, "'").replace(/\"/g, '\\"');
-                return `"${normalizedValue}"`;
-            });
-            return withDoubleQuotes;
-        },
-
-        stringifyObjectLiteral(value, indent = 0) {
-            const pad = '  '.repeat(indent);
-            if (value === null || value === undefined) {
-                return 'null';
-            }
-            if (Array.isArray(value)) {
-                if (value.length === 0) {
-                    return '[]';
-                }
-                const items = value.map(item => this.stringifyObjectLiteral(item, indent + 1));
-                const multiline = items.some(item => item.includes('\n'));
-                if (!multiline && items.join(', ').length <= 80) {
-                    return `[${items.join(', ')}]`;
-                }
-                return `[\n${items.map(item => `${'  '.repeat(indent + 1)}${item}`).join(',\n')}\n${pad}]`;
-            }
-            if (typeof value === 'object') {
-                const entries = Object.entries(value);
-                if (entries.length === 0) {
-                    return '{}';
-                }
-                const rendered = entries.map(([key, val]) => {
-                    const safeKey = /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) ? key : JSON.stringify(key);
-                    const renderedValue = this.stringifyObjectLiteral(val, indent + 1);
-                    if (renderedValue.includes('\n')) {
-                        return `${safeKey}: ${renderedValue}`;
-                    }
-                    return `${safeKey}: ${renderedValue}`;
-                });
-                const multiline = rendered.some(item => item.includes('\n')) || rendered.join(', ').length > 80;
-                if (!multiline) {
-                    return `{${rendered.join(', ')}}`;
-                }
-                return `{\n${rendered.map(item => `${'  '.repeat(indent + 1)}${item}`).join(',\n')}\n${pad}}`;
-            }
-            if (typeof value === 'string') {
-                return JSON.stringify(value);
-            }
-            return String(value);
         },
 
         applyCustomOverrides() {
@@ -441,8 +560,8 @@ function hierarchicalFragmentList() {
             const parameters = { ...(this.customStoryState?.parameters || {}) };
             const model = { ...(this.customStoryState?.model || {}) };
             const yaml = this.buildCustomStoryYaml(parameters, model);
-            const templatePart = this.sanitizeFilePart(this.selectedFragment.templatePath);
-            const fragmentPart = this.sanitizeFilePart(this.selectedFragment.fragmentName);
+            const templatePart = sanitizeFilePart(this.selectedFragment.templatePath);
+            const fragmentPart = sanitizeFilePart(this.selectedFragment.fragmentName);
             const fileName = `${templatePart}__${fragmentPart}__custom.yaml`;
             const blob = new Blob([yaml], { type: 'text/yaml;charset=utf-8' });
             const url = URL.createObjectURL(blob);
@@ -464,70 +583,13 @@ function hierarchicalFragmentList() {
             ];
             if (parameters && Object.keys(parameters).length > 0) {
                 lines.push('  parameters:');
-                lines.push(this.indentYaml(this.toYaml(parameters, 1), 2));
+                lines.push(indentYaml(toYaml(parameters, 1), 2));
             }
             if (model && Object.keys(model).length > 0) {
                 lines.push('  model:');
-                lines.push(this.indentYaml(this.toYaml(model, 1), 2));
+                lines.push(indentYaml(toYaml(model, 1), 2));
             }
             return lines.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
-        },
-
-        indentYaml(yaml, indentSize) {
-            const pad = ' '.repeat(indentSize);
-            return yaml
-                .split('\n')
-                .map(line => (line.length > 0 ? `${pad}${line}` : line))
-                .join('\n');
-        },
-
-        sanitizeFilePart(value) {
-            return String(value || '')
-                .replace(/\s+/g, '-')
-                .replace(/[^a-zA-Z0-9_-]/g, '-')
-                .replace(/-+/g, '-')
-                .replace(/^-+|-+$/g, '');
-        },
-
-        toYaml(value, indent = 0) {
-            const pad = '  '.repeat(indent);
-            if (value === null || value === undefined) {
-                return 'null';
-            }
-            if (Array.isArray(value)) {
-                if (value.length === 0) {
-                    return '[]';
-                }
-                return value
-                    .map(item => {
-                        const rendered = this.toYaml(item, indent + 1);
-                        if (typeof item === 'object' && item !== null) {
-                            return `${pad}- ${rendered.replace(/^\s*/, '')}`;
-                        }
-                        return `${pad}- ${rendered}`;
-                    })
-                    .join('\n');
-            }
-            if (typeof value === 'object') {
-                const entries = Object.entries(value);
-                if (entries.length === 0) {
-                    return '{}';
-                }
-                return entries
-                    .map(([key, val]) => {
-                        const rendered = this.toYaml(val, indent + 1);
-                        if (typeof val === 'object' && val !== null && !Array.isArray(val)) {
-                            return `${pad}${key}:\n${rendered}`;
-                        }
-                        return `${pad}${key}: ${rendered}`;
-                    })
-                    .join('\n');
-            }
-            if (typeof value === 'string') {
-                const needsQuote = value === '' || /[:#\n\r\t]|^\s|\s$/.test(value);
-                return needsQuote ? JSON.stringify(value) : value;
-            }
-            return String(value);
         },
 
         resetPreviewOverrides() {
@@ -559,32 +621,7 @@ function hierarchicalFragmentList() {
         },
 
         expandAllFolders() {
-            const expandNode = (node, currentPath) => {
-                if (currentPath) {
-                    this.expandedFolders[currentPath] = true;
-                }
-
-                if (node && typeof node === 'object') {
-                    if (node._fragments) {
-                        Object.keys(node._fragments).forEach(templateName => {
-                            const templatePath = currentPath ? `${currentPath}/${templateName}` : templateName;
-                            this.expandedFolders[templatePath] = true;
-                        });
-                    }
-
-                    Object.keys(node).forEach(key => {
-                        if (key === '_fragments') {
-                            return;
-                        }
-                        const nextPath = currentPath ? `${currentPath}/${key}` : key;
-                        expandNode(node[key], nextPath);
-                    });
-                }
-            };
-
-            Object.keys(this.hierarchyTree || {}).forEach(rootKey => {
-                expandNode(this.hierarchyTree[rootKey], rootKey);
-            });
+            expandFolderTree(this.hierarchyTree, this.expandedFolders);
         },
 
 
@@ -694,27 +731,10 @@ function hierarchicalFragmentList() {
             }
         },
 
-        // Story/Fallbackバッジを動的にレンダリング
-        renderStoryBadges() {
-            const placeholders = document.querySelectorAll('.story-badge-placeholder');
-            placeholders.forEach(placeholder => {
-                const hasStoryConfig = placeholder.dataset.hasStoryConfig === 'true';
-                const storyName = placeholder.dataset.storyName;
-                const badgeClass = storyName === 'custom'
-                    ? 'badge-custom'
-                    : (hasStoryConfig ? 'badge-story' : 'badge-fallback');
-                const badgeText = storyName === 'custom'
-                    ? 'Custom'
-                    : (hasStoryConfig ? 'Story' : 'Fallback');
-
-                placeholder.innerHTML = `<span class="${badgeClass}">${badgeText}</span>`;
-            });
-        },
-
         // Alpine.jsデータ変更時にバッジを更新
         updateStoryBadges() {
             this.$nextTick(() => {
-                this.renderStoryBadges();
+                renderStoryBadges();
             });
         }
 
@@ -751,53 +771,7 @@ document.addEventListener('htmx:afterSettle', function(event) {
     if (!alpineData) {
         return;
     }
-    const urlMatch = window.location.pathname.match(/\/thymeleaflet\/([^\/]+)\/([^\/]+)\/([^\/]+)/);
-    if (!urlMatch) {
-        alpineData.selectedFragment = null;
-        alpineData.selectedStory = null;
-        return;
-    }
-    const templatePathEncoded = urlMatch[1];
-    const fragmentName = decodeURIComponent(urlMatch[2]);
-    const storyName = decodeURIComponent(urlMatch[3]);
-    const templatePath = typeof alpineData.templatePathForFilePath === 'function'
-        ? alpineData.templatePathForFilePath(templatePathEncoded)
-        : templatePathEncoded.replace(/\./g, '/');
-    const fragment = (alpineData.allFragments || []).find(f =>
-        f?.templatePath === templatePath && f?.fragmentName === fragmentName
-    );
-    if (!fragment) {
-        return;
-    }
-    if (typeof alpineData.setSelectedFragment === 'function') {
-        alpineData.setSelectedFragment(fragment);
-    } else {
-        alpineData.selectedFragment = fragment;
-    }
-    if (typeof alpineData.expandFoldersForFragment === 'function') {
-        alpineData.expandFoldersForFragment(fragment);
-    }
-    if (Array.isArray(fragment.stories) && typeof alpineData.setSelectedStory === 'function') {
-        const story = fragment.stories.find(s => s?.storyName === storyName);
-        if (story) {
-            alpineData.setSelectedStory(story);
-        }
-    }
+    syncSelectionFromUrl(alpineData);
 });
 
 // バッジレンダリング関数（グローバル）
-function renderStoryBadges() {
-    const placeholders = document.querySelectorAll('.story-badge-placeholder');
-    placeholders.forEach(placeholder => {
-        const hasStoryConfig = placeholder.dataset.hasStoryConfig === 'true';
-        const storyName = placeholder.dataset.storyName;
-        const badgeClass = storyName === 'custom'
-            ? 'badge-custom'
-            : (hasStoryConfig ? 'badge-story' : 'badge-fallback');
-        const badgeText = storyName === 'custom'
-            ? 'Custom'
-            : (hasStoryConfig ? 'Story' : 'Fallback');
-
-        placeholder.innerHTML = `<span class="${badgeClass}">${badgeText}</span>`;
-    });
-}
