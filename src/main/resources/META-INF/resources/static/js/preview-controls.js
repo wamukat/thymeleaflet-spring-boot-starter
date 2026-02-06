@@ -135,6 +135,16 @@
             if (!doc || !doc.documentElement || !doc.body) {
                 return null;
             }
+            const root = doc.getElementById('preview-root');
+            const content = doc.getElementById('preview-content');
+            if (root && content) {
+                const contentRect = content.getBoundingClientRect();
+                const rootStyle = getComputedStyle(root);
+                const paddingTop = parseFloat(rootStyle.paddingTop) || 0;
+                const paddingBottom = parseFloat(rootStyle.paddingBottom) || 0;
+                const height = Math.ceil(contentRect.height + paddingTop + paddingBottom);
+                return Math.max(MIN_HEIGHT, height);
+            }
             return Math.ceil(Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight));
         } catch (error) {
             return null;
@@ -244,14 +254,23 @@
                     parent.postMessage({ type: 'thymeleaflet:preview-height', id: previewId, height: safeHeight }, '*');
                 };
                 function notifyHeight() {
-                    const height = Math.ceil(
-                        Math.max(
-                            document.documentElement.scrollHeight,
-                            document.body.scrollHeight
-                        )
-                    );
-                    postHeight(height);
+                const root = document.getElementById('preview-root');
+                const content = document.getElementById('preview-content');
+                let height = Math.ceil(
+                    Math.max(
+                        document.documentElement.scrollHeight,
+                        document.body.scrollHeight
+                    )
+                );
+                if (root && content) {
+                    const rect = content.getBoundingClientRect();
+                    const style = getComputedStyle(root);
+                    const paddingTop = parseFloat(style.paddingTop) || 0;
+                    const paddingBottom = parseFloat(style.paddingBottom) || 0;
+                    height = Math.ceil(rect.height + paddingTop + paddingBottom);
                 }
+                postHeight(height);
+            }
                 if ('ResizeObserver' in window) {
                     const observer = new ResizeObserver(() => notifyHeight());
                     observer.observe(document.body);
