@@ -7,10 +7,9 @@
  * 統一プレビューコンテナフラグメント
  * 
  * 全てのフラグメントプレビュー表示を統一したスタイルで提供する汎用的なコンテナコンポーネント。
- * 背景色切替機能、カスタムクラス、レスポンシブ対応を包含。
+ * カスタムクラス、レスポンシブ対応を包含。
  * 
  * @fragment container - メインプレビューコンテナフラグメント
- * @param showBackgroundToggle {@code Boolean} [optional=true] 背景色切替ボタン表示
  * @param additionalClasses {@code String} [optional] 追加CSSクラス
  * @param containerId {@code String} [optional=preview-container] コンテナID
  * @param borderColor {@code String} [optional=zinc-300] ボーダー色 (gray-200, zinc-300等)
@@ -31,19 +30,18 @@
  * 
  * @example
  * // カスタムボーダー色と高さ
- * <div th:replace="~{thymeleaflet/fragments/preview-container :: container(true, null, 'custom-preview', 'gray-200', 'min-h-64')}"></div>
+ * <div th:replace="~{thymeleaflet/fragments/preview-container :: container(null, 'custom-preview', 'gray-200', 'min-h-64')}"></div>
  *
  * @example
  * // 追加属性とコンテンツを差し込み
  * <div id="preview-content-slot">
  *   <div>Preview content...</div>
  * </div>
- * <div th:replace="~{thymeleaflet/fragments/preview-container :: container(true, null, null, null, null, '/path', 'load', 'this', 'innerHTML', ~{::#preview-content-slot})}"></div>
+ * <div th:replace="~{thymeleaflet/fragments/preview-container :: container(null, null, null, null, '/path', 'load', 'this', 'innerHTML', ~{::#preview-content-slot})}"></div>
  */
 -->
-<div th:fragment="container(showBackgroundToggle, additionalClasses, containerId, borderColor, minHeight, hxGet, hxTrigger, hxTarget, hxSwap, contentFragment)"
+<div th:fragment="container(additionalClasses, containerId, borderColor, minHeight, hxGet, hxTrigger, hxTarget, hxSwap, contentFragment)"
      th:with="
-        toggleButton=${showBackgroundToggle != null ? showBackgroundToggle : true},
         customClasses=${additionalClasses ?: ''},
         containerIdName=${containerId ?: 'preview-container'},
         borderColorClass=${borderColor ?: 'zinc-300'},
@@ -55,28 +53,19 @@
         previewContentFragment=${contentFragment}
      ">
     
-    <div th:if="${toggleButton}" class="flex justify-end mb-4">
-        <button id="background-toggle" 
-                class="btn-thymeleaflet-secondary btn-thymeleaflet-small"
-                onclick="togglePreviewBackground()"
-                th:attr="title=#{thymeleaflet.preview.toggle}">
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"/>
-            </svg>
-            <span th:text="#{thymeleaflet.preview.toggle}">Toggle background</span>
-        </button>
-    </div>
-    
     <!-- プレビューコンテナ本体 -->
     <div th:id="${containerIdName}" 
          th:class="'border-2 border-solid border-' + ${borderColorClass} + ' rounded-lg ' + ${minHeightClass} + ' preview-background-light ' + ${customClasses}"
          th:attr="hx-get=${hxGetValue}, hx-trigger=${hxTriggerValue}, hx-target=${hxTargetValue}, hx-swap=${hxSwapValue}">
         
-        <!-- プレビューコンテンツ -->
-        <div class="preview-content w-full flex-1">
-            <!-- HTMXまたは動的コンテンツがここに挿入される -->
-            <div th:if="${previewContentFragment != null}" th:replace="${previewContentFragment}"></div>
+        <div class="preview-viewport-frame flex justify-center items-start">
+            <div id="preview-viewport" class="preview-viewport w-full overflow-hidden transition-all duration-200">
+                <!-- プレビューコンテンツ -->
+                <div class="preview-content w-full flex-1">
+                    <!-- HTMXまたは動的コンテンツがここに挿入される -->
+                    <div th:if="${previewContentFragment != null}" th:replace="${previewContentFragment}"></div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

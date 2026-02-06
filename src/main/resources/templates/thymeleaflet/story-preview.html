@@ -215,9 +215,44 @@
                             <h3 class="text-lg font-semibold text-gray-900" th:text="#{thymeleaflet.preview.title}">
                                 Preview
                             </h3>
-                            <div class="flex items-center space-x-2">
-                                <span class="text-xs text-gray-500" th:text="#{thymeleaflet.livePreview}">Live Preview</span>
-                                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs text-gray-500" th:text="#{thymeleaflet.livePreview}">Live Preview</span>
+                                    <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                                </div>
+
+                                <!-- 背景色切替 -->
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs text-gray-500" th:text="#{thymeleaflet.preview.background}">Background</span>
+                                    <button id="background-toggle"
+                                            class="flex items-center space-x-1 px-2 py-1 text-xs rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                                            onclick="togglePreviewBackground()"
+                                            th:attr="title=#{thymeleaflet.preview.toggle.title},data-label-light=#{thymeleaflet.preview.light},data-label-dark=#{thymeleaflet.preview.dark}">
+                                        <span id="toggle-icon">☀️</span>
+                                        <span id="toggle-text" th:text="#{thymeleaflet.preview.light}">Light</span>
+                                    </button>
+                                </div>
+
+                                <!-- Viewport プリセット -->
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs text-gray-500" th:text="#{thymeleaflet.preview.viewport}">Viewport</span>
+                                    <select id="preview-viewport-select"
+                                            class="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:bg-gray-50 transition-colors">
+                                        <option value="responsive" data-width="" data-height="" th:text="#{thymeleaflet.preview.viewport.responsive}">Responsive</option>
+                                        <option value="mobileSmall" data-width="320" data-height="568" th:text="#{thymeleaflet.preview.viewport.mobileSmall}">Mobile Small</option>
+                                        <option value="mobileLarge" data-width="414" data-height="896" th:text="#{thymeleaflet.preview.viewport.mobileLarge}">Mobile Large</option>
+                                        <option value="tablet" data-width="834" data-height="1112" th:text="#{thymeleaflet.preview.viewport.tablet}">Tablet</option>
+                                        <option value="desktop" data-width="1024" data-height="1280" th:text="#{thymeleaflet.preview.viewport.desktop}">Desktop</option>
+                                    </select>
+                                    <button id="preview-viewport-rotate"
+                                            class="flex items-center justify-center w-7 h-7 rounded border border-gray-300 bg-white hover:bg-gray-50 transition-colors"
+                                            th:attr="title=#{thymeleaflet.preview.viewport.rotate},aria-label=#{thymeleaflet.preview.viewport.rotate}">
+                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M4 7h8a5 5 0 1 1 0 10h-1"/>
+                                            <path d="M4 7l3-3M4 7l3 3"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -239,7 +274,7 @@
                             </div>
                         </th:block>
                         
-                        <div th:replace="~{thymeleaflet/fragments/preview-container :: container(true, 'p-8 flex items-center justify-center', 'preview-container', 'gray-200', 'min-h-20', '/thymeleaflet/' + templatePathEncoded + '/' + storyInfo.fragmentInfo.fragmentName + '/' + storyInfo.storyName + '/render', 'load', 'this', 'innerHTML', ~{::story-preview-content(true)})}"></div>
+                        <div th:replace="~{thymeleaflet/fragments/preview-container :: container('p-8 flex items-center justify-center', 'preview-container', 'gray-200', 'min-h-20', '/thymeleaflet/' + templatePathEncoded + '/' + storyInfo.fragmentInfo.fragmentName + '/' + storyInfo.storyName + '/render', 'load', 'this', 'innerHTML', ~{::story-preview-content(true)})}"></div>
                     </div>
                 </div>
 
@@ -408,6 +443,7 @@
     
     <!-- 統一JavaScriptコンポーネント -->
     <div th:replace="~{thymeleaflet/fragments/common-scripts :: scripts}"></div>
+    <script th:src="@{/thymeleaflet/js/preview-controls.js}"></script>
     
 </body>
 </html>
