@@ -86,6 +86,66 @@
         font-size: 14px;
         color: var(--muted);
       }
+      .section {
+        margin-top: 56px;
+      }
+      .section h2 {
+        margin: 0 0 10px;
+        font-size: 24px;
+        letter-spacing: -0.01em;
+      }
+      .section p {
+        margin-bottom: 14px;
+      }
+      .card {
+        border: 1px solid var(--border);
+        background: var(--card);
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 28px rgba(15, 23, 42, 0.06);
+      }
+      .stack {
+        display: grid;
+        gap: 18px;
+      }
+      .grid-2 {
+        display: grid;
+        gap: 18px;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      .shot {
+        padding: 0;
+      }
+      .shot img {
+        width: 100%;
+        display: block;
+      }
+      .caption {
+        margin-top: 8px;
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .code {
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        overflow-x: auto;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #ecfdf3;
+        color: #166534;
+        font-size: 12px;
+        font-weight: 600;
+      }
     </style>
   </head>
   <body>
@@ -156,6 +216,249 @@
           Note: Thymeleaflet is intended for development and internal environments.
         </p>
       </div>
+
+      <section class="section">
+        <h2>Overview</h2>
+        <p>
+          Thymeleaflet is a preview UI that helps you verify Thymeleaf fragments quickly and reliably.
+          Stories and live previews keep implementation intent visible during development.
+        </p>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-overview.png" alt="Overview of the Thymeleaflet UI" loading="lazy">
+          </div>
+          <div class="caption">Full UI view: Stories, preview, and fragment details.</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Story Authoring (stories.yml)</h2>
+        <p>
+          Define UI variations in <code>stories.yml</code> to keep expected states explicit and reviewable.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <pre class="code">storyGroups:
+  accordionItem:
+    title: Accordion Item
+    description: Vanilla JS accordion using inline handlers
+    stories:
+      - name: default
+        title: Closed
+        parameters:
+          title: Shipping details
+          body: Ships in 2-3 business days.
+          open: false
+      - name: open
+        title: Open
+        parameters:
+          title: Returns
+          body: Returns are accepted within 14 days of delivery.
+          open: true</pre>
+            <div class="caption">Story definitions in the actual stories.yml.</div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-live-preview.png" alt="Story list rendered in the UI" loading="lazy">
+            </div>
+            <div class="caption">Stories rendered in the UI</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Live Preview Experience</h2>
+        <p>
+          Select a story and the preview updates immediately. Parameters and models are edited in the same view.
+        </p>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-live-preview-open.png" alt="Live preview with the Open story selected" loading="lazy">
+          </div>
+          <div class="caption">Story selection with live preview updates.</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Fragment Details (JavaDoc)</h2>
+        <p>
+          JavaDoc-style comments surface fragment descriptions and model specs so intent is always visible.
+        </p>
+        <div class="card">
+          <pre class="code">/**
+ * Select input (selectInput)
+ *
+ * @param label {@code String} [required] Field label
+ * @param name {@code String} [required] Select name
+ * @param selected {@code String} [optional=] Selected value
+ * @param help {@code String} [optional=] Help text
+ * @param error {@code String} [optional=] Error message
+ * @param required {@code Boolean} [optional=false] Required flag
+ * @param disabled {@code Boolean} [optional=false] Disabled flag
+ * @model options {@code List<Map<String, Object>>} [required] Options with value/label
+ * @example &lt;div th:replace="~{components/form-select :: selectInput(label='Plan', name='plan', selected='pro', help='Choose your plan', error='', required=true, disabled=false)}"&gt;&lt;/div&gt;
+ */</pre>
+          <div class="caption">JavaDoc comment in the fragment source.</div>
+        </div>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-fragment-details.png" alt="Fragment details and model specification panel" loading="lazy">
+          </div>
+          <div class="caption">Fragment details and model specification panel.</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Viewport Presets &amp; Fit</h2>
+        <p>
+          Switch between Fit, Mobile, and Tablet to validate responsive layouts quickly.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-viewport-mobile.png" alt="Responsive header on Mobile Small (portrait)" loading="lazy">
+            </div>
+            <div class="caption">Mobile Small (portrait)</div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-viewport-tablet.png" alt="Responsive header on Mobile Small (landscape)" loading="lazy">
+            </div>
+            <div class="caption">Mobile Small (landscape)</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Fullscreen Preview</h2>
+        <p>
+          Use the floating fullscreen preview when you need the maximum workspace.
+        </p>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-fullscreen.png" alt="Fullscreen preview mode" loading="lazy">
+          </div>
+          <div class="caption">Floating fullscreen preview mode.</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Custom Parameters</h2>
+        <p>
+          Edit parameters directly to test fragments even when no story exists.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-custom-params-form.png" alt="Custom parameter input form" loading="lazy">
+            </div>
+            <div class="caption">Custom parameter input form.</div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-custom-params-preview.png" alt="Live preview after applying custom parameters" loading="lazy">
+            </div>
+            <div class="caption">Live preview updated with custom parameters.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Custom Model</h2>
+        <p>
+          Provide Object-style models to validate model-dependent fragments without leaving the UI.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-custom-model-form.png" alt="Custom model input form" loading="lazy">
+            </div>
+            <div class="caption">Custom model input aligned with the model spec.</div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-custom-model-preview.png" alt="Live preview after applying custom model" loading="lazy">
+            </div>
+            <div class="caption">Live preview updated with custom model values.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Story Fallback</h2>
+        <p>
+          When a story is missing, Thymeleaflet still renders a fallback preview so you can validate quickly.
+        </p>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-fallback.png" alt="Fallback badge in story list" loading="lazy">
+          </div>
+          <div class="caption">Fallback badge appears when no story is defined.</div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Background Toggle</h2>
+        <p>
+          Toggle light and dark backgrounds to confirm contrast and edge clarity.
+        </p>
+        <div class="grid-2">
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-background-light.png" alt="Light background preview" loading="lazy">
+            </div>
+          </div>
+          <div class="card">
+            <div class="shot">
+              <img src="assets/feature-background-dark.png" alt="Dark background preview" loading="lazy">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Getting Started</h2>
+        <p>
+          You do not need to build the starter to use it. Add it as a dependency and start exploring.
+        </p>
+        <div class="card stack">
+          <div class="pill">Dependency</div>
+          <div>
+            <p>Maven</p>
+            <pre class="code">&lt;dependency&gt;
+  &lt;groupId&gt;io.github.wamukat&lt;/groupId&gt;
+  &lt;artifactId&gt;thymeleaflet-spring-boot-starter&lt;/artifactId&gt;
+  &lt;version&gt;x.y.z&lt;/version&gt;
+&lt;/dependency&gt;</pre>
+          </div>
+          <div>
+            <p>Gradle (Groovy)</p>
+            <pre class="code">implementation 'io.github.wamukat:thymeleaflet-spring-boot-starter:x.y.z'</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Configuration at a Glance</h2>
+        <p>
+          Define preview viewports and background colors via <code>application.yml</code>.
+        </p>
+        <div class="card">
+          <pre class="code">thymeleaflet:
+  preview:
+    backgroundLight: "#f6f7fb"
+    backgroundDark: "#1f2331"
+    viewports:
+      - id: mobileSmall
+        labelKey: thymeleaflet.preview.viewport.mobileSmall
+        width: 360
+        height: 640
+      - id: tablet
+        labelKey: thymeleaflet.preview.viewport.tablet
+        width: 834
+        height: 1194</pre>
+        </div>
+      </section>
     </div>
   </body>
 </html>
