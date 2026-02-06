@@ -37,41 +37,17 @@
         delete window.__thymeleafletPendingOverrides;
     }
 
-    function getPreviewHost() {
-        return document.querySelector('#fragment-preview-host');
-    }
-
-    function getPreviewViewport() {
-        return document.querySelector('#preview-viewport');
-    }
-
-    function getPreviewViewportFrame() {
-        return document.querySelector('.preview-viewport-frame');
-    }
-
-    function getViewportSelect() {
-        return document.getElementById('preview-viewport-select');
-    }
-
-    function getViewportRotateButton() {
-        return document.getElementById('preview-viewport-rotate');
-    }
-
-    function getFullscreenToggleButton() {
-        return document.getElementById('preview-fullscreen-toggle');
-    }
-
-    function getFullscreenOverlay() {
-        return document.getElementById('preview-fullscreen-overlay');
-    }
-
-    function getFullscreenHost() {
-        return document.getElementById('preview-fullscreen-host');
-    }
-
-    function getPreviewContainer() {
-        return document.getElementById('preview-container');
-    }
+    const dom = {
+        previewHost: () => document.querySelector('#fragment-preview-host'),
+        previewViewport: () => document.querySelector('#preview-viewport'),
+        previewViewportFrame: () => document.querySelector('.preview-viewport-frame'),
+        viewportSelect: () => document.getElementById('preview-viewport-select'),
+        viewportRotateButton: () => document.getElementById('preview-viewport-rotate'),
+        fullscreenToggleButton: () => document.getElementById('preview-fullscreen-toggle'),
+        fullscreenOverlay: () => document.getElementById('preview-fullscreen-overlay'),
+        fullscreenHost: () => document.getElementById('preview-fullscreen-host'),
+        previewContainer: () => document.getElementById('preview-container')
+    };
 
     function isFixedViewport() {
         return Number.isFinite(viewportState.width) && Number.isFinite(viewportState.height);
@@ -90,7 +66,7 @@
         if (isFixedViewport()) {
             return;
         }
-        const host = getPreviewHost();
+        const host = dom.previewHost();
         if (host) {
             host.style.height = heightPx + 'px';
         }
@@ -346,7 +322,7 @@
             if (data.type !== 'thymeleaflet:preview-height') {
                 return;
             }
-            const host = getPreviewHost();
+            const host = dom.previewHost();
             if (!host || host.dataset.previewId !== data.id) {
                 return;
             }
@@ -380,7 +356,7 @@
         if (isFixedViewport()) {
             return;
         }
-        const host = getPreviewHost();
+        const host = dom.previewHost();
         const iframe = host?.querySelector('iframe');
         if (!iframe) {
             return;
@@ -397,7 +373,7 @@
     }
 
     function updateIframeScrolling() {
-        const host = getPreviewHost();
+        const host = dom.previewHost();
         if (!host) {
             return;
         }
@@ -409,12 +385,12 @@
     }
 
     function applyViewportState() {
-        const viewport = getPreviewViewport();
+        const viewport = dom.previewViewport();
         if (!viewport) {
             return;
         }
-        const frame = getPreviewViewportFrame();
-        const host = getPreviewHost();
+        const frame = dom.previewViewportFrame();
+        const host = dom.previewHost();
         const effective = getEffectiveViewportSize();
         if (!effective) {
             viewport.style.width = '100%';
@@ -454,7 +430,7 @@
     }
 
     function updateViewportFromSelect() {
-        const select = getViewportSelect();
+        const select = dom.viewportSelect();
         if (!select) {
             return;
         }
@@ -470,7 +446,7 @@
     }
 
     function syncViewportSelectFromState() {
-        const select = getViewportSelect();
+        const select = dom.viewportSelect();
         if (!select) {
             return;
         }
@@ -488,12 +464,12 @@
     }
 
     function bindViewportControls() {
-        const select = getViewportSelect();
+        const select = dom.viewportSelect();
         if (select && !select.dataset.boundViewport) {
             select.addEventListener('change', updateViewportFromSelect);
             select.dataset.boundViewport = 'true';
         }
-        const rotate = getViewportRotateButton();
+        const rotate = dom.viewportRotateButton();
         if (rotate && !rotate.dataset.boundViewport) {
             rotate.addEventListener('click', toggleViewportRotation);
             rotate.dataset.boundViewport = 'true';
@@ -501,7 +477,7 @@
     }
 
     function updateViewportRotateButton() {
-        const button = getViewportRotateButton();
+        const button = dom.viewportRotateButton();
         if (!button) {
             return;
         }
@@ -512,7 +488,7 @@
     }
 
     function updateFullscreenToggleButton() {
-        const button = getFullscreenToggleButton();
+        const button = dom.fullscreenToggleButton();
         if (!button) {
             return;
         }
@@ -530,9 +506,9 @@
     }
 
     function setPreviewFullscreen(active) {
-        const overlay = getFullscreenOverlay();
-        const host = getFullscreenHost();
-        const container = getPreviewContainer();
+        const overlay = dom.fullscreenOverlay();
+        const host = dom.fullscreenHost();
+        const container = dom.previewContainer();
         if (!overlay || !host || !container) {
             return;
         }
@@ -579,12 +555,12 @@
     }
 
     function bindFullscreenControls() {
-        const button = getFullscreenToggleButton();
+        const button = dom.fullscreenToggleButton();
         if (button && !button.dataset.boundFullscreen) {
             button.addEventListener('click', togglePreviewFullscreen);
             button.dataset.boundFullscreen = 'true';
         }
-        const overlay = getFullscreenOverlay();
+        const overlay = dom.fullscreenOverlay();
         if (overlay && !overlay.dataset.boundFullscreen) {
             overlay.addEventListener('click', (event) => {
                 if (event.target === overlay) {
@@ -613,7 +589,7 @@
 
     function updateViewportBadge() {
         const badge = document.getElementById('preview-viewport-badge');
-        const select = getViewportSelect();
+        const select = dom.viewportSelect();
         if (!badge || !select) {
             return;
         }
@@ -642,7 +618,7 @@
     }
 
     async function loadPreview(host) {
-        const targetHost = host || getPreviewHost();
+        const targetHost = host || dom.previewHost();
         if (!targetHost) return;
 
         ensurePreviewMessageListener();
