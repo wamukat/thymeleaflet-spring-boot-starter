@@ -322,6 +322,27 @@
         host.appendChild(iframe);
         setupIframeObservers(iframe);
         applyViewportState();
+        refreshResponsiveHeight();
+    }
+
+    function refreshResponsiveHeight() {
+        if (isFixedViewport()) {
+            return;
+        }
+        const host = getPreviewHost();
+        const iframe = host?.querySelector('iframe');
+        if (!iframe) {
+            return;
+        }
+        const attempt = () => {
+            const height = measureIframeHeight(iframe);
+            if (height != null) {
+                handleResize(height);
+            }
+        };
+        setTimeout(attempt, 50);
+        setTimeout(attempt, 200);
+        setTimeout(attempt, 600);
     }
 
     function updateIframeScrolling() {
