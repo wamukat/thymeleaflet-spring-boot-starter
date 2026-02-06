@@ -43,6 +43,9 @@ public class StoryCommonDataService {
 
     @Autowired
     private StorybookProperties storybookProperties;
+
+    @Autowired
+    private PreviewConfigService previewConfigService;
     
     /**
      * フラグメント・ストーリー共通データセットアップ
@@ -112,6 +115,7 @@ public class StoryCommonDataService {
         model.addAttribute("javadocInfo", javadocInfo);
         model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
         model.addAttribute("previewScripts", joinResources(storybookProperties.getResources().getScripts()));
+        previewConfigService.applyPreviewConfig(model);
     }
 
     private String joinResources(java.util.List<String> resources) {

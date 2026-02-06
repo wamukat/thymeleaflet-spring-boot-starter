@@ -28,6 +28,17 @@ JavaScript を使いたい場合は `resources.scripts` に登録してくださ
 例: `<div data-theme=\"light\">{{content}}</div>`
 プレビュー iframe は same-origin を許可しているため、Cookie / localStorage / 認証付きAPIが動作します。
 
+## プレビュー設定
+
+| プロパティ | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `thymeleaflet.preview.background-light` | String | `#f3f4f6` | プレビューの明るい背景色 |
+| `thymeleaflet.preview.background-dark` | String | `#1f2937` | プレビューの暗い背景色 |
+| `thymeleaflet.preview.viewports` | List | 組み込みプリセット | ビューポート一覧（名前＋縦横サイズ、Fitは除外） |
+
+ビューポート一覧はドロップダウンに表示されます。Fit は常に利用可能で、この一覧には含めません。
+各項目は `id` / `label` / `width` / `height` を持ちます。
+
 ## キャッシュ設定
 
 | プロパティ | 型 | デフォルト | 説明 |
@@ -72,6 +83,18 @@ thymeleaflet:
     scripts:
       - /js/app.js
     cache-duration-seconds: 3600
+  preview:
+    background-light: "#f7f7f9"
+    background-dark: "#1f2937"
+    viewports:
+      - id: mobileSmall
+        label: Mobile Small
+        width: 320
+        height: 568
+      - id: tablet
+        label: Tablet
+        width: 834
+        height: 1112
   cache:
     enabled: true
     preload: false

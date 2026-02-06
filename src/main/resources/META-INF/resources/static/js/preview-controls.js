@@ -21,6 +21,13 @@
         rotated: false,
         preset: 'responsive'
     };
+    let fullscreenState = {
+        active: false,
+        placeholder: null,
+        originalParent: null,
+        originalNextSibling: null,
+        previousBodyOverflow: ''
+    };
     const previewState = {
         storyOverrides: {},
         lastRenderAt: null
@@ -38,12 +45,32 @@
         return document.querySelector('#preview-viewport');
     }
 
+    function getPreviewViewportFrame() {
+        return document.querySelector('.preview-viewport-frame');
+    }
+
     function getViewportSelect() {
         return document.getElementById('preview-viewport-select');
     }
 
     function getViewportRotateButton() {
         return document.getElementById('preview-viewport-rotate');
+    }
+
+    function getFullscreenToggleButton() {
+        return document.getElementById('preview-fullscreen-toggle');
+    }
+
+    function getFullscreenOverlay() {
+        return document.getElementById('preview-fullscreen-overlay');
+    }
+
+    function getFullscreenHost() {
+        return document.getElementById('preview-fullscreen-host');
+    }
+
+    function getPreviewContainer() {
+        return document.getElementById('preview-container');
     }
 
     function isFixedViewport() {
@@ -220,11 +247,17 @@
         });
         headParts.push(
             `<style>
-                html, body { margin: 0; padding: 0; background: ${resolvedBackground} !important; }
+                html, body {
+                    margin: 0;
+                    padding: 0;
+                    height: 100%;
+                    background: ${resolvedBackground} !important;
+                }
                 body { background-color: ${resolvedBackground} !important; }
                 #preview-root {
                     width: 100%;
-                    min-height: 50px;
+                    height: 100%;
+                    min-height: 100%;
                     display: flex;
                     justify-content: center;
                     align-items: center;
@@ -381,6 +414,7 @@
         if (!viewport) {
             return;
         }
+        const frame = getPreviewViewportFrame();
         const host = getPreviewHost();
         const effective = getEffectiveViewportSize();
         if (!effective) {
@@ -388,7 +422,10 @@
             viewport.style.height = 'auto';
             viewport.classList.remove('preview-viewport-fixed');
             viewport.classList.add('preview-viewport-responsive');
-            viewport.classList.remove('border', 'border-dashed', 'border-gray-300', 'bg-white');
+            viewport.classList.remove('bg-white');
+            if (frame) {
+                frame.classList.remove('border', 'border-dashed', 'border-gray-300', 'bg-white');
+            }
             if (host) {
                 host.style.width = '100%';
                 const iframe = host.querySelector('iframe');
@@ -404,7 +441,10 @@
             viewport.style.height = `${effective.height}px`;
             viewport.classList.remove('preview-viewport-responsive');
             viewport.classList.add('preview-viewport-fixed');
-            viewport.classList.add('border', 'border-dashed', 'border-gray-300', 'bg-white');
+            viewport.classList.add('bg-white');
+            if (frame) {
+                frame.classList.add('border', 'border-dashed', 'border-gray-300', 'bg-white');
+            }
             if (host) {
                 host.style.width = '100%';
                 host.style.height = '100%';
@@ -470,6 +510,98 @@
         button.disabled = disabled;
         button.classList.toggle('opacity-50', disabled);
         button.classList.toggle('pointer-events-none', disabled);
+    }
+
+    function updateFullscreenToggleButton() {
+        const button = getFullscreenToggleButton();
+        if (!button) {
+            return;
+        }
+        const enterLabel = button.dataset.labelEnter || 'Enter fullscreen';
+        const exitLabel = button.dataset.labelExit || 'Exit fullscreen';
+        const label = fullscreenState.active ? exitLabel : enterLabel;
+        button.setAttribute('title', label);
+        button.setAttribute('aria-label', label);
+        const enterIcon = button.querySelector('[data-fullscreen-icon="enter"]');
+        const exitIcon = button.querySelector('[data-fullscreen-icon="exit"]');
+        if (enterIcon && exitIcon) {
+            enterIcon.style.display = fullscreenState.active ? 'none' : 'inline-flex';
+            exitIcon.style.display = fullscreenState.active ? 'inline-flex' : 'none';
+        }
+    }
+
+    function setPreviewFullscreen(active) {
+        const overlay = getFullscreenOverlay();
+        const host = getFullscreenHost();
+        const container = getPreviewContainer();
+        if (!overlay || !host || !container) {
+            return;
+        }
+
+        if (active === fullscreenState.active) {
+            return;
+        }
+
+        if (active) {
+            fullscreenState.originalParent = container.parentElement;
+            fullscreenState.originalNextSibling = container.nextSibling;
+            fullscreenState.placeholder = document.createComment('preview-fullscreen-placeholder');
+            if (fullscreenState.originalParent) {
+                fullscreenState.originalParent.insertBefore(fullscreenState.placeholder, container);
+            }
+            host.appendChild(container);
+            container.classList.add('preview-fullscreen');
+            overlay.classList.add('preview-fullscreen-active');
+            overlay.setAttribute('aria-hidden', 'false');
+            fullscreenState.previousBodyOverflow = document.body.style.overflow || '';
+            document.body.style.overflow = 'hidden';
+            fullscreenState.active = true;
+        } else {
+            overlay.classList.remove('preview-fullscreen-active');
+            overlay.setAttribute('aria-hidden', 'true');
+            container.classList.remove('preview-fullscreen');
+            if (fullscreenState.placeholder && fullscreenState.originalParent) {
+                fullscreenState.originalParent.insertBefore(container, fullscreenState.placeholder);
+                fullscreenState.placeholder.remove();
+            } else if (fullscreenState.originalParent) {
+                fullscreenState.originalParent.appendChild(container);
+            }
+            document.body.style.overflow = fullscreenState.previousBodyOverflow;
+            fullscreenState.active = false;
+        }
+
+        applyViewportState();
+        updateViewportRotateButton();
+        updateFullscreenToggleButton();
+    }
+
+    function togglePreviewFullscreen() {
+        setPreviewFullscreen(!fullscreenState.active);
+    }
+
+    function bindFullscreenControls() {
+        const button = getFullscreenToggleButton();
+        if (button && !button.dataset.boundFullscreen) {
+            button.addEventListener('click', togglePreviewFullscreen);
+            button.dataset.boundFullscreen = 'true';
+        }
+        const overlay = getFullscreenOverlay();
+        if (overlay && !overlay.dataset.boundFullscreen) {
+            overlay.addEventListener('click', (event) => {
+                if (event.target === overlay) {
+                    setPreviewFullscreen(false);
+                }
+            });
+            overlay.dataset.boundFullscreen = 'true';
+        }
+        if (!document.body.dataset.boundFullscreenEsc) {
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape' && fullscreenState.active) {
+                    setPreviewFullscreen(false);
+                }
+            });
+            document.body.dataset.boundFullscreenEsc = 'true';
+        }
     }
 
     function toggleViewportRotation() {
@@ -578,18 +710,22 @@
     document.addEventListener('DOMContentLoaded', function() {
         loadPreview();
         bindViewportControls();
+        bindFullscreenControls();
         syncViewportSelectFromState();
         applyViewportState();
         updateViewportRotateButton();
+        updateFullscreenToggleButton();
     });
 
     document.addEventListener('htmx:afterSettle', function(event) {
         if (event.detail.target && event.detail.target.id === 'main-content-area') {
             loadPreview();
             bindViewportControls();
+            bindFullscreenControls();
             syncViewportSelectFromState();
             applyViewportState();
             updateViewportRotateButton();
+            updateFullscreenToggleButton();
         }
     });
 })();

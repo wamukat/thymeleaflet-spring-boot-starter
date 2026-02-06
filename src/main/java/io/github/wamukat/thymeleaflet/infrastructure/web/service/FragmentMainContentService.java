@@ -45,6 +45,9 @@ public class FragmentMainContentService {
 
     @Autowired
     private StorybookProperties storybookProperties;
+
+    @Autowired
+    private PreviewConfigService previewConfigService;
     
     /**
      * メインコンテンツ遅延読み込み処理
@@ -96,6 +99,7 @@ public class FragmentMainContentService {
             model.addAttribute("totalCount", allFragments.size());
             model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
             model.addAttribute("previewScripts", joinResources(storybookProperties.getResources().getScripts()));
+            previewConfigService.applyPreviewConfig(model);
             
             long totalTime = System.currentTimeMillis() - startTime;
             logger.info("=== Main Content (Delayed Loading) COMPLETED in {} ms ===", totalTime);
