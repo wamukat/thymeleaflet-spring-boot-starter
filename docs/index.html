@@ -44,42 +44,34 @@
         line-height: 1.6;
       }
       .links {
-        display: grid;
+        display: flex;
+        flex-wrap: wrap;
         gap: 12px;
         margin-top: 20px;
-      }
-      .link-sub {
-        display: grid;
-        gap: 10px;
-        margin-left: 26px;
-        padding-left: 14px;
-        border-left: 1px solid rgba(15, 23, 42, 0.12);
-      }
-      .link-subitem {
-        font-size: 0.95rem;
-        padding: 12px 14px;
-        background: rgba(255, 255, 255, 0.8);
+        justify-content: center;
       }
       .link {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        gap: 12px;
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        padding: 12px 16px;
+        gap: 10px;
+        padding: 18px 20px;
         border: 1px solid var(--border);
         border-radius: 12px;
         text-decoration: none;
         color: var(--fg);
         background: #fff;
+        min-width: 180px;
       }
       .link svg {
-        width: 20px;
-        height: 20px;
+        width: 28px;
+        height: 28px;
         color: var(--accent);
       }
       .link span {
-        color: var(--accent);
+        color: var(--fg);
         font-weight: 600;
+        font-size: 0.95rem;
       }
       .meta {
         margin-top: 24px;
@@ -166,55 +158,15 @@
               <path d="M12 17v4"></path>
               <path d="M7 8h10"></path>
             </svg>
-            Live demo <span>→</span>
+            <span>Live demo</span>
           </a>
           <a class="link" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9 19c-4.3 1.3-4.3-2.4-6-3"></path>
-              <path d="M15 19c0 1 .1 2-.6 2.7-.7.7-1.8.9-2.4.3"></path>
-              <path d="M15 19v-3.5c0-1 .2-2-1-2.7"></path>
-              <path d="M9 15.5V19"></path>
-              <path d="M7 9c1-2 4-2 5-2s4 0 5 2"></path>
-              <path d="M6 9c-1-1-1-3 0-4"></path>
-              <path d="M18 9c1-1 1-3 0-4"></path>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2c-5.5 0-10 4.6-10 10.2 0 4.5 2.9 8.4 6.9 9.8.5.1.7-.2.7-.5 0-.2 0-.9 0-1.7-2.8.6-3.4-1.4-3.4-1.4-.4-1.1-1.1-1.4-1.1-1.4-.9-.7.1-.7.1-.7 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.7-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.8-.1-.3-.4-1.3.1-2.6 0 0 .8-.3 2.7 1a9.2 9.2 0 0 1 4.9 0c1.9-1.3 2.7-1 2.7-1 .5 1.3.2 2.3.1 2.6.6.8 1 1.7 1 2.8 0 3.9-2.4 4.7-4.6 5 .4.4.7 1 .7 2 0 1.5 0 2.7 0 3.1 0 .3.2.6.7.5 4-1.4 6.9-5.3 6.9-9.8C22 6.6 17.5 2 12 2z"></path>
             </svg>
-            GitHub repository <span>→</span>
+            <span>GitHub repository</span>
           </a>
-          <div class="link-sub">
-            <a class="link link-subitem" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/getting-started.md">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5C5.5 18 8 18 10 19V6C8 5 5.5 5 4 6.5z"></path>
-                <path d="M20 19.5C18.5 18 16 18 14 19V6c2-1 4.5-1 6 0.5z"></path>
-              </svg>
-              Getting started <span>→</span>
-            </a>
-            <a class="link link-subitem" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/stories.md">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 6h8"></path>
-                <path d="M4 12h14"></path>
-                <path d="M4 18h10"></path>
-              </svg>
-              Stories guide <span>→</span>
-            </a>
-            <a class="link link-subitem" href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/configuration.md">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2v3"></path>
-                <path d="M12 19v3"></path>
-                <path d="M4.9 4.9l2.1 2.1"></path>
-                <path d="M17 17l2.1 2.1"></path>
-                <path d="M2 12h3"></path>
-                <path d="M19 12h3"></path>
-                <path d="M4.9 19.1l2.1-2.1"></path>
-                <path d="M17 7l2.1-2.1"></path>
-                <circle cx="12" cy="12" r="3"></circle>
-              </svg>
-              Configuration <span>→</span>
-            </a>
-          </div>
         </div>
-        <p class="meta">
-          Note: Thymeleaflet is intended for development and internal environments.
-        </p>
       </div>
 
       <section class="section">
@@ -235,6 +187,7 @@
         <h2>Story Authoring (stories.yml)</h2>
         <p>
           Define UI variations in <code>stories.yml</code> to keep expected states explicit and reviewable.
+          Details are in <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/stories.md">stories.md</a>.
         </p>
         <div class="grid-2">
           <div class="card">
@@ -270,6 +223,7 @@
         <h2>Live Preview Experience</h2>
         <p>
           Select a story and the preview updates immediately. Parameters and models are edited in the same view.
+          When a story is missing, Thymeleaflet still renders a fallback preview so you can validate quickly.
         </p>
         <div class="card">
           <div class="shot">
@@ -279,34 +233,7 @@
         </div>
       </section>
 
-      <section class="section">
-        <h2>Fragment Details (JavaDoc)</h2>
-        <p>
-          JavaDoc-style comments surface fragment descriptions and model specs so intent is always visible.
-        </p>
-        <div class="card">
-          <pre class="code">/**
- * Select input (selectInput)
- *
- * @param label {@code String} [required] Field label
- * @param name {@code String} [required] Select name
- * @param selected {@code String} [optional=] Selected value
- * @param help {@code String} [optional=] Help text
- * @param error {@code String} [optional=] Error message
- * @param required {@code Boolean} [optional=false] Required flag
- * @param disabled {@code Boolean} [optional=false] Disabled flag
- * @model options {@code List<Map<String, Object>>} [required] Options with value/label
- * @example &lt;div th:replace="~{components/form-select :: selectInput(label='Plan', name='plan', selected='pro', help='Choose your plan', error='', required=true, disabled=false)}"&gt;&lt;/div&gt;
- */</pre>
-          <div class="caption">JavaDoc comment in the fragment source.</div>
-        </div>
-        <div class="card">
-          <div class="shot">
-            <img src="assets/feature-fragment-details.png" alt="Fragment details and model specification panel" loading="lazy">
-          </div>
-          <div class="caption">Fragment details and model specification panel.</div>
-        </div>
-      </section>
+
 
       <section class="section">
         <h2>Viewport Presets &amp; Fit</h2>
@@ -385,19 +312,6 @@
       </section>
 
       <section class="section">
-        <h2>Story Fallback</h2>
-        <p>
-          When a story is missing, Thymeleaflet still renders a fallback preview so you can validate quickly.
-        </p>
-        <div class="card">
-          <div class="shot">
-            <img src="assets/feature-fallback.png" alt="Fallback badge in story list" loading="lazy">
-          </div>
-          <div class="caption">Fallback badge appears when no story is defined.</div>
-        </div>
-      </section>
-
-      <section class="section">
         <h2>Background Toggle</h2>
         <p>
           Toggle light and dark backgrounds to confirm contrast and edge clarity.
@@ -417,9 +331,39 @@
       </section>
 
       <section class="section">
+        <h2>Fragment Details (JavaDoc)</h2>
+        <p>
+          JavaDoc-style comments surface fragment descriptions and model specs so intent is always visible.
+        </p>
+        <div class="card">
+          <pre class="code">/**
+ * Select input (selectInput)
+ *
+ * @param label {@code String} [required] Field label
+ * @param name {@code String} [required] Select name
+ * @param selected {@code String} [optional=] Selected value
+ * @param help {@code String} [optional=] Help text
+ * @param error {@code String} [optional=] Error message
+ * @param required {@code Boolean} [optional=false] Required flag
+ * @param disabled {@code Boolean} [optional=false] Disabled flag
+ * @model options {@code List<Map<String, Object>>} [required] Options with value/label
+ * @example &lt;div th:replace="~{components/form-select :: selectInput(label='Plan', name='plan', selected='pro', help='Choose your plan', error='', required=true, disabled=false)}"&gt;&lt;/div&gt;
+ */</pre>
+          <div class="caption">JavaDoc comment in the fragment source.</div>
+        </div>
+        <div class="card">
+          <div class="shot">
+            <img src="assets/feature-fragment-details.png" alt="Fragment details and model specification panel" loading="lazy">
+          </div>
+          <div class="caption">Fragment details and model specification panel.</div>
+        </div>
+      </section>
+
+      <section class="section">
         <h2>Getting Started</h2>
         <p>
           You do not need to build the starter to use it. Add it as a dependency and start exploring.
+          Details are in <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/getting-started.md">getting-started.md</a>.
         </p>
         <div class="card stack">
           <div class="pill">Dependency</div>
@@ -442,6 +386,7 @@
         <h2>Configuration at a Glance</h2>
         <p>
           Define preview viewports and background colors via <code>application.yml</code>.
+          Details are in <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/configuration.md">configuration.md</a>.
         </p>
         <div class="card">
           <pre class="code">thymeleaflet:
