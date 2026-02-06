@@ -62,7 +62,7 @@
 </div>
 
 <div th:fragment="panel" class="card-thymeleaflet">
-    <th:block th:fragment="panel-subtitle">
+    <th:block th:fragment="panel-subtitle" th:remove="all">
         <span class="text-gray-500 font-normal" th:text="'- ' + ${selectedStory.displayTitle ?: selectedStory.storyName}">- Default</span>
     </th:block>
     <div th:replace="~{thymeleaflet/fragments/preview-panel :: header(${selectedStory} != null ? ~{::panel-subtitle} : null)}"></div>
