@@ -125,6 +125,7 @@ public class FragmentDiscoveryService {
 
         String fragmentName;
         List<String> parameters;
+        SignatureDiagnostic signatureDiagnostic = null;
 
         FragmentSignatureParser.ParseResult parseResult = fragmentSignatureParser.parse(fragmentDefinition);
         if (parseResult.success()) {
@@ -135,11 +136,15 @@ public class FragmentDiscoveryService {
             // keep backward compatibility: fallback to plain name when signature parse fails
             fragmentName = fragmentDefinition.trim();
             parameters = new ArrayList<>();
+            signatureDiagnostic = createSignatureDiagnostic(parseResult);
             logger.warn(
-                "[DEBUG_FRAGMENT_PARAMS] Fragment signature parse failed. fallback=plain-name, definition={}, code={}, message={}",
+                "[FRAGMENT_SIGNATURE_DIAGNOSTIC] severity={} code={} template={} fragmentDefinition={} fallback={} devMessage={}",
+                signatureDiagnostic.getSeverity(),
+                signatureDiagnostic.getCode(),
+                templatePath,
                 fragmentDefinition,
-                parseResult.code(),
-                parseResult.message()
+                fragmentName,
+                signatureDiagnostic.getDeveloperMessage()
             );
         }
         
@@ -150,13 +155,40 @@ public class FragmentDiscoveryService {
             fragmentName,
             parameters,
             type,
-            fragmentDefinition
+            fragmentDefinition,
+            signatureDiagnostic
         );
         
         logger.debug("[DEBUG_FRAGMENT_PARAMS] Created FragmentInfo: path={}, name={}, params={}, type={}", 
                    templatePath, fragmentName, parameters, type);
         
         return fragmentInfo;
+    }
+
+    private SignatureDiagnostic createSignatureDiagnostic(FragmentSignatureParser.ParseResult parseResult) {
+        if (parseResult == null || parseResult.code() == null) {
+            return new SignatureDiagnostic(
+                "UNKNOWN",
+                "WARNING",
+                "This fragment declaration may not be fully supported.",
+                "Signature parse failed with unknown reason"
+            );
+        }
+
+        return switch (parseResult.code()) {
+            case INVALID_SIGNATURE -> new SignatureDiagnostic(
+                "INVALID_SIGNATURE",
+                "WARNING",
+                "Invalid fragment signature. Please check th:fragment syntax.",
+                parseResult.message()
+            );
+            case UNSUPPORTED_SYNTAX -> new SignatureDiagnostic(
+                "UNSUPPORTED_SYNTAX",
+                "WARNING",
+                "This fragment signature uses syntax not yet supported in Thymeleaflet UI.",
+                parseResult.message()
+            );
+        };
     }
     
     
@@ -191,14 +223,22 @@ public class FragmentDiscoveryService {
         private final List<String> parameters;
         private final FragmentDomainService.FragmentType type;
         private final String originalDefinition;
+        private final SignatureDiagnostic signatureDiagnostic;
         
         public FragmentInfo(String templatePath, String fragmentName, List<String> parameters, 
                            FragmentDomainService.FragmentType type, String originalDefinition) {
+            this(templatePath, fragmentName, parameters, type, originalDefinition, null);
+        }
+
+        public FragmentInfo(String templatePath, String fragmentName, List<String> parameters,
+                           FragmentDomainService.FragmentType type, String originalDefinition,
+                           SignatureDiagnostic signatureDiagnostic) {
             this.templatePath = templatePath;
             this.fragmentName = fragmentName;
             this.parameters = Collections.unmodifiableList(parameters);
             this.type = type;
             this.originalDefinition = originalDefinition;
+            this.signatureDiagnostic = signatureDiagnostic;
         }
         
         // Getters
@@ -207,12 +247,33 @@ public class FragmentDiscoveryService {
         public List<String> getParameters() { return parameters; }
         public FragmentDomainService.FragmentType getType() { return type; }
         public String getOriginalDefinition() { return originalDefinition; }
+        public SignatureDiagnostic getSignatureDiagnostic() { return signatureDiagnostic; }
+        public boolean hasSignatureDiagnostic() { return signatureDiagnostic != null; }
 
         @Override
         public String toString() {
             return String.format("Fragment{path='%s', name='%s', type=%s, params=%s}", 
                                templatePath, fragmentName, type, parameters);
         }
+    }
+
+    public static class SignatureDiagnostic {
+        private final String code;
+        private final String severity;
+        private final String userMessage;
+        private final String developerMessage;
+
+        public SignatureDiagnostic(String code, String severity, String userMessage, String developerMessage) {
+            this.code = code;
+            this.severity = severity;
+            this.userMessage = userMessage;
+            this.developerMessage = developerMessage;
+        }
+
+        public String getCode() { return code; }
+        public String getSeverity() { return severity; }
+        public String getUserMessage() { return userMessage; }
+        public String getDeveloperMessage() { return developerMessage; }
     }
     
 }
