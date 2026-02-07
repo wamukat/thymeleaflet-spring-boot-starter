@@ -175,7 +175,7 @@
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>--should-stop=ifError=FLOW</arg>
-                        <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:WARN -XepOpt:NullAway:AnnotatedPackages=io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery</arg>
+                        <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:WARN -XepOpt:NullAway:AnnotatedPackages=io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery,io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
