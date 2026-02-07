@@ -17,3 +17,4 @@ Thymeleaf フラグメントを Storybook 風に扱うための情報をまと�
 - [javadoc.ja.md](javadoc.ja.md) — HTML 内 JavaDoc コメント
 - [security.ja.md](security.ja.md) — セキュリティの挙動と推奨事項
 - [parser-spec.ja.md](parser-spec.ja.md) — フラグメントパーサの対応仕様とルール
+- [parser-model.ja.md](parser-model.ja.md) — パーサ出力モデルとマージ方針
