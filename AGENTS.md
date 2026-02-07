@@ -37,6 +37,15 @@
 ## Browser Tooling
 - ブラウザ確認・操作は `agent-browser` を優先して利用する。
 
+## Null Safety (NullAway)
+- `null` で状態を表現しない（可能な限り非null設計を優先する）。
+- `@Nullable` を付ける前に、以下を先に検討する:
+  - 成功/失敗を型で分離する（例: sealed interface, Result型）
+  - 値の有無は `Optional` で表現する
+  - 未初期化状態は sentinel / Null Object パターンで表現する
+  - コレクションは空コレクションを基本とする
+- `@Nullable` は外部仕様上やむを得ない境界でのみ使い、理由をコード上で説明できる状態にする。
+
 ## Docs Screenshot Workflow
 - キャプチャは Playwright を使って取得する（`npx -p playwright` で依存を一時的に利用）。
 - 目安の設定:
