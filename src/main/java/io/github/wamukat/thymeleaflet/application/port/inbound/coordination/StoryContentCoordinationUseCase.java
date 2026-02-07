@@ -2,11 +2,11 @@ package io.github.wamukat.thymeleaflet.application.port.inbound.coordination;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import org.springframework.lang.Nullable;
 import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ストーリーコンテンツ協調ユースケース - Inbound Port
@@ -31,14 +31,14 @@ public interface StoryContentCoordinationUseCase {
      */
     record StoryContentResult(
         boolean succeeded,
-        @Nullable String errorMessage,
-        @Nullable FragmentStoryInfo storyInfo,
-        @Nullable FragmentDiscoveryService.FragmentInfo selectedFragment,
-        @Nullable List<FragmentStoryInfo> stories,
-        @Nullable Map<String, Object> displayParameters,
-        @Nullable FragmentStoryInfo defaultStory,
-        @Nullable Map<String, Object> defaultParameters,
-        @Nullable Object javadocInfo
+        Optional<String> errorMessage,
+        Optional<FragmentStoryInfo> storyInfo,
+        Optional<FragmentDiscoveryService.FragmentInfo> selectedFragment,
+        Optional<List<FragmentStoryInfo>> stories,
+        Optional<Map<String, Object>> displayParameters,
+        Optional<FragmentStoryInfo> defaultStory,
+        Optional<Map<String, Object>> defaultParameters,
+        Optional<Object> javadocInfo
     ) {
         public static StoryContentResult success(
             FragmentStoryInfo storyInfo,
@@ -47,14 +47,33 @@ public interface StoryContentCoordinationUseCase {
             Map<String, Object> displayParameters,
             FragmentStoryInfo defaultStory,
             Map<String, Object> defaultParameters,
-            @Nullable Object javadocInfo
+            Optional<Object> javadocInfo
         ) {
-            return new StoryContentResult(true, null, storyInfo, selectedFragment, stories,
-                displayParameters, defaultStory, defaultParameters, javadocInfo);
+            return new StoryContentResult(
+                true,
+                Optional.empty(),
+                Optional.of(storyInfo),
+                Optional.of(selectedFragment),
+                Optional.of(stories),
+                Optional.of(displayParameters),
+                Optional.of(defaultStory),
+                Optional.of(defaultParameters),
+                javadocInfo
+            );
         }
         
         public static StoryContentResult failure(String errorMessage) {
-            return new StoryContentResult(false, errorMessage, null, null, null, null, null, null, null);
+            return new StoryContentResult(
+                false,
+                Optional.of(errorMessage),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty(),
+                Optional.empty()
+            );
         }
     }
     

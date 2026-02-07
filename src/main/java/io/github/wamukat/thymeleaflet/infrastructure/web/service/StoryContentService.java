@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -63,23 +64,23 @@ public class StoryContentService {
             storyContentCoordinationUseCase.coordinateStoryContentSetup(contentRequest);
         
         if (!contentResult.succeeded()) {
-            logger.error("Story content coordination failed: {}", contentResult.errorMessage());
-            model.addAttribute("error", contentResult.errorMessage());
+            logger.error("Story content coordination failed: {}", contentResult.errorMessage().orElse("unknown"));
+            model.addAttribute("error", contentResult.errorMessage().orElse("Story content coordination failed"));
             return StoryContentResult.failure("thymeleaflet/fragments/error-display :: error(type='danger')");
         }
         
         // モデルに協調処理結果を設定
-        model.addAttribute("selectedFragment", contentResult.selectedFragment());
-        model.addAttribute("selectedStory", contentResult.storyInfo());
-        model.addAttribute("storyInfo", contentResult.storyInfo());
-        model.addAttribute("stories", contentResult.stories());
+        model.addAttribute("selectedFragment", contentResult.selectedFragment().orElse(null));
+        model.addAttribute("selectedStory", contentResult.storyInfo().orElse(null));
+        model.addAttribute("storyInfo", contentResult.storyInfo().orElse(null));
+        model.addAttribute("stories", contentResult.stories().orElse(List.of()));
         
         // StoryCommonDataServiceを使用して共通データ設定
         storyCommonDataService.setupCommonStoryData(
             fullTemplatePath,
             fragmentName,
             storyName,
-            Objects.requireNonNull(contentResult.storyInfo()),
+            contentResult.storyInfo().orElseThrow(),
             model
         );
         

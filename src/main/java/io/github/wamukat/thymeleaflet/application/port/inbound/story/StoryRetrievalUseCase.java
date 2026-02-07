@@ -2,7 +2,6 @@ package io.github.wamukat.thymeleaflet.application.port.inbound.story;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import org.springframework.lang.Nullable;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,12 +34,12 @@ public interface StoryRetrievalUseCase {
      */
     class StoryListResponse {
         private final boolean success;
-        private final @Nullable FragmentDiscoveryService.FragmentInfo fragment;
+        private final Optional<FragmentDiscoveryService.FragmentInfo> fragment;
         private final List<FragmentStoryInfo> stories;
 
         public StoryListResponse(
             boolean success,
-            @Nullable FragmentDiscoveryService.FragmentInfo fragment,
+            Optional<FragmentDiscoveryService.FragmentInfo> fragment,
             List<FragmentStoryInfo> stories
         ) {
             this.success = success;
@@ -49,16 +48,16 @@ public interface StoryRetrievalUseCase {
         }
 
         public static StoryListResponse success(FragmentDiscoveryService.FragmentInfo fragment, List<FragmentStoryInfo> stories) {
-            return new StoryListResponse(true, fragment, stories);
+            return new StoryListResponse(true, Optional.of(fragment), stories);
         }
 
         public static StoryListResponse failure() {
-            return new StoryListResponse(false, null, List.of());
+            return new StoryListResponse(false, Optional.empty(), List.of());
         }
 
         public boolean isSuccess() { return success; }
 
-        public @Nullable FragmentDiscoveryService.FragmentInfo getFragment() { return fragment; }
+        public Optional<FragmentDiscoveryService.FragmentInfo> getFragment() { return fragment; }
         public List<FragmentStoryInfo> getStories() { return stories; }
     }
 }

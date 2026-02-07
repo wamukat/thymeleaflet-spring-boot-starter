@@ -102,8 +102,8 @@ public class StoryPreviewService {
             storyPageCoordinationUseCase.coordinateStoryPageSetup(coordinationRequest);
         
         if (!coordinationResult.succeeded()) {
-            logger.error("Story page coordination failed: {}", coordinationResult.errorMessage());
-            model.addAttribute("error", coordinationResult.errorMessage());
+            logger.error("Story page coordination failed: {}", coordinationResult.errorMessage().orElse("unknown"));
+            model.addAttribute("error", coordinationResult.errorMessage().orElse("Story page coordination failed"));
             return StoryPreviewResult.failure("thymeleaflet/fragment-list");
         }
         

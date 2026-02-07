@@ -1,7 +1,8 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.fragment;
 
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import org.springframework.lang.Nullable;
+
+import java.util.Optional;
 
 /**
  * フラグメント発見専用ユースケース - Inbound Port
@@ -20,13 +21,13 @@ public interface FragmentDiscoveryUseCase {
      * フラグメント詳細レスポンス
      */
     class FragmentDetailResponse {
-        private final @Nullable FragmentDiscoveryService.FragmentInfo fragment;
+        private final Optional<FragmentDiscoveryService.FragmentInfo> fragment;
         private final boolean found;
         private final String templatePath;
         private final String fragmentName;
 
         public FragmentDetailResponse(
-            @Nullable FragmentDiscoveryService.FragmentInfo fragment,
+            Optional<FragmentDiscoveryService.FragmentInfo> fragment,
             boolean found,
             String templatePath,
             String fragmentName
@@ -38,14 +39,14 @@ public interface FragmentDiscoveryUseCase {
         }
 
         public static FragmentDetailResponse success(FragmentDiscoveryService.FragmentInfo fragment, String templatePath, String fragmentName) {
-            return new FragmentDetailResponse(fragment, true, templatePath, fragmentName);
+            return new FragmentDetailResponse(Optional.of(fragment), true, templatePath, fragmentName);
         }
 
         public static FragmentDetailResponse notFound(String templatePath, String fragmentName) {
-            return new FragmentDetailResponse(null, false, templatePath, fragmentName);
+            return new FragmentDetailResponse(Optional.empty(), false, templatePath, fragmentName);
         }
 
-        public @Nullable FragmentDiscoveryService.FragmentInfo getFragment() { return fragment; }
+        public Optional<FragmentDiscoveryService.FragmentInfo> getFragment() { return fragment; }
         public boolean isFound() { return found; }
         public String getTemplatePath() { return templatePath; }
         public String getFragmentName() { return fragmentName; }
