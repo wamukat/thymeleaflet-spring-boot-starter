@@ -96,15 +96,9 @@ ws             = { " " | "\t" | "\n" | "\r" } ;
 | ` profileCard ( name , age ) ` | name=`profileCard`, params=`[name, age]` |
 | `profileCard(name,,age)` | `INVALID_SIGNATURE` |
 | `profileCard(name` | `INVALID_SIGNATURE` |
-| `profileCard(name='x')` | Thymeleaf内部挙動次第で受理可能性はあるが、v1 UIサポートでは `UNSUPPORTED_SYNTAX` |
+| `profileCard(name='x')` | `th:fragment` の宣言側構文としては非対応のため `UNSUPPORTED_SYNTAX` |
 
-## 9. 互換性ポリシー
-
-- 単純シグネチャは既存互換とする。
-- これまで曖昧に通っていた文字列は、明示的エラーになる場合がある。
-- 一部失敗しても、一覧全体が壊れないよう UI へ診断を渡す。
-
-## 10. 実装Issue向けテスト要件
+## 9. 実装Issue向けテスト要件
 
 - 受理/拒否ケースの単体テスト
 - 正規化順序のゴールデンテスト
