@@ -8,7 +8,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFrag
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
@@ -18,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -102,13 +102,13 @@ public class StoryCommonDataService {
                 Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStory);
                 defaultParameters = defaultStoryParams.entrySet().stream()
                     .filter(entry -> !"__storybook_background".equals(entry.getKey()))
-                    .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+                    .filter(entry -> entry.getValue() != null)
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             }
         }
         
         // JavaDoc情報を取得
-        io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo javadocInfo =
+        Optional<io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo> javadocInfo =
             javaDocLookupService.findJavaDocInfo(templatePath, fragmentName);
 
         List<String> orderedParameterNames = resolveOrderedParameterNames(storyInfo, displayParameters, javadocInfo);
@@ -122,7 +122,7 @@ public class StoryCommonDataService {
             fragmentDependencyService.findDependencies(templatePath, fragmentName));
         model.addAttribute("defaultStory", defaultStory);
         model.addAttribute("defaultParameters", defaultParameters);
-        model.addAttribute("javadocInfo", javadocInfo);
+        model.addAttribute("javadocInfo", javadocInfo.orElse(null));
         model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
         model.addAttribute("previewScripts", joinResources(storybookProperties.getResources().getScripts()));
         previewConfigService.applyPreviewConfig(model);
@@ -141,25 +141,25 @@ public class StoryCommonDataService {
     private List<String> resolveOrderedParameterNames(
         FragmentStoryInfo storyInfo,
         Map<String, Object> displayParameters,
-        @Nullable io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo javadocInfo
+        Optional<io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo> javadocInfo
     ) {
         LinkedHashSet<String> ordered = new LinkedHashSet<>();
 
-        if (javadocInfo != null && javadocInfo.getParameters() != null) {
-            for (var parameterInfo : javadocInfo.getParameters()) {
-                if (parameterInfo.getName() != null && !parameterInfo.getName().isBlank()) {
-                    ordered.add(parameterInfo.getName());
+        javadocInfo
+            .map(io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo::getParameters)
+            .ifPresent(parameters -> {
+                for (var parameterInfo : parameters) {
+                    if (parameterInfo.getName() != null && !parameterInfo.getName().isBlank()) {
+                        ordered.add(parameterInfo.getName());
+                    }
                 }
-            }
-        }
+            });
 
-        if (storyInfo != null && storyInfo.getFragmentSummary() != null && storyInfo.getFragmentSummary().getParameters() != null) {
+        if (storyInfo.getFragmentSummary() != null && storyInfo.getFragmentSummary().getParameters() != null) {
             ordered.addAll(storyInfo.getFragmentSummary().getParameters());
         }
 
-        if (displayParameters != null) {
-            ordered.addAll(displayParameters.keySet());
-        }
+        ordered.addAll(displayParameters.keySet());
 
         return new ArrayList<>(ordered);
     }
@@ -168,14 +168,12 @@ public class StoryCommonDataService {
         Map<String, Object> displayParameters,
         List<String> orderedParameterNames
     ) {
-        Map<String, Object> source = displayParameters != null ? displayParameters : Map.of();
+        Map<String, Object> source = displayParameters;
         LinkedHashMap<String, Object> ordered = new LinkedHashMap<>();
 
-        if (orderedParameterNames != null) {
-            for (String parameterName : orderedParameterNames) {
-                if (source.containsKey(parameterName)) {
-                    ordered.put(parameterName, source.get(parameterName));
-                }
+        for (String parameterName : orderedParameterNames) {
+            if (source.containsKey(parameterName)) {
+                ordered.put(parameterName, source.get(parameterName));
             }
         }
 

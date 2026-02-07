@@ -5,9 +5,9 @@ import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaD
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import org.springframework.lang.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * JavaDoc情報取得専用サービス
@@ -25,10 +25,10 @@ public class JavaDocLookupService {
         this.javaDocContentService = javaDocContentService;
     }
 
-    public @Nullable JavaDocAnalyzer.JavaDocInfo findJavaDocInfo(String templatePath, String fragmentName) {
+    public Optional<JavaDocAnalyzer.JavaDocInfo> findJavaDocInfo(String templatePath, String fragmentName) {
         List<JavaDocAnalyzer.JavaDocInfo> javadocInfos = javaDocContentService.loadJavaDocInfos(templatePath);
         if (javadocInfos.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
 
         try {
@@ -40,15 +40,14 @@ public class JavaDocLookupService {
                         .anyMatch(ex -> ex.getFragmentName().equals(fragmentName));
                     return matchesDescription || matchesExample;
                 })
-                .findFirst()
-                .orElse(null);
+                .findFirst();
         } catch (Exception e) {
             logger.warn("Failed to read JavaDoc info for {}::{}: {}", templatePath, fragmentName, e.getMessage());
-            return null;
+            return Optional.empty();
         }
     }
 
     public boolean hasJavaDoc(String templatePath, String fragmentName) {
-        return findJavaDocInfo(templatePath, fragmentName) != null;
+        return findJavaDocInfo(templatePath, fragmentName).isPresent();
     }
 }

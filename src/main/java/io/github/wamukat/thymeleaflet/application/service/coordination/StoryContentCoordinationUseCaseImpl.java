@@ -108,7 +108,8 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             }
             
             // JavaDoc情報取得
-            Object javadocInfo = javaDocLookupService.findJavaDocInfo(request.fullTemplatePath(), request.fragmentName());
+            Object javadocInfo = javaDocLookupService.findJavaDocInfo(request.fullTemplatePath(), request.fragmentName())
+                .orElse(null);
             
             logger.info("=== StoryContentCoordination COMPLETED ===");
             return StoryContentResult.success(storyInfo, selectedFragment, stories, 

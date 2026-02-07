@@ -104,6 +104,6 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
 
     @Override
     public Optional<JavaDocAnalyzer.JavaDocInfo> getJavaDocInfo(String templatePath, String fragmentName) {
-        return Optional.ofNullable(javaDocLookupService.findJavaDocInfo(templatePath, fragmentName));
+        return javaDocLookupService.findJavaDocInfo(templatePath, fragmentName);
     }
 }

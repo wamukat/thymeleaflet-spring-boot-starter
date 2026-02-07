@@ -143,7 +143,7 @@ class StoryCommonDataServiceTest {
             List.of(),
             java.util.Optional.empty()
         );
-        when(javaDocLookupService.findJavaDocInfo("components/button", "primaryButton")).thenReturn(javaDocInfo);
+        when(javaDocLookupService.findJavaDocInfo("components/button", "primaryButton")).thenReturn(java.util.Optional.of(javaDocInfo));
 
         Model model = new ExtendedModelMap();
         service.setupCommonStoryData("components/button", "primaryButton", "default", storyInfo, model);
