@@ -8,6 +8,7 @@ import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class StoryDataAdapter implements StoryDataPort {
     }
     
     @Override
-    public StoryConfiguration loadStoryConfiguration(String templatePath) {
+    public @Nullable StoryConfiguration loadStoryConfiguration(String templatePath) {
         try {
             return yamlStoryConfigurationLoader.loadStoryConfiguration(templatePath)
                 .orElse(null);
@@ -89,7 +90,7 @@ public class StoryDataAdapter implements StoryDataPort {
     }
 
     @Override
-    public FragmentStoryInfo getStory(String templatePath, String fragmentName, String storyName) {
+    public @Nullable FragmentStoryInfo getStory(String templatePath, String fragmentName, String storyName) {
         try {
             StoryConfiguration storyConfiguration = loadStoryConfiguration(templatePath);
             
@@ -182,7 +183,7 @@ public class StoryDataAdapter implements StoryDataPort {
     /**
      * デフォルトストーリーを作成
      */
-    private FragmentStoryInfo createDefaultStory(String templatePath, String fragmentName, String storyName) {
+    private @Nullable FragmentStoryInfo createDefaultStory(String templatePath, String fragmentName, String storyName) {
         // FragmentDiscoveryServiceから実際のFragmentInfoを取得
         FragmentDiscoveryService.FragmentInfo fragmentInfo = fragmentDiscoveryService.discoverFragments()
             .stream()
@@ -215,7 +216,7 @@ public class StoryDataAdapter implements StoryDataPort {
         );
     }
 
-    private StoryItem resolveBaseStory(StoryGroup storyGroup) {
+    private @Nullable StoryItem resolveBaseStory(StoryGroup storyGroup) {
         if (storyGroup == null || storyGroup.stories().isEmpty()) {
             return null;
         }

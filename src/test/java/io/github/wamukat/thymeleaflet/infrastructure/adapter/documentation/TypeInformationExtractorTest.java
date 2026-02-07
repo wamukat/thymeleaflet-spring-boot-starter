@@ -210,15 +210,15 @@ class TypeInformationExtractorTest {
         List<TypeInfo> typeInfos = Arrays.asList(typeInfo1, typeInfo2);
 
         // When
-        TypeInfo found = extractor.findTypeInfoByName(typeInfos, "text");
-        TypeInfo notFound = extractor.findTypeInfoByName(typeInfos, "nonexistent");
+        var found = extractor.findTypeInfoByName(typeInfos, "text");
+        var notFound = extractor.findTypeInfoByName(typeInfos, "nonexistent");
 
         // Then
-        assertThat(found).isNotNull();
-        assertThat(found.getParameterName()).isEqualTo("text");
-        assertThat(found.getJavaTypeName()).isEqualTo("String");
+        assertThat(found).isPresent();
+        assertThat(found.get().getParameterName()).isEqualTo("text");
+        assertThat(found.get().getJavaTypeName()).isEqualTo("String");
         
-        assertThat(notFound).isNull();
+        assertThat(notFound).isEmpty();
     }
 
     @Test

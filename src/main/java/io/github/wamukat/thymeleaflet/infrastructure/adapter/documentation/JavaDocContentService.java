@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -35,11 +36,11 @@ public class JavaDocContentService {
         this.resourcePathValidator = resourcePathValidator;
     }
 
-    public String loadTemplateContent(String templatePath) {
+    public Optional<String> loadTemplateContent(String templatePath) {
         if (storybookProperties.getCache().isEnabled()) {
             String cached = templateCache.get(templatePath);
             if (cached != null) {
-                return cached;
+                return Optional.of(cached);
             }
         }
         try {
@@ -50,17 +51,17 @@ public class JavaDocContentService {
 
             if (!resource.exists()) {
                 logger.debug("Template not found: {}", templatePath);
-                return null;
+                return Optional.empty();
             }
 
             String content = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
             if (storybookProperties.getCache().isEnabled()) {
                 templateCache.put(templatePath, content);
             }
-            return content;
+            return Optional.of(content);
         } catch (Exception e) {
             logger.warn("Failed to read template content for {}: {}", templatePath, e.getMessage());
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -71,13 +72,13 @@ public class JavaDocContentService {
                 return cached;
             }
         }
-        String htmlContent = loadTemplateContent(templatePath);
-        if (htmlContent == null || htmlContent.isBlank()) {
+        Optional<String> htmlContent = loadTemplateContent(templatePath);
+        if (htmlContent.isEmpty() || htmlContent.get().isBlank()) {
             return Collections.emptyList();
         }
 
         try {
-            List<JavaDocAnalyzer.JavaDocInfo> docs = javaDocAnalyzer.analyzeJavaDocFromHtml(htmlContent);
+            List<JavaDocAnalyzer.JavaDocInfo> docs = javaDocAnalyzer.analyzeJavaDocFromHtml(htmlContent.get());
             if (storybookProperties.getCache().isEnabled()) {
                 javaDocCache.put(templatePath, docs);
             }

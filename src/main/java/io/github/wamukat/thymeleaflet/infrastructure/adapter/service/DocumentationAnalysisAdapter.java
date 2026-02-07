@@ -46,11 +46,11 @@ public class DocumentationAnalysisAdapter implements DocumentationAnalysisPort {
             }
         }
         try {
-            String htmlContent = javaDocContentService.loadTemplateContent(templatePath);
-            if (htmlContent == null || htmlContent.isBlank()) {
+            var htmlContent = javaDocContentService.loadTemplateContent(templatePath);
+            if (htmlContent.isEmpty() || htmlContent.get().isBlank()) {
                 return new ArrayList<>();
             }
-            List<TypeInfo> result = typeInformationExtractor.extractTypeInformationFromHtml(htmlContent);
+            List<TypeInfo> result = typeInformationExtractor.extractTypeInformationFromHtml(htmlContent.get());
             if (storybookProperties.getCache().isEnabled()) {
                 typeInfoCache.put(templatePath, result);
             }

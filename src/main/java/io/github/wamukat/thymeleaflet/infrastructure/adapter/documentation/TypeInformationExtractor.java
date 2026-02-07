@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation;
 
 import io.github.wamukat.thymeleaflet.domain.model.TypeInfo;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -93,7 +95,7 @@ public class TypeInformationExtractor {
     private TypeInfo analyzeParameterType(JavaDocAnalyzer.ParameterInfo paramInfo, JavaDocAnalyzer.JavaDocInfo javadocInfo) {
         String paramName = paramInfo.getName();
         String paramType = paramInfo.getType();
-        String description = paramInfo.getDescription();
+        @Nullable String description = paramInfo.getDescription();
         
         logger.debug("Analyzing parameter type: name='{}', type='{}', description='{}'", paramName, paramType, description);
         
@@ -120,7 +122,7 @@ public class TypeInformationExtractor {
             .typeCategory(category)
             .inferenceLevel(inferenceLevel)
             .allowedValues(allowedValues)
-            .description(description)
+            .description(description != null ? description : "")
             .build();
     }
 
@@ -128,7 +130,7 @@ public class TypeInformationExtractor {
      * 型カテゴリの技術的判定
      * Infrastructure責任: 型分類アルゴリズム
      */
-    private TypeInfo.TypeCategory determineTypeCategory(String paramType, String description) {
+    private TypeInfo.TypeCategory determineTypeCategory(String paramType, @Nullable String description) {
         // プリミティブ型判定
         if (isPrimitiveType(paramType)) {
             return TypeInfo.TypeCategory.PRIMITIVE;
@@ -156,7 +158,7 @@ public class TypeInformationExtractor {
      * 推論レベルの技術的判定
      * Infrastructure責任: 信頼度アルゴリズム
      */
-    private TypeInfo.InferenceLevel determineInferenceLevel(String paramType, TypeInfo.TypeCategory category, String description) {
+    private TypeInfo.InferenceLevel determineInferenceLevel(String paramType, TypeInfo.TypeCategory category, @Nullable String description) {
         // 既知のパターンによる高信頼度判定
         if (category == TypeInfo.TypeCategory.PRIMITIVE && isPrimitiveType(paramType)) {
             return TypeInfo.InferenceLevel.EXPLICIT;
@@ -179,7 +181,7 @@ public class TypeInformationExtractor {
      * Enum値の技術的抽出
      * Infrastructure責任: パターンマッチング・値抽出
      */
-    private List<String> extractEnumValues(String paramType, String description, JavaDocAnalyzer.JavaDocInfo javadocInfo) {
+    private List<String> extractEnumValues(String paramType, @Nullable String description, JavaDocAnalyzer.JavaDocInfo javadocInfo) {
         List<String> values = new ArrayList<>();
         
         // TransactionType特別処理
@@ -215,7 +217,7 @@ public class TypeInformationExtractor {
      * Enum型判定
      * Infrastructure技術的パターンマッチング
      */
-    private boolean isEnumType(String type, String description) {
+    private boolean isEnumType(String type, @Nullable String description) {
         // 既知のEnum型名
         if (KNOWN_ENUM_PATTERNS.contains(type)) {
             return true;
@@ -277,10 +279,9 @@ public class TypeInformationExtractor {
      * 名前による型情報検索
      * Infrastructure技術的検索処理
      */
-    public TypeInfo findTypeInfoByName(List<TypeInfo> typeInfos, String parameterName) {
+    public Optional<TypeInfo> findTypeInfoByName(List<TypeInfo> typeInfos, String parameterName) {
         return typeInfos.stream()
             .filter(typeInfo -> typeInfo.getParameterName().equals(parameterName))
-            .findFirst()
-            .orElse(null);
+            .findFirst();
     }
 }

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfiguration;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -44,7 +45,7 @@ public class YamlStoryConfigurationLoader {
      * 指定されたテンプレートパスに対応するStory設定をYAMLから読み込み
      * Infrastructure技術的責任: ファイル読み込み・YAML解析のみ
      */
-    public Optional<StoryConfiguration> loadStoryConfiguration(String templatePath) {
+    public Optional<StoryConfiguration> loadStoryConfiguration(@Nullable String templatePath) {
         if (templatePath == null || templatePath.trim().isEmpty()) {
             logger.debug("Template path is null or empty");
             return Optional.empty();
@@ -84,7 +85,7 @@ public class YamlStoryConfigurationLoader {
      * Story設定ファイルの存在確認
      * Infrastructure技術的責任: ファイルシステム操作
      */
-    public boolean storyConfigurationExists(String templatePath) {
+    public boolean storyConfigurationExists(@Nullable String templatePath) {
         if (templatePath == null || templatePath.trim().isEmpty()) {
             return false;
         }
@@ -104,7 +105,7 @@ public class YamlStoryConfigurationLoader {
      * Story設定ファイルの最終更新時刻取得
      * Infrastructure技術的責任: ファイルシステム操作
      */
-    public Optional<Long> getStoryConfigurationLastModified(String templatePath) {
+    public Optional<Long> getStoryConfigurationLastModified(@Nullable String templatePath) {
         if (templatePath == null || templatePath.trim().isEmpty()) {
             return Optional.empty();
         }

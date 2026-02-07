@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -48,7 +49,7 @@ public class JavaDocAnalyzer {
     /**
      * HTMLテンプレートからJavaDocコメントを解析 - Legacy実装移設
      */
-    public List<JavaDocInfo> analyzeJavaDocFromHtml(String htmlContent) {
+    public List<JavaDocInfo> analyzeJavaDocFromHtml(@Nullable String htmlContent) {
         List<JavaDocInfo> docInfoList = new ArrayList<>();
         
         if (htmlContent == null || htmlContent.trim().isEmpty()) {
@@ -187,7 +188,7 @@ public class JavaDocAnalyzer {
     /**
      * @backgroundタグから背景色を解析
      */
-    private String parseBackgroundColor(String javadocContent) {
+    private @Nullable String parseBackgroundColor(String javadocContent) {
         Matcher backgroundMatcher = BACKGROUND_PATTERN.matcher(javadocContent);
         if (backgroundMatcher.find()) {
             return backgroundMatcher.group(1);
@@ -251,7 +252,7 @@ public class JavaDocAnalyzer {
         private final List<ParameterInfo> parameters;
         private final List<ModelInfo> models;
         private final List<ExampleInfo> examples;
-        private final String backgroundColor;
+        private final @Nullable String backgroundColor;
         
         /**
          * プライベートコンストラクタ - 不変Value Object設計
@@ -259,7 +260,13 @@ public class JavaDocAnalyzer {
          * ファクトリメソッドのみからのインスタンス化を強制
          * Clean Architecture: 検証済み値による安全なオブジェクト生成
          */
-        private JavaDocInfo(String description, List<ParameterInfo> parameters, List<ModelInfo> models, List<ExampleInfo> examples, String backgroundColor) {
+        private JavaDocInfo(
+            String description,
+            List<ParameterInfo> parameters,
+            @Nullable List<ModelInfo> models,
+            @Nullable List<ExampleInfo> examples,
+            @Nullable String backgroundColor
+        ) {
             this.description = description;
             this.parameters = Collections.unmodifiableList(
                 parameters != null ? new ArrayList<>(parameters) : new ArrayList<>()
@@ -276,14 +283,25 @@ public class JavaDocAnalyzer {
         /**
          * JavaDocInfo作成 - ファクトリメソッド（完全指定版）
          */
-        public static JavaDocInfo of(String description, List<ParameterInfo> parameters, List<ModelInfo> models, List<ExampleInfo> examples, String backgroundColor) {
+        public static JavaDocInfo of(
+            String description,
+            List<ParameterInfo> parameters,
+            @Nullable List<ModelInfo> models,
+            @Nullable List<ExampleInfo> examples,
+            @Nullable String backgroundColor
+        ) {
             return new JavaDocInfo(description, parameters, models, examples, backgroundColor);
         }
 
         /**
          * JavaDocInfo作成 - ファクトリメソッド（モデル省略版）
          */
-        public static JavaDocInfo of(String description, List<ParameterInfo> parameters, List<ExampleInfo> examples, String backgroundColor) {
+        public static JavaDocInfo of(
+            String description,
+            List<ParameterInfo> parameters,
+            @Nullable List<ExampleInfo> examples,
+            @Nullable String backgroundColor
+        ) {
             return new JavaDocInfo(description, parameters, null, examples, backgroundColor);
         }
         
@@ -291,7 +309,7 @@ public class JavaDocAnalyzer {
          * JavaDocInfo作成 - ファクトリメソッド（基本版）
          */
         public static JavaDocInfo of(String description) {
-            return new JavaDocInfo(description, null, null, null, null);
+            return new JavaDocInfo(description, Collections.emptyList(), null, null, null);
         }
         
         // Getters
@@ -299,7 +317,7 @@ public class JavaDocAnalyzer {
         public List<ParameterInfo> getParameters() { return parameters; }
         public List<ModelInfo> getModels() { return models; }
         public List<ExampleInfo> getExamples() { return examples; }
-        public String getBackgroundColor() { return backgroundColor; }
+        public @Nullable String getBackgroundColor() { return backgroundColor; }
         
         @Override
         public String toString() {
@@ -318,8 +336,8 @@ public class JavaDocAnalyzer {
         private final String name;
         private final String type;
         private final boolean required;
-        private final String defaultValue;
-        private final String description;
+        private final @Nullable String defaultValue;
+        private final @Nullable String description;
 
         /**
          * プライベートコンストラクタ - 不変Value Object設計
@@ -327,7 +345,7 @@ public class JavaDocAnalyzer {
          * ファクトリメソッドのみからのインスタンス化を強制
          * Clean Architecture: 検証済み値による安全なオブジェクト生成
          */
-        private ModelInfo(String name, String type, boolean required, String defaultValue, String description) {
+        private ModelInfo(String name, String type, boolean required, @Nullable String defaultValue, @Nullable String description) {
             this.name = java.util.Objects.requireNonNull(name, "name cannot be null");
             this.type = java.util.Objects.requireNonNull(type, "type cannot be null");
             this.required = required;
@@ -338,7 +356,7 @@ public class JavaDocAnalyzer {
         /**
          * ModelInfo作成 - ファクトリメソッド（完全指定版）
          */
-        public static ModelInfo of(String name, String type, boolean required, String defaultValue, String description) {
+        public static ModelInfo of(String name, String type, boolean required, @Nullable String defaultValue, @Nullable String description) {
             return new ModelInfo(name, type, required, defaultValue, description);
         }
 
@@ -352,14 +370,14 @@ public class JavaDocAnalyzer {
         /**
          * ModelInfo作成 - ファクトリメソッド（必須属性版）
          */
-        public static ModelInfo required(String name, String type, String description) {
+        public static ModelInfo required(String name, String type, @Nullable String description) {
             return new ModelInfo(name, type, true, null, description);
         }
 
         /**
          * ModelInfo作成 - ファクトリメソッド（オプション属性版）
          */
-        public static ModelInfo optional(String name, String type, String defaultValue, String description) {
+        public static ModelInfo optional(String name, String type, @Nullable String defaultValue, @Nullable String description) {
             return new ModelInfo(name, type, false, defaultValue, description);
         }
 
@@ -367,8 +385,8 @@ public class JavaDocAnalyzer {
         public String getName() { return name; }
         public String getType() { return type; }
         public boolean isRequired() { return required; }
-        public String getDefaultValue() { return defaultValue; }
-        public String getDescription() { return description; }
+        public @Nullable String getDefaultValue() { return defaultValue; }
+        public @Nullable String getDescription() { return description; }
 
         @Override
         public String toString() {
@@ -387,8 +405,8 @@ public class JavaDocAnalyzer {
         private final String name;
         private final String type;
         private final boolean required;
-        private final String defaultValue;
-        private final String description;
+        private final @Nullable String defaultValue;
+        private final @Nullable String description;
         private final List<String> allowedValues;
         
         /**
@@ -397,8 +415,14 @@ public class JavaDocAnalyzer {
          * ファクトリメソッドのみからのインスタンス化を強制
          * Clean Architecture: 検証済み値による安全なオブジェクト生成
          */
-        private ParameterInfo(String name, String type, boolean required, String defaultValue, 
-                           String description, List<String> allowedValues) {
+        private ParameterInfo(
+            String name,
+            String type,
+            boolean required,
+            @Nullable String defaultValue,
+            @Nullable String description,
+            @Nullable List<String> allowedValues
+        ) {
             this.name = java.util.Objects.requireNonNull(name, "name cannot be null");
             this.type = java.util.Objects.requireNonNull(type, "type cannot be null");
             this.required = required;
@@ -412,8 +436,14 @@ public class JavaDocAnalyzer {
         /**
          * ParameterInfo作成 - ファクトリメソッド（完全指定版）
          */
-        public static ParameterInfo of(String name, String type, boolean required, String defaultValue, 
-                                     String description, List<String> allowedValues) {
+        public static ParameterInfo of(
+            String name,
+            String type,
+            boolean required,
+            @Nullable String defaultValue,
+            @Nullable String description,
+            @Nullable List<String> allowedValues
+        ) {
             return new ParameterInfo(name, type, required, defaultValue, description, allowedValues);
         }
         
@@ -427,14 +457,14 @@ public class JavaDocAnalyzer {
         /**
          * ParameterInfo作成 - ファクトリメソッド（必須属性版）
          */
-        public static ParameterInfo required(String name, String type, String description) {
+        public static ParameterInfo required(String name, String type, @Nullable String description) {
             return new ParameterInfo(name, type, true, null, description, null);
         }
         
         /**
          * ParameterInfo作成 - ファクトリメソッド（オプション属性版）
          */
-        public static ParameterInfo optional(String name, String type, String defaultValue, String description) {
+        public static ParameterInfo optional(String name, String type, @Nullable String defaultValue, @Nullable String description) {
             return new ParameterInfo(name, type, false, defaultValue, description, null);
         }
         
@@ -442,8 +472,8 @@ public class JavaDocAnalyzer {
         public String getName() { return name; }
         public String getType() { return type; }
         public boolean isRequired() { return required; }
-        public String getDefaultValue() { return defaultValue; }
-        public String getDescription() { return description; }
+        public @Nullable String getDefaultValue() { return defaultValue; }
+        public @Nullable String getDescription() { return description; }
         public List<String> getAllowedValues() { return allowedValues; }
         
         @Override
@@ -470,7 +500,7 @@ public class JavaDocAnalyzer {
          * ファクトリメソッドのみからのインスタンス化を強制
          * Clean Architecture: 検証済み値による安全なオブジェクト生成
          */
-        private ExampleInfo(String templatePath, String fragmentName, List<String> arguments) {
+        private ExampleInfo(String templatePath, String fragmentName, @Nullable List<String> arguments) {
             this.templatePath = java.util.Objects.requireNonNull(templatePath, "templatePath cannot be null");
             this.fragmentName = java.util.Objects.requireNonNull(fragmentName, "fragmentName cannot be null");
             this.arguments = Collections.unmodifiableList(
