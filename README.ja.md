@@ -138,6 +138,24 @@ thymeleaflet:
 -->
 ```
 
+## フラグメントシグネチャ解析ポリシー
+
+- 基準: Thymeleaf `3.1.2.RELEASE`
+- 参照パーサ: `org.thymeleaf.standard.expression.FragmentSignatureUtils`
+- v1 では、UIで安定サポートする範囲を Thymeleaf の受理範囲より狭く定義しています。
+
+現時点での安定サポート:
+
+- `th:fragment="name"`
+- `th:fragment="name()"`
+- `th:fragment="name(param1, param2)"`
+
+補足:
+
+- 非対応のシグネチャは発見対象からスキップし、診断情報を出力します。
+- 診断は code/severity をログ出力し、UIには安全なメッセージのみ表示します。
+- 詳細は `docs/parser-spec.ja.md` / `docs/parser-model.ja.md` を参照してください。
+
 ## ローカルビルド
 
 ```bash
@@ -156,6 +174,8 @@ npm run build
 - [docs/javadoc.ja.md](docs/javadoc.ja.md)
 - [docs/stories.ja.md](docs/stories.ja.md)
 - [docs/security.ja.md](docs/security.ja.md)
+- [docs/parser-spec.ja.md](docs/parser-spec.ja.md)
+- [docs/parser-model.ja.md](docs/parser-model.ja.md)
 
 ## コントリビューション
 
