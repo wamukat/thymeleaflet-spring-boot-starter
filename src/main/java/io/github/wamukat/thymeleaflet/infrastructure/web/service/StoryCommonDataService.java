@@ -11,7 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -104,9 +108,13 @@ public class StoryCommonDataService {
         // JavaDoc情報を取得
         io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo javadocInfo =
             javaDocLookupService.findJavaDocInfo(templatePath, fragmentName);
+
+        List<String> orderedParameterNames = resolveOrderedParameterNames(storyInfo, displayParameters, javadocInfo);
+        Map<String, Object> orderedDisplayParameters = resolveOrderedDisplayParameters(displayParameters, orderedParameterNames);
         
         // モデルに設定
-        model.addAttribute("displayParameters", displayParameters);
+        model.addAttribute("displayParameters", orderedDisplayParameters);
+        model.addAttribute("orderedParameterNames", orderedParameterNames);
         model.addAttribute("displayModel", displayModel);
         model.addAttribute("dependentComponents",
             fragmentDependencyService.findDependencies(templatePath, fragmentName));
@@ -126,5 +134,53 @@ public class StoryCommonDataService {
             .map(value -> value == null ? "" : value.trim())
             .filter(value -> !value.isEmpty())
             .collect(Collectors.joining(","));
+    }
+
+    private List<String> resolveOrderedParameterNames(
+        FragmentStoryInfo storyInfo,
+        Map<String, Object> displayParameters,
+        io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo javadocInfo
+    ) {
+        LinkedHashSet<String> ordered = new LinkedHashSet<>();
+
+        if (javadocInfo != null && javadocInfo.getParameters() != null) {
+            for (var parameterInfo : javadocInfo.getParameters()) {
+                if (parameterInfo.getName() != null && !parameterInfo.getName().isBlank()) {
+                    ordered.add(parameterInfo.getName());
+                }
+            }
+        }
+
+        if (storyInfo != null && storyInfo.getFragmentSummary() != null && storyInfo.getFragmentSummary().getParameters() != null) {
+            ordered.addAll(storyInfo.getFragmentSummary().getParameters());
+        }
+
+        if (displayParameters != null) {
+            ordered.addAll(displayParameters.keySet());
+        }
+
+        return new ArrayList<>(ordered);
+    }
+
+    private Map<String, Object> resolveOrderedDisplayParameters(
+        Map<String, Object> displayParameters,
+        List<String> orderedParameterNames
+    ) {
+        Map<String, Object> source = displayParameters != null ? displayParameters : Map.of();
+        LinkedHashMap<String, Object> ordered = new LinkedHashMap<>();
+
+        if (orderedParameterNames != null) {
+            for (String parameterName : orderedParameterNames) {
+                if (source.containsKey(parameterName)) {
+                    ordered.put(parameterName, source.get(parameterName));
+                }
+            }
+        }
+
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            ordered.putIfAbsent(entry.getKey(), entry.getValue());
+        }
+
+        return ordered;
     }
 }
