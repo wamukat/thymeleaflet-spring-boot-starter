@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -61,11 +62,10 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
                 new StoryValidationUseCase.StoryValidationCommand(request.fullTemplatePath(), request.fragmentName(), request.storyName());
             StoryValidationUseCase.StoryValidationResult validationResult = 
                 storyValidationUseCase.validateStory(validationCommand);
-            FragmentStoryInfo storyInfo = validationResult.getStory();
-            
-            if (storyInfo == null) {
+            if (!validationResult.isSuccess()) {
                 return StoryContentResult.failure("Story not found");
             }
+            FragmentStoryInfo storyInfo = Objects.requireNonNull(validationResult.getStory());
             
             // 2. フラグメント情報取得
             List<FragmentDiscoveryService.FragmentInfo> allFragments = fragmentDiscoveryService.discoverFragments();
@@ -103,7 +103,7 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
                     Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStory);
                     defaultParameters = defaultStoryParams.entrySet().stream()
                         .filter(entry -> !"__storybook_background".equals(entry.getKey()))
-                        .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+                        .filter(entry -> entry.getValue() != null)
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 }
             }

@@ -122,19 +122,11 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
 
     @Override
     public StoryListResponse getStoriesForFragment(String templatePath, String fragmentName) {
-        // フラグメント情報を取得
-        List<FragmentDiscoveryService.FragmentInfo> allFragments = fragmentDiscoveryService.discoverFragments();
-        FragmentDiscoveryService.FragmentInfo fragment = allFragments.stream()
+        return fragmentDiscoveryService.discoverFragments().stream()
             .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
             .findFirst()
-            .orElse(null);
-        
-        if (fragment == null) {
-            return StoryListResponse.failure();
-        }
-        
-        List<FragmentStoryInfo> stories = getStoriesForFragment(fragment);
-        return StoryListResponse.success(fragment, stories);
+            .map(fragment -> StoryListResponse.success(fragment, getStoriesForFragment(fragment)))
+            .orElseGet(StoryListResponse::failure);
     }
 
     @Autowired

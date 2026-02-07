@@ -130,9 +130,7 @@ public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUs
                     new FragmentPreviewUseCase.PageSetupCommand(request.fullTemplatePath(), request.fragmentName(), request.storyName(), request.model());
                 FragmentPreviewUseCase.PageSetupResponse pageSetupResponse = fragmentPreviewUseCase.setupStoryContentData(pageSetupCommand);
                 
-                if (pageSetupResponse == null) {
-                    logger.warn("Story content data setup returned null, but continuing");
-                } else if (!pageSetupResponse.isSucceeded()) {
+                if (!pageSetupResponse.isSucceeded()) {
                     logger.warn("Story content data setup failed: {}, but continuing", pageSetupResponse.errorMessage());
                 }
             }

@@ -24,16 +24,11 @@ public class FragmentDiscoveryUseCaseImpl implements FragmentDiscoveryUseCase {
     @Override
     public FragmentDetailResponse discoverFragment(String templatePath, String fragmentName) {
         List<FragmentDiscoveryService.FragmentInfo> allFragments = fragmentDiscoveryService.discoverFragments();
-        
-        FragmentDiscoveryService.FragmentInfo fragment = allFragments.stream()
+
+        return allFragments.stream()
             .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
             .findFirst()
-            .orElse(null);
-        
-        if (fragment != null) {
-            return FragmentDetailResponse.success(fragment, templatePath, fragmentName);
-        } else {
-            return FragmentDetailResponse.notFound(templatePath, fragmentName);
-        }
+            .map(fragment -> FragmentDetailResponse.success(fragment, templatePath, fragmentName))
+            .orElseGet(() -> FragmentDetailResponse.notFound(templatePath, fragmentName));
     }
 }

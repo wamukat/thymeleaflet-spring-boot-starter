@@ -76,11 +76,8 @@ public class UsageExampleUseCaseImpl implements UsageExampleUseCase {
     }
 
     private String applyPreviewWrapperIfNeeded(FragmentStoryInfo storyInfo, String example) {
-        if (storyInfo == null || storyInfo.getStory() == null || storyInfo.getStory().preview() == null) {
-            return example;
-        }
         String wrapper = storyInfo.getStory().preview().wrapper();
-        if (wrapper == null || wrapper.trim().isEmpty()) {
+        if (wrapper.isBlank()) {
             return example;
         }
         int placeholderIndex = wrapper.indexOf(PREVIEW_WRAPPER_PLACEHOLDER);
