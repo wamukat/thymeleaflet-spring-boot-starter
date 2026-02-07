@@ -263,20 +263,14 @@ public class JavaDocAnalyzer {
         private JavaDocInfo(
             String description,
             List<ParameterInfo> parameters,
-            @Nullable List<ModelInfo> models,
-            @Nullable List<ExampleInfo> examples,
+            List<ModelInfo> models,
+            List<ExampleInfo> examples,
             @Nullable String backgroundColor
         ) {
             this.description = description;
-            this.parameters = Collections.unmodifiableList(
-                parameters != null ? new ArrayList<>(parameters) : new ArrayList<>()
-            );
-            this.models = Collections.unmodifiableList(
-                models != null ? new ArrayList<>(models) : new ArrayList<>()
-            );
-            this.examples = Collections.unmodifiableList(
-                examples != null ? new ArrayList<>(examples) : new ArrayList<>()
-            );
+            this.parameters = Collections.unmodifiableList(new ArrayList<>(parameters));
+            this.models = Collections.unmodifiableList(new ArrayList<>(models));
+            this.examples = Collections.unmodifiableList(new ArrayList<>(examples));
             this.backgroundColor = backgroundColor;
         }
         
@@ -286,8 +280,8 @@ public class JavaDocAnalyzer {
         public static JavaDocInfo of(
             String description,
             List<ParameterInfo> parameters,
-            @Nullable List<ModelInfo> models,
-            @Nullable List<ExampleInfo> examples,
+            List<ModelInfo> models,
+            List<ExampleInfo> examples,
             @Nullable String backgroundColor
         ) {
             return new JavaDocInfo(description, parameters, models, examples, backgroundColor);
@@ -299,17 +293,17 @@ public class JavaDocAnalyzer {
         public static JavaDocInfo of(
             String description,
             List<ParameterInfo> parameters,
-            @Nullable List<ExampleInfo> examples,
+            List<ExampleInfo> examples,
             @Nullable String backgroundColor
         ) {
-            return new JavaDocInfo(description, parameters, null, examples, backgroundColor);
+            return new JavaDocInfo(description, parameters, Collections.emptyList(), examples, backgroundColor);
         }
         
         /**
          * JavaDocInfo作成 - ファクトリメソッド（基本版）
          */
         public static JavaDocInfo of(String description) {
-            return new JavaDocInfo(description, Collections.emptyList(), null, null, null);
+            return new JavaDocInfo(description, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), null);
         }
         
         // Getters
@@ -421,16 +415,14 @@ public class JavaDocAnalyzer {
             boolean required,
             @Nullable String defaultValue,
             @Nullable String description,
-            @Nullable List<String> allowedValues
+            List<String> allowedValues
         ) {
             this.name = java.util.Objects.requireNonNull(name, "name cannot be null");
             this.type = java.util.Objects.requireNonNull(type, "type cannot be null");
             this.required = required;
             this.defaultValue = defaultValue;
             this.description = description;
-            this.allowedValues = Collections.unmodifiableList(
-                allowedValues != null ? new ArrayList<>(allowedValues) : new ArrayList<>()
-            );
+            this.allowedValues = Collections.unmodifiableList(new ArrayList<>(allowedValues));
         }
         
         /**
@@ -442,7 +434,7 @@ public class JavaDocAnalyzer {
             boolean required,
             @Nullable String defaultValue,
             @Nullable String description,
-            @Nullable List<String> allowedValues
+            List<String> allowedValues
         ) {
             return new ParameterInfo(name, type, required, defaultValue, description, allowedValues);
         }
@@ -451,21 +443,21 @@ public class JavaDocAnalyzer {
          * ParameterInfo作成 - ファクトリメソッド（基本版）
          */
         public static ParameterInfo of(String name, String type) {
-            return new ParameterInfo(name, type, false, null, null, null);
+            return new ParameterInfo(name, type, false, null, null, Collections.emptyList());
         }
         
         /**
          * ParameterInfo作成 - ファクトリメソッド（必須属性版）
          */
         public static ParameterInfo required(String name, String type, @Nullable String description) {
-            return new ParameterInfo(name, type, true, null, description, null);
+            return new ParameterInfo(name, type, true, null, description, Collections.emptyList());
         }
         
         /**
          * ParameterInfo作成 - ファクトリメソッド（オプション属性版）
          */
         public static ParameterInfo optional(String name, String type, @Nullable String defaultValue, @Nullable String description) {
-            return new ParameterInfo(name, type, false, defaultValue, description, null);
+            return new ParameterInfo(name, type, false, defaultValue, description, Collections.emptyList());
         }
         
         // Getters
@@ -500,12 +492,10 @@ public class JavaDocAnalyzer {
          * ファクトリメソッドのみからのインスタンス化を強制
          * Clean Architecture: 検証済み値による安全なオブジェクト生成
          */
-        private ExampleInfo(String templatePath, String fragmentName, @Nullable List<String> arguments) {
+        private ExampleInfo(String templatePath, String fragmentName, List<String> arguments) {
             this.templatePath = java.util.Objects.requireNonNull(templatePath, "templatePath cannot be null");
             this.fragmentName = java.util.Objects.requireNonNull(fragmentName, "fragmentName cannot be null");
-            this.arguments = Collections.unmodifiableList(
-                arguments != null ? new ArrayList<>(arguments) : new ArrayList<>()
-            );
+            this.arguments = Collections.unmodifiableList(new ArrayList<>(arguments));
         }
         
         /**
@@ -519,7 +509,7 @@ public class JavaDocAnalyzer {
          * ExampleInfo作成 - ファクトリメソッド（基本版）
          */
         public static ExampleInfo of(String templatePath, String fragmentName) {
-            return new ExampleInfo(templatePath, fragmentName, null);
+            return new ExampleInfo(templatePath, fragmentName, Collections.emptyList());
         }
         
         // Getters
