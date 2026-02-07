@@ -428,7 +428,8 @@
                 viewport.classList.add('preview-viewport-fixed');
                 viewport.classList.add('bg-white');
                 if (frame) {
-                    frame.classList.add('border', 'border-dashed', 'border-gray-300', 'bg-white');
+                    frame.classList.remove('border', 'border-dashed', 'border-gray-300');
+                    frame.classList.add('bg-white');
                 }
                 if (host) {
                     host.style.width = '100%';
