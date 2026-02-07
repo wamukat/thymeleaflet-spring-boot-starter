@@ -111,7 +111,9 @@ public class FragmentDiscoveryService {
         while (matcher.find()) {
             String fragmentDefinition = matcher.group(1);
             FragmentInfo fragmentInfo = analyzeFragment(templatePath, fragmentDefinition);
-            fragments.add(fragmentInfo);
+            if (fragmentInfo != null) {
+                fragments.add(fragmentInfo);
+            }
         }
         
         return fragments;
@@ -125,7 +127,6 @@ public class FragmentDiscoveryService {
 
         String fragmentName;
         List<String> parameters;
-        SignatureDiagnostic signatureDiagnostic = null;
 
         FragmentSignatureParser.ParseResult parseResult = fragmentSignatureParser.parse(fragmentDefinition);
         if (parseResult.success()) {
@@ -133,21 +134,19 @@ public class FragmentDiscoveryService {
             parameters = new ArrayList<>(parseResult.parameters());
             logger.debug("[DEBUG_FRAGMENT_PARAMS] Parsed by FragmentSignatureParser: name={}, parameters={}", fragmentName, parameters);
         } else {
-            // keep backward compatibility: fallback to plain name when signature parse fails
-            fragmentName = fragmentDefinition.trim();
-            parameters = new ArrayList<>();
-            signatureDiagnostic = createSignatureDiagnostic(parseResult);
+            SignatureDiagnostic signatureDiagnostic = createSignatureDiagnostic(parseResult);
             logger.warn(
                 "[FRAGMENT_SIGNATURE_DIAGNOSTIC] severity={} code={} template={} fragmentDefinition={} fallback={} devMessage={}",
                 signatureDiagnostic.getSeverity(),
                 signatureDiagnostic.getCode(),
                 templatePath,
                 fragmentDefinition,
-                fragmentName,
+                "skipped",
                 signatureDiagnostic.getDeveloperMessage()
             );
+            return null;
         }
-        
+
         FragmentDomainService.FragmentType type = fragmentDomainService.determineFragmentType(templatePath, fragmentName, parameters);
         
         FragmentInfo fragmentInfo = new FragmentInfo(
@@ -155,8 +154,7 @@ public class FragmentDiscoveryService {
             fragmentName,
             parameters,
             type,
-            fragmentDefinition,
-            signatureDiagnostic
+            fragmentDefinition
         );
         
         logger.debug("[DEBUG_FRAGMENT_PARAMS] Created FragmentInfo: path={}, name={}, params={}, type={}", 
