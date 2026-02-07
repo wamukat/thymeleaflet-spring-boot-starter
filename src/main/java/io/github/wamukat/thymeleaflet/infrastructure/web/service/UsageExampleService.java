@@ -84,7 +84,9 @@ public class UsageExampleService {
             validationUseCase.validateStoryRequest(requestValidationCommand);
             
             // 対象ストーリーを取得
-            FragmentStoryInfo storyInfo = storyRetrievalUseCase.getStory(fullTemplatePath, fragmentName, storyName);
+            FragmentStoryInfo storyInfo = storyRetrievalUseCase
+                .getStory(fullTemplatePath, fragmentName, storyName)
+                .orElse(null);
             
             if (storyInfo == null) {
                 model.addAttribute("hasError", true);

@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ストーリー取得専用ユースケース実装
@@ -34,8 +35,8 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
     private StoryDataPort storyDataPort;
 
     @Override
-    public FragmentStoryInfo getStory(String templatePath, String fragmentName, String storyName) {
-        return storyDataPort.getStory(templatePath, fragmentName, storyName).orElse(null);
+    public Optional<FragmentStoryInfo> getStory(String templatePath, String fragmentName, String storyName) {
+        return storyDataPort.getStory(templatePath, fragmentName, storyName);
     }
 
     @Override

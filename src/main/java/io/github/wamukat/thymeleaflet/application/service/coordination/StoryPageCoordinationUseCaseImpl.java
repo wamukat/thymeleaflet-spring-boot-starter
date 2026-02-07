@@ -103,11 +103,13 @@ public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUs
             
             FragmentStoryInfo selectedStory = null;
             if (selectedFragment != null) {
-                selectedStory = storyRetrievalUseCase.getStory(
-                    request.fullTemplatePath(), 
-                    request.fragmentName(), 
-                    request.storyName()
-                );
+                selectedStory = storyRetrievalUseCase
+                    .getStory(
+                        request.fullTemplatePath(),
+                        request.fragmentName(),
+                        request.storyName()
+                    )
+                    .orElse(null);
             }
             
             // 3. Modelに統合結果を設定 (Domain形式のFragmentSummaryを設定)

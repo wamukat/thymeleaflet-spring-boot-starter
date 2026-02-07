@@ -4,6 +4,7 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ストーリー取得専用ユースケース - Inbound Port
@@ -16,7 +17,7 @@ public interface StoryRetrievalUseCase {
     /**
      * ストーリー取得
      */
-    FragmentStoryInfo getStory(String templatePath, String fragmentName, String storyName);
+    Optional<FragmentStoryInfo> getStory(String templatePath, String fragmentName, String storyName);
 
     /**
      * フラグメントのストーリー一覧取得

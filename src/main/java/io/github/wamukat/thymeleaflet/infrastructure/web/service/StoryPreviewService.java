@@ -77,7 +77,9 @@ public class StoryPreviewService {
         
         // 対象ストーリーを取得
         logger.info("Calling storyManagementUseCase.getStory with: templatePath={}, fragmentName={}, storyName={}", fullTemplatePath, fragmentName, storyName);
-        FragmentStoryInfo storyInfo = storyRetrievalUseCase.getStory(fullTemplatePath, fragmentName, storyName);
+        FragmentStoryInfo storyInfo = storyRetrievalUseCase
+            .getStory(fullTemplatePath, fragmentName, storyName)
+            .orElse(null);
         
         if (storyInfo == null) {
             model.addAttribute("error", "指定されたストーリーが見つかりません: " + fullTemplatePath + "::" + fragmentName + "::" + storyName);

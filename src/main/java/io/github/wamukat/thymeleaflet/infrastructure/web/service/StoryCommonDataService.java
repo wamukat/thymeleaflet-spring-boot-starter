@@ -95,7 +95,9 @@ public class StoryCommonDataService {
         Map<String, Object> defaultParameters = new HashMap<>();
         
         if (!storyName.equals("default")) {
-            defaultStory = storyRetrievalUseCase.getStory(templatePath, fragmentName, "default");
+            defaultStory = storyRetrievalUseCase
+                .getStory(templatePath, fragmentName, "default")
+                .orElse(null);
             if (defaultStory != null) {
                 Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStory);
                 defaultParameters = defaultStoryParams.entrySet().stream()

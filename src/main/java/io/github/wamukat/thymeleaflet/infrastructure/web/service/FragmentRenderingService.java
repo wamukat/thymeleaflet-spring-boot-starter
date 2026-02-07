@@ -79,7 +79,9 @@ public class FragmentRenderingService {
             logger.info("Full template path: {}", fullTemplatePath);
         
             // 対象ストーリーを取得
-            FragmentStoryInfo storyInfo = storyRetrievalUseCase.getStory(fullTemplatePath, fragmentName, storyName);
+            FragmentStoryInfo storyInfo = storyRetrievalUseCase
+                .getStory(fullTemplatePath, fragmentName, storyName)
+                .orElse(null);
             
             logger.info("=== Story Config Debug ===");
             logger.info("Story Info: {}", storyInfo);
