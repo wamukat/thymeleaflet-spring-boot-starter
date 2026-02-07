@@ -5,7 +5,12 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [Unreleased]
 
-- TBD
+- Parser migration progress:
+- Define parser baseline/spec documents for Thymeleaf 3.1.2 compatibility scope.
+- Introduce dedicated fragment signature parser and switch to Thymeleaf internal signature parsing.
+- Add structured signature diagnostics (code/severity/user-safe message) and surface in UI.
+- Remove legacy plain-name fallback for invalid fragment signatures.
+- Align Story Values ordering/status display with JavaDoc-driven parameter ordering and state chips.
 
 ## [0.2.2] - 2026-02-07
 
