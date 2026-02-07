@@ -13,13 +13,13 @@ storyGroups:
           title: Shipping details
           body: Ships in 2-3 business days.
           open: false
-        preview:
-          wrapper: |
-            <div class="px-6 py-6 text-base-content font-display">
-              <div class="max-w-2xl mx-auto">
-                {{content}}
-              </div>
-            </div>
+#        preview:
+#          wrapper: |
+#            <div class="px-6 py-6 text-base-content font-display">
+#              <div class="max-w-2xl mx-auto">
+#                {{content}}
+#              </div>
+#            </div>
       - name: open
         title: Open
         parameters:

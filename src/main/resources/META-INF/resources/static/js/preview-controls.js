@@ -29,11 +29,16 @@
     };
     const previewState = {
         storyOverrides: {},
+        wrapperOverride: null,
         lastRenderAt: null
     };
     if (window.__thymeleafletPendingOverrides && typeof window.__thymeleafletPendingOverrides === 'object') {
         previewState.storyOverrides = { ...window.__thymeleafletPendingOverrides };
         delete window.__thymeleafletPendingOverrides;
+    }
+    if (typeof window.__thymeleafletPendingWrapperOverride === 'string') {
+        previewState.wrapperOverride = window.__thymeleafletPendingWrapperOverride;
+        delete window.__thymeleafletPendingWrapperOverride;
     }
 
     const dom = {
@@ -209,7 +214,9 @@
     iframeControls.buildDocument = function(host, html, backgroundColor) {
         const styles = parseResourceList(host.dataset.previewStylesheets);
         const scripts = parseResourceList(host.dataset.previewScripts);
-        const wrapper = host?.dataset?.previewWrapper || '';
+        const wrapper = previewState.wrapperOverride !== null
+            ? previewState.wrapperOverride
+            : (host?.dataset?.previewWrapper || '');
         const wrappedHtml = wrapper && wrapper.includes('{{content}}')
             ? wrapper.replace('{{content}}', html)
             : html;
@@ -617,14 +624,21 @@
         }
 
         try {
-            const hasOverrides = previewState.storyOverrides && Object.keys(previewState.storyOverrides).length > 0;
+            const overrides = previewState.storyOverrides && typeof previewState.storyOverrides === 'object'
+                ? previewState.storyOverrides
+                : {};
+            const requestPayload = {
+                parameters: overrides.parameters && typeof overrides.parameters === 'object' ? overrides.parameters : {},
+                model: overrides.model && typeof overrides.model === 'object' ? overrides.model : {}
+            };
+            const hasOverrides = Object.keys(requestPayload.parameters).length > 0 || Object.keys(requestPayload.model).length > 0;
             const response = await fetch(previewUrl, {
                 method: hasOverrides ? 'POST' : 'GET',
                 headers: {
                     'HX-Request': 'true',
                     'Content-Type': 'application/json'
                 },
-                body: hasOverrides ? JSON.stringify(previewState.storyOverrides) : undefined
+                body: hasOverrides ? JSON.stringify(requestPayload) : undefined
             });
             if (!response.ok) {
                 throw new Error(`Preview response status ${response.status}`);
@@ -648,8 +662,13 @@
             : {};
     }
 
+    function setWrapperOverride(wrapper) {
+        previewState.wrapperOverride = typeof wrapper === 'string' ? wrapper : null;
+    }
+
     function resetToDefaults() {
         previewState.storyOverrides = {};
+        previewState.wrapperOverride = null;
         loadPreview();
     }
 
@@ -672,6 +691,7 @@
     window.__thymeleafletRefreshPreview = () => loadPreview();
     window.__thymeleafletPreview = {
         setStoryOverrides,
+        setWrapperOverride,
         render,
         resetToDefaults
     };
