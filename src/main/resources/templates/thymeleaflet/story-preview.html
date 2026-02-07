@@ -106,6 +106,13 @@
                                           th:text="${storyInfo.fragmentInfo.type.name()}">type</span>
                                 </dd>
                             </div>
+                            <div th:if="${storyInfo.fragmentInfo != null and storyInfo.fragmentInfo.hasSignatureDiagnostic()}"
+                                 class="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                                <div class="font-semibold" th:text="${storyInfo.fragmentInfo.signatureDiagnostic.code}">UNSUPPORTED_SYNTAX</div>
+                                <div th:text="${storyInfo.fragmentInfo.signatureDiagnostic.userMessage}">
+                                    This fragment declaration may not be fully supported.
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -130,7 +137,7 @@
                                 <div th:if="${displayParameters != null and !displayParameters.isEmpty()}" class="space-y-3">
                                     <div class="text-xs font-semibold tracking-wide text-blue-700 bg-blue-50 inline-flex px-2 py-1 rounded">PARAMETERS</div>
                                     <div class="space-y-3">
-                                        <div th:each="parameterName : ${orderedParameterNames}" 
+                                        <div th:each="parameterName : ${orderedParameterNames}"
                                              class="flex justify-between items-start py-2 px-3 bg-gray-50 rounded">
                                             <div class="flex-1">
                                                 <span class="text-sm font-mono text-gray-700" th:text="${parameterName}">param</span>
@@ -145,8 +152,18 @@
                                                 </div>
                                             </div>
                                             <div class="text-right">
-                                                <span th:if="${displayParameters.containsKey(parameterName)}" class="text-sm text-gray-800 break-all" th:text="${displayParameters.get(parameterName)}">value</span>
-                                                <span th:if="${!displayParameters.containsKey(parameterName)}" class="text-xs text-gray-500">Not specified</span>
+                                                <span th:if="${displayParameters.containsKey(parameterName) and displayParameters.get(parameterName) instanceof T(java.lang.String) and #strings.isEmpty(displayParameters.get(parameterName))}"
+                                                      class="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-medium"
+                                                      th:text="#{thymeleaflet.story.values.emptyString}">
+                                                    Empty string ("")
+                                                </span>
+                                                <span th:if="${displayParameters.containsKey(parameterName) and !(displayParameters.get(parameterName) instanceof T(java.lang.String) and #strings.isEmpty(displayParameters.get(parameterName)))}"
+                                                      class="text-sm text-gray-800 break-all" th:text="${displayParameters.get(parameterName)}">value</span>
+                                                <span th:if="${!displayParameters.containsKey(parameterName)}"
+                                                      class="inline-flex items-center rounded-full bg-gray-100 text-gray-600 px-2 py-0.5 text-xs font-medium"
+                                                      th:text="#{thymeleaflet.story.values.notSpecified}">
+                                                    Not specified
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
