@@ -122,7 +122,6 @@ public class UsageExampleService {
                 model.addAttribute("hasError", true);
                 model.addAttribute("errorMessage", "パラメータが取得できません");
                 model.addAttribute("usageExample", errorUsageExample);
-                model.addAttribute("usageModel", storyModel);
                 model.addAttribute("description", "このフラグメントのパラメータが定義されていません");
             } else {
                 // 正常な使用例を生成（SIMPLEフラグメントまたはパラメータ付きフラグメント）
@@ -158,7 +157,6 @@ public class UsageExampleService {
                 
                 model.addAttribute("usageExample", rawUsageExample);
                 model.addAttribute("parameters", relevantParams);
-                model.addAttribute("usageModel", storyModel);
                 
                 String description;
                 if (isSimpleFragment) {
