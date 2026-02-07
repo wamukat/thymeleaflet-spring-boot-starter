@@ -239,6 +239,10 @@ function hierarchicalFragmentList() {
         originalHierarchyTree: originalHierarchyTree,
         selectedFragment: null,
         customStoryState: { parameters: {}, model: {} },
+        customPreviewWrapper: '',
+        yamlPreviewOpen: false,
+        yamlPreviewContent: '',
+        yamlPreviewTitle: '',
 
         // Phase 4.3: SecureTemplatePath 対応 - templatePath変換ヘルパー
         templatePathForUrl: function(templatePath) {
@@ -375,17 +379,20 @@ function hierarchicalFragmentList() {
                 const parsed = JSON.parse(raw);
                 if (parsed && typeof parsed === 'object') {
                     if ('parameters' in parsed || 'model' in parsed) {
+                        const hasWrapper = Object.prototype.hasOwnProperty.call(parsed, 'wrapper');
                         return {
                             parameters: parsed.parameters && typeof parsed.parameters === 'object' ? parsed.parameters : {},
-                            model: parsed.model && typeof parsed.model === 'object' ? parsed.model : {}
+                            model: parsed.model && typeof parsed.model === 'object' ? parsed.model : {},
+                            wrapper: hasWrapper && typeof parsed.wrapper === 'string' ? parsed.wrapper : null,
+                            wrapperDefined: hasWrapper
                         };
                     }
-                    return { parameters: parsed, model: {} };
+                    return { parameters: parsed, model: {}, wrapper: null, wrapperDefined: false };
                 }
-                return { parameters: {}, model: {} };
+                return { parameters: {}, model: {}, wrapper: null, wrapperDefined: false };
             } catch (error) {
                 console.warn('Failed to load custom story values', error);
-                return { parameters: {}, model: {} };
+                return { parameters: {}, model: {}, wrapper: null, wrapperDefined: false };
             }
         },
 
@@ -418,12 +425,25 @@ function hierarchicalFragmentList() {
                 return;
             }
             const stored = this.loadCustomStoryValues(fragment);
-            if (stored && (Object.keys(stored.parameters || {}).length > 0 || Object.keys(stored.model || {}).length > 0)) {
+            if (stored && (
+                Object.keys(stored.parameters || {}).length > 0 ||
+                Object.keys(stored.model || {}).length > 0 ||
+                (typeof stored.wrapper === 'string' && stored.wrapper.length > 0)
+            )) {
+                const baseStory = this.getCustomBaseStory(fragment);
+                const inheritedWrapper = this.getStoryWrapper(baseStory) || this.getPreviewWrapperFromHost();
                 this.customStoryState = stored;
+                this.customPreviewWrapper = stored.wrapperDefined === false || !stored.wrapper || !stored.wrapper.trim()
+                    ? inheritedWrapper
+                    : stored.wrapper;
                 this.customStoryRawValues = this.buildRawValuesFromCustom(stored);
                 this.customStoryJsonErrors = {};
                 this.customModelJson = stringifyObjectLiteral(this.customStoryState.model || {});
                 this.customModelJsonError = false;
+                this.saveCustomStoryValues(fragment, {
+                    ...this.customStoryState,
+                    wrapper: this.customPreviewWrapper
+                });
                 return;
             }
 
@@ -435,11 +455,15 @@ function hierarchicalFragmentList() {
                 ? baseStory.model
                 : {};
             this.customStoryState = { parameters: { ...baseParams }, model: { ...baseModel } };
+            this.customPreviewWrapper = this.getStoryWrapper(baseStory) || this.getPreviewWrapperFromHost();
             this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryState);
             this.customStoryJsonErrors = {};
             this.customModelJson = stringifyObjectLiteral(this.customStoryState.model || {});
             this.customModelJsonError = false;
-            this.saveCustomStoryValues(fragment, this.customStoryState);
+            this.saveCustomStoryValues(fragment, {
+                ...this.customStoryState,
+                wrapper: this.customPreviewWrapper
+            });
         },
 
         buildRawValuesFromCustom(state) {
@@ -521,7 +545,10 @@ function hierarchicalFragmentList() {
                 const { [`${kind}:${key}`]: _, ...restRaw } = this.customStoryRawValues || {};
                 this.customStoryRawValues = restRaw;
             }
-            this.saveCustomStoryValues(this.selectedFragment, this.customStoryState);
+            this.saveCustomStoryValues(this.selectedFragment, {
+                ...this.customStoryState,
+                wrapper: this.customPreviewWrapper
+            });
             this.applyCustomOverrides();
         },
 
@@ -534,16 +561,41 @@ function hierarchicalFragmentList() {
                     model: parsed
                 };
                 this.customModelJsonError = false;
-                this.saveCustomStoryValues(this.selectedFragment, this.customStoryState);
+                this.saveCustomStoryValues(this.selectedFragment, {
+                    ...this.customStoryState,
+                    wrapper: this.customPreviewWrapper
+                });
                 this.applyCustomOverrides();
                 return;
             }
             this.customModelJsonError = true;
         },
 
+        updateCustomPreviewWrapper(rawValue) {
+            this.customPreviewWrapper = rawValue || '';
+            this.saveCustomStoryValues(this.selectedFragment, {
+                ...this.customStoryState,
+                wrapper: this.customPreviewWrapper
+            });
+            this.applyCustomOverrides();
+        },
+
+        getStoryWrapper(story) {
+            const preview = story?.story?.preview || story?.preview;
+            return (preview && typeof preview.wrapper === 'string') ? preview.wrapper : '';
+        },
+
+        getPreviewWrapperFromHost() {
+            const host = document.getElementById('fragment-preview-host');
+            return host?.dataset?.previewWrapper || '';
+        },
+
         applyCustomOverrides() {
             if (!this.isCustomStory(this.selectedStory)) {
                 return;
+            }
+            if (window.__thymeleafletPreview?.setWrapperOverride) {
+                window.__thymeleafletPreview.setWrapperOverride(this.customPreviewWrapper);
             }
             if (window.__thymeleafletPreview?.setStoryOverrides) {
                 window.__thymeleafletPreview.setStoryOverrides(this.customStoryState);
@@ -551,6 +603,7 @@ function hierarchicalFragmentList() {
                 return;
             }
             window.__thymeleafletPendingOverrides = { ...this.customStoryState };
+            window.__thymeleafletPendingWrapperOverride = this.customPreviewWrapper;
         },
 
         downloadCustomStoryYaml() {
@@ -559,7 +612,7 @@ function hierarchicalFragmentList() {
             }
             const parameters = { ...(this.customStoryState?.parameters || {}) };
             const model = { ...(this.customStoryState?.model || {}) };
-            const yaml = this.buildCustomStoryYaml(parameters, model);
+            const yaml = this.buildCustomStoryYaml(parameters, model, this.customPreviewWrapper);
             const templatePart = sanitizeFilePart(this.selectedFragment.templatePath);
             const fragmentPart = sanitizeFilePart(this.selectedFragment.fragmentName);
             const fileName = `${templatePart}__${fragmentPart}__custom.yaml`;
@@ -574,7 +627,7 @@ function hierarchicalFragmentList() {
             URL.revokeObjectURL(url);
         },
 
-        buildCustomStoryYaml(parameters, model) {
+        buildCustomStoryYaml(parameters, model, wrapper) {
             const lines = [
                 '# Paste into storyGroups.<fragmentName>.stories',
                 '# Rename "custom" before saving',
@@ -589,10 +642,60 @@ function hierarchicalFragmentList() {
                 lines.push('  model:');
                 lines.push(indentYaml(toYaml(model, 1), 2));
             }
+            if (wrapper && wrapper.trim() !== '') {
+                lines.push('  preview:');
+                lines.push('    wrapper: |');
+                lines.push(indentYaml(wrapper, 6));
+            }
             return lines.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
         },
 
+        buildSelectedStoryYaml() {
+            if (!this.selectedStory) {
+                return '';
+            }
+            const storyName = this.selectedStory.storyName || 'story';
+            const title = this.selectedStory.displayTitle || storyName;
+            const rawParameters = this.selectedStory.parameters && !Array.isArray(this.selectedStory.parameters)
+                ? this.selectedStory.parameters
+                : {};
+            const rawModel = this.selectedStory.model && !Array.isArray(this.selectedStory.model)
+                ? this.selectedStory.model
+                : {};
+            const wrapper = this.getStoryWrapper(this.selectedStory) || this.getPreviewWrapperFromHost();
+            const lines = [
+                `- name: ${storyName}`,
+                `  title: ${title}`
+            ];
+            if (rawParameters && Object.keys(rawParameters).length > 0) {
+                lines.push('  parameters:');
+                lines.push(indentYaml(toYaml(rawParameters, 1), 2));
+            }
+            if (rawModel && Object.keys(rawModel).length > 0) {
+                lines.push('  model:');
+                lines.push(indentYaml(toYaml(rawModel, 1), 2));
+            }
+            if (wrapper && wrapper.trim() !== '') {
+                lines.push('  preview:');
+                lines.push('    wrapper: |');
+                lines.push(indentYaml(wrapper, 6));
+            }
+            return lines.join('\n').replace(/\n{3,}/g, '\n\n') + '\n';
+        },
+
+        showStoryYamlPreview() {
+            const yaml = this.buildSelectedStoryYaml();
+            this.yamlPreviewTitle = this.selectedStory?.displayTitle || this.selectedStory?.storyName || '';
+            this.yamlPreviewContent = yaml;
+            this.yamlPreviewOpen = true;
+        },
+
+        closeStoryYamlPreview() {
+            this.yamlPreviewOpen = false;
+        },
+
         resetPreviewOverrides() {
+            this.customPreviewWrapper = this.getStoryWrapper(this.selectedStory) || this.getPreviewWrapperFromHost();
             if (window.__thymeleafletPreview?.resetToDefaults) {
                 window.__thymeleafletPreview.resetToDefaults();
             }

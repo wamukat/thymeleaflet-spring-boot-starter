@@ -14,6 +14,12 @@
 <div th:fragment="content" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     <!-- メタ情報 -->
     <div class="lg:col-span-1 space-y-6">
+        <div>
+            <div class="border-l-4 border-gray-300 pl-3">
+                <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Fragment</p>
+                <h2 class="mt-0.5 text-lg font-semibold text-gray-900 leading-tight" th:text="${selectedFragment.fragmentName}">fragmentName</h2>
+            </div>
+        </div>
         <!-- ストーリー選択 -->
         <div class="card-thymeleaflet">
             <div class="card-thymeleaflet-header">
@@ -68,16 +74,57 @@
                             <path d="M9 3h2v7.586l2.293-2.293 1.414 1.414L10 14.414 5.293 9.707l1.414-1.414L9 10.586V3z"/>
                         </svg>
                     </button>
+                    <button type="button"
+                            class="text-xs inline-flex items-center justify-center w-7 h-7 rounded border border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors"
+                            th:if="${selectedStory != null and selectedStory.storyName != 'custom'}"
+                            th:attr="title=#{thymeleaflet.story.values.viewYaml}"
+                            @click="showStoryYamlPreview()">
+                        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 104.473 8.698l2.664 2.665a.75.75 0 101.06-1.061l-2.664-2.664A5.5 5.5 0 009 3.5zm-4 5.5a4 4 0 118 0 4 4 0 01-8 0z" clip-rule="evenodd"/>
+                        </svg>
+                    </button>
                 </div>
             </div>
             <div class="card-thymeleaflet-content">
                 <div class="space-y-4">
                     <!-- Parameters -->
-                    <div th:if="${displayParameters != null and !#maps.isEmpty(displayParameters) and (selectedStory == null or selectedStory.storyName != 'custom')}" class="space-y-3">
+                    <div th:if="${selectedFragment != null and selectedFragment.type.name() == 'PARAMETERIZED' and (selectedStory == null or selectedStory.storyName != 'custom')}" class="space-y-3">
                         <div class="text-xs font-semibold tracking-wide text-blue-700 bg-blue-50 inline-flex px-2 py-1 rounded"
                              th:text="#{thymeleaflet.story.values.parameters}">Parameters</div>
                         <div class="space-y-3">
-                            <div th:each="storyParam : ${displayParameters}"
+                            <div th:if="${selectedFragment.parameters != null and !#lists.isEmpty(selectedFragment.parameters)}"
+                                 th:each="parameterName : ${selectedFragment.parameters}"
+                                 class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
+                                <div class="flex items-start gap-4">
+                                    <div class="flex-shrink-0">
+                                        <span class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
+                                              th:text="${parameterName}"></span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div th:if="${displayParameters != null and displayParameters.containsKey(parameterName) and displayParameters.get(parameterName) != null and (displayParameters.get(parameterName).class.isArray() or displayParameters.get(parameterName) instanceof T(java.util.List) or displayParameters.get(parameterName) instanceof T(java.util.Map))}"
+                                             class="w-full min-h-9 text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
+                                             th:text="${displayParameters.get(parameterName)}"></div>
+                                        <div th:unless="${displayParameters != null and displayParameters.containsKey(parameterName) and displayParameters.get(parameterName) != null and (displayParameters.get(parameterName).class.isArray() or displayParameters.get(parameterName) instanceof T(java.util.List) or displayParameters.get(parameterName) instanceof T(java.util.Map))}"
+                                             class="w-full min-h-9 px-2 py-1 rounded border break-all bg-white border-gray-200 text-gray-800 flex items-center">
+                                            <span th:if="${displayParameters != null and displayParameters.containsKey(parameterName) and displayParameters.get(parameterName) instanceof T(java.lang.String) and #strings.isEmpty(displayParameters.get(parameterName))}"
+                                                  class="inline-flex items-center rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-medium"
+                                                  th:text="#{thymeleaflet.story.values.emptyString}">
+                                                Empty string ("")
+                                            </span>
+                                            <span th:if="${displayParameters != null and displayParameters.containsKey(parameterName) and !(displayParameters.get(parameterName) instanceof T(java.lang.String) and #strings.isEmpty(displayParameters.get(parameterName)))}"
+                                                  class="text-sm font-medium"
+                                                  th:text="${displayParameters.get(parameterName)}">value</span>
+                                            <span th:if="${displayParameters == null or !displayParameters.containsKey(parameterName)}"
+                                                  class="inline-flex items-center rounded-full bg-gray-100 text-gray-600 px-2 py-0.5 text-xs font-medium"
+                                                  th:text="#{thymeleaflet.story.values.notSpecified}">
+                                                Not specified
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div th:if="${(selectedFragment.parameters == null or #lists.isEmpty(selectedFragment.parameters)) and displayParameters != null and !#maps.isEmpty(displayParameters)}"
+                                 th:each="storyParam : ${displayParameters}"
                                  class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
                                 <div th:if="${storyParam.value != null and (storyParam.value.class.isArray() or storyParam.value instanceof T(java.util.List) or storyParam.value instanceof T(java.util.Map))}" class="space-y-3">
                                     <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
@@ -123,6 +170,22 @@
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${selectedStory != null and selectedStory.storyName != 'custom'}" class="space-y-3">
+                        <div class="text-xs font-semibold tracking-wide text-amber-700 bg-amber-50 inline-flex px-2 py-1 rounded"
+                             th:text="#{thymeleaflet.story.values.parentContext}">Parent context</div>
+                        <div th:if="${selectedStory.story.preview.wrapper != null and !#strings.isEmpty(selectedStory.story.preview.wrapper)}"
+                             class="rounded border border-gray-200 bg-gray-900 text-gray-100 overflow-auto max-h-64">
+                            <pre class="p-3 text-xs font-mono whitespace-pre-wrap"><code th:text="${selectedStory.story.preview.wrapper}"></code></pre>
+                        </div>
+                        <div th:if="${selectedStory.story.preview.wrapper == null or #strings.isEmpty(selectedStory.story.preview.wrapper)}"
+                             class="w-full min-h-9 px-2 py-1 rounded border bg-white border-gray-200 text-gray-800 flex items-center">
+                            <span class="inline-flex items-center rounded-full bg-gray-100 text-gray-600 px-2 py-0.5 text-xs font-medium"
+                                  th:text="#{thymeleaflet.story.values.notSpecified}">
+                                Not specified
+                            </span>
                         </div>
                     </div>
 
@@ -212,6 +275,24 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="mt-6">
+                            <div class="inline-flex items-center gap-2 rounded bg-amber-50 px-2 py-1 text-xs font-semibold tracking-wide text-amber-700">
+                                <span th:text="#{thymeleaflet.story.values.parentContext}">Parent context</span>
+                            </div>
+                            <div class="mt-3 space-y-3">
+                                <div class="border border-orange-200 rounded-lg p-4 transition-colors duration-200 hover:bg-orange-50/40">
+                                    <textarea rows="6"
+                                              class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800 font-mono focus:border-gray-300 focus:ring-2 focus:ring-orange-100"
+                                              :value="customPreviewWrapper"
+                                              @input="updateCustomPreviewWrapper($event.target.value)"></textarea>
+                                    <p class="text-xs text-amber-700 mt-2"
+                                       x-show="customPreviewWrapper && !customPreviewWrapper.includes('{{content}}')"
+                                       th:text="#{thymeleaflet.story.values.wrapperHint}">
+                                        Include {{content}} in wrapper.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -253,6 +334,31 @@
     <script>
     // no-op
     </script>
+
+    <div x-show="yamlPreviewOpen"
+         x-cloak
+         x-transition.opacity
+         class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+         @click.self="closeStoryYamlPreview()"
+         @keydown.escape.window="closeStoryYamlPreview()">
+        <div class="w-full max-w-3xl bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                <h4 class="text-sm font-semibold text-gray-900">
+                    <span th:text="#{thymeleaflet.story.values.yamlTitle}">Story YAML</span>
+                    <span class="text-gray-500 font-normal" x-show="yamlPreviewTitle" x-text="'- ' + yamlPreviewTitle"></span>
+                </h4>
+                <button type="button"
+                        class="text-gray-500 hover:text-gray-700 text-sm"
+                        @click="closeStoryYamlPreview()"
+                        th:text="#{thymeleaflet.story.values.close}">
+                    Close
+                </button>
+            </div>
+            <div class="bg-gray-900 text-gray-100 max-h-[70vh] overflow-auto">
+                <pre class="p-4 text-xs font-mono whitespace-pre-wrap"><code x-text="yamlPreviewContent"></code></pre>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!--

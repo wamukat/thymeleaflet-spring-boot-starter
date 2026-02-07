@@ -111,14 +111,14 @@
         
         const originalText = button.innerHTML;
         const copyDoneLabel = document.body?.dataset?.copyDone || 'Copied!';
-        button.innerHTML = `<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>${copyDoneLabel}`;
-        button.classList.add('btn-thymeleaflet-success');
-        button.classList.remove('btn-thymeleaflet-secondary');
+        button.innerHTML = `<svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg><span>${copyDoneLabel}</span>`;
+        button.classList.add('border-emerald-500', 'bg-emerald-600', 'text-white');
+        button.classList.remove('border-gray-600', 'bg-gray-800/90', 'text-gray-100');
         
         setTimeout(() => {
             button.innerHTML = originalText;
-            button.classList.remove('btn-thymeleaflet-success');
-            button.classList.add('btn-thymeleaflet-secondary');
+            button.classList.remove('border-emerald-500', 'bg-emerald-600', 'text-white');
+            button.classList.add('border-gray-600', 'bg-gray-800/90', 'text-gray-100');
         }, 2000);
     }
 </script>

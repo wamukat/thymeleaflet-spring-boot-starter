@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.controller;
 
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.FragmentMainContentService;
+import io.github.wamukat.thymeleaflet.infrastructure.web.service.ThymeleafletVersionResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,9 @@ public class FragmentListController {
     
     @Autowired
     private FragmentMainContentService fragmentMainContentService;
+
+    @Autowired
+    private ThymeleafletVersionResolver thymeleafletVersionResolver;
     
     /**
      * Storybookメインエントリーポイント - フラグメント一覧ページ (プレースホルダ最適化版)
@@ -39,6 +43,7 @@ public class FragmentListController {
     public String fragmentList(Model model) {
         long startTime = System.currentTimeMillis();
         logger.info("=== Fragment List (Placeholder Optimized) START ===");
+        model.addAttribute("thymeleafletVersion", thymeleafletVersionResolver.resolve());
         
         // 初期レンダリング時は重い処理をスキップ - フラグメント発見のみ実行
         List<FragmentDiscoveryService.FragmentInfo> fragments = fragmentDiscoveryService.discoverFragments();
@@ -95,5 +100,5 @@ public class FragmentListController {
         // フラグメント部分テンプレートを返す
         return "thymeleaflet/fragments/main-content :: delayedContent";
     }
-    
+
 }
