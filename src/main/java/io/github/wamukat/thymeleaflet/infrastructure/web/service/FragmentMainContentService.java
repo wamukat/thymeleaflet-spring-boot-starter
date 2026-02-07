@@ -7,6 +7,7 @@ import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentD
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,11 +118,11 @@ public class FragmentMainContentService {
      */
     public static class MainContentResult {
         private final boolean succeeded;
-        private final String errorMessage;
+        private final @Nullable String errorMessage;
         private final int fragmentCount;
         private final long processingTime;
         
-        private MainContentResult(boolean succeeded, String errorMessage, int fragmentCount, long processingTime) {
+        private MainContentResult(boolean succeeded, @Nullable String errorMessage, int fragmentCount, long processingTime) {
             this.succeeded = succeeded;
             this.errorMessage = errorMessage;
             this.fragmentCount = fragmentCount;
@@ -137,7 +138,7 @@ public class FragmentMainContentService {
         }
         
         public boolean succeeded() { return succeeded; }
-        public String errorMessage() { return errorMessage; }
+        public @Nullable String errorMessage() { return errorMessage; }
         public int fragmentCount() { return fragmentCount; }
         public long processingTime() { return processingTime; }
     }

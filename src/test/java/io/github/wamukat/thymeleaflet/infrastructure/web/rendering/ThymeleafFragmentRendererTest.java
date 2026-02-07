@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -50,8 +51,9 @@ class ThymeleafFragmentRendererTest {
 
         // Then
         assertThat(found).isNotNull();
-        assertThat(found.getTemplatePath()).isEqualTo("templates/shared/atoms/button");
-        assertThat(found.getFragmentName()).isEqualTo("primary-button");
+        FragmentDiscoveryService.FragmentInfo resolved = Objects.requireNonNull(found);
+        assertThat(resolved.getTemplatePath()).isEqualTo("templates/shared/atoms/button");
+        assertThat(resolved.getFragmentName()).isEqualTo("primary-button");
     }
 
     @Test
@@ -170,12 +172,20 @@ class ThymeleafFragmentRendererTest {
     }
 
     private io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo createFragmentStoryInfo(String storyName) {
-        // FragmentStoryInfoのモックオブジェクトを作成（簡易実装）
+        io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem storyItem =
+            new io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem(
+                storyName,
+                storyName,
+                "",
+                Map.of(),
+                io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview.empty(),
+                Map.of()
+            );
         return io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo.of(
             createDomainFragmentSummary("template", "fragment"), 
             "fragment", 
             storyName, 
-            null
+            storyItem
         );
     }
     

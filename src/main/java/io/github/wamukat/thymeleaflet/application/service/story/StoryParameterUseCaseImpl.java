@@ -39,7 +39,7 @@ public class StoryParameterUseCaseImpl implements StoryParameterUseCase {
         
         // フラグメントのパラメータリストを取得
         List<String> fragmentParams = command.getFragment().getParameters();
-        if (fragmentParams == null || fragmentParams.isEmpty()) {
+        if (fragmentParams.isEmpty()) {
             return ParameterExtractionResponse.success(relevantParams);
         }
         

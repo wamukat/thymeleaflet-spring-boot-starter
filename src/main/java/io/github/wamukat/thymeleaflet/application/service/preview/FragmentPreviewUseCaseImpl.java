@@ -9,12 +9,14 @@ import io.github.wamukat.thymeleaflet.infrastructure.web.service.JavaDocLookupSe
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * フラグメントプレビュー専用ユースケース実装（縮小版）
@@ -54,10 +56,10 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
 
         if (!result.succeeded()) {
             logger.warn("setupStoryContentData: {}", result.errorMessage());
-            return PageSetupResponse.failure(result.errorMessage());
+            return PageSetupResponse.failure(Objects.requireNonNullElse(result.errorMessage(), "Story setup failed"));
         }
 
-        FragmentStoryInfo storyInfo = result.storyInfo();
+        FragmentStoryInfo storyInfo = Objects.requireNonNull(result.storyInfo());
         Map<String, Object> displayModel = storyInfo.getModel();
 
         command.getModel().addAttribute("selectedFragment", result.selectedFragment());
@@ -102,7 +104,7 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
     }
 
     @Override
-    public JavaDocAnalyzer.JavaDocInfo getJavaDocInfo(String templatePath, String fragmentName) {
+    public @Nullable JavaDocAnalyzer.JavaDocInfo getJavaDocInfo(String templatePath, String fragmentName) {
         return javaDocLookupService.findJavaDocInfo(templatePath, fragmentName);
     }
 }

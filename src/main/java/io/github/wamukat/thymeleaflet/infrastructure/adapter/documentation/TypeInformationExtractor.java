@@ -94,7 +94,7 @@ public class TypeInformationExtractor {
     private TypeInfo analyzeParameterType(JavaDocAnalyzer.ParameterInfo paramInfo, JavaDocAnalyzer.JavaDocInfo javadocInfo) {
         String paramName = paramInfo.getName();
         String paramType = paramInfo.getType();
-        Optional<String> description = Optional.ofNullable(paramInfo.getDescription());
+        Optional<String> description = paramInfo.getDescriptionOptional();
         
         logger.debug("Analyzing parameter type: name='{}', type='{}', description='{}'", paramName, paramType, description.orElse(""));
         

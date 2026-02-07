@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.coordination;
 
 import org.springframework.ui.Model;
+import org.jspecify.annotations.Nullable;
 
 /**
  * ストーリーページ協調ユースケース
@@ -33,7 +34,7 @@ public interface StoryPageCoordinationUseCase {
      */
     record StoryPageResult(
         boolean succeeded,
-        String errorMessage
+        @Nullable String errorMessage
     ) {
         public static StoryPageResult success() {
             return new StoryPageResult(true, null);

@@ -141,7 +141,7 @@ class StoryCommonDataServiceTest {
                 JavaDocAnalyzer.ParameterInfo.of("text", "String")
             ),
             List.of(),
-            null
+            java.util.Optional.empty()
         );
         when(javaDocLookupService.findJavaDocInfo("components/button", "primaryButton")).thenReturn(javaDocInfo);
 

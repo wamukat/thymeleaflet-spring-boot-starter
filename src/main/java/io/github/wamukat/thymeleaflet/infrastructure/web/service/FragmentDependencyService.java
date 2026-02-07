@@ -3,6 +3,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,12 +61,12 @@ public class FragmentDependencyService {
             }
 
             String html = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            String fragmentBlock = extractFragmentBlock(html, fragmentName);
+            @Nullable String fragmentBlock = extractFragmentBlock(html, fragmentName);
             String target = fragmentBlock != null ? fragmentBlock : html;
 
             Map<String, DependencyComponent> dependencies = new LinkedHashMap<>();
             for (String expression : extractDependencyExpressions(target)) {
-                DependencyComponent component = parseDependency(expression);
+                @Nullable DependencyComponent component = parseDependency(expression);
                 if (component == null) {
                     continue;
                 }
@@ -86,7 +87,7 @@ public class FragmentDependencyService {
         }
     }
 
-    private DependencyComponent parseDependency(String expression) {
+    private @Nullable DependencyComponent parseDependency(String expression) {
         String[] parts = expression.split("::");
         if (parts.length < 2) {
             return null;
@@ -128,7 +129,7 @@ public class FragmentDependencyService {
         return expressions;
     }
 
-    private String extractFragmentBlock(String html, String fragmentName) {
+    private @Nullable String extractFragmentBlock(String html, String fragmentName) {
         Matcher matcher = FRAGMENT_DECL_PATTERN.matcher(html);
         while (matcher.find()) {
             String definition = matcher.group(1).trim();
@@ -146,7 +147,7 @@ public class FragmentDependencyService {
                 return null;
             }
 
-            String tagName = extractTagName(html.substring(tagStart, tagEnd + 1));
+            @Nullable String tagName = extractTagName(html.substring(tagStart, tagEnd + 1));
             if (tagName == null) {
                 return null;
             }
@@ -181,7 +182,7 @@ public class FragmentDependencyService {
         return null;
     }
 
-    private String extractTagName(String tag) {
+    private @Nullable String extractTagName(String tag) {
         Matcher matcher = Pattern.compile("<\\s*([a-zA-Z0-9:-]+)").matcher(tag);
         if (matcher.find()) {
             return matcher.group(1);

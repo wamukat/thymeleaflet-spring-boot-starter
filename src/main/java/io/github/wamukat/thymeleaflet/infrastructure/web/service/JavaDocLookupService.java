@@ -5,6 +5,7 @@ import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaD
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.lang.Nullable;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ public class JavaDocLookupService {
         this.javaDocContentService = javaDocContentService;
     }
 
-    public JavaDocAnalyzer.JavaDocInfo findJavaDocInfo(String templatePath, String fragmentName) {
+    public @Nullable JavaDocAnalyzer.JavaDocInfo findJavaDocInfo(String templatePath, String fragmentName) {
         List<JavaDocAnalyzer.JavaDocInfo> javadocInfos = javaDocContentService.loadJavaDocInfos(templatePath);
         if (javadocInfos.isEmpty()) {
             return null;

@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
+import java.util.Objects;
+
 /**
  * ストーリーコンテンツHTMX処理専用サービス
  * 
@@ -47,9 +49,12 @@ public class StoryContentService {
         // セキュアパス変換
         SecurePathConversionService.SecurityConversionResult conversionResult = securePathConversionService.convertSecurePath(templatePath, model);
         if (!conversionResult.succeeded()) {
-            return StoryContentResult.failure(conversionResult.templateReference());
+            return StoryContentResult.failure(
+                Objects.requireNonNullElse(conversionResult.templateReference(),
+                    "thymeleaflet/fragments/error-display :: error(type='danger')")
+            );
         }
-        String fullTemplatePath = conversionResult.fullTemplatePath();
+        String fullTemplatePath = Objects.requireNonNull(conversionResult.fullTemplatePath());
         
         // ストーリーコンテンツ協調処理 (協調UseCase使用)
         StoryContentCoordinationUseCase.StoryContentRequest contentRequest = 
@@ -70,7 +75,13 @@ public class StoryContentService {
         model.addAttribute("stories", contentResult.stories());
         
         // StoryCommonDataServiceを使用して共通データ設定
-        storyCommonDataService.setupCommonStoryData(fullTemplatePath, fragmentName, storyName, contentResult.storyInfo(), model);
+        storyCommonDataService.setupCommonStoryData(
+            fullTemplatePath,
+            fragmentName,
+            storyName,
+            Objects.requireNonNull(contentResult.storyInfo()),
+            model
+        );
         
         SecureTemplatePath secureTemplatePath = SecureTemplatePath.createUnsafe(templatePath);
         model.addAttribute("templatePathEncoded", secureTemplatePath.forUrl());

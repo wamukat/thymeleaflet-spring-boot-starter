@@ -8,6 +8,7 @@ import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import org.springframework.ui.Model;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -63,8 +65,8 @@ public class FragmentRenderingService {
                                        String fragmentName,
                                        String storyName,
                                        Model model,
-                                       Map<String, Object> parameterOverrides,
-                                       Map<String, Object> modelOverrides) {
+                                       @Nullable Map<String, Object> parameterOverrides,
+                                       @Nullable Map<String, Object> modelOverrides) {
         try {
             logger.info("=== RENDER STORY START ===");
             logger.info("Request params: templatePath={}, fragmentName={}, storyName={}", 
@@ -76,7 +78,7 @@ public class FragmentRenderingService {
             if (!conversionResult.succeeded()) {
                 return RenderingResult.error(conversionResult.templateReference());
             }
-            String fullTemplatePath = conversionResult.fullTemplatePath();
+            String fullTemplatePath = Objects.requireNonNull(conversionResult.fullTemplatePath());
             logger.info("Full template path: {}", fullTemplatePath);
         
             // 対象ストーリーを取得
@@ -220,9 +222,9 @@ public class FragmentRenderingService {
      */
     public static class RenderingResult {
         private final boolean succeeded;
-        private final String templateReference;
+        private final @Nullable String templateReference;
         
-        private RenderingResult(boolean succeeded, String templateReference) {
+        private RenderingResult(boolean succeeded, @Nullable String templateReference) {
             this.succeeded = succeeded;
             this.templateReference = templateReference;
         }
@@ -231,11 +233,11 @@ public class FragmentRenderingService {
             return new RenderingResult(true, templateReference);
         }
         
-        public static RenderingResult error(String templateReference) {
+        public static RenderingResult error(@Nullable String templateReference) {
             return new RenderingResult(false, templateReference);
         }
         
         public boolean succeeded() { return succeeded; }
-        public String templateReference() { return templateReference; }
+        public @Nullable String templateReference() { return templateReference; }
     }
 }

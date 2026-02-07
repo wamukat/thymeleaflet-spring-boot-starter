@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -67,9 +68,12 @@ public class StoryPreviewService {
         // セキュアパス変換
         SecurePathConversionService.SecurityConversionResult conversionResult = securePathConversionService.convertSecurePath(templatePath, model);
         if (!conversionResult.succeeded()) {
-            return StoryPreviewResult.failure(conversionResult.templateReference());
+            return StoryPreviewResult.failure(
+                Objects.requireNonNullElse(conversionResult.templateReference(),
+                    "thymeleaflet/fragments/error-display :: error(type='danger')")
+            );
         }
-        String fullTemplatePath = conversionResult.fullTemplatePath();
+        String fullTemplatePath = Objects.requireNonNull(conversionResult.fullTemplatePath());
         
         // 外部仕様として必要な属性を最優先で設定（契約テスト保護）
         model.addAttribute("templatePathEncoded", templatePath.replace("/", ".")); // 契約テスト必須属性：パス変換

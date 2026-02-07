@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -45,10 +46,14 @@ public class SecurePathConversionService {
      */
     public static class SecurityConversionResult {
         private final boolean succeeded;
-        private final String fullTemplatePath;
-        private final String templateReference;
+        private final @Nullable String fullTemplatePath;
+        private final @Nullable String templateReference;
         
-        private SecurityConversionResult(boolean succeeded, String fullTemplatePath, String templateReference) {
+        private SecurityConversionResult(
+            boolean succeeded,
+            @Nullable String fullTemplatePath,
+            @Nullable String templateReference
+        ) {
             this.succeeded = succeeded;
             this.fullTemplatePath = fullTemplatePath;
             this.templateReference = templateReference;
@@ -63,7 +68,7 @@ public class SecurePathConversionService {
         }
         
         public boolean succeeded() { return succeeded; }
-        public String fullTemplatePath() { return fullTemplatePath; }
-        public String templateReference() { return templateReference; }
+        public @Nullable String fullTemplatePath() { return fullTemplatePath; }
+        public @Nullable String templateReference() { return templateReference; }
     }
 }

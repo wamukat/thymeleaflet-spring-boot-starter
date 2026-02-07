@@ -4,6 +4,7 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.lang.Nullable;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.context.ExpressionContext;
 import org.thymeleaf.spring6.SpringTemplateEngine;
@@ -38,7 +39,7 @@ public class ThymeleafFragmentRenderer {
      * 指定されたテンプレートパスとフラグメント名に一致するフラグメントを検索
      * Infrastructure責任: フラグメント選択の技術的処理
      */
-    public FragmentDiscoveryService.FragmentInfo findFragmentByIdentifier(
+    public @Nullable FragmentDiscoveryService.FragmentInfo findFragmentByIdentifier(
             List<FragmentDiscoveryService.FragmentInfo> allFragments,
             String templatePath,
             String fragmentName) {
@@ -109,12 +110,12 @@ public class ThymeleafFragmentRenderer {
      * Infrastructure層のデータ転送専用
      */
     public static class FragmentRenderingContext {
-        private final FragmentDiscoveryService.FragmentInfo selectedFragment;
-        private final FragmentStoryInfo selectedStory;
+        private final @Nullable FragmentDiscoveryService.FragmentInfo selectedFragment;
+        private final @Nullable FragmentStoryInfo selectedStory;
 
         public FragmentRenderingContext(
-                FragmentDiscoveryService.FragmentInfo selectedFragment,
-                FragmentStoryInfo selectedStory) {
+                @Nullable FragmentDiscoveryService.FragmentInfo selectedFragment,
+                @Nullable FragmentStoryInfo selectedStory) {
             this.selectedFragment = selectedFragment;
             this.selectedStory = selectedStory;
         }

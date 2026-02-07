@@ -51,7 +51,7 @@ class TransactionBadgeTypeInferenceTest {
             "ポイント取引タイプバッジフラグメント",
             Arrays.asList(transactionTypeParam),
             Collections.emptyList(),
-            null
+            java.util.Optional.empty()
         );
 
         when(mockJavaDocAnalyzer.analyzeJavaDocFromHtml(any(String.class)))
@@ -93,7 +93,7 @@ class TransactionBadgeTypeInferenceTest {
             "ポイント取引タイプバッジフラグメント",
             Arrays.asList(transactionTypeParam),
             Collections.emptyList(),
-            null
+            java.util.Optional.empty()
         );
 
         when(mockJavaDocAnalyzer.analyzeJavaDocFromHtml(any(String.class)))
@@ -128,7 +128,7 @@ class TransactionBadgeTypeInferenceTest {
             "テストフラグメント",
             Arrays.asList(vagueTypeParam),
             Collections.emptyList(),
-            null
+            java.util.Optional.empty()
         );
 
         when(mockJavaDocAnalyzer.analyzeJavaDocFromHtml(any(String.class)))

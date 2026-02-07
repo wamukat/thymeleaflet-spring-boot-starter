@@ -7,6 +7,7 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,7 +143,7 @@ public class FragmentJsonService {
         fragmentPreviewUseCase.setupFragmentJsonAttributes(enrichedFragments, hierarchicalFragmentsList, model);
     }
 
-    private Object sanitizeParameterValue(Object value) {
+    private @Nullable Object sanitizeParameterValue(@Nullable Object value) {
         if (value == null) {
             return null;
         }

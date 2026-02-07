@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -53,18 +54,19 @@ public class PreviewConfigService {
     }
 
     private String resolveLabel(StorybookProperties.ViewportPreset preset, Locale locale) {
-        String label = safeString(preset.getLabel());
-        String labelKey = safeString(preset.getLabelKey());
+        @Nullable String label = safeString(preset.getLabel());
+        @Nullable String labelKey = safeString(preset.getLabelKey());
         if (label == null && labelKey != null) {
             return messageSource.getMessage(labelKey, null, labelKey, locale);
         }
         if (label == null) {
-            return safeString(preset.getId());
+            @Nullable String fallbackId = safeString(preset.getId());
+            return fallbackId != null ? fallbackId : "viewport";
         }
         return label;
     }
 
-    private String safeString(String value) {
+    private @Nullable String safeString(@Nullable String value) {
         if (value == null) {
             return null;
         }

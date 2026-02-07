@@ -6,6 +6,7 @@ import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConve
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.StoryPreviewService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.StoryContentService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.ThymeleafletVersionResolver;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -16,6 +17,7 @@ import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * ストーリープレビュー表示専用コントローラー
@@ -41,7 +43,7 @@ public class StoryPreviewController {
     private ThymeleafletVersionResolver thymeleafletVersionResolver;
 
     @Value("${thymeleaflet.base-path:/thymeleaflet}")
-    private String basePath;
+    private String basePath = "/thymeleaflet";
     
     /**
      * 個別ストーリープレビューページ（統一テンプレート構造を使用）
@@ -87,7 +89,7 @@ public class StoryPreviewController {
         return result.templateReference();
     }
     
-    private String resolveRedirectTarget(String templatePath, String fragmentName, String storyName, Model model) {
+    private @Nullable String resolveRedirectTarget(String templatePath, String fragmentName, String storyName, Model model) {
         if (!"default".equals(storyName)) {
             return null;
         }
@@ -97,11 +99,11 @@ public class StoryPreviewController {
         if (!conversionResult.succeeded()) {
             return null;
         }
-        String fullTemplatePath = conversionResult.fullTemplatePath();
+        String fullTemplatePath = Objects.requireNonNull(conversionResult.fullTemplatePath());
 
         StoryRetrievalUseCase.StoryListResponse listResponse =
             storyRetrievalUseCase.getStoriesForFragment(fullTemplatePath, fragmentName);
-        if (!listResponse.isSuccess() || listResponse.getStories() == null || listResponse.getStories().isEmpty()) {
+        if (!listResponse.isSuccess() || listResponse.getStories().isEmpty()) {
             return null;
         }
 
@@ -112,7 +114,7 @@ public class StoryPreviewController {
         }
 
         String firstStoryName = stories.get(0).getStoryName();
-        if (firstStoryName == null || firstStoryName.isBlank()) {
+        if (firstStoryName.isBlank()) {
             return null;
         }
 

@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.preview;
 
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer;
+import org.springframework.lang.Nullable;
 import org.springframework.ui.Model;
 
 import java.util.List;
@@ -36,7 +37,7 @@ public interface FragmentPreviewUseCase {
     /**
      * JavaDoc情報直接取得
      */
-    JavaDocAnalyzer.JavaDocInfo getJavaDocInfo(String templatePath, String fragmentName);
+    @Nullable JavaDocAnalyzer.JavaDocInfo getJavaDocInfo(String templatePath, String fragmentName);
 
     // === Command Objects ===
 
@@ -67,9 +68,9 @@ public interface FragmentPreviewUseCase {
      * ページセットアップレスポンス
      */
     class PageSetupResponse {
-        private final String errorMessage;
+        private final @Nullable String errorMessage;
 
-        private PageSetupResponse(String errorMessage) {
+        private PageSetupResponse(@Nullable String errorMessage) {
             this.errorMessage = errorMessage;
         }
         public static PageSetupResponse success() {
@@ -84,7 +85,7 @@ public interface FragmentPreviewUseCase {
             return errorMessage == null;
         }
 
-        public String errorMessage() { return errorMessage; }
+        public @Nullable String errorMessage() { return errorMessage; }
     }
 
     /**

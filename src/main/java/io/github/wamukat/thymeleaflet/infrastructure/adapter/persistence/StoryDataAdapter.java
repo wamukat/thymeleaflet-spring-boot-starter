@@ -184,7 +184,7 @@ public class StoryDataAdapter implements StoryDataPort {
             return Optional.empty();
         }
 
-        String resolvedStoryName = (storyName != null && !storyName.isBlank()) ? storyName : "default";
+        String resolvedStoryName = storyName.isBlank() ? "default" : storyName;
         StoryItem defaultStory = new StoryItem(
             resolvedStoryName,
             resolvedStoryName,
@@ -205,7 +205,7 @@ public class StoryDataAdapter implements StoryDataPort {
     }
 
     private Optional<StoryItem> resolveBaseStory(StoryGroup storyGroup) {
-        if (storyGroup == null || storyGroup.stories().isEmpty()) {
+        if (storyGroup.stories().isEmpty()) {
             return Optional.empty();
         }
         Optional<StoryItem> defaultStory = storyGroup.findStoryByName("default");

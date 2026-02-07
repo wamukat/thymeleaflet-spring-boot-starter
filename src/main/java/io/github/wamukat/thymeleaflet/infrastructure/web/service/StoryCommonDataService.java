@@ -8,6 +8,7 @@ import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFrag
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
@@ -140,7 +141,7 @@ public class StoryCommonDataService {
     private List<String> resolveOrderedParameterNames(
         FragmentStoryInfo storyInfo,
         Map<String, Object> displayParameters,
-        io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo javadocInfo
+        @Nullable io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo javadocInfo
     ) {
         LinkedHashSet<String> ordered = new LinkedHashSet<>();
 

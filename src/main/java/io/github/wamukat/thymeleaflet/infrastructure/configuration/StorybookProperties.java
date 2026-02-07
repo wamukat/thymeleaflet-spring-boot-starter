@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.configuration;
 
+import org.jspecify.annotations.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
@@ -47,8 +48,8 @@ public class StorybookProperties {
         return basePath;
     }
 
-    public void setBasePath(String basePath) {
-        this.basePath = basePath;
+    public void setBasePath(@Nullable String basePath) {
+        this.basePath = (basePath == null || basePath.isBlank()) ? "/thymeleaflet" : basePath;
     }
 
     public boolean isDebug() {
@@ -63,16 +64,16 @@ public class StorybookProperties {
         return resources;
     }
 
-    public void setResources(ResourceConfig resources) {
-        this.resources = resources;
+    public void setResources(@Nullable ResourceConfig resources) {
+        this.resources = resources != null ? resources : new ResourceConfig();
     }
 
     public CacheConfig getCache() {
         return cache;
     }
 
-    public void setCache(CacheConfig cache) {
-        this.cache = cache;
+    public void setCache(@Nullable CacheConfig cache) {
+        this.cache = cache != null ? cache : new CacheConfig();
     }
 
     public PreviewConfig getPreview() {
@@ -118,7 +119,7 @@ public class StorybookProperties {
             return templatePaths;
         }
 
-        public void setTemplatePaths(List<String> templatePaths) {
+        public void setTemplatePaths(@Nullable List<String> templatePaths) {
             if (templatePaths == null || templatePaths.isEmpty()) {
                 throw new IllegalArgumentException("At least one template path must be configured");
             }
@@ -132,7 +133,7 @@ public class StorybookProperties {
             return stylesheets;
         }
 
-        public void setStylesheets(List<String> stylesheets) {
+        public void setStylesheets(@Nullable List<String> stylesheets) {
             if (stylesheets != null && stylesheets.size() > 10) {
                 throw new IllegalArgumentException("Maximum 10 stylesheets allowed");
             }
@@ -143,7 +144,7 @@ public class StorybookProperties {
             return scripts;
         }
 
-        public void setScripts(List<String> scripts) {
+        public void setScripts(@Nullable List<String> scripts) {
             if (scripts != null && scripts.size() > 10) {
                 throw new IllegalArgumentException("Maximum 10 scripts allowed");
             }
@@ -219,7 +220,7 @@ public class StorybookProperties {
             return backgroundLight;
         }
 
-        public void setBackgroundLight(String backgroundLight) {
+        public void setBackgroundLight(@Nullable String backgroundLight) {
             this.backgroundLight = (backgroundLight == null || backgroundLight.isBlank())
                 ? "#f3f4f6"
                 : backgroundLight.trim();
@@ -229,7 +230,7 @@ public class StorybookProperties {
             return backgroundDark;
         }
 
-        public void setBackgroundDark(String backgroundDark) {
+        public void setBackgroundDark(@Nullable String backgroundDark) {
             this.backgroundDark = (backgroundDark == null || backgroundDark.isBlank())
                 ? "#1f2937"
                 : backgroundDark.trim();
@@ -239,7 +240,7 @@ public class StorybookProperties {
             return viewports;
         }
 
-        public void setViewports(List<ViewportPreset> viewports) {
+        public void setViewports(@Nullable List<ViewportPreset> viewports) {
             if (viewports == null || viewports.isEmpty()) {
                 this.viewports = new ArrayList<>();
                 return;
@@ -264,16 +265,22 @@ public class StorybookProperties {
      * ビューポートプリセット
      */
     public static class ViewportPreset {
-        private String id;
-        private String label;
-        private String labelKey;
-        private Integer width;
-        private Integer height;
+        private @Nullable String id;
+        private @Nullable String label;
+        private @Nullable String labelKey;
+        private @Nullable Integer width;
+        private @Nullable Integer height;
 
         public ViewportPreset() {
         }
 
-        public ViewportPreset(String id, String label, String labelKey, Integer width, Integer height) {
+        public ViewportPreset(
+            @Nullable String id,
+            @Nullable String label,
+            @Nullable String labelKey,
+            @Nullable Integer width,
+            @Nullable Integer height
+        ) {
             this.id = id;
             this.label = label;
             this.labelKey = labelKey;
@@ -285,43 +292,43 @@ public class StorybookProperties {
             return new ViewportPreset(id, null, labelKey, width, height);
         }
 
-        public String getId() {
+        public @Nullable String getId() {
             return id;
         }
 
-        public void setId(String id) {
+        public void setId(@Nullable String id) {
             this.id = id;
         }
 
-        public String getLabel() {
+        public @Nullable String getLabel() {
             return label;
         }
 
-        public void setLabel(String label) {
+        public void setLabel(@Nullable String label) {
             this.label = label;
         }
 
-        public String getLabelKey() {
+        public @Nullable String getLabelKey() {
             return labelKey;
         }
 
-        public void setLabelKey(String labelKey) {
+        public void setLabelKey(@Nullable String labelKey) {
             this.labelKey = labelKey;
         }
 
-        public Integer getWidth() {
+        public @Nullable Integer getWidth() {
             return width;
         }
 
-        public void setWidth(Integer width) {
+        public void setWidth(@Nullable Integer width) {
             this.width = width;
         }
 
-        public Integer getHeight() {
+        public @Nullable Integer getHeight() {
             return height;
         }
 
-        public void setHeight(Integer height) {
+        public void setHeight(@Nullable Integer height) {
             this.height = height;
         }
     }

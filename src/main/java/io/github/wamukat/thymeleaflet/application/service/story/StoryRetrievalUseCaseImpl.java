@@ -42,20 +42,18 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
     @Override
     public List<FragmentStoryInfo> getStoriesForFragment(FragmentDiscoveryService.FragmentInfo fragmentInfo) {
         // StoryDataPortを使用してストーリー設定を取得
-        StoryConfiguration config = storyDataPort.loadStoryConfiguration(fragmentInfo.getTemplatePath()).orElse(null);
-        
         FragmentSummary domainFragmentSummary = fragmentSummaryMapper.toDomain(fragmentInfo);
         List<FragmentStoryInfo> stories = new ArrayList<>();
-        
-        if (config != null && config.storyGroups() != null) {
-            StoryGroup group = config.storyGroups().get(fragmentInfo.getFragmentName());
-            
-            if (group != null && group.stories() != null) {
+
+        Optional<StoryConfiguration> config = storyDataPort.loadStoryConfiguration(fragmentInfo.getTemplatePath());
+        if (config.isPresent()) {
+            StoryGroup group = config.orElseThrow().storyGroups().get(fragmentInfo.getFragmentName());
+            if (group != null) {
                 for (StoryItem story : group.stories()) {
                     stories.add(FragmentStoryInfo.of(
-                        domainFragmentSummary, 
+                        domainFragmentSummary,
                         fragmentInfo.getFragmentName(),
-                        story.name(), 
+                        story.name(),
                         story
                     ));
                 }
@@ -113,9 +111,7 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
     }
 
     private boolean canUseCustomStory(List<FragmentStoryInfo> stories, FragmentSummary fragmentSummary) {
-        boolean hasParameters = fragmentSummary != null
-            && fragmentSummary.getParameters() != null
-            && !fragmentSummary.getParameters().isEmpty();
+        boolean hasParameters = !fragmentSummary.getParameters().isEmpty();
         if (hasParameters) {
             return true;
         }

@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.rendering;
 
+import org.jspecify.annotations.Nullable;
 import org.thymeleaf.context.IExpressionContext;
 import org.thymeleaf.standard.expression.Fragment;
 import org.thymeleaf.standard.expression.IStandardExpression;
@@ -10,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class FragmentExpressionResolver {
 
-    public Object resolve(Object fragmentExpression, Object context) {
+    public @Nullable Object resolve(@Nullable Object fragmentExpression, Object context) {
         if (fragmentExpression == null) {
             return null;
         }

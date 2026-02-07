@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.application.port.inbound.coordination;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import org.springframework.lang.Nullable;
 import org.springframework.ui.Model;
 
 import java.util.List;
@@ -30,14 +31,14 @@ public interface StoryContentCoordinationUseCase {
      */
     record StoryContentResult(
         boolean succeeded,
-        String errorMessage,
-        FragmentStoryInfo storyInfo,
-        FragmentDiscoveryService.FragmentInfo selectedFragment,
-        List<FragmentStoryInfo> stories,
-        Map<String, Object> displayParameters,
-        FragmentStoryInfo defaultStory,
-        Map<String, Object> defaultParameters,
-        Object javadocInfo
+        @Nullable String errorMessage,
+        @Nullable FragmentStoryInfo storyInfo,
+        @Nullable FragmentDiscoveryService.FragmentInfo selectedFragment,
+        @Nullable List<FragmentStoryInfo> stories,
+        @Nullable Map<String, Object> displayParameters,
+        @Nullable FragmentStoryInfo defaultStory,
+        @Nullable Map<String, Object> defaultParameters,
+        @Nullable Object javadocInfo
     ) {
         public static StoryContentResult success(
             FragmentStoryInfo storyInfo,
@@ -46,7 +47,7 @@ public interface StoryContentCoordinationUseCase {
             Map<String, Object> displayParameters,
             FragmentStoryInfo defaultStory,
             Map<String, Object> defaultParameters,
-            Object javadocInfo
+            @Nullable Object javadocInfo
         ) {
             return new StoryContentResult(true, null, storyInfo, selectedFragment, stories,
                 displayParameters, defaultStory, defaultParameters, javadocInfo);

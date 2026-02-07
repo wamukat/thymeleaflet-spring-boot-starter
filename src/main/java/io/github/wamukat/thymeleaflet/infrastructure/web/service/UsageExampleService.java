@@ -9,6 +9,7 @@ import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -186,9 +187,9 @@ public class UsageExampleService {
      */
     public static class UsageExampleResult {
         private final boolean succeeded;
-        private final String errorMessage;
+        private final @Nullable String errorMessage;
         
-        private UsageExampleResult(boolean succeeded, String errorMessage) {
+        private UsageExampleResult(boolean succeeded, @Nullable String errorMessage) {
             this.succeeded = succeeded;
             this.errorMessage = errorMessage;
         }
@@ -202,6 +203,6 @@ public class UsageExampleService {
         }
         
         public boolean succeeded() { return succeeded; }
-        public String errorMessage() { return errorMessage; }
+        public @Nullable String errorMessage() { return errorMessage; }
     }
 }

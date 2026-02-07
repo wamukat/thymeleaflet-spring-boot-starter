@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.controller;
 
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.FragmentRenderingService;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * フラグメント動的レンダリング専用コントローラー
@@ -41,7 +43,7 @@ public class FragmentRenderingController {
         FragmentRenderingService.RenderingResult result = 
             fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model);
         
-        return result.templateReference();
+        return Objects.requireNonNull(result.templateReference());
     }
 
     /**
@@ -52,13 +54,13 @@ public class FragmentRenderingController {
             @PathVariable("templatePath") String templatePath,
             @PathVariable("fragmentName") String fragmentName,
             @PathVariable("storyName") String storyName,
-            @RequestBody(required = false) RenderOverridesRequest request,
+            @RequestBody(required = false) @Nullable RenderOverridesRequest request,
             Model model) {
         Map<String, Object> parameters = request != null ? request.parameters() : null;
         Map<String, Object> modelOverrides = request != null ? request.model() : null;
         FragmentRenderingService.RenderingResult result =
             fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model, parameters, modelOverrides);
-        return result.templateReference();
+        return Objects.requireNonNull(result.templateReference());
     }
 
     public record RenderOverridesRequest(Map<String, Object> parameters, Map<String, Object> model) {}

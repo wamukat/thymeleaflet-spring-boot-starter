@@ -1,5 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.fragment;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Map;
 
 /**
@@ -19,7 +21,7 @@ public interface MetricsUseCase {
      * メトリクスコマンド
      */
     class MetricsCommand {
-        private final Map<String, Object> data;
+        private final @Nullable Map<String, Object> data;
         private final long discoveryTime;
         private final int fragmentCount;
 
@@ -35,7 +37,7 @@ public interface MetricsUseCase {
             this.data = null;
         }
 
-        public Map<String, Object> getData() { return data; }
+        public @Nullable Map<String, Object> getData() { return data; }
         public long getDiscoveryTime() { return discoveryTime; }
         public int getFragmentCount() { return fragmentCount; }
     }

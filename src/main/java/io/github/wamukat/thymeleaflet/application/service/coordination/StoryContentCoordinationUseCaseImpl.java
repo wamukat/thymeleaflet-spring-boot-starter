@@ -92,7 +92,7 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             Map<String, Object> displayParameters = thymeleafFragmentRenderer.configureModelWithStoryParameters(storyParameters, request.model());
             
             // defaultストーリーの情報取得（差異ハイライト用）
-            FragmentStoryInfo defaultStory = null;
+            FragmentStoryInfo defaultStory = storyInfo;
             Map<String, Object> defaultParameters = new HashMap<>();
             
             if (!request.storyName().equals("default")) {

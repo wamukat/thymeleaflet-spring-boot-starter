@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.story;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
+import org.jspecify.annotations.Nullable;
 
 /**
  * ストーリー検証専用ユースケース - Inbound Port
@@ -38,10 +39,10 @@ public interface StoryValidationUseCase {
      * ストーリー検証結果
      */
     class StoryValidationResult {
-        private final FragmentStoryInfo story;
+        private final @Nullable FragmentStoryInfo story;
         private final boolean success;
 
-        private StoryValidationResult(FragmentStoryInfo story, boolean success) {
+        private StoryValidationResult(@Nullable FragmentStoryInfo story, boolean success) {
             this.story = story;
             this.success = success;
         }
@@ -54,7 +55,7 @@ public interface StoryValidationUseCase {
             return new StoryValidationResult(null, false);
         }
 
-        public FragmentStoryInfo getStory() { return story; }
+        public @Nullable FragmentStoryInfo getStory() { return story; }
         public boolean isSuccess() { return success; }
     }
 }

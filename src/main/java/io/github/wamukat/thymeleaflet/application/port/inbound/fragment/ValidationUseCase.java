@@ -1,5 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.fragment;
 
+import org.jspecify.annotations.Nullable;
+
 /**
  * 汎用検証専用ユースケース - Inbound Port
  * 
@@ -22,11 +24,11 @@ public interface ValidationUseCase {
      * 検証コマンド
      */
     class ValidationCommand {
-        private final String target;
-        private final Object data;
-        private final String templatePath;
-        private final String fragmentName;
-        private final String storyName;
+        private final @Nullable String target;
+        private final @Nullable Object data;
+        private final @Nullable String templatePath;
+        private final @Nullable String fragmentName;
+        private final @Nullable String storyName;
 
         public ValidationCommand(String target, Object data) {
             this.target = target;
@@ -44,11 +46,11 @@ public interface ValidationUseCase {
             this.data = null;
         }
 
-        public String getTarget() { return target; }
-        public Object getData() { return data; }
-        public String getTemplatePath() { return templatePath; }
-        public String getFragmentName() { return fragmentName; }
-        public String getStoryName() { return storyName; }
+        public @Nullable String getTarget() { return target; }
+        public @Nullable Object getData() { return data; }
+        public @Nullable String getTemplatePath() { return templatePath; }
+        public @Nullable String getFragmentName() { return fragmentName; }
+        public @Nullable String getStoryName() { return storyName; }
     }
 
 }
