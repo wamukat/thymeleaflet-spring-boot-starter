@@ -175,7 +175,7 @@
                     <compilerArgs>
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>--should-stop=ifError=FLOW</arg>
-                        <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:WARN -XepOpt:NullAway:AnnotatedPackages=io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery,io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper,io.github.wamukat.thymeleaflet.infrastructure.adapter.persistence,io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation,io.github.wamukat.thymeleaflet.infrastructure.web,io.github.wamukat.thymeleaflet.infrastructure.configuration,io.github.wamukat.thymeleaflet.application.service,io.github.wamukat.thymeleaflet.application.port,io.github.wamukat.thymeleaflet.domain</arg>
+                        <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:WARN -XepOpt:NullAway:AnnotatedPackages=io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery,io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper,io.github.wamukat.thymeleaflet.infrastructure.adapter.persistence,io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation,io.github.wamukat.thymeleaflet.infrastructure.adapter.service,io.github.wamukat.thymeleaflet.infrastructure.adapter.story,io.github.wamukat.thymeleaflet.infrastructure.web,io.github.wamukat.thymeleaflet.infrastructure.configuration,io.github.wamukat.thymeleaflet.application.service,io.github.wamukat.thymeleaflet.application.port,io.github.wamukat.thymeleaflet.domain</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
