@@ -19,11 +19,6 @@
         </h3>
     </div>
     <div class="card-thymeleaflet-content">
-        <div th:if="${displayModel != null and !#maps.isEmpty(displayModel)}" class="mb-3 text-xs text-gray-500">
-            <span th:text="#{thymeleaflet.storyPreview.model.description}">
-                Model values are injected via story.model.
-            </span>
-        </div>
         <div th:if="${selectedFragment != null and selectedStory != null}"
              hx-get th:hx-get="@{'/thymeleaflet/' + ${templatePathEncoded} + '/' + ${selectedFragment.fragmentName} + '/' + ${selectedStory.storyName} + '/usage'}"
              hx-trigger="load"
@@ -89,11 +84,6 @@
         <div id="usage-description" class="mb-3 text-sm text-gray-600"
              th:text="#{thymeleaflet.storyPreview.usage.description}">
             This usage example reflects the current preview.
-        </div>
-        <div th:if="${displayModel != null and !displayModel.isEmpty()}" class="mb-3 text-xs text-gray-500">
-            <span th:text="#{thymeleaflet.storyPreview.model.description}">
-                Model values are injected via story.model.
-            </span>
         </div>
         <div class="bg-gray-900 text-gray-100 p-4 rounded-lg font-mono text-sm overflow-x-auto">
             <div id="usage-example"
