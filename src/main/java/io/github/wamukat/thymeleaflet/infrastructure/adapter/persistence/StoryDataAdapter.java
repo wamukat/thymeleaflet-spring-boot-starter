@@ -8,7 +8,6 @@ import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Component;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ストーリーデータアクセスアダプタ
@@ -41,13 +41,12 @@ public class StoryDataAdapter implements StoryDataPort {
     }
     
     @Override
-    public @Nullable StoryConfiguration loadStoryConfiguration(String templatePath) {
+    public Optional<StoryConfiguration> loadStoryConfiguration(String templatePath) {
         try {
-            return yamlStoryConfigurationLoader.loadStoryConfiguration(templatePath)
-                .orElse(null);
+            return yamlStoryConfigurationLoader.loadStoryConfiguration(templatePath);
         } catch (Exception e) {
             logger.error("Failed to load story configuration for {}: {}", templatePath, e.getMessage());
-            return null;
+            return Optional.empty();
         }
     }
     
@@ -57,7 +56,8 @@ public class StoryDataAdapter implements StoryDataPort {
         
         try {
             StoryConfiguration config = loadStoryConfiguration(
-                storyInfo.getFragmentSummary().getTemplatePath());
+                storyInfo.getFragmentSummary().getTemplatePath()
+            ).orElse(null);
             
             if (config != null && config.storyGroups() != null) {
                 String fragmentName = storyInfo.getFragmentSummary().getFragmentName();
@@ -90,18 +90,18 @@ public class StoryDataAdapter implements StoryDataPort {
     }
 
     @Override
-    public @Nullable FragmentStoryInfo getStory(String templatePath, String fragmentName, String storyName) {
+    public Optional<FragmentStoryInfo> getStory(String templatePath, String fragmentName, String storyName) {
         try {
-            StoryConfiguration storyConfiguration = loadStoryConfiguration(templatePath);
+            Optional<StoryConfiguration> storyConfiguration = loadStoryConfiguration(templatePath);
             
             // Story configuration が見つからない場合はデフォルトストーリーを返す
-            if (storyConfiguration == null) {
+            if (storyConfiguration.isEmpty()) {
                 logger.debug("Story configuration not found for template: {}, returning default story", templatePath);
                 return createDefaultStory(templatePath, fragmentName, storyName);
             }
             
             // StoryConfiguration.storyGroups()はMap<String, StoryGroup>を返す
-            StoryGroup storyGroup = storyConfiguration.storyGroups().get(fragmentName);
+            StoryGroup storyGroup = storyConfiguration.get().storyGroups().get(fragmentName);
             if (storyGroup == null) {
                 logger.debug("Story group not found for fragment: {}, returning default story", fragmentName);
                 return createDefaultStory(templatePath, fragmentName, storyName);
@@ -109,40 +109,36 @@ public class StoryDataAdapter implements StoryDataPort {
             
             // Custom story: base storyから作成して返す
             if ("custom".equals(storyName)) {
-                StoryItem baseStory = resolveBaseStory(storyGroup);
-                if (baseStory == null) {
+                Optional<StoryItem> baseStory = resolveBaseStory(storyGroup);
+                if (baseStory.isEmpty()) {
                     logger.debug("Base story not found for custom: {}::{}", templatePath, fragmentName);
                     return createDefaultStory(templatePath, fragmentName, storyName);
                 }
 
                 // FragmentDiscoveryServiceから実際のFragmentInfoを取得
-                FragmentDiscoveryService.FragmentInfo fragmentInfo = fragmentDiscoveryService.discoverFragments()
-                    .stream()
-                    .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
-                    .findFirst()
-                    .orElse(null);
-                if (fragmentInfo == null) {
+                Optional<FragmentDiscoveryService.FragmentInfo> fragmentInfo = findFragmentInfo(templatePath, fragmentName);
+                if (fragmentInfo.isEmpty()) {
                     logger.warn("FragmentInfo not found for {}::{}", templatePath, fragmentName);
-                    return null;
+                    return Optional.empty();
                 }
 
                 StoryItem customStory = new StoryItem(
                     "custom",
                     "Custom",
                     "",
-                    baseStory.parameters(),
-                    baseStory.preview(),
-                    baseStory.model()
+                    baseStory.get().parameters(),
+                    baseStory.get().preview(),
+                    baseStory.get().model()
                 );
 
                 io.github.wamukat.thymeleaflet.domain.model.FragmentSummary domainFragmentSummary =
-                    fragmentSummaryMapper.toDomain(fragmentInfo);
-                return FragmentStoryInfo.of(
+                    fragmentSummaryMapper.toDomain(fragmentInfo.get());
+                return Optional.of(FragmentStoryInfo.of(
                     domainFragmentSummary,
                     fragmentName,
                     "custom",
                     customStory
-                );
+                ));
             }
 
             // StoryGroup.findStoryByName()を使用してストーリーを検索
@@ -154,46 +150,37 @@ public class StoryDataAdapter implements StoryDataPort {
             
             // StoryItemをFragmentStoryInfoに変換
             // FragmentDiscoveryServiceから実際のFragmentInfoを取得
-            FragmentDiscoveryService.FragmentInfo fragmentInfo = fragmentDiscoveryService.discoverFragments()
-                .stream()
-                .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
-                .findFirst()
-                .orElse(null);
-            
-            if (fragmentInfo == null) {
+            Optional<FragmentDiscoveryService.FragmentInfo> fragmentInfo = findFragmentInfo(templatePath, fragmentName);
+            if (fragmentInfo.isEmpty()) {
                 logger.warn("FragmentInfo not found for {}::{}", templatePath, fragmentName);
-                return null;
+                return Optional.empty();
             }
             
             io.github.wamukat.thymeleaflet.domain.model.FragmentSummary domainFragmentSummary = 
-                fragmentSummaryMapper.toDomain(fragmentInfo);
-            return FragmentStoryInfo.of(
+                fragmentSummaryMapper.toDomain(fragmentInfo.get());
+            return Optional.of(FragmentStoryInfo.of(
                 domainFragmentSummary,
                 fragmentName,
                 storyName,
                 storyItem
-            );
+            ));
             
         } catch (Exception e) {
             logger.error("Error retrieving story: {}::{}::{}", templatePath, fragmentName, storyName, e);
-            return null;
+            return Optional.empty();
         }
     }
     
     /**
      * デフォルトストーリーを作成
      */
-    private @Nullable FragmentStoryInfo createDefaultStory(String templatePath, String fragmentName, String storyName) {
+    private Optional<FragmentStoryInfo> createDefaultStory(String templatePath, String fragmentName, String storyName) {
         // FragmentDiscoveryServiceから実際のFragmentInfoを取得
-        FragmentDiscoveryService.FragmentInfo fragmentInfo = fragmentDiscoveryService.discoverFragments()
-            .stream()
-            .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
-            .findFirst()
-            .orElse(null);
+        Optional<FragmentDiscoveryService.FragmentInfo> fragmentInfo = findFragmentInfo(templatePath, fragmentName);
         
-        if (fragmentInfo == null) {
+        if (fragmentInfo.isEmpty()) {
             logger.debug("FragmentInfo not found for {}::{}, cannot create default story", templatePath, fragmentName);
-            return null;
+            return Optional.empty();
         }
 
         String resolvedStoryName = (storyName != null && !storyName.isBlank()) ? storyName : "default";
@@ -207,23 +194,30 @@ public class StoryDataAdapter implements StoryDataPort {
         );
         
         io.github.wamukat.thymeleaflet.domain.model.FragmentSummary domainFragmentSummary = 
-            fragmentSummaryMapper.toDomain(fragmentInfo);
-        return FragmentStoryInfo.of(
+            fragmentSummaryMapper.toDomain(fragmentInfo.get());
+        return Optional.of(FragmentStoryInfo.of(
             domainFragmentSummary,
             fragmentName,
             resolvedStoryName,
             defaultStory
-        );
+        ));
     }
 
-    private @Nullable StoryItem resolveBaseStory(StoryGroup storyGroup) {
+    private Optional<StoryItem> resolveBaseStory(StoryGroup storyGroup) {
         if (storyGroup == null || storyGroup.stories().isEmpty()) {
-            return null;
+            return Optional.empty();
         }
         StoryItem defaultStory = storyGroup.findStoryByName("default");
         if (defaultStory != null) {
-            return defaultStory;
+            return Optional.of(defaultStory);
         }
-        return storyGroup.stories().get(0);
+        return Optional.of(storyGroup.stories().get(0));
+    }
+
+    private Optional<FragmentDiscoveryService.FragmentInfo> findFragmentInfo(String templatePath, String fragmentName) {
+        return fragmentDiscoveryService.discoverFragments()
+            .stream()
+            .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
+            .findFirst();
     }
 }

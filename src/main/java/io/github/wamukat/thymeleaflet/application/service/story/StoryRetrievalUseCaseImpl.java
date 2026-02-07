@@ -35,13 +35,13 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
 
     @Override
     public FragmentStoryInfo getStory(String templatePath, String fragmentName, String storyName) {
-        return storyDataPort.getStory(templatePath, fragmentName, storyName);
+        return storyDataPort.getStory(templatePath, fragmentName, storyName).orElse(null);
     }
 
     @Override
     public List<FragmentStoryInfo> getStoriesForFragment(FragmentDiscoveryService.FragmentInfo fragmentInfo) {
         // StoryDataPortを使用してストーリー設定を取得
-        StoryConfiguration config = storyDataPort.loadStoryConfiguration(fragmentInfo.getTemplatePath());
+        StoryConfiguration config = storyDataPort.loadStoryConfiguration(fragmentInfo.getTemplatePath()).orElse(null);
         
         FragmentSummary domainFragmentSummary = fragmentSummaryMapper.toDomain(fragmentInfo);
         List<FragmentStoryInfo> stories = new ArrayList<>();

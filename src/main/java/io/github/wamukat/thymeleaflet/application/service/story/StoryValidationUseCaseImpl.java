@@ -26,7 +26,7 @@ public class StoryValidationUseCaseImpl implements StoryValidationUseCase {
             command.getTemplatePath(), 
             command.getFragmentName(), 
             command.getStoryName()
-        );
+        ).orElse(null);
         
         if (story == null) {
             return StoryValidationResult.failure();
