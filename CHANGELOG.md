@@ -5,12 +5,27 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [Unreleased]
 
-- Parser migration progress:
-- Define parser baseline/spec documents for Thymeleaf 3.1.2 compatibility scope.
-- Introduce dedicated fragment signature parser and switch to Thymeleaf internal signature parsing.
-- Add structured signature diagnostics (code/severity/user-safe message) and surface in UI.
+- TBD
+
+## [0.2.3] - 2026-02-07
+
+- Complete parser migration planning and implementation (spec/model docs, parser integration, diagnostics, UI alignment).
+- Define Thymeleaf 3.1.2-based signature policy and clarify declaration-side unsupported syntax handling.
+- Add structured fragment signature diagnostics and surface user-safe diagnostic messages in UI.
 - Remove legacy plain-name fallback for invalid fragment signatures.
-- Align Story Values ordering/status display with JavaDoc-driven parameter ordering and state chips.
+- Align Story Values ordering and state rendering across main content and story preview.
+
+### Issues
+
+- #39 Epic: Thymeleaf Fragment Parser の全面刷新（Regex廃止）
+- #48 Parser仕様策定: サポート対象文法の定義
+- #49 新ドメインモデル設計: Fragment解析結果の再定義
+- #50 Parser実装(1): th:fragmentシグネチャ解析
+- #51 Parser実装(2): JavaDoc連携とParamマッピング
+- #52 診断改善: Parserエラー分類と表示方針
+- #53 UI接続: Fragment Details / Story values の新モデル対応
+- #54 負債返済: 旧Regex解析経路の撤去
+- #55 ドキュメント更新: 新Parser仕様・互換性・制約
 
 ## [0.2.2] - 2026-02-07
 

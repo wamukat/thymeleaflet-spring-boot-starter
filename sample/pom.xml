@@ -7,7 +7,7 @@
 
     <groupId>io.github.wamukat.thymeleaflet.samples</groupId>
     <artifactId>thymeleaflet-sample</artifactId>
-    <version>0.2.2</version>
+    <version>0.2.3</version>
 
     <name>Thymeleaflet Sample</name>
     <description>Sample app for thymeleaflet-spring-boot-starter</description>
@@ -41,7 +41,7 @@
         <dependency>
             <groupId>io.github.wamukat</groupId>
             <artifactId>thymeleaflet-spring-boot-starter</artifactId>
-            <version>0.2.2</version>
+            <version>0.2.3</version>
         </dependency>
     </dependencies>
 
