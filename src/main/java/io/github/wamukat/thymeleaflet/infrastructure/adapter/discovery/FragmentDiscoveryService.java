@@ -39,6 +39,9 @@ public class FragmentDiscoveryService {
     
     @Autowired
     private StorybookProperties storybookProperties;
+
+    @Autowired
+    private FragmentSignatureParser fragmentSignatureParser;
     
     /**
      * テンプレートディレクトリから全フラグメントを発見
@@ -119,37 +122,25 @@ public class FragmentDiscoveryService {
      */
     private FragmentInfo analyzeFragment(String templatePath, String fragmentDefinition) {
         logger.debug("[DEBUG_FRAGMENT_PARAMS] Analyzing fragment: template={}, definition={}", templatePath, fragmentDefinition);
-        
+
         String fragmentName;
-        List<String> parameters = new ArrayList<>();
-        
-        // パラメータ付きフラグメントの解析: "fragmentName(param1, param2, ...)" / "fragmentName()"
-        Pattern paramPattern = Pattern.compile("([^(]+)\\(([^)]*)\\)");
-        Matcher paramMatcher = paramPattern.matcher(fragmentDefinition);
-        
-        logger.debug("[DEBUG_FRAGMENT_PARAMS] Parameter pattern matching against: {}", fragmentDefinition);
-        
-        if (paramMatcher.matches()) {
-            fragmentName = paramMatcher.group(1).trim();
-            String paramString = paramMatcher.group(2);
-            
-            logger.debug("[DEBUG_FRAGMENT_PARAMS] Found parameters in fragment: name={}, paramString={}", fragmentName, paramString);
-            
-            // パラメータをカンマで分割（空の括弧はパラメータなし扱い）
-            if (paramString != null && !paramString.trim().isEmpty()) {
-                String[] paramArray = paramString.split(",");
-                for (String param : paramArray) {
-                    String trimmedParam = param.trim();
-                    parameters.add(trimmedParam);
-                    logger.debug("[DEBUG_FRAGMENT_PARAMS] Added parameter: {}", trimmedParam);
-                }
-            } else {
-                logger.debug("[DEBUG_FRAGMENT_PARAMS] Empty parameter list detected for fragment: {}", fragmentName);
-            }
+        List<String> parameters;
+
+        FragmentSignatureParser.ParseResult parseResult = fragmentSignatureParser.parse(fragmentDefinition);
+        if (parseResult.success()) {
+            fragmentName = parseResult.fragmentName();
+            parameters = new ArrayList<>(parseResult.parameters());
+            logger.debug("[DEBUG_FRAGMENT_PARAMS] Parsed by FragmentSignatureParser: name={}, parameters={}", fragmentName, parameters);
         } else {
-            // パラメータなしフラグメント
+            // keep backward compatibility: fallback to plain name when signature parse fails
             fragmentName = fragmentDefinition.trim();
-            logger.debug("[DEBUG_FRAGMENT_PARAMS] No parameters found for fragment: {}", fragmentName);
+            parameters = new ArrayList<>();
+            logger.warn(
+                "[DEBUG_FRAGMENT_PARAMS] Fragment signature parse failed. fallback=plain-name, definition={}, code={}, message={}",
+                fragmentDefinition,
+                parseResult.code(),
+                parseResult.message()
+            );
         }
         
         FragmentDomainService.FragmentType type = fragmentDomainService.determineFragmentType(templatePath, fragmentName, parameters);
