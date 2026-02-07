@@ -3,13 +3,23 @@
 This document defines the target behavior for the new fragment parser (Epic #39).
 Scope is **fragment declaration parsing** (`th:fragment="..."`) and normalization used by discovery/UI.
 
-## 1. Goals
+## 1. Baseline Version
+
+- Grammar baseline: **Thymeleaf 3.1.2.RELEASE**
+- Primary reference: `org.thymeleaf.standard.expression.FragmentSignatureUtils`
+
+This spec defines a staged adoption policy:
+
+- **Parse compatibility set**: declarations accepted by Thymeleaf's fragment-signature parser.
+- **UI support set (v1)**: subset that Thymeleaflet guarantees as stable for display/edit flows.
+
+## 2. Goals
 
 - Remove regex-only extraction for fragment signatures.
 - Support practical Thymeleaf fragment declaration syntax in a deterministic way.
 - Produce stable parser output for UI, Story values ordering, and diagnostics.
 
-## 2. Parsing Scope
+## 3. Parsing Scope
 
 ### 2.1 Input Scope
 
@@ -27,9 +37,9 @@ Parser output for one declaration consists of:
 - `originalDefinition`: raw `th:fragment` value
 - `diagnostics`: parse warnings/errors with location
 
-## 3. Supported Grammar (v1)
+## 4. Supported Grammar (v1 UI support set)
 
-The following signature form is supported:
+The v1 UI support set is:
 
 ```ebnf
 signature      = fragmentName , [ ws , "(" , ws , [ parameterList ] , ws , ")" ] ;
@@ -42,14 +52,23 @@ nextChar       = firstChar | "_" | "-" ;
 ws             = { " " | "\t" | "\n" | "\r" } ;
 ```
 
-### 3.1 Normalization Rules
+### 4.1 Normalization Rules
 
 - Leading/trailing whitespace is ignored.
 - Parameter order is preserved as declared.
 - `fragmentName()` is valid and yields empty parameter list.
 - Duplicate parameter names are preserved (reported as warning, not auto-fixed).
 
-## 4. Explicitly Not Supported (v1)
+## 5. Parse Compatibility vs UI Support
+
+- Parse compatibility follows Thymeleaf 3.1.2 behavior.
+- Thymeleaflet v1 UI support is intentionally narrower than parse compatibility.
+- If a declaration is parse-compatible but outside UI support:
+  - keep declaration in discovery result
+  - emit diagnostic (`UNSUPPORTED_SYNTAX`)
+  - disable strict UI-driven editing for that declaration
+
+## 6. Explicitly Not Supported (v1 UI support set)
 
 The parser does **not** support these declaration forms in v1:
 
@@ -65,14 +84,14 @@ When unsupported syntax is detected, parser behavior:
 - skip creating normalized declaration for that entry
 - continue processing other declarations
 
-## 5. Ambiguity Resolution Rules
+## 7. Ambiguity Resolution Rules
 
 - If parentheses are present but unbalanced, treat as parse error (`INVALID_SIGNATURE`).
 - If comma-separated token is empty (e.g. `a,,b`), treat as parse error.
 - If identifier validation fails, treat as parse error.
 - If multiple `th:fragment` declarations are present in one template, all valid ones are returned in appearance order.
 
-## 6. Example Matrix
+## 8. Example Matrix
 
 | Input `th:fragment` value | Result |
 | --- | --- |
@@ -82,15 +101,15 @@ When unsupported syntax is detected, parser behavior:
 | ` profileCard ( name , age ) ` | name=`profileCard`, params=`[name, age]` |
 | `profileCard(name,,age)` | error `INVALID_SIGNATURE` |
 | `profileCard(name` | error `INVALID_SIGNATURE` |
-| `profileCard(name='x')` | error `UNSUPPORTED_SYNTAX` |
+| `profileCard(name='x')` | parse-compatible may vary by Thymeleaf internals, but v1 UI support: `UNSUPPORTED_SYNTAX` |
 
-## 7. Compatibility Policy
+## 9. Compatibility Policy
 
 - Existing simple signatures remain compatible.
 - Currently accepted-but-ambiguous strings may become explicit errors with diagnostics.
 - UI should surface warnings/errors without failing the full fragment list.
 
-## 8. Test Requirements (for implementation issues)
+## 10. Test Requirements (for implementation issues)
 
 - Unit tests for grammar acceptance/rejection.
 - Golden tests for normalization output ordering.
