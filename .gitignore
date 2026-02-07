@@ -49,6 +49,8 @@ playwright-report/
 .env
 .env.*
 .cache/
+.npm/
+Library/
 coverage/
 dist/
 build/
