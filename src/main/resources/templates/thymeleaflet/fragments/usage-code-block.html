@@ -45,23 +45,11 @@
      th:class="'storybook-usage-section ' + (${isError} ? 'error-state' : 'normal-state')">
     
     <!-- ブロックヘッダー -->
-    <div th:if="${blockTitle != '' or copyButton}" class="flex justify-between items-center mb-2">
+    <div th:if="${blockTitle != ''}" class="mb-2">
         <!-- タイトル -->
         <h4 th:if="${blockTitle != ''}" 
             th:class="'text-sm font-medium ' + (${isError} ? 'text-red-700' : 'text-gray-700')"
             th:text="${blockTitle}">Code Title</h4>
-        
-        <!-- コピーボタン -->
-        <button th:if="${copyButton}" 
-                class="btn-thymeleaflet-secondary btn-thymeleaflet-small copy-button"
-                th:attr="onclick='copyUsageExample(\'' + ${elementId} + '\')',
-                         title=#{thymeleaflet.copy.title}">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
-            </svg>
-            <span th:text="#{thymeleaflet.copy}">Copy</span>
-        </button>
     </div>
     
     <!-- エラーメッセージ -->
@@ -76,7 +64,18 @@
     </div>
     
     <!-- コードブロック本体 -->
-    <div class="storybook-usage-example">
+    <div class="storybook-usage-example relative">
+        <button th:if="${copyButton}"
+                type="button"
+                class="copy-button absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-md border border-gray-600 bg-gray-800/90 px-2 py-1 text-xs font-medium text-gray-100 transition-colors hover:bg-gray-700"
+                th:attr="onclick='copyUsageExample(\'' + ${elementId} + '\')',
+                         title=#{thymeleaflet.copy.title}">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+            <span th:text="#{thymeleaflet.copy}">Copy</span>
+        </button>
         <div class="code-block-scrollable">
             <pre class="code-block-pre"><code th:class="'language-' + ${lang} + ' hljs'" 
                                              th:text="${displayCode}">Code content</code></pre>

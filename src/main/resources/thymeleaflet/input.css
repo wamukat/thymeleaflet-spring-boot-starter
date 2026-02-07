@@ -5,6 +5,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  [x-cloak] {
+    display: none !important;
+  }
+}
+
 @layer components {
   /* Storybook専用のボタンスタイル */
   .btn-storybook-primary {
@@ -109,7 +115,7 @@
   }
 
   .thymeleaflet-footer {
-    @apply mt-auto py-6;
+    @apply mt-auto;
   }
 
   .thymeleaflet-footer-inner {
