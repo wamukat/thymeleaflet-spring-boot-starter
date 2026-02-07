@@ -21,7 +21,10 @@
 
 ## Release Flow
 - 「新しいバージョンとしてリリースする」と依頼されたら、現在のバージョン番号を添えて「バージョン番号はどうする？」と確認する。
-- 確定後は `RELEASE.md` の手順に従い、`pom.xml` と `sample/pom.xml` のバージョンを更新し、`CHANGELOG.md` を更新してリリースを進める。
+- リリース作業は `main` へ直接コミットせず、`release/x.y.z` ブランチを作成して進める。
+- `release/x.y.z` では `pom.xml` と `sample/pom.xml` のバージョン更新、`CHANGELOG.md` 更新を行う。
+- 更新後は PR を作成し、CI/E2E確認後に `main` へマージしてからタグ作成・GitHub Release・デプロイを行う。
+- 確定後は `RELEASE.md` の手順に従ってリリースを進める。
 
 ## Branch Cleanup
 - 「ブランチを整理してください」と依頼されたら、未マージのブランチ有無を確認する。
