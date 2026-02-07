@@ -261,10 +261,12 @@ function hierarchicalFragmentList() {
             if (!story || !story.parameters) {
                 return [];
             }
+            const parameterSpecOrder = this.getParameterSpecOrder();
             if (Array.isArray(story.parameters)) {
-                return story.parameters;
+                return this.sortStoryParameterEntries(story.parameters, parameterSpecOrder);
             }
-            return Object.entries(story.parameters).map(([key, value]) => ({ key, value }));
+            const entries = Object.entries(story.parameters).map(([key, value]) => ({ key, value }));
+            return this.sortStoryParameterEntries(entries, parameterSpecOrder);
         },
         selectedStory: null,
         searchQuery: '',
@@ -481,13 +483,46 @@ function hierarchicalFragmentList() {
 
         customStoryEntries(kind) {
             const bucket = this.customStoryState?.[kind] || {};
-            return Object.entries(bucket).map(([key, value]) => ({
+            const entries = Object.entries(bucket).map(([key, value]) => ({
                 kind,
                 key,
                 value,
                 type: this.getCustomValueType(value),
                 rawValue: this.customStoryRawValues?.[`${kind}:${key}`]
             }));
+            if (kind !== 'parameters') {
+                return entries;
+            }
+            return this.sortStoryParameterEntries(entries, this.getParameterSpecOrder());
+        },
+
+        getParameterSpecOrder() {
+            const javadocParameters = this.selectedFragment?.javadocInfo?.parameters;
+            if (!Array.isArray(javadocParameters) || javadocParameters.length === 0) {
+                return null;
+            }
+            const orderedNames = javadocParameters
+                .map(param => param?.name)
+                .filter(name => typeof name === 'string' && name.length > 0);
+            return orderedNames.length > 0 ? orderedNames : null;
+        },
+
+        sortStoryParameterEntries(entries, parameterSpecOrder) {
+            if (!Array.isArray(entries) || entries.length === 0) {
+                return [];
+            }
+            if (!Array.isArray(parameterSpecOrder) || parameterSpecOrder.length === 0) {
+                return entries;
+            }
+            const orderMap = new Map(parameterSpecOrder.map((name, index) => [name, index]));
+            return [...entries].sort((a, b) => {
+                const aOrder = orderMap.has(a?.key) ? orderMap.get(a.key) : Number.MAX_SAFE_INTEGER;
+                const bOrder = orderMap.has(b?.key) ? orderMap.get(b.key) : Number.MAX_SAFE_INTEGER;
+                if (aOrder !== bOrder) {
+                    return aOrder - bOrder;
+                }
+                return 0;
+            });
         },
 
         getCustomValueType(value) {
