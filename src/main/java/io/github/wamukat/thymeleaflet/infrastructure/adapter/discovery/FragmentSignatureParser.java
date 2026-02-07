@@ -1,12 +1,16 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
+import org.thymeleaf.standard.expression.FragmentSignature;
+import org.thymeleaf.standard.expression.FragmentSignatureUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+import java.lang.reflect.Method;
 import java.util.List;
 
 @Component
 public class FragmentSignatureParser {
+
+    private static final Method INTERNAL_PARSE_METHOD = loadInternalParseMethod();
 
     public ParseResult parse(String definition) {
         if (definition == null) {
@@ -17,67 +21,36 @@ public class FragmentSignatureParser {
         if (input.isEmpty()) {
             return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "fragment definition is empty");
         }
-
-        int openParenIndex = input.indexOf('(');
-        if (openParenIndex < 0) {
-            if (!isValidIdentifier(input)) {
-                return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "invalid fragment name: " + input);
-            }
-            return ParseResult.success(input, List.of());
+        if (hasEmptyParameterToken(input)) {
+            return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "empty parameter token");
         }
 
-        int closeParenIndex = input.lastIndexOf(')');
-        if (closeParenIndex < openParenIndex) {
-            return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "unbalanced parentheses");
+        final FragmentSignature signature;
+        try {
+            signature = (FragmentSignature) INTERNAL_PARSE_METHOD.invoke(null, input);
+        } catch (Exception ex) {
+            return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "invalid signature: " + input);
+        }
+        if (signature == null) {
+            return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "invalid signature: " + input);
         }
 
-        String trailing = input.substring(closeParenIndex + 1).trim();
-        if (!trailing.isEmpty()) {
-            return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "unexpected trailing content");
-        }
-
-        String fragmentName = input.substring(0, openParenIndex).trim();
+        String fragmentName = signature.getFragmentName();
         if (!isValidIdentifier(fragmentName)) {
-            return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "invalid fragment name: " + fragmentName);
+            return ParseResult.error(DiagnosticCode.UNSUPPORTED_SYNTAX, "unsupported fragment name syntax: " + fragmentName);
         }
 
-        String paramSection = input.substring(openParenIndex + 1, closeParenIndex).trim();
-        if (paramSection.isEmpty()) {
-            return ParseResult.success(fragmentName, List.of());
-        }
-
-        List<String> parameters = new ArrayList<>();
-        for (String rawToken : splitByComma(paramSection)) {
-            String token = rawToken.trim();
+        List<String> parameters = signature.hasParameters() ? signature.getParameterNames() : List.of();
+        for (String token : parameters) {
             if (token.isEmpty()) {
                 return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "empty parameter token");
             }
             if (!isValidIdentifier(token)) {
-                if (token.contains("=") || token.contains("'") || token.contains("\"")) {
-                    return ParseResult.error(DiagnosticCode.UNSUPPORTED_SYNTAX, "unsupported parameter syntax: " + token);
-                }
-                return ParseResult.error(DiagnosticCode.INVALID_SIGNATURE, "invalid parameter token: " + token);
+                return ParseResult.error(DiagnosticCode.UNSUPPORTED_SYNTAX, "unsupported parameter syntax: " + token);
             }
-            parameters.add(token);
         }
 
         return ParseResult.success(fragmentName, parameters);
-    }
-
-    private static List<String> splitByComma(String value) {
-        List<String> result = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            if (c == ',') {
-                result.add(current.toString());
-                current.setLength(0);
-                continue;
-            }
-            current.append(c);
-        }
-        result.add(current.toString());
-        return result;
     }
 
     private static boolean isValidIdentifier(String value) {
@@ -107,6 +80,26 @@ public class FragmentSignatureParser {
     public enum DiagnosticCode {
         INVALID_SIGNATURE,
         UNSUPPORTED_SYNTAX
+    }
+
+    private static Method loadInternalParseMethod() {
+        try {
+            Method method = FragmentSignatureUtils.class.getDeclaredMethod("internalParseFragmentSignature", String.class);
+            method.setAccessible(true);
+            return method;
+        } catch (Exception ex) {
+            throw new IllegalStateException("Failed to access Thymeleaf fragment signature parser", ex);
+        }
+    }
+
+    private static boolean hasEmptyParameterToken(String input) {
+        int openIndex = input.indexOf('(');
+        int closeIndex = input.lastIndexOf(')');
+        if (openIndex < 0 || closeIndex <= openIndex) {
+            return false;
+        }
+        String compact = input.substring(openIndex + 1, closeIndex).replaceAll("\\s+", "");
+        return compact.startsWith(",") || compact.endsWith(",") || compact.contains(",,");
     }
 
     public record ParseResult(boolean success, String fragmentName, List<String> parameters, DiagnosticCode code,
