@@ -143,6 +143,24 @@ Thymeleaflet parses JavaDoc-style comments embedded in HTML templates. Example:
 -->
 ```
 
+## Fragment Signature Parsing Policy
+
+- Baseline: Thymeleaf `3.1.2.RELEASE`
+- Reference parser: `org.thymeleaf.standard.expression.FragmentSignatureUtils`
+- v1 UI support set is intentionally narrower than Thymeleaf parse compatibility.
+
+Current stable UI support:
+
+- `th:fragment="name"`
+- `th:fragment="name()"`
+- `th:fragment="name(param1, param2)"`
+
+Notes:
+
+- Unsupported signature styles are skipped from discovery and reported via diagnostics.
+- Diagnostics are logged with code/severity and surfaced to the UI as user-safe messages.
+- See detailed rules: `docs/parser-spec.md` and `docs/parser-model.md`.
+
 ## Build from Source
 
 ```bash
@@ -161,6 +179,8 @@ See:
 - [docs/javadoc.md](docs/javadoc.md)
 - [docs/stories.md](docs/stories.md)
 - [docs/security.md](docs/security.md)
+- [docs/parser-spec.md](docs/parser-spec.md)
+- [docs/parser-model.md](docs/parser-model.md)
 
 ## Contributing
 
