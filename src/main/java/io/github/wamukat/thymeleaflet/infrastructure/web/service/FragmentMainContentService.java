@@ -7,7 +7,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentD
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +15,7 @@ import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -118,11 +118,11 @@ public class FragmentMainContentService {
      */
     public static class MainContentResult {
         private final boolean succeeded;
-        private final @Nullable String errorMessage;
+        private final Optional<String> errorMessage;
         private final int fragmentCount;
         private final long processingTime;
         
-        private MainContentResult(boolean succeeded, @Nullable String errorMessage, int fragmentCount, long processingTime) {
+        private MainContentResult(boolean succeeded, Optional<String> errorMessage, int fragmentCount, long processingTime) {
             this.succeeded = succeeded;
             this.errorMessage = errorMessage;
             this.fragmentCount = fragmentCount;
@@ -130,15 +130,15 @@ public class FragmentMainContentService {
         }
         
         public static MainContentResult success(int fragmentCount, long processingTime) {
-            return new MainContentResult(true, null, fragmentCount, processingTime);
+            return new MainContentResult(true, Optional.empty(), fragmentCount, processingTime);
         }
         
         public static MainContentResult failure(String errorMessage) {
-            return new MainContentResult(false, errorMessage, 0, 0);
+            return new MainContentResult(false, Optional.of(errorMessage), 0, 0);
         }
         
         public boolean succeeded() { return succeeded; }
-        public @Nullable String errorMessage() { return errorMessage; }
+        public Optional<String> errorMessage() { return errorMessage; }
         public int fragmentCount() { return fragmentCount; }
         public long processingTime() { return processingTime; }
     }

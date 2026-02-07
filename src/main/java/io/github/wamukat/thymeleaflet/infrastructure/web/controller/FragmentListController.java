@@ -92,8 +92,8 @@ public class FragmentListController {
         FragmentMainContentService.MainContentResult result = fragmentMainContentService.setupMainContent(model);
         
         if (!result.succeeded()) {
-            logger.error("Main content setup failed: {}", result.errorMessage());
-            model.addAttribute("error", result.errorMessage());
+            logger.error("Main content setup failed: {}", result.errorMessage().orElse("unknown"));
+            model.addAttribute("error", result.errorMessage().orElse("Main content setup failed"));
             return "thymeleaflet/fragments/error-display :: error(type='danger')";
         }
         

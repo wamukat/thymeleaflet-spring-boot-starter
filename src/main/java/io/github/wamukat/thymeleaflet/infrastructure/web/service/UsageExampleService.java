@@ -9,7 +9,6 @@ import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -187,22 +186,22 @@ public class UsageExampleService {
      */
     public static class UsageExampleResult {
         private final boolean succeeded;
-        private final @Nullable String errorMessage;
+        private final Optional<String> errorMessage;
         
-        private UsageExampleResult(boolean succeeded, @Nullable String errorMessage) {
+        private UsageExampleResult(boolean succeeded, Optional<String> errorMessage) {
             this.succeeded = succeeded;
             this.errorMessage = errorMessage;
         }
         
         public static UsageExampleResult success() {
-            return new UsageExampleResult(true, null);
+            return new UsageExampleResult(true, Optional.empty());
         }
         
         public static UsageExampleResult failure(String errorMessage) {
-            return new UsageExampleResult(false, errorMessage);
+            return new UsageExampleResult(false, Optional.of(errorMessage));
         }
         
         public boolean succeeded() { return succeeded; }
-        public @Nullable String errorMessage() { return errorMessage; }
+        public Optional<String> errorMessage() { return errorMessage; }
     }
 }
