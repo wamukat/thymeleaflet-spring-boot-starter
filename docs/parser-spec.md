@@ -75,6 +75,7 @@ The parser does **not** support these declaration forms in v1:
 - Fragment selector forms beyond identifier name (e.g. CSS selector style fragment names).
 - Parameter default expression syntax inside declaration.
 - Parameter assignment syntax inside declaration.
+- Assignment style arguments (e.g. `name='x'`) are for fragment call sites, not declaration signatures.
 - Nested parenthesis or expression parsing inside parameter tokens.
 - Non-identifier parameter tokens.
 
@@ -101,15 +102,9 @@ When unsupported syntax is detected, parser behavior:
 | ` profileCard ( name , age ) ` | name=`profileCard`, params=`[name, age]` |
 | `profileCard(name,,age)` | error `INVALID_SIGNATURE` |
 | `profileCard(name` | error `INVALID_SIGNATURE` |
-| `profileCard(name='x')` | parse-compatible may vary by Thymeleaf internals, but v1 UI support: `UNSUPPORTED_SYNTAX` |
+| `profileCard(name='x')` | declaration-side syntax is unsupported in `th:fragment`; handled as `UNSUPPORTED_SYNTAX` |
 
-## 9. Compatibility Policy
-
-- Existing simple signatures remain compatible.
-- Currently accepted-but-ambiguous strings may become explicit errors with diagnostics.
-- UI should surface warnings/errors without failing the full fragment list.
-
-## 10. Test Requirements (for implementation issues)
+## 9. Test Requirements (for implementation issues)
 
 - Unit tests for grammar acceptance/rejection.
 - Golden tests for normalization output ordering.
