@@ -3,31 +3,14 @@
 <body>
 <div th:fragment="sidebar(totalCount)">
     <!-- サイドバーヘッダー -->
-    <div class="px-4 py-6 border-b border-gray-200">
-        <div class="flex items-center justify-between">
-            <div>
-                <a href="/thymeleaflet" class="flex items-center text-gray-900">
-                    <img th:src="@{/thymeleaflet/images/thymeleaflet-icon.png}"
-                         alt="Thymeleaflet"
-                         class="h-7 w-7 mr-2">
-                    <span class="text-lg font-bold leading-none">Thymeleaflet</span>
-                </a>
-                <p class="text-xs text-gray-500 mt-1" th:text="#{thymeleaflet.sidebar.subtitle}">Fragment List</p>
-            </div>
+    <div class="lg:hidden px-4 py-4">
+        <div class="flex items-center justify-end">
             <button class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
                     @click="sidebarOpen = false">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
-        </div>
-
-        <!-- 統計サマリー -->
-        <div class="mt-4 text-center">
-            <div class="bg-blue-50 rounded-lg p-2">
-                <div class="text-lg font-bold text-blue-600" th:text="${totalCount}">0</div>
-                <div class="text-xs text-blue-700" th:text="#{thymeleaflet.stats.total}">Total</div>
-            </div>
         </div>
     </div>
 

@@ -14,8 +14,15 @@
                     </svg>
                 </button>
 
+                <a href="/thymeleaflet" class="flex items-center text-gray-900 mr-4" aria-label="Thymeleaflet Home">
+                    <img th:src="@{/thymeleaflet/images/thymeleaflet-icon.png}"
+                         alt="Thymeleaflet"
+                         class="h-6 w-6">
+                </a>
+
                 <!-- ブレッドクラム -->
                 <nav class="breadcrumb-thymeleaflet">
+                    <span class="text-gray-500 mr-1">-</span>
                     <span class="text-gray-900"
                           th:attr="data-default-label=#{thymeleaflet.title.fragmentList}"
                           x-text="selectedFragment ? selectedFragment.fragmentName : $el.dataset.defaultLabel"></span>

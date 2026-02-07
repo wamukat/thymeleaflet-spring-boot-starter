@@ -5,6 +5,7 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.StoryPreviewService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.StoryContentService;
+import io.github.wamukat.thymeleaflet.infrastructure.web.service.ThymeleafletVersionResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -36,6 +37,9 @@ public class StoryPreviewController {
     @Autowired
     private SecurePathConversionService securePathConversionService;
 
+    @Autowired
+    private ThymeleafletVersionResolver thymeleafletVersionResolver;
+
     @Value("${thymeleaflet.base-path:/thymeleaflet}")
     private String basePath;
     
@@ -49,6 +53,7 @@ public class StoryPreviewController {
             @PathVariable("fragmentName") String fragmentName,
             @PathVariable("storyName") String storyName,
             Model model) {
+        model.addAttribute("thymeleafletVersion", thymeleafletVersionResolver.resolve());
         String redirectTarget = resolveRedirectTarget(templatePath, fragmentName, storyName, model);
         if (redirectTarget != null) {
             return redirectTarget;
@@ -70,6 +75,7 @@ public class StoryPreviewController {
             @PathVariable("fragmentName") String fragmentName,
             @PathVariable("storyName") String storyName,
             Model model) {
+        model.addAttribute("thymeleafletVersion", thymeleafletVersionResolver.resolve());
         String redirectTarget = resolveRedirectTarget(templatePath, fragmentName, storyName, model);
         if (redirectTarget != null) {
             return redirectTarget + "/content";
