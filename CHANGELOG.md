@@ -7,6 +7,18 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 - TBD
 
+## [0.2.2] - 2026-02-07
+
+- Simplify Usage panel by removing model-specific helper text and model value blocks.
+- Align story value ordering with JavaDoc parameter specification order when available.
+- Remove redundant "Fragment parameters" label from Fragment Details parameter spec section.
+- Improve YAML preview modal rendering stability to avoid initial flicker.
+
+### Issues
+
+- #35 UI minor adjustments for preview and story values
+- #37 Refine Usage panel and fragment details labels
+
 ## [0.2.1] - 2026-02-06
 
 - Switch viewport controls to width-only presets and remove rotate/ruler-related UI.
