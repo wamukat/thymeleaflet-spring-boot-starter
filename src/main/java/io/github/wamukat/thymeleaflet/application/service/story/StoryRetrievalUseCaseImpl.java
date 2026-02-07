@@ -64,11 +64,19 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
         
         // ストーリーが定義されていない場合はデフォルトストーリーを作成
         if (stories.isEmpty()) {
+            StoryItem defaultStory = new StoryItem(
+                "default",
+                "default",
+                "",
+                Collections.emptyMap(),
+                StoryPreview.empty(),
+                Collections.emptyMap()
+            );
             stories.add(FragmentStoryInfo.of(
                 domainFragmentSummary, 
                 fragmentInfo.getFragmentName(),
                 "default", 
-                null
+                defaultStory
             ));
         }
 
@@ -113,7 +121,7 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
         }
         return stories.stream()
             .map(FragmentStoryInfo::getModel)
-            .anyMatch(model -> model != null && !model.isEmpty());
+            .anyMatch(model -> !model.isEmpty());
     }
 
     @Override

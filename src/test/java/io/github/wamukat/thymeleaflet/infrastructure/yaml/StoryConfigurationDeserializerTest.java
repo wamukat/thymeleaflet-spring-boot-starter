@@ -88,7 +88,7 @@ class StoryConfigurationDeserializerTest {
         assertThat(primaryGroup.title()).isEqualTo("Primary Buttons");
         assertThat(primaryGroup.stories()).hasSize(2);
         
-        StoryItem defaultStory = primaryGroup.findStoryByName("default");
+        StoryItem defaultStory = primaryGroup.findStoryByName("default").orElse(null);
         assertThat(defaultStory).isNotNull();
         assertThat(defaultStory.title()).isEqualTo("Default State");
         assertThat(defaultStory.parameters()).containsEntry("text", "Click Me");
@@ -99,7 +99,7 @@ class StoryConfigurationDeserializerTest {
         assertThat(secondaryGroup.title()).isEqualTo("Secondary Buttons");
         assertThat(secondaryGroup.stories()).hasSize(1);
         
-        StoryItem outlineStory = secondaryGroup.findStoryByName("outline");
+        StoryItem outlineStory = secondaryGroup.findStoryByName("outline").orElse(null);
         assertThat(outlineStory).isNotNull();
         assertThat(outlineStory.parameters()).containsEntry("variant", "outline");
     }
@@ -200,8 +200,8 @@ class StoryConfigurationDeserializerTest {
 
         // Then
         assertThat(result).isNotNull();
-        StoryGroup group = result.getStoryGroup("simple");
-        StoryItem story = group.findStoryByName("noparams");
+        StoryGroup group = result.getStoryGroup("simple").orElse(null);
+        StoryItem story = group != null ? group.findStoryByName("noparams").orElse(null) : null;
         
         assertThat(story).isNotNull();
         assertThat(story.parameters()).isEmpty();
@@ -260,8 +260,8 @@ class StoryConfigurationDeserializerTest {
 
         // Then
         assertThat(result).isNotNull();
-        StoryGroup group = result.getStoryGroup("advanced");
-        StoryItem story = group.findStoryByName("complex");
+        StoryGroup group = result.getStoryGroup("advanced").orElse(null);
+        StoryItem story = group != null ? group.findStoryByName("complex").orElse(null) : null;
         
         assertThat(story).isNotNull();
         assertThat(story.parameters()).containsKey("text");

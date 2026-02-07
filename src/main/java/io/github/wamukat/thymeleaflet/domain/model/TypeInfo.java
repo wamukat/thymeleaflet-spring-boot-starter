@@ -88,9 +88,9 @@ public class TypeInfo {
         this.javaTypeName = Objects.requireNonNull(javaTypeName, "javaTypeName cannot be null");
         this.typeCategory = Objects.requireNonNull(typeCategory, "typeCategory cannot be null");
         this.required = required;
-        this.description = description;
+        this.description = description != null ? description : "";
         this.inferenceLevel = Objects.requireNonNull(inferenceLevel, "inferenceLevel cannot be null");
-        this.inferenceSource = inferenceSource;
+        this.inferenceSource = inferenceSource != null ? inferenceSource : "";
         this.allowedValues = Collections.unmodifiableList(new ArrayList<>(
             allowedValues != null ? allowedValues : new ArrayList<>()));
     }
@@ -109,8 +109,8 @@ public class TypeInfo {
      * TypeInfo作成 - ファクトリメソッド（基本版）
      */
     public static TypeInfo of(String parameterName, String javaTypeName, TypeCategory typeCategory) {
-        return new TypeInfo(parameterName, javaTypeName, typeCategory, false, null, 
-                           InferenceLevel.FALLBACK, null, null);
+        return new TypeInfo(parameterName, javaTypeName, typeCategory, false, "",
+                           InferenceLevel.FALLBACK, "", Collections.emptyList());
     }
 
     /**
@@ -118,23 +118,23 @@ public class TypeInfo {
      */
     public static TypeInfo of(String parameterName, String javaTypeName, TypeCategory typeCategory, 
                              InferenceLevel inferenceLevel, String inferenceSource) {
-        return new TypeInfo(parameterName, javaTypeName, typeCategory, false, null, 
-                           inferenceLevel, inferenceSource, null);
+        return new TypeInfo(parameterName, javaTypeName, typeCategory, false, "",
+                           inferenceLevel, inferenceSource, Collections.emptyList());
     }
 
     /**
      * プリミティブ型TypeInfo作成 - 事前定義ファクトリメソッド
      */
     public static TypeInfo primitiveType(String parameterName, String javaTypeName) {
-        return new TypeInfo(parameterName, javaTypeName, TypeCategory.PRIMITIVE, false, null, 
-                           InferenceLevel.FALLBACK, null, null);
+        return new TypeInfo(parameterName, javaTypeName, TypeCategory.PRIMITIVE, false, "",
+                           InferenceLevel.FALLBACK, "", Collections.emptyList());
     }
 
     /**
      * Enum型TypeInfo作成 - 事前定義ファクトリメソッド
      */
     public static TypeInfo enumType(String parameterName, String javaTypeName, List<String> allowedValues) {
-        return new TypeInfo(parameterName, javaTypeName, TypeCategory.ENUM, false, null, 
+        return new TypeInfo(parameterName, javaTypeName, TypeCategory.ENUM, false, "",
                            InferenceLevel.EXPLICIT, "Enum definition", allowedValues);
     }
 
@@ -142,8 +142,8 @@ public class TypeInfo {
      * 不明型TypeInfo作成 - 事前定義ファクトリメソッド
      */
     public static TypeInfo unknownType(String parameterName) {
-        return new TypeInfo(parameterName, "Object", TypeCategory.UNKNOWN, false, null, 
-                           InferenceLevel.FALLBACK, "Unknown type fallback", null);
+        return new TypeInfo(parameterName, "Object", TypeCategory.UNKNOWN, false, "",
+                           InferenceLevel.FALLBACK, "Unknown type fallback", Collections.emptyList());
     }
 
     // Getters
@@ -210,14 +210,13 @@ public class TypeInfo {
      * TypeInfo構築用のBuilderクラス（後方互換性維持）
      */
     public static class Builder {
-        private String parameterName;
-        private String javaTypeName;
+        private String parameterName = "";
+        private String javaTypeName = "";
         private TypeCategory typeCategory = TypeCategory.UNKNOWN;
         private boolean required = false;
-        private String defaultValue;
-        private String description;
+        private String description = "";
         private InferenceLevel inferenceLevel = InferenceLevel.FALLBACK;
-        private String inferenceSource;
+        private String inferenceSource = "";
         private List<String> allowedValues = new ArrayList<>();
 
         public Builder parameterName(String parameterName) {

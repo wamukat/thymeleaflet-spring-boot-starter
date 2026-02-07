@@ -300,21 +300,21 @@ public class Story {
          * 成功結果作成 - ファクトリメソッド（成功版）
          */
         public static ValidationResult success() {
-            return new ValidationResult(true, null, null);
+            return new ValidationResult(true, Collections.emptyList(), Collections.emptyList());
         }
 
         /**
          * 成功結果作成 - ファクトリメソッド（警告付き成功版）
          */
         public static ValidationResult successWithWarnings(List<String> warnings) {
-            return new ValidationResult(true, null, warnings);
+            return new ValidationResult(true, Collections.emptyList(), warnings);
         }
 
         /**
          * 失敗結果作成 - ファクトリメソッド（エラー版）
          */
         public static ValidationResult failure(List<String> errors) {
-            return new ValidationResult(false, errors, null);
+            return new ValidationResult(false, errors, Collections.emptyList());
         }
 
         /**

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ストーリーグループ - Value Object (Expert改善版)
@@ -39,21 +40,20 @@ public record StoryGroup(
     /**
      * ドメインメソッド: 名前でストーリー検索
      */
-    public StoryItem findStoryByName(String name) {
+    public Optional<StoryItem> findStoryByName(String name) {
         if (name == null) {
-            return null;
+            return Optional.empty();
         }
         
         return stories.stream()
             .filter(story -> story.name().equals(name))
-            .findFirst()
-            .orElse(null);
+            .findFirst();
     }
     
     /**
      * ドメインメソッド: グループの有効性確認
      */
     public boolean isValid() {
-        return title != null && !title.trim().isEmpty() && !stories.isEmpty();
+        return !title.trim().isEmpty() && !stories.isEmpty();
     }
 }

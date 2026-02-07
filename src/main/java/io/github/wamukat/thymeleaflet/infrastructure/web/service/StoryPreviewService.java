@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ストーリープレビューページ処理専用サービス
@@ -77,11 +78,10 @@ public class StoryPreviewService {
         
         // 対象ストーリーを取得
         logger.info("Calling storyManagementUseCase.getStory with: templatePath={}, fragmentName={}, storyName={}", fullTemplatePath, fragmentName, storyName);
-        FragmentStoryInfo storyInfo = storyRetrievalUseCase
-            .getStory(fullTemplatePath, fragmentName, storyName)
-            .orElse(null);
-        
-        if (storyInfo == null) {
+        Optional<FragmentStoryInfo> storyInfoOptional = storyRetrievalUseCase
+            .getStory(fullTemplatePath, fragmentName, storyName);
+
+        if (storyInfoOptional.isEmpty()) {
             model.addAttribute("error", "指定されたストーリーが見つかりません: " + fullTemplatePath + "::" + fragmentName + "::" + storyName);
             // 契約テスト保護：エラー時でも必要な属性を設定
             model.addAttribute("uniquePaths", Arrays.asList("基本データ")); // Thymeleafテンプレート必須属性
@@ -89,6 +89,7 @@ public class StoryPreviewService {
             model.addAttribute("hierarchicalFragments", new HashMap<>());
             return StoryPreviewResult.failure("thymeleaflet/fragment-list");
         }
+        FragmentStoryInfo storyInfo = storyInfoOptional.orElseThrow();
         
         // フラグメント一覧ページと同じ基本データを設定 (協調UseCase使用)
         StoryPageCoordinationUseCase.StoryPageRequest coordinationRequest = 

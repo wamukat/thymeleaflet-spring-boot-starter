@@ -17,6 +17,7 @@ import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 使用例生成処理専用サービス
@@ -84,16 +85,16 @@ public class UsageExampleService {
             validationUseCase.validateStoryRequest(requestValidationCommand);
             
             // 対象ストーリーを取得
-            FragmentStoryInfo storyInfo = storyRetrievalUseCase
-                .getStory(fullTemplatePath, fragmentName, storyName)
-                .orElse(null);
-            
-            if (storyInfo == null) {
+            Optional<FragmentStoryInfo> storyInfoOptional = storyRetrievalUseCase
+                .getStory(fullTemplatePath, fragmentName, storyName);
+
+            if (storyInfoOptional.isEmpty()) {
                 model.addAttribute("hasError", true);
                 model.addAttribute("errorMessage", "ストーリーが見つかりません");
                 model.addAttribute("usageExample", "<!-- ストーリーが見つかりません -->");
                 return UsageExampleResult.success();
             }
+            FragmentStoryInfo storyInfo = storyInfoOptional.orElseThrow();
             
             // パラメータを取得（JavaDocフォールバックを含む）
             Map<String, Object> storyParameters = storyParameterUseCase.getParametersForStory(storyInfo);

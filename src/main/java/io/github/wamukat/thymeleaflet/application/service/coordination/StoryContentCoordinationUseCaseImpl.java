@@ -96,10 +96,10 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             Map<String, Object> defaultParameters = new HashMap<>();
             
             if (!request.storyName().equals("default")) {
-                defaultStory = storyRetrievalUseCase
-                    .getStory(request.fullTemplatePath(), request.fragmentName(), "default")
-                    .orElse(null);
-                if (defaultStory != null) {
+                var defaultStoryOptional = storyRetrievalUseCase
+                    .getStory(request.fullTemplatePath(), request.fragmentName(), "default");
+                if (defaultStoryOptional.isPresent()) {
+                    defaultStory = defaultStoryOptional.orElseThrow();
                     Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStory);
                     defaultParameters = defaultStoryParams.entrySet().stream()
                         .filter(entry -> !"__storybook_background".equals(entry.getKey()))

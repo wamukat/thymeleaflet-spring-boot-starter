@@ -142,11 +142,12 @@ public class StoryDataAdapter implements StoryDataPort {
             }
 
             // StoryGroup.findStoryByName()を使用してストーリーを検索
-            StoryItem storyItem = storyGroup.findStoryByName(storyName);
-            if (storyItem == null) {
+            Optional<StoryItem> storyItemOptional = storyGroup.findStoryByName(storyName);
+            if (storyItemOptional.isEmpty()) {
                 logger.debug("Story not found: {}::{}::{}, returning default story", templatePath, fragmentName, storyName);
                 return createDefaultStory(templatePath, fragmentName, storyName);
             }
+            StoryItem storyItem = storyItemOptional.orElseThrow();
             
             // StoryItemをFragmentStoryInfoに変換
             // FragmentDiscoveryServiceから実際のFragmentInfoを取得
@@ -207,9 +208,9 @@ public class StoryDataAdapter implements StoryDataPort {
         if (storyGroup == null || storyGroup.stories().isEmpty()) {
             return Optional.empty();
         }
-        StoryItem defaultStory = storyGroup.findStoryByName("default");
-        if (defaultStory != null) {
-            return Optional.of(defaultStory);
+        Optional<StoryItem> defaultStory = storyGroup.findStoryByName("default");
+        if (defaultStory.isPresent()) {
+            return defaultStory;
         }
         return Optional.of(storyGroup.stories().get(0));
     }

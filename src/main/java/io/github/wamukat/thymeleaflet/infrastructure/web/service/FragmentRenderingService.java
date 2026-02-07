@@ -16,6 +16,7 @@ import org.springframework.ui.Model;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * フラグメント動的レンダリング処理専用サービス
@@ -79,17 +80,17 @@ public class FragmentRenderingService {
             logger.info("Full template path: {}", fullTemplatePath);
         
             // 対象ストーリーを取得
-            FragmentStoryInfo storyInfo = storyRetrievalUseCase
-                .getStory(fullTemplatePath, fragmentName, storyName)
-                .orElse(null);
+            Optional<FragmentStoryInfo> storyInfoOptional = storyRetrievalUseCase
+                .getStory(fullTemplatePath, fragmentName, storyName);
             
             logger.info("=== Story Config Debug ===");
-            logger.info("Story Info: {}", storyInfo);
+            logger.info("Story Info: {}", storyInfoOptional.orElse(null));
             
-            if (storyInfo == null) {
+            if (storyInfoOptional.isEmpty()) {
                 logger.info("Story info is null, returning error");
                 return RenderingResult.error("thymeleaflet/fragments/error-display :: error(type='info', title=null, message=null, showActionButton=true, actionText=null, actionScript=null, templatePath=null)");
             }
+            FragmentStoryInfo storyInfo = storyInfoOptional.orElseThrow();
             
             logger.info("Has Story Config: {}", storyInfo.hasStoryConfig());
             logger.info("Fragment Type: {}", storyInfo.getFragmentSummary().getType());

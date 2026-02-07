@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.domain.model;
 
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
+import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ public class FragmentStoryInfo {
     
     private final FragmentSummary fragmentSummary;
     private final StoryItem story;
+    private final boolean hasStoryConfig;
     private final String storyName;
     private final String fragmentGroupName;
     private final Map<String, Object> fallbackParameters;
@@ -30,9 +32,19 @@ public class FragmentStoryInfo {
                            StoryItem story,
                            Map<String, Object> fallbackParameters) {
         this.fragmentSummary = Objects.requireNonNull(fragmentSummary, "Fragment summary cannot be null");
-        this.fragmentGroupName = fragmentGroupName;
-        this.storyName = storyName;
-        this.story = story;
+        this.fragmentGroupName = fragmentGroupName != null ? fragmentGroupName : "";
+        this.storyName = storyName != null ? storyName : "default";
+        this.hasStoryConfig = story != null;
+        this.story = story != null
+            ? story
+            : new StoryItem(
+                this.storyName,
+                this.storyName,
+                "",
+                Collections.emptyMap(),
+                StoryPreview.empty(),
+                Collections.emptyMap()
+            );
         
         // 防御的コピー + 不変化
         this.fallbackParameters = fallbackParameters != null ?
@@ -81,14 +93,14 @@ public class FragmentStoryInfo {
      * ストーリーのパラメータを取得（フォールバック機能付き）
      */
     public Map<String, Object> getParameters() {
-        if (story != null && story.parameters() != null) {
+        if (story.parameters() != null) {
             return story.parameters();
         }
         // フォールバックパラメータが設定されている場合はそれを返す
-        if (fallbackParameters != null && !fallbackParameters.isEmpty()) {
+        if (!fallbackParameters.isEmpty()) {
             return fallbackParameters;
         }
-        return null;
+        return Collections.emptyMap();
     }
     
     /**
@@ -102,7 +114,7 @@ public class FragmentStoryInfo {
      * ストーリーのモデル値を取得
      */
     public Map<String, Object> getModel() {
-        if (story != null && story.model() != null) {
+        if (story.model() != null) {
             return story.model();
         }
         return Collections.emptyMap();
@@ -126,27 +138,27 @@ public class FragmentStoryInfo {
      * ストーリーのタイトルを取得
      */
     public String getDisplayTitle() {
-        if (story != null && story.title() != null) {
+        if (story.title() != null) {
             return story.title();
         }
-        return storyName != null ? storyName : "Default";
+        return storyName;
     }
     
     /**
      * ストーリーの説明を取得
      */
     public String getDisplayDescription() {
-        if (story != null && story.description() != null) {
+        if (story.description() != null) {
             return story.description();
         }
-        return null;
+        return "";
     }
     
     /**
      * ストーリーファイルが存在するかどうか（フォールバック状態ではない）
      */
     public boolean hasStoryConfig() {
-        return story != null;
+        return hasStoryConfig;
     }
 
 }

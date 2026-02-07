@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ストーリー設定 - ドメインValue Object (Expert改善版)
@@ -32,8 +33,8 @@ public record StoryConfiguration(
     /**
      * ドメインメソッド: ストーリーグループ取得
      */
-    public StoryGroup getStoryGroup(String groupName) {
-        return storyGroups.get(groupName);
+    public Optional<StoryGroup> getStoryGroup(String groupName) {
+        return Optional.ofNullable(storyGroups.get(groupName));
     }
     
     /**
@@ -49,6 +50,6 @@ public record StoryConfiguration(
      * ドメインメソッド: 設定の有効性確認
      */
     public boolean isValid() {
-        return meta != null && !storyGroups.isEmpty();
+        return !storyGroups.isEmpty();
     }
 }

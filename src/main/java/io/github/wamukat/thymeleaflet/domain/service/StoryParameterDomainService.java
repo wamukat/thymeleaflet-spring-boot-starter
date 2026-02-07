@@ -56,7 +56,7 @@ public class StoryParameterDomainService {
                 storyInfo.getFragmentSummary().getTemplatePath());
             
             for (String paramName : storyInfo.getFragmentSummary().getParameters()) {
-                TypeInfo typeInfo = findTypeInfoByName(typeInfos, paramName);
+                Optional<TypeInfo> typeInfo = findTypeInfoByName(typeInfos, paramName);
                 Object parameterValue = generateParameterValue(paramName, typeInfo);
                 
                 if (parameterValue != null) {
@@ -76,16 +76,17 @@ public class StoryParameterDomainService {
     /**
      * パラメータ値を生成
      */
-    public Object generateParameterValue(String paramName, TypeInfo typeInfo) {
-        if (typeInfo == null) {
+    public Object generateParameterValue(String paramName, Optional<TypeInfo> typeInfo) {
+        if (typeInfo.isEmpty()) {
             return generateDefaultValue(paramName);
         }
-        
-        switch (typeInfo.getTypeCategory()) {
+        TypeInfo resolvedTypeInfo = typeInfo.orElseThrow();
+
+        switch (resolvedTypeInfo.getTypeCategory()) {
             case PRIMITIVE:
-                return generatePrimitiveValue(paramName, typeInfo);
+                return generatePrimitiveValue(paramName, resolvedTypeInfo);
             case ENUM:
-                return generateEnumValue(typeInfo);
+                return generateEnumValue(resolvedTypeInfo);
             case COLLECTION:
                 return generateCollectionValue();
             case OBJECT:
@@ -95,11 +96,10 @@ public class StoryParameterDomainService {
         }
     }
     
-    private TypeInfo findTypeInfoByName(List<TypeInfo> typeInfos, String parameterName) {
+    private Optional<TypeInfo> findTypeInfoByName(List<TypeInfo> typeInfos, String parameterName) {
         return typeInfos.stream()
                 .filter(typeInfo -> typeInfo.getParameterName().equals(parameterName))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
     
     private Object generateDefaultValue(String paramName) {

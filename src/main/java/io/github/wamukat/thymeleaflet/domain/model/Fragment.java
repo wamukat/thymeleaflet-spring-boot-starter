@@ -61,14 +61,28 @@ public class Fragment {
      * Fragment作成 - ファクトリメソッド（基本版）
      */
     public static Fragment of(SecureTemplatePath templatePath, FragmentName name) {
-        return new Fragment(templatePath, name, null, null, null, null);
+        return new Fragment(
+            templatePath,
+            name,
+            "component",
+            Collections.emptyMap(),
+            Collections.emptySet(),
+            Collections.emptyMap()
+        );
     }
 
     /**
      * Fragment作成 - ファクトリメソッド（カテゴリ付き版）
      */
     public static Fragment of(SecureTemplatePath templatePath, FragmentName name, String category) {
-        return new Fragment(templatePath, name, category, null, null, null);
+        return new Fragment(
+            templatePath,
+            name,
+            category,
+            Collections.emptyMap(),
+            Collections.emptySet(),
+            Collections.emptyMap()
+        );
     }
 
     // === ドメインメソッド ===
