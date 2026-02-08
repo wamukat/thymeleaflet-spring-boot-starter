@@ -5,15 +5,22 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [Unreleased]
 
-- TBD
+- Added
+  - TBD
 
 ## [0.2.3] - 2026-02-07
 
-- Complete parser migration planning and implementation (spec/model docs, parser integration, diagnostics, UI alignment).
-- Define Thymeleaf 3.1.2-based signature policy and clarify declaration-side unsupported syntax handling.
-- Add structured fragment signature diagnostics and surface user-safe diagnostic messages in UI.
-- Remove legacy plain-name fallback for invalid fragment signatures.
-- Align Story Values ordering and state rendering across main content and story preview.
+- Added
+  - Structured fragment signature diagnostics and user-safe diagnostic messages in UI.
+- Changed
+  - Fragment signature handling to Thymeleaf 3.1.2-based declaration-side policy.
+  - Story Values ordering/state rendering alignment between main content and story preview.
+- Refactored
+  - End-to-end parser migration (spec/model docs, parser integration, diagnostics wiring, UI alignment).
+- Removed
+  - Legacy plain-name fallback for invalid fragment signatures.
+- Docs
+  - Parser specification and declaration-side unsupported syntax clarification.
 
 ### Issues
 
@@ -29,10 +36,12 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [0.2.2] - 2026-02-07
 
-- Simplify Usage panel by removing model-specific helper text and model value blocks.
-- Align story value ordering with JavaDoc parameter specification order when available.
-- Remove redundant "Fragment parameters" label from Fragment Details parameter spec section.
-- Improve YAML preview modal rendering stability to avoid initial flicker.
+- Changed
+  - Usage panel simplification by removing model-specific helper text/model value blocks.
+  - Story value ordering to follow JavaDoc parameter specification order when available.
+  - Fragment Details parameter spec section by removing redundant "Fragment parameters" label.
+- Fixed
+  - YAML preview modal initial flicker.
 
 ### Issues
 
@@ -41,10 +50,16 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [0.2.1] - 2026-02-06
 
-- Switch viewport controls to width-only presets and remove rotate/ruler-related UI.
-- Fix fullscreen and fit preview sizing behavior so fragments render without clipping.
-- Refactor preview controls/templates and strengthen E2E coverage.
-- Refresh English/Japanese documentation and screenshots for the updated preview behavior.
+- Changed
+  - Viewport controls to width-only presets and removed rotate/ruler-related UI.
+- Fixed
+  - Fullscreen/Fit preview sizing so fragments render without clipping.
+- Refactored
+  - Preview controls/templates.
+- Test
+  - Strengthened E2E coverage for preview behavior.
+- Docs
+  - Refreshed English/Japanese docs and screenshots for updated preview behavior.
 
 ### Issues
 
@@ -53,9 +68,11 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [0.2.0] - 2026-02-06
 
-- Make preview viewport presets and preview background colors configurable.
-- Add fullscreen preview mode and responsive header sample for layout verification.
-- Refine preview viewport sizing, fit behavior, and labels.
+- Added
+  - Configurable preview viewport presets and preview background colors.
+  - Fullscreen preview mode and responsive header sample for layout verification.
+- Changed
+  - Preview viewport sizing, fit behavior, and labels.
 
 ### Issues
 
@@ -63,9 +80,13 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [0.1.1] - 2026-02-05
 
-- Allow custom model editing when `stories.yml` is missing.
-- Accept object literal input for custom model values.
-- Tidy Custom badges to icon-only cues and stop tracking generated sample CSS.
+- Added
+  - Custom model editing support when `stories.yml` is missing.
+  - Object literal input support for custom model values.
+- Changed
+  - Custom badge design to icon-only cues.
+- Removed
+  - Tracking of generated sample CSS.
 
 ### Issues
 
@@ -73,8 +94,12 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [0.1.0] - 2026-02-05
 
-- Added editable controls for story parameters/models and aligned custom/default story layouts.
-- Improved preview/controls structure and supporting UI fragments.
+- Added
+  - Editable controls for story parameters/models.
+- Changed
+  - Custom/default story layout alignment.
+- Refactored
+  - Preview/controls structure and supporting UI fragments.
 
 ### Issues
 
@@ -86,10 +111,13 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [0.0.2] - 2026-02-03
 
-- Switched preview rendering to iframe for better JS isolation
-- Added preview JS injection via `thymeleaflet.resources.scripts`
-- Synced preview background with container color and same-origin iframe behavior
+- Added
+  - Preview JS injection via `thymeleaflet.resources.scripts`.
+- Changed
+  - Preview rendering to iframe for better JS isolation.
+  - Preview background sync with container color and same-origin iframe behavior.
 
 ## [0.0.1] - 2026-02-02
 
-- Initial public release
+- Added
+  - Initial public release.
