@@ -13,10 +13,6 @@ public class FragmentSignatureParser {
     private static final Method INTERNAL_PARSE_METHOD = loadInternalParseMethod();
 
     public ParseResult parse(String definition) {
-        if (definition == null) {
-            return new ParseError(DiagnosticCode.INVALID_SIGNATURE, "fragment definition is null");
-        }
-
         String input = definition.trim();
         if (input.isEmpty()) {
             return new ParseError(DiagnosticCode.INVALID_SIGNATURE, "fragment definition is empty");
