@@ -2,7 +2,8 @@
 
 ## Requirements
 
-- Java 17+
+- Java 17+ (runtime / library usage)
+- Java 21+ (when building this repository from source)
 - Spring Boot 3.1+
 
 ## Install
