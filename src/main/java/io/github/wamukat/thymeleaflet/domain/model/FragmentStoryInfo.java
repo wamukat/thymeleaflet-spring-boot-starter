@@ -32,10 +32,10 @@ public class FragmentStoryInfo {
                            StoryItem story,
                            Map<String, Object> fallbackParameters) {
         this.fragmentSummary = Objects.requireNonNull(fragmentSummary, "Fragment summary cannot be null");
-        this.fragmentGroupName = fragmentGroupName != null ? fragmentGroupName : "";
-        this.storyName = storyName != null ? storyName : "default";
-        this.hasStoryConfig = story != null;
-        this.story = story != null
+        this.fragmentGroupName = Objects.requireNonNullElse(fragmentGroupName, "");
+        this.storyName = Objects.requireNonNullElse(storyName, "default");
+        this.hasStoryConfig = Objects.nonNull(story);
+        this.story = Objects.nonNull(story)
             ? story
             : new StoryItem(
                 this.storyName,
@@ -47,9 +47,8 @@ public class FragmentStoryInfo {
             );
         
         // 防御的コピー + 不変化
-        this.fallbackParameters = fallbackParameters != null ?
-            Collections.unmodifiableMap(new HashMap<>(fallbackParameters)) :
-            Collections.emptyMap();
+        this.fallbackParameters = Collections.unmodifiableMap(
+            new HashMap<>(Objects.requireNonNullElse(fallbackParameters, Collections.emptyMap())));
     }
     
     /**

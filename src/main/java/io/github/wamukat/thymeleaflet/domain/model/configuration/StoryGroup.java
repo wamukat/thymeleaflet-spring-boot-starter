@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -24,10 +25,10 @@ public record StoryGroup(
 ) {
     // Expert推奨: Compact constructor for validation and immutability
     public StoryGroup {
-        title = title != null ? title : "Default Group";
-        description = description != null ? description : "";
-        stories = stories != null ? 
-            Collections.unmodifiableList(stories) : Collections.emptyList();
+        title = Objects.requireNonNullElse(title, "Default Group");
+        description = Objects.requireNonNullElse(description, "");
+        stories = Collections.unmodifiableList(
+            Objects.requireNonNullElse(stories, Collections.emptyList()));
     }
 
     /**

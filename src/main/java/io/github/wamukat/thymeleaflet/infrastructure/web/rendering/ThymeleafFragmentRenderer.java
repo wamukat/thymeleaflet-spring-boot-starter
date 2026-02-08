@@ -76,7 +76,7 @@ public class ThymeleafFragmentRenderer {
         // 表示用パラメータリスト（Thymeleaf表示制約対応）
         Map<String, Object> displayParameters = storyParameters.entrySet().stream()
                 .filter(entry -> !"__storybook_background".equals(entry.getKey()))
-                .filter(entry -> entry.getValue() != null)
+                .filter(entry -> Objects.nonNull(entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         logger.debug("Configured {} parameters in Thymeleaf model", displayParameters.size());

@@ -104,7 +104,7 @@ public class StoryCommonDataService {
                 Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(story);
                 defaultParameters = defaultStoryParams.entrySet().stream()
                     .filter(entry -> !"__storybook_background".equals(entry.getKey()))
-                    .filter(entry -> entry.getValue() != null)
+                    .filter(entry -> Objects.nonNull(entry.getValue()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             }
         }

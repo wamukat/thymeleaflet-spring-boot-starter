@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * ストーリーアイテム - Value Object (Expert改善版)
@@ -26,14 +27,14 @@ public record StoryItem(
 ) {
     // Expert推奨: Compact constructor for validation and immutability
     public StoryItem {
-        name = name != null ? name : "default";
-        title = title != null ? title : name;
-        description = description != null ? description : "";
-        parameters = parameters != null ? 
-            Collections.unmodifiableMap(parameters) : Collections.emptyMap();
-        preview = preview != null ? preview : StoryPreview.empty();
-        model = model != null ?
-            Collections.unmodifiableMap(model) : Collections.emptyMap();
+        name = Objects.requireNonNullElse(name, "default");
+        title = Objects.requireNonNullElse(title, name);
+        description = Objects.requireNonNullElse(description, "");
+        parameters = Collections.unmodifiableMap(
+            Objects.requireNonNullElse(parameters, Collections.emptyMap()));
+        preview = Objects.requireNonNullElse(preview, StoryPreview.empty());
+        model = Collections.unmodifiableMap(
+            Objects.requireNonNullElse(model, Collections.emptyMap()));
     }
 
     /**

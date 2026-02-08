@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -25,9 +26,9 @@ public record StoryConfiguration(
 ) {
     // Expert推奨: Compact constructor for validation and immutability
     public StoryConfiguration {
-        meta = meta != null ? meta : new StoryMeta("Default Title", "");
-        storyGroups = storyGroups != null ? 
-            Collections.unmodifiableMap(storyGroups) : Collections.emptyMap();
+        meta = Objects.requireNonNullElse(meta, new StoryMeta("Default Title", ""));
+        storyGroups = Collections.unmodifiableMap(
+            Objects.requireNonNullElse(storyGroups, Collections.emptyMap()));
     }
 
     /**
