@@ -64,6 +64,7 @@ public final class SecureTemplatePath {
      * テストコードや信頼できる内部処理でのみ使用してください
      */
     public static SecureTemplatePath createUnsafe(String trustedPath) {
+        Objects.requireNonNull(trustedPath, "trustedPath cannot be null");
         String normalizedPath = trustedPath.replace(".", "/");
         return new SecureTemplatePath(trustedPath, normalizedPath);
     }
@@ -72,6 +73,7 @@ public final class SecureTemplatePath {
      * 既に正規化されたパスから作成（レガシー統合用）
      */
     public static SecureTemplatePath fromNormalizedPath(String normalizedPath) {
+        Objects.requireNonNull(normalizedPath, "normalizedPath cannot be null");
         String originalPath = normalizedPath.replace("/", ".");
         return new SecureTemplatePath(originalPath, normalizedPath);
     }
@@ -87,6 +89,9 @@ public final class SecureTemplatePath {
      * @throws SecurityValidationException セキュリティ違反が検出された場合
      */
     public static SecureTemplatePath of(String rawPath) throws SecurityValidationException {
+        if (Objects.isNull(rawPath)) {
+            throw new SecurityValidationException("Template path cannot be null or empty", SecurityViolationType.NULL_OR_EMPTY);
+        }
         String validatedPath = validateSecurityAndConvert(rawPath);
         return new SecureTemplatePath(rawPath, validatedPath);
     }
@@ -98,6 +103,8 @@ public final class SecureTemplatePath {
      * 直接作成する際に使用（内部API）
      */
     public static SecureTemplatePath fromValidatedPaths(String originalPath, String securePath) {
+        Objects.requireNonNull(originalPath, "originalPath cannot be null");
+        Objects.requireNonNull(securePath, "securePath cannot be null");
         return new SecureTemplatePath(originalPath, securePath);
     }
 
@@ -113,7 +120,7 @@ public final class SecureTemplatePath {
         logger.debug("Starting security validation and conversion for: {}", rawPath);
         
         // 1. NULL・空文字チェック
-        if (rawPath == null || rawPath.trim().isEmpty()) {
+        if (rawPath.trim().isEmpty()) {
             throw new SecurityValidationException("Template path cannot be null or empty", SecurityViolationType.NULL_OR_EMPTY);
         }
         
@@ -340,8 +347,7 @@ public final class SecureTemplatePath {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        SecureTemplatePath that = (SecureTemplatePath) o;
+        if (!(o instanceof SecureTemplatePath that)) return false;
         return Objects.equals(originalPath, that.originalPath) &&
                Objects.equals(securePath, that.securePath);
     }

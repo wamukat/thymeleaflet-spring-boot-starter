@@ -61,11 +61,7 @@ public final class FragmentName {
     }
 
     private static String validateAndNormalize(String value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Fragment name cannot be null");
-        }
-
-        String trimmed = value.trim();
+        String trimmed = Objects.requireNonNull(value, "Fragment name cannot be null").trim();
 
         if (trimmed.isEmpty()) {
             throw new IllegalArgumentException("Fragment name cannot be empty");
@@ -135,8 +131,7 @@ public final class FragmentName {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FragmentName that = (FragmentName) o;
+        if (!(o instanceof FragmentName that)) return false;
         return Objects.equals(value, that.value);
     }
 
