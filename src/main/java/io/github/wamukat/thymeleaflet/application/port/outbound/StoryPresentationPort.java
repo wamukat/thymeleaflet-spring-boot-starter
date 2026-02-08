@@ -11,4 +11,3 @@ public interface StoryPresentationPort {
 
     Map<String, Object> configureModelWithStoryParameters(Map<String, Object> storyParameters, Model model);
 }
-

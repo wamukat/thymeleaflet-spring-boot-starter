@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.service.story;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
 import io.github.wamukat.thymeleaflet.application.port.outbound.StoryDataPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
@@ -8,8 +9,6 @@ import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfigurat
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryGroup;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,18 +120,12 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
 
     @Override
     public StoryListResponse getStoriesForFragment(String templatePath, String fragmentName) {
-        return fragmentDiscoveryService.discoverFragments().stream()
-            .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
-            .findFirst()
-            .map(fragment -> fragmentSummaryMapper.toDomain(fragment))
+        return fragmentCatalogPort.findFragment(templatePath, fragmentName)
             .map(fragmentSummary -> StoryListResponse.success(fragmentSummary, getStoriesForFragment(fragmentSummary)))
             .orElseGet(StoryListResponse::failure);
     }
 
     @Autowired
-    private FragmentDiscoveryService fragmentDiscoveryService;
-    
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
+    private FragmentCatalogPort fragmentCatalogPort;
     
 }

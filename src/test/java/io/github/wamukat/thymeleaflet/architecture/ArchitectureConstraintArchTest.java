@@ -2,6 +2,10 @@ package io.github.wamukat.thymeleaflet.architecture;
 
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentDependencyPort;
+import io.github.wamukat.thymeleaflet.application.port.outbound.JavaDocLookupPort;
+import io.github.wamukat.thymeleaflet.application.port.outbound.StoryPresentationPort;
 import io.github.wamukat.thymeleaflet.application.port.outbound.DocumentationAnalysisPort;
 import io.github.wamukat.thymeleaflet.application.port.outbound.StoryDataPort;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
@@ -66,8 +70,16 @@ class ArchitectureConstraintArchTest {
             .implement(StoryDataPort.class)
             .or()
             .implement(DocumentationAnalysisPort.class)
+            .or()
+            .implement(FragmentCatalogPort.class)
+            .or()
+            .implement(StoryPresentationPort.class)
+            .or()
+            .implement(JavaDocLookupPort.class)
+            .or()
+            .implement(FragmentDependencyPort.class)
             .should()
-            .resideInAnyPackage("..infrastructure.adapter..");
+            .resideInAnyPackage("..infrastructure.adapter..", "..infrastructure.web..");
 
     @ArchTest
     static final com.tngtech.archunit.lang.ArchRule application_ports_should_not_depend_on_infrastructure =
@@ -92,12 +104,4 @@ class ArchitectureConstraintArchTest {
             .orShould()
             .beAnnotatedWith(Controller.class);
 
-    @ArchTest
-    static final com.tngtech.archunit.lang.ArchRule application_services_should_not_depend_on_web_infrastructure =
-        noClasses()
-            .that()
-            .resideInAPackage("..application.service..")
-            .should()
-            .dependOnClassesThat()
-            .resideInAPackage("..infrastructure.web..");
 }

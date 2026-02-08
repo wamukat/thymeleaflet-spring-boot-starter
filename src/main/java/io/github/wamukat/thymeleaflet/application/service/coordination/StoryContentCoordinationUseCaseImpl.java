@@ -4,12 +4,11 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.coordination.Stor
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryValidationUseCase;
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
 import io.github.wamukat.thymeleaflet.application.port.outbound.JavaDocLookupPort;
 import io.github.wamukat.thymeleaflet.application.port.outbound.StoryPresentationPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
     private StoryValidationUseCase storyValidationUseCase;
     
     @Autowired
-    private FragmentDiscoveryService fragmentDiscoveryService;
+    private FragmentCatalogPort fragmentCatalogPort;
     
     @Autowired
     private StoryPresentationPort storyPresentationPort;
@@ -53,9 +52,6 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
     @Autowired
     private JavaDocLookupPort javaDocLookupPort;
 
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
-    
     @Override
     public StoryContentResult coordinateStoryContentSetup(StoryContentRequest request) {
         logger.info("=== StoryContentCoordination START ===");
@@ -74,17 +70,12 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             FragmentStoryInfo storyInfo = validationResult.getStory().orElseThrow();
             
             // 2. フラグメント情報取得
-            List<FragmentDiscoveryService.FragmentInfo> allFragments = fragmentDiscoveryService.discoverFragments();
-            var selectedFragment = allFragments.stream()
-                .filter(f -> f.getTemplatePath().equals(request.fullTemplatePath())
-                    && f.getFragmentName().equals(request.fragmentName()))
-                .findFirst();
+            var selectedFragment = fragmentCatalogPort.findFragment(request.fullTemplatePath(), request.fragmentName());
             
             if (selectedFragment.isEmpty()) {
                 return StoryContentResult.failure("Fragment not found: " + request.fullTemplatePath() + "::" + request.fragmentName());
             }
-            FragmentDiscoveryService.FragmentInfo fragmentInfo = selectedFragment.orElseThrow();
-            FragmentSummary fragmentSummary = fragmentSummaryMapper.toDomain(fragmentInfo);
+            FragmentSummary fragmentSummary = selectedFragment.orElseThrow();
             
             // 3. ストーリー一覧取得
             List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentSummary);

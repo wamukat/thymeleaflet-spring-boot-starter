@@ -8,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.context.ExpressionContext;
 import org.springframework.stereotype.Component;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.springframework.ui.Model;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.List;
 import java.util.Map;

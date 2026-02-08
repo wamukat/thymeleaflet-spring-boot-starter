@@ -7,11 +7,10 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.fragment.Fragment
 import io.github.wamukat.thymeleaflet.application.port.inbound.fragment.MetricsUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.preview.FragmentPreviewUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,10 +53,7 @@ public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUs
     private FragmentPreviewUseCase fragmentPreviewUseCase;
     
     @Autowired
-    private FragmentDiscoveryService fragmentDiscoveryService;
-    
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
+    private FragmentCatalogPort fragmentCatalogPort;
     
     @Override
     public StoryPageResult coordinateStoryPageSetup(StoryPageRequest request) {
@@ -68,18 +64,13 @@ public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUs
         try {
             // 1. フラグメント発見・統計・階層化の協調処理
             long discoveryStart = System.currentTimeMillis();
-            List<FragmentDiscoveryService.FragmentInfo> infraFragments = fragmentDiscoveryService.discoverFragments();
+            List<FragmentSummary> allFragments = fragmentCatalogPort.discoverFragments();
             
             // メトリクス記録
             long discoveryTime = System.currentTimeMillis() - discoveryStart;
             MetricsUseCase.MetricsCommand metricsCommand = 
-                new MetricsUseCase.MetricsCommand(discoveryTime, infraFragments.size());
+                new MetricsUseCase.MetricsCommand(discoveryTime, allFragments.size());
             metricsUseCase.logDiscoveryMetrics(metricsCommand);
-            
-            // Infrastructure形式からDomain形式に変換
-            List<FragmentSummary> allFragments = infraFragments.stream()
-                .map(fragmentSummaryMapper::toDomain)
-                .collect(Collectors.toList());
             
             // フラグメントタイプ別グループ化 (Domain形式で実行)
             Map<FragmentDomainService.FragmentType, List<FragmentSummary>> groupedFragments = 

@@ -1,13 +1,10 @@
 package io.github.wamukat.thymeleaflet.application.service.fragment;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.fragment.FragmentDiscoveryUseCase;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * フラグメント発見専用ユースケース実装
@@ -20,19 +17,12 @@ import java.util.List;
 public class FragmentDiscoveryUseCaseImpl implements FragmentDiscoveryUseCase {
     
     @Autowired
-    private FragmentDiscoveryService fragmentDiscoveryService;
-
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
+    private FragmentCatalogPort fragmentCatalogPort;
 
     @Override
     public FragmentDetailResponse discoverFragment(String templatePath, String fragmentName) {
-        List<FragmentDiscoveryService.FragmentInfo> allFragments = fragmentDiscoveryService.discoverFragments();
-
-        return allFragments.stream()
-            .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
-            .findFirst()
-            .map(fragment -> FragmentDetailResponse.success(fragmentSummaryMapper.toDomain(fragment), templatePath, fragmentName))
+        return fragmentCatalogPort.findFragment(templatePath, fragmentName)
+            .map(fragment -> FragmentDetailResponse.success(fragment, templatePath, fragmentName))
             .orElseGet(() -> FragmentDetailResponse.notFound(templatePath, fragmentName));
     }
 }

@@ -47,7 +47,7 @@ public interface FragmentPreviewUseCase {
         public String getFullTemplatePath() { return templatePath; }
         public String getFragmentName() { return fragmentName; }
         public String getStoryName() { return storyName; }
-        public org.springframework.ui.Model getModel() { return model; }
+        public Model getModel() { return model; }
     }
 
     /**
