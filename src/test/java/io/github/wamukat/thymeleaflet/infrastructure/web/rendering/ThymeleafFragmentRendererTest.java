@@ -124,8 +124,8 @@ class ThymeleafFragmentRendererTest {
         // Given - レンダリング準備完了の場合
         ThymeleafFragmentRenderer.FragmentRenderingContext readyContext = 
             new ThymeleafFragmentRenderer.FragmentRenderingContext(
-                createFragmentInfo("template", "fragment"),
-                createFragmentStoryInfo("story")
+                Optional.of(createFragmentInfo("template", "fragment")),
+                Optional.of(createFragmentStoryInfo("story"))
             );
 
         // When & Then
@@ -134,8 +134,8 @@ class ThymeleafFragmentRendererTest {
         // Given - フラグメントが未選択の場合
         ThymeleafFragmentRenderer.FragmentRenderingContext notReadyContext = 
             new ThymeleafFragmentRenderer.FragmentRenderingContext(
-                null, // フラグメント未選択
-                createFragmentStoryInfo("story")
+                Optional.empty(), // フラグメント未選択
+                Optional.of(createFragmentStoryInfo("story"))
             );
 
         // When & Then

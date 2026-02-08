@@ -88,11 +88,11 @@ public class TypeInfo {
         this.javaTypeName = Objects.requireNonNull(javaTypeName, "javaTypeName cannot be null");
         this.typeCategory = Objects.requireNonNull(typeCategory, "typeCategory cannot be null");
         this.required = required;
-        this.description = description != null ? description : "";
+        this.description = Objects.requireNonNullElse(description, "");
         this.inferenceLevel = Objects.requireNonNull(inferenceLevel, "inferenceLevel cannot be null");
-        this.inferenceSource = inferenceSource != null ? inferenceSource : "";
+        this.inferenceSource = Objects.requireNonNullElse(inferenceSource, "");
         this.allowedValues = Collections.unmodifiableList(new ArrayList<>(
-            allowedValues != null ? allowedValues : new ArrayList<>()));
+            Objects.requireNonNullElse(allowedValues, List.<String>of())));
     }
 
     /**
@@ -220,17 +220,17 @@ public class TypeInfo {
         private List<String> allowedValues = new ArrayList<>();
 
         public Builder parameterName(String parameterName) {
-            this.parameterName = parameterName;
+            this.parameterName = Objects.requireNonNull(parameterName, "parameterName cannot be null");
             return this;
         }
 
         public Builder javaTypeName(String javaTypeName) {
-            this.javaTypeName = javaTypeName;
+            this.javaTypeName = Objects.requireNonNull(javaTypeName, "javaTypeName cannot be null");
             return this;
         }
 
         public Builder typeCategory(TypeCategory typeCategory) {
-            this.typeCategory = typeCategory;
+            this.typeCategory = Objects.requireNonNull(typeCategory, "typeCategory cannot be null");
             return this;
         }
 
@@ -240,26 +240,26 @@ public class TypeInfo {
         }
 
         public Builder description(String description) {
-            this.description = description;
+            this.description = Objects.requireNonNullElse(description, "");
             return this;
         }
 
         public Builder inferenceLevel(InferenceLevel inferenceLevel) {
-            this.inferenceLevel = inferenceLevel;
+            this.inferenceLevel = Objects.requireNonNull(inferenceLevel, "inferenceLevel cannot be null");
             return this;
         }
 
         public Builder allowedValues(List<String> allowedValues) {
-            this.allowedValues = allowedValues != null ? allowedValues : new ArrayList<>();
+            this.allowedValues = Objects.requireNonNullElse(allowedValues, new ArrayList<>());
             return this;
         }
 
         public TypeInfo build() {
             // 必須フィールドの検証
-            if (parameterName == null || parameterName.trim().isEmpty()) {
+            if (parameterName.trim().isEmpty()) {
                 throw new IllegalArgumentException("parameterName is required");
             }
-            if (javaTypeName == null || javaTypeName.trim().isEmpty()) {
+            if (javaTypeName.trim().isEmpty()) {
                 throw new IllegalArgumentException("javaTypeName is required");
             }
 

@@ -7,12 +7,12 @@ import org.slf4j.LoggerFactory;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.context.ExpressionContext;
 import org.springframework.stereotype.Component;
-import org.springframework.lang.Nullable;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -76,7 +76,7 @@ public class ThymeleafFragmentRenderer {
         // 表示用パラメータリスト（Thymeleaf表示制約対応）
         Map<String, Object> displayParameters = storyParameters.entrySet().stream()
                 .filter(entry -> !"__storybook_background".equals(entry.getKey()))
-                .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+                .filter(entry -> entry.getValue() != null)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         logger.debug("Configured {} parameters in Thymeleaf model", displayParameters.size());
@@ -107,14 +107,14 @@ public class ThymeleafFragmentRenderer {
      * Infrastructure層のデータ転送専用
      */
     public static class FragmentRenderingContext {
-        private final @Nullable FragmentDiscoveryService.FragmentInfo selectedFragment;
-        private final @Nullable FragmentStoryInfo selectedStory;
+        private final Optional<FragmentDiscoveryService.FragmentInfo> selectedFragment;
+        private final Optional<FragmentStoryInfo> selectedStory;
 
         public FragmentRenderingContext(
-                @Nullable FragmentDiscoveryService.FragmentInfo selectedFragment,
-                @Nullable FragmentStoryInfo selectedStory) {
-            this.selectedFragment = selectedFragment;
-            this.selectedStory = selectedStory;
+                Optional<FragmentDiscoveryService.FragmentInfo> selectedFragment,
+                Optional<FragmentStoryInfo> selectedStory) {
+            this.selectedFragment = Objects.requireNonNull(selectedFragment, "selectedFragment cannot be null");
+            this.selectedStory = Objects.requireNonNull(selectedStory, "selectedStory cannot be null");
         }
 
         /**
@@ -122,7 +122,7 @@ public class ThymeleafFragmentRenderer {
          * Infrastructure技術的制約チェック
          */
         public boolean isRenderingReady() {
-            return selectedFragment != null && selectedStory != null;
+            return selectedFragment.isPresent() && selectedStory.isPresent();
         }
     }
 }

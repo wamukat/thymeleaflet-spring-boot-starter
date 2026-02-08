@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -92,15 +93,16 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             Map<String, Object> displayParameters = thymeleafFragmentRenderer.configureModelWithStoryParameters(storyParameters, request.model());
             
             // defaultストーリーの情報取得（差異ハイライト用）
-            FragmentStoryInfo defaultStory = storyInfo;
+            Optional<FragmentStoryInfo> defaultStory = Optional.of(storyInfo);
             Map<String, Object> defaultParameters = new HashMap<>();
             
             if (!request.storyName().equals("default")) {
                 var defaultStoryOptional = storyRetrievalUseCase
                     .getStory(request.fullTemplatePath(), request.fragmentName(), "default");
                 if (defaultStoryOptional.isPresent()) {
-                    defaultStory = defaultStoryOptional.orElseThrow();
-                    Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStory);
+                    FragmentStoryInfo defaultStoryInfo = defaultStoryOptional.orElseThrow();
+                    defaultStory = Optional.of(defaultStoryInfo);
+                    Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStoryInfo);
                     defaultParameters = defaultStoryParams.entrySet().stream()
                         .filter(entry -> !"__storybook_background".equals(entry.getKey()))
                         .filter(entry -> entry.getValue() != null)
@@ -113,7 +115,7 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             
             logger.info("=== StoryContentCoordination COMPLETED ===");
             return StoryContentResult.success(storyInfo, fragmentInfo, stories,
-                displayParameters, defaultStory, defaultParameters, javadocInfo);
+                displayParameters, defaultStory.orElseThrow(), defaultParameters, javadocInfo);
             
         } catch (Exception e) {
             logger.error("Story content coordination failed", e);
