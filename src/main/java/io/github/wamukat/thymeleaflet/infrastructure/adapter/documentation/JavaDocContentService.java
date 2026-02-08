@@ -38,9 +38,9 @@ public class JavaDocContentService {
 
     public Optional<String> loadTemplateContent(String templatePath) {
         if (storybookProperties.getCache().isEnabled()) {
-            String cached = templateCache.get(templatePath);
-            if (cached != null) {
-                return Optional.of(cached);
+            Optional<String> cached = Optional.ofNullable(templateCache.get(templatePath));
+            if (cached.isPresent()) {
+                return cached;
             }
         }
         try {
@@ -67,9 +67,9 @@ public class JavaDocContentService {
 
     public List<JavaDocAnalyzer.JavaDocInfo> loadJavaDocInfos(String templatePath) {
         if (storybookProperties.getCache().isEnabled()) {
-            List<JavaDocAnalyzer.JavaDocInfo> cached = javaDocCache.get(templatePath);
-            if (cached != null) {
-                return cached;
+            Optional<List<JavaDocAnalyzer.JavaDocInfo>> cached = Optional.ofNullable(javaDocCache.get(templatePath));
+            if (cached.isPresent()) {
+                return cached.orElseThrow();
             }
         }
         Optional<String> htmlContent = loadTemplateContent(templatePath);

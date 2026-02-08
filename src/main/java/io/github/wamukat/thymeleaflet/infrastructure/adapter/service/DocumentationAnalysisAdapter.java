@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -40,9 +41,9 @@ public class DocumentationAnalysisAdapter implements DocumentationAnalysisPort {
     @Override
     public List<TypeInfo> extractTypeInformation(String templatePath) {
         if (storybookProperties.getCache().isEnabled()) {
-            List<TypeInfo> cached = typeInfoCache.get(templatePath);
-            if (cached != null) {
-                return cached;
+            Optional<List<TypeInfo>> cached = Optional.ofNullable(typeInfoCache.get(templatePath));
+            if (cached.isPresent()) {
+                return cached.orElseThrow();
             }
         }
         try {
