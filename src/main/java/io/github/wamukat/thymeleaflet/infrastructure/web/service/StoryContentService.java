@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * ストーリーコンテンツHTMX処理専用サービス
@@ -51,11 +50,11 @@ public class StoryContentService {
         SecurePathConversionService.SecurityConversionResult conversionResult = securePathConversionService.convertSecurePath(templatePath, model);
         if (!conversionResult.succeeded()) {
             return StoryContentResult.failure(
-                Objects.requireNonNullElse(conversionResult.templateReference(),
+                conversionResult.templateReference().orElse(
                     "thymeleaflet/fragments/error-display :: error(type='danger')")
             );
         }
-        String fullTemplatePath = Objects.requireNonNull(conversionResult.fullTemplatePath());
+        String fullTemplatePath = conversionResult.fullTemplatePath().orElseThrow();
         
         // ストーリーコンテンツ協調処理 (協調UseCase使用)
         StoryContentCoordinationUseCase.StoryContentRequest contentRequest = 

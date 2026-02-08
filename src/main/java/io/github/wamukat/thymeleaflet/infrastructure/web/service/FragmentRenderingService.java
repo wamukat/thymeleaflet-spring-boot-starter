@@ -17,7 +17,6 @@ import org.springframework.ui.Model;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -76,9 +75,10 @@ public class FragmentRenderingService {
             SecurePathConversionService.SecurityConversionResult conversionResult = 
                 securePathConversionService.convertSecurePath(templatePath, model);
             if (!conversionResult.succeeded()) {
-                return RenderingResult.error(conversionResult.templateReference());
+                return RenderingResult.error(conversionResult.templateReference()
+                    .orElse("thymeleaflet/fragments/error-display :: error(type='danger')"));
             }
-            String fullTemplatePath = Objects.requireNonNull(conversionResult.fullTemplatePath());
+            String fullTemplatePath = conversionResult.fullTemplatePath().orElseThrow();
             logger.info("Full template path: {}", fullTemplatePath);
         
             // 対象ストーリーを取得
@@ -222,22 +222,22 @@ public class FragmentRenderingService {
      */
     public static class RenderingResult {
         private final boolean succeeded;
-        private final @Nullable String templateReference;
+        private final Optional<String> templateReference;
         
-        private RenderingResult(boolean succeeded, @Nullable String templateReference) {
+        private RenderingResult(boolean succeeded, Optional<String> templateReference) {
             this.succeeded = succeeded;
             this.templateReference = templateReference;
         }
         
         public static RenderingResult success(String templateReference) {
-            return new RenderingResult(true, templateReference);
+            return new RenderingResult(true, Optional.of(templateReference));
         }
         
-        public static RenderingResult error(@Nullable String templateReference) {
-            return new RenderingResult(false, templateReference);
+        public static RenderingResult error(String templateReference) {
+            return new RenderingResult(false, Optional.of(templateReference));
         }
         
         public boolean succeeded() { return succeeded; }
-        public @Nullable String templateReference() { return templateReference; }
+        public Optional<String> templateReference() { return templateReference; }
     }
 }

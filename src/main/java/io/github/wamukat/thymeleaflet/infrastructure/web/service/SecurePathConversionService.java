@@ -1,11 +1,12 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
+
+import java.util.Optional;
 
 /**
  * セキュアパス変換専用サービス
@@ -46,13 +47,13 @@ public class SecurePathConversionService {
      */
     public static class SecurityConversionResult {
         private final boolean succeeded;
-        private final @Nullable String fullTemplatePath;
-        private final @Nullable String templateReference;
+        private final Optional<String> fullTemplatePath;
+        private final Optional<String> templateReference;
         
         private SecurityConversionResult(
             boolean succeeded,
-            @Nullable String fullTemplatePath,
-            @Nullable String templateReference
+            Optional<String> fullTemplatePath,
+            Optional<String> templateReference
         ) {
             this.succeeded = succeeded;
             this.fullTemplatePath = fullTemplatePath;
@@ -60,15 +61,15 @@ public class SecurePathConversionService {
         }
         
         public static SecurityConversionResult success(String fullTemplatePath) {
-            return new SecurityConversionResult(true, fullTemplatePath, null);
+            return new SecurityConversionResult(true, Optional.of(fullTemplatePath), Optional.empty());
         }
         
         public static SecurityConversionResult failure(String templateReference) {
-            return new SecurityConversionResult(false, null, templateReference);
+            return new SecurityConversionResult(false, Optional.empty(), Optional.of(templateReference));
         }
         
         public boolean succeeded() { return succeeded; }
-        public @Nullable String fullTemplatePath() { return fullTemplatePath; }
-        public @Nullable String templateReference() { return templateReference; }
+        public Optional<String> fullTemplatePath() { return fullTemplatePath; }
+        public Optional<String> templateReference() { return templateReference; }
     }
 }

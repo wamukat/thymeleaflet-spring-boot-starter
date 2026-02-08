@@ -17,7 +17,6 @@ import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * ストーリープレビュー表示専用コントローラー
@@ -99,7 +98,7 @@ public class StoryPreviewController {
         if (!conversionResult.succeeded()) {
             return null;
         }
-        String fullTemplatePath = Objects.requireNonNull(conversionResult.fullTemplatePath());
+        String fullTemplatePath = conversionResult.fullTemplatePath().orElseThrow();
 
         StoryRetrievalUseCase.StoryListResponse listResponse =
             storyRetrievalUseCase.getStoriesForFragment(fullTemplatePath, fragmentName);

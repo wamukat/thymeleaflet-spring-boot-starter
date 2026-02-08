@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * フラグメント動的レンダリング専用コントローラー
@@ -43,7 +42,8 @@ public class FragmentRenderingController {
         FragmentRenderingService.RenderingResult result = 
             fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model);
         
-        return Objects.requireNonNull(result.templateReference());
+        return result.templateReference()
+            .orElse("thymeleaflet/fragments/error-display :: error(type='danger')");
     }
 
     /**
@@ -60,7 +60,8 @@ public class FragmentRenderingController {
         Map<String, Object> modelOverrides = request != null ? request.model() : null;
         FragmentRenderingService.RenderingResult result =
             fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model, parameters, modelOverrides);
-        return Objects.requireNonNull(result.templateReference());
+        return result.templateReference()
+            .orElse("thymeleaflet/fragments/error-display :: error(type='danger')");
     }
 
     public record RenderOverridesRequest(Map<String, Object> parameters, Map<String, Object> model) {}
