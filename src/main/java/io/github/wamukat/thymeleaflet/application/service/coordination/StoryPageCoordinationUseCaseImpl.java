@@ -86,21 +86,21 @@ public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUs
                 allFragments.stream()
                     .collect(Collectors.groupingBy(FragmentSummary::getType));
             
-            // 統計情報生成 (Infrastructure形式を使用)
+            // 統計情報生成
             FragmentStatisticsUseCase.FragmentStatisticsResponse statisticsResponse = 
-                fragmentStatisticsUseCase.generateStatistics(infraFragments);
+                fragmentStatisticsUseCase.generateStatistics(allFragments);
             Map<String, Long> templateStats = statisticsResponse.getTemplateStats();
             List<String> uniquePaths = statisticsResponse.getUniquePaths();
             
-            // 階層構造化 (Infrastructure形式を使用)
+            // 階層構造化
             FragmentHierarchyUseCase.FragmentHierarchyResponse hierarchyResponse = 
-                fragmentHierarchyUseCase.buildHierarchicalStructure(infraFragments);
+                fragmentHierarchyUseCase.buildHierarchicalStructure(allFragments);
             Map<String, Object> hierarchicalFragments = hierarchyResponse.getHierarchicalStructure();
             
             // 2. 選択されたフラグメント・ストーリー取得
             FragmentDiscoveryUseCase.FragmentDetailResponse fragmentDetailResponse = 
                 fragmentDiscoveryUseCase.discoverFragment(request.fullTemplatePath(), request.fragmentName());
-            Optional<FragmentDiscoveryService.FragmentInfo> selectedFragment = fragmentDetailResponse.getFragment();
+            Optional<FragmentSummary> selectedFragment = fragmentDetailResponse.getFragment();
 
             Optional<FragmentStoryInfo> selectedStory = Optional.empty();
             if (selectedFragment.isPresent()) {

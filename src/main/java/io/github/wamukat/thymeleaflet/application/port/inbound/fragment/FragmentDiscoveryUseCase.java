@@ -1,6 +1,6 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.fragment;
 
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 
 import java.util.Optional;
 
@@ -21,13 +21,13 @@ public interface FragmentDiscoveryUseCase {
      * フラグメント詳細レスポンス
      */
     class FragmentDetailResponse {
-        private final Optional<FragmentDiscoveryService.FragmentInfo> fragment;
+        private final Optional<FragmentSummary> fragment;
         private final boolean found;
         private final String templatePath;
         private final String fragmentName;
 
         public FragmentDetailResponse(
-            Optional<FragmentDiscoveryService.FragmentInfo> fragment,
+            Optional<FragmentSummary> fragment,
             boolean found,
             String templatePath,
             String fragmentName
@@ -38,7 +38,7 @@ public interface FragmentDiscoveryUseCase {
             this.fragmentName = fragmentName;
         }
 
-        public static FragmentDetailResponse success(FragmentDiscoveryService.FragmentInfo fragment, String templatePath, String fragmentName) {
+        public static FragmentDetailResponse success(FragmentSummary fragment, String templatePath, String fragmentName) {
             return new FragmentDetailResponse(Optional.of(fragment), true, templatePath, fragmentName);
         }
 
@@ -46,7 +46,7 @@ public interface FragmentDiscoveryUseCase {
             return new FragmentDetailResponse(Optional.empty(), false, templatePath, fragmentName);
         }
 
-        public Optional<FragmentDiscoveryService.FragmentInfo> getFragment() { return fragment; }
+        public Optional<FragmentSummary> getFragment() { return fragment; }
         public boolean isFound() { return found; }
         public String getTemplatePath() { return templatePath; }
         public String getFragmentName() { return fragmentName; }

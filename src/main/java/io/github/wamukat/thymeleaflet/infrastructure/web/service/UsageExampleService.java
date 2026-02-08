@@ -7,8 +7,6 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrie
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +39,6 @@ public class UsageExampleService {
     
     @Autowired
     private UsageExampleUseCase usageExampleUseCase;
-    
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
     
     /**
      * 使用例生成処理
@@ -140,12 +135,10 @@ public class UsageExampleService {
                     storyInfo.getStoryName()
                 ));
                 
-                // パラメータ抽出（Domain FragmentSummaryをInfrastructure型に変換）
-                FragmentDiscoveryService.FragmentInfo infrastructureFragmentInfo = 
-                    fragmentSummaryMapper.toInfrastructure(storyInfo.getFragmentSummary());
+                // パラメータ抽出
                 StoryParameterUseCase.ParameterExtractionApplicationCommand extractionCommand = 
                     new StoryParameterUseCase.ParameterExtractionApplicationCommand(
-                        infrastructureFragmentInfo,
+                        storyInfo.getFragmentSummary(),
                         tempModel.asMap()
                     );
                 StoryParameterUseCase.ParameterExtractionResponse extractionResponse = 

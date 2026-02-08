@@ -1,7 +1,5 @@
 package io.github.wamukat.thymeleaflet.domain.service;
 
-import org.springframework.stereotype.Service;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,7 +8,6 @@ import java.util.List;
  * 
  * FragmentDiscoveryServiceから移設したドメインロジックを集約
  */
-@Service
 public class FragmentDomainService {
 
     /**

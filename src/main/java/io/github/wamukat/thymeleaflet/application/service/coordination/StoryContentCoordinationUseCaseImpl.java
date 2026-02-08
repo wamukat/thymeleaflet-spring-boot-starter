@@ -5,7 +5,9 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParame
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryValidationUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.JavaDocLookupService;
 import org.slf4j.Logger;
@@ -50,6 +52,9 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
     
     @Autowired
     private JavaDocLookupService javaDocLookupService;
+
+    @Autowired
+    private FragmentSummaryMapper fragmentSummaryMapper;
     
     @Override
     public StoryContentResult coordinateStoryContentSetup(StoryContentRequest request) {
@@ -77,9 +82,10 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
                 return StoryContentResult.failure("Fragment not found: " + request.fullTemplatePath() + "::" + request.fragmentName());
             }
             FragmentDiscoveryService.FragmentInfo fragmentInfo = selectedFragment.orElseThrow();
+            FragmentSummary fragmentSummary = fragmentSummaryMapper.toDomain(fragmentInfo);
             
             // 3. ストーリー一覧取得
-            List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentInfo);
+            List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentSummary);
             
             // 4. 共通データセットアップ
             Map<String, Object> storyParameters = storyParameterUseCase.getParametersForStory(storyInfo);
@@ -115,7 +121,7 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             var javadocInfo = javaDocLookupService.findJavaDocInfo(request.fullTemplatePath(), request.fragmentName());
             
             logger.info("=== StoryContentCoordination COMPLETED ===");
-            return StoryContentResult.success(storyInfo, fragmentInfo, stories,
+            return StoryContentResult.success(storyInfo, fragmentSummary, stories,
                 displayParameters, defaultStory.orElseThrow(), defaultParameters, javadocInfo);
             
         } catch (Exception e) {

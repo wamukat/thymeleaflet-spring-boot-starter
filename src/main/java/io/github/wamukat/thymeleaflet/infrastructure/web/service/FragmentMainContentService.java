@@ -77,17 +77,17 @@ public class FragmentMainContentService {
                 allFragments.stream()
                     .collect(Collectors.groupingBy(FragmentSummary::getType));
             
-            // テンプレートパス別の統計 (Infrastructure形式を使用)
+            // テンプレートパス別の統計
             FragmentStatisticsUseCase.FragmentStatisticsResponse statisticsResponse = 
-                fragmentStatisticsUseCase.generateStatistics(infraFragments);
+                fragmentStatisticsUseCase.generateStatistics(allFragments);
             Map<String, Long> templateStats = statisticsResponse.getTemplateStats();
             
             // ユニークパスリスト
             List<String> uniquePaths = statisticsResponse.getUniquePaths();
             
-            // 階層構造化 - ナビソート機能含む (Infrastructure形式を使用)
+            // 階層構造化 - ナビソート機能含む
             FragmentHierarchyUseCase.FragmentHierarchyResponse hierarchyResponse = 
-                fragmentHierarchyUseCase.buildHierarchicalStructure(infraFragments);
+                fragmentHierarchyUseCase.buildHierarchicalStructure(allFragments);
             Map<String, Object> hierarchicalFragments = hierarchyResponse.getHierarchicalStructure();
             
             // JSON変換とモデル属性設定 (Domain形式を使用)

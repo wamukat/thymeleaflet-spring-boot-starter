@@ -76,12 +76,12 @@ class FragmentMainContentServiceTest {
 
         when(fragmentDiscoveryService.discoverFragments()).thenReturn(List.of(infraFragment));
         when(fragmentSummaryMapper.toDomain(infraFragment)).thenReturn(summary);
-        when(fragmentStatisticsUseCase.generateStatistics(List.of(infraFragment)))
+        when(fragmentStatisticsUseCase.generateStatistics(List.of(summary)))
             .thenReturn(FragmentStatisticsUseCase.FragmentStatisticsResponse.success(
                 Map.of("components/button", 1L),
                 List.of("components/button")
             ));
-        when(fragmentHierarchyUseCase.buildHierarchicalStructure(List.of(infraFragment)))
+        when(fragmentHierarchyUseCase.buildHierarchicalStructure(List.of(summary)))
             .thenReturn(FragmentHierarchyUseCase.FragmentHierarchyResponse.success(
                 Map.of("components", Map.of()), 1
             ));

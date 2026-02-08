@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wamukat.thymeleaflet.application.port.inbound.preview.FragmentPreviewUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.coordination.StoryContentCoordinationUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.JavaDocLookupService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,6 @@ import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * フラグメントプレビュー専用ユースケース実装（縮小版）
@@ -102,8 +100,4 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
         return new JavaDocInfoResponse(javaDocLookupService.hasJavaDoc(command.templatePath(), command.fragmentName()));
     }
 
-    @Override
-    public Optional<JavaDocAnalyzer.JavaDocInfo> getJavaDocInfo(String templatePath, String fragmentName) {
-        return javaDocLookupService.findJavaDocInfo(templatePath, fragmentName);
-    }
 }

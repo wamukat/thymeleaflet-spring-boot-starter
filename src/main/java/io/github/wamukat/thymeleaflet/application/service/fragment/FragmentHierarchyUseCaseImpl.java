@@ -1,7 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.service.fragment;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.fragment.FragmentHierarchyUseCase;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 public class FragmentHierarchyUseCaseImpl implements FragmentHierarchyUseCase {
 
     @Override
-    public FragmentHierarchyResponse buildHierarchicalStructure(List<FragmentDiscoveryService.FragmentInfo> fragments) {
+    public FragmentHierarchyResponse buildHierarchicalStructure(List<FragmentSummary> fragments) {
         // 階層構造構築 - FragmentQueryService統合
         Map<String, Object> hierarchicalStructure = buildFragmentHierarchy(fragments);
         
@@ -29,17 +29,17 @@ public class FragmentHierarchyUseCaseImpl implements FragmentHierarchyUseCase {
     /**
      * 階層構造構築 (FragmentQueryService統合機能) - 元の構造を保持して辞書順ソート対応
      */
-    private Map<String, Object> buildFragmentHierarchy(List<FragmentDiscoveryService.FragmentInfo> fragments) {
+    private Map<String, Object> buildFragmentHierarchy(List<FragmentSummary> fragments) {
         // 辞書順を保持するためLinkedHashMapを使用
         Map<String, Object> hierarchy = new LinkedHashMap<>();
         
         // フラグメントを辞書順でソート
-        List<FragmentDiscoveryService.FragmentInfo> sortedFragments = fragments.stream()
-            .sorted(Comparator.comparing(FragmentDiscoveryService.FragmentInfo::getTemplatePath)
-                   .thenComparing(FragmentDiscoveryService.FragmentInfo::getFragmentName))
+        List<FragmentSummary> sortedFragments = fragments.stream()
+            .sorted(Comparator.comparing(FragmentSummary::getTemplatePath)
+                   .thenComparing(FragmentSummary::getFragmentName))
             .collect(Collectors.toList());
         
-        for (FragmentDiscoveryService.FragmentInfo fragment : sortedFragments) {
+        for (FragmentSummary fragment : sortedFragments) {
             String[] pathParts = fragment.getTemplatePath().split("/");
             Map<String, Object> currentLevel = hierarchy;
             
@@ -52,8 +52,8 @@ public class FragmentHierarchyUseCaseImpl implements FragmentHierarchyUseCase {
                     Map<String, Object> fragmentsMap = (Map<String, Object>) currentLevel.computeIfAbsent("_fragments", k -> new LinkedHashMap<>());
                     
                     @SuppressWarnings("unchecked")
-                    List<FragmentDiscoveryService.FragmentInfo> fragmentList = 
-                        (List<FragmentDiscoveryService.FragmentInfo>) fragmentsMap.computeIfAbsent(part, k -> new ArrayList<>());
+                    List<FragmentSummary> fragmentList =
+                        (List<FragmentSummary>) fragmentsMap.computeIfAbsent(part, k -> new ArrayList<>());
                     fragmentList.add(fragment);
                 } else {
                     // 中間レベル: 階層を作成
@@ -104,13 +104,13 @@ public class FragmentHierarchyUseCaseImpl implements FragmentHierarchyUseCase {
                 fragmentsMap.keySet().stream()
                     .sorted()
                     .forEach(fragmentKey -> {
-                        List<FragmentDiscoveryService.FragmentInfo> fragmentList = 
-                            (List<FragmentDiscoveryService.FragmentInfo>) fragmentsMap.get(fragmentKey);
+                        List<FragmentSummary> fragmentList =
+                            (List<FragmentSummary>) fragmentsMap.get(fragmentKey);
                         // フラグメントリスト内も名前でソート
-                        List<FragmentDiscoveryService.FragmentInfo> sortedList = fragmentList == null
+                        List<FragmentSummary> sortedList = fragmentList == null
                             ? List.of()
                             : fragmentList.stream()
-                            .sorted(Comparator.comparing(FragmentDiscoveryService.FragmentInfo::getFragmentName))
+                            .sorted(Comparator.comparing(FragmentSummary::getFragmentName))
                             .collect(Collectors.toList());
                         sortedFragmentsMap.put(fragmentKey, sortedList);
                     });

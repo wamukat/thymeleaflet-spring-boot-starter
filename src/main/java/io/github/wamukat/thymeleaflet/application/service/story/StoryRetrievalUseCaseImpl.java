@@ -40,19 +40,18 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
     }
 
     @Override
-    public List<FragmentStoryInfo> getStoriesForFragment(FragmentDiscoveryService.FragmentInfo fragmentInfo) {
+    public List<FragmentStoryInfo> getStoriesForFragment(FragmentSummary fragmentSummary) {
         // StoryDataPortを使用してストーリー設定を取得
-        FragmentSummary domainFragmentSummary = fragmentSummaryMapper.toDomain(fragmentInfo);
         List<FragmentStoryInfo> stories = new ArrayList<>();
 
-        Optional<StoryConfiguration> config = storyDataPort.loadStoryConfiguration(fragmentInfo.getTemplatePath());
+        Optional<StoryConfiguration> config = storyDataPort.loadStoryConfiguration(fragmentSummary.getTemplatePath());
         if (config.isPresent()) {
-            Optional<StoryGroup> group = config.orElseThrow().getStoryGroup(fragmentInfo.getFragmentName());
+            Optional<StoryGroup> group = config.orElseThrow().getStoryGroup(fragmentSummary.getFragmentName());
             if (group.isPresent()) {
                 for (StoryItem story : group.orElseThrow().stories()) {
                     stories.add(FragmentStoryInfo.of(
-                        domainFragmentSummary,
-                        fragmentInfo.getFragmentName(),
+                        fragmentSummary,
+                        fragmentSummary.getFragmentName(),
                         story.name(),
                         story
                     ));
@@ -63,22 +62,22 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
         // ストーリーが定義されていない場合はデフォルトストーリーを作成
         if (stories.isEmpty()) {
             StoryItem defaultStory = new StoryItem(
-                "default",
-                "default",
-                "",
+                    "default",
+                    "default",
+                    "",
                 Collections.emptyMap(),
                 StoryPreview.empty(),
                 Collections.emptyMap()
             );
             stories.add(FragmentStoryInfo.of(
-                domainFragmentSummary, 
-                fragmentInfo.getFragmentName(),
+                fragmentSummary,
+                fragmentSummary.getFragmentName(),
                 "default", 
                 defaultStory
             ));
         }
 
-        appendCustomStoryIfMissing(stories, domainFragmentSummary, fragmentInfo.getFragmentName());
+        appendCustomStoryIfMissing(stories, fragmentSummary, fragmentSummary.getFragmentName());
         
         return stories;
     }
@@ -125,7 +124,8 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
         return fragmentDiscoveryService.discoverFragments().stream()
             .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
             .findFirst()
-            .map(fragment -> StoryListResponse.success(fragment, getStoriesForFragment(fragment)))
+            .map(fragment -> fragmentSummaryMapper.toDomain(fragment))
+            .map(fragmentSummary -> StoryListResponse.success(fragmentSummary, getStoriesForFragment(fragmentSummary)))
             .orElseGet(StoryListResponse::failure);
     }
 
