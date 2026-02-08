@@ -5,6 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Storybook設定プロパティクラス
@@ -248,7 +249,9 @@ public class StorybookProperties {
             if (viewports.size() > 10) {
                 throw new IllegalArgumentException("Maximum 10 viewport presets allowed");
             }
-            this.viewports = viewports;
+            this.viewports = viewports.stream()
+                .filter(Objects::nonNull)
+                .toList();
         }
 
         private static List<ViewportPreset> defaultViewports() {

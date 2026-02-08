@@ -11,6 +11,7 @@ import org.springframework.ui.Model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * プレビュー設定を画面向けに整形するサービス
@@ -33,44 +34,38 @@ public class PreviewConfigService {
 
     private List<PreviewViewportOption> buildViewportOptions(List<StorybookProperties.ViewportPreset> presets) {
         List<PreviewViewportOption> options = new ArrayList<>();
-        if (presets == null) {
-            return options;
-        }
         Locale locale = LocaleContextHolder.getLocale();
         for (StorybookProperties.ViewportPreset preset : presets) {
-            if (preset == null) {
-                continue;
-            }
-            String id = safeString(preset.getId());
+            Optional<String> id = safeString(preset.getId());
             Integer width = preset.getWidth();
             Integer height = preset.getHeight();
             String label = resolveLabel(preset, locale);
-            if (id == null || width == null || height == null) {
+            if (id.isEmpty() || width == null || height == null) {
                 continue;
             }
-            options.add(new PreviewViewportOption(id, label, width, height));
+            options.add(new PreviewViewportOption(id.orElseThrow(), label, width, height));
         }
         return options;
     }
 
     private String resolveLabel(StorybookProperties.ViewportPreset preset, Locale locale) {
-        @Nullable String label = safeString(preset.getLabel());
-        @Nullable String labelKey = safeString(preset.getLabelKey());
-        if (label == null && labelKey != null) {
-            return messageSource.getMessage(labelKey, null, labelKey, locale);
+        Optional<String> label = safeString(preset.getLabel());
+        Optional<String> labelKey = safeString(preset.getLabelKey());
+        if (label.isEmpty() && labelKey.isPresent()) {
+            String key = labelKey.orElseThrow();
+            return messageSource.getMessage(key, null, key, locale);
         }
-        if (label == null) {
-            @Nullable String fallbackId = safeString(preset.getId());
-            return fallbackId != null ? fallbackId : "viewport";
+        if (label.isEmpty()) {
+            return safeString(preset.getId()).orElse("viewport");
         }
-        return label;
+        return label.orElseThrow();
     }
 
-    private @Nullable String safeString(@Nullable String value) {
+    private Optional<String> safeString(@Nullable String value) {
         if (value == null) {
-            return null;
+            return Optional.empty();
         }
         String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return trimmed.isEmpty() ? Optional.empty() : Optional.of(trimmed);
     }
 }
