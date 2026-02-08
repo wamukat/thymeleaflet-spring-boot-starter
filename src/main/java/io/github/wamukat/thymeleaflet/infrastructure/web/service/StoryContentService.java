@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.coordination.StoryContentCoordinationUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
+import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,9 @@ public class StoryContentService {
     
     @Autowired
     private SecurePathConversionService securePathConversionService;
+
+    @Autowired
+    private FragmentSummaryMapper fragmentSummaryMapper;
     
     /**
      * ストーリーコンテンツHTMX処理
@@ -69,7 +73,10 @@ public class StoryContentService {
         }
         
         // モデルに協調処理結果を設定
-        model.addAttribute("selectedFragment", contentResult.selectedFragment().orElse(null));
+        model.addAttribute(
+            "selectedFragment",
+            contentResult.selectedFragment().map(fragmentSummaryMapper::toInfrastructure).orElse(null)
+        );
         model.addAttribute("selectedStory", contentResult.storyInfo().orElse(null));
         model.addAttribute("storyInfo", contentResult.storyInfo().orElse(null));
         model.addAttribute("stories", contentResult.stories().orElse(List.of()));

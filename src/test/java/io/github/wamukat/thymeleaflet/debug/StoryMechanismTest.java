@@ -2,8 +2,8 @@ package io.github.wamukat.thymeleaflet.debug;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,12 +97,11 @@ class StoryMechanismTest {
         
         try {
             // FragmentInfoを構築してStoryを取得する必要がある
-            var fragmentInfo = new FragmentDiscoveryService.FragmentInfo(
+            var fragmentInfo = FragmentSummary.of(
                 templatePath, 
                 fragmentName, 
                 Collections.emptyList(), 
-                FragmentDomainService.FragmentType.PARAMETERIZED,
-                "transactionTypeBadge(transactionType)"
+                FragmentDomainService.FragmentType.PARAMETERIZED
             );
             var availableStories = storyRetrievalUseCase.getStoriesForFragment(fragmentInfo);
             

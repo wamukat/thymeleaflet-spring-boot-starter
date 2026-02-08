@@ -99,9 +99,8 @@ public class FragmentJsonService {
                 fragmentData.put("type", fragment.getType().name());
                 fragmentData.put("originalDefinition", ""); // FragmentSummaryにはoriginalDefinitionなし
                 
-                // ストーリー情報を取得 (FragmentSummaryMapperでInfrastructure形式に変換)
-                FragmentDiscoveryService.FragmentInfo infraFragment = fragmentSummaryMapper.toInfrastructure(fragment);
-                List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(infraFragment);
+                // ストーリー情報を取得
+                List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragment);
                 fragmentData.put("stories", stories.stream().map(story -> {
                     Map<String, Object> storyData = new HashMap<>();
                     Map<String, Object> storyParameters = story.getParameters();

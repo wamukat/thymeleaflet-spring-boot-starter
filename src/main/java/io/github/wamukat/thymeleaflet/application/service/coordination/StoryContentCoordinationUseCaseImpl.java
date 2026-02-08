@@ -4,10 +4,11 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.coordination.Stor
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryValidationUseCase;
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
+import io.github.wamukat.thymeleaflet.application.port.outbound.JavaDocLookupPort;
+import io.github.wamukat.thymeleaflet.application.port.outbound.StoryPresentationPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
-import io.github.wamukat.thymeleaflet.infrastructure.web.service.JavaDocLookupService;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,10 +38,10 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
     private StoryValidationUseCase storyValidationUseCase;
     
     @Autowired
-    private FragmentDiscoveryService fragmentDiscoveryService;
+    private FragmentCatalogPort fragmentCatalogPort;
     
     @Autowired
-    private ThymeleafFragmentRenderer thymeleafFragmentRenderer;
+    private StoryPresentationPort storyPresentationPort;
     
     @Autowired
     private StoryRetrievalUseCase storyRetrievalUseCase;
@@ -49,8 +50,8 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
     private StoryParameterUseCase storyParameterUseCase;
     
     @Autowired
-    private JavaDocLookupService javaDocLookupService;
-    
+    private JavaDocLookupPort javaDocLookupPort;
+
     @Override
     public StoryContentResult coordinateStoryContentSetup(StoryContentRequest request) {
         logger.info("=== StoryContentCoordination START ===");
@@ -69,17 +70,15 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             FragmentStoryInfo storyInfo = validationResult.getStory().orElseThrow();
             
             // 2. フラグメント情報取得
-            List<FragmentDiscoveryService.FragmentInfo> allFragments = fragmentDiscoveryService.discoverFragments();
-            var selectedFragment = thymeleafFragmentRenderer
-                .findFragmentByIdentifier(allFragments, request.fullTemplatePath(), request.fragmentName());
+            var selectedFragment = fragmentCatalogPort.findFragment(request.fullTemplatePath(), request.fragmentName());
             
             if (selectedFragment.isEmpty()) {
                 return StoryContentResult.failure("Fragment not found: " + request.fullTemplatePath() + "::" + request.fragmentName());
             }
-            FragmentDiscoveryService.FragmentInfo fragmentInfo = selectedFragment.orElseThrow();
+            FragmentSummary fragmentSummary = selectedFragment.orElseThrow();
             
             // 3. ストーリー一覧取得
-            List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentInfo);
+            List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentSummary);
             
             // 4. 共通データセットアップ
             Map<String, Object> storyParameters = storyParameterUseCase.getParametersForStory(storyInfo);
@@ -91,7 +90,7 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             }
             
             // パラメータをモデルに設定し、表示用パラメータを取得
-            Map<String, Object> displayParameters = thymeleafFragmentRenderer.configureModelWithStoryParameters(storyParameters, request.model());
+            Map<String, Object> displayParameters = storyPresentationPort.configureModelWithStoryParameters(storyParameters, request.model());
             
             // defaultストーリーの情報取得（差異ハイライト用）
             Optional<FragmentStoryInfo> defaultStory = Optional.of(storyInfo);
@@ -112,10 +111,10 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             }
             
             // JavaDoc情報取得
-            var javadocInfo = javaDocLookupService.findJavaDocInfo(request.fullTemplatePath(), request.fragmentName());
+            var javadocInfo = javaDocLookupPort.findJavaDocInfoForView(request.fullTemplatePath(), request.fragmentName());
             
             logger.info("=== StoryContentCoordination COMPLETED ===");
-            return StoryContentResult.success(storyInfo, fragmentInfo, stories,
+            return StoryContentResult.success(storyInfo, fragmentSummary, stories,
                 displayParameters, defaultStory.orElseThrow(), defaultParameters, javadocInfo);
             
         } catch (Exception e) {

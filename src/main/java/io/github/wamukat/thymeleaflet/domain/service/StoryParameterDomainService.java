@@ -6,7 +6,6 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.TypeInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
 
 import java.util.*;
 
@@ -16,7 +15,6 @@ import java.util.*;
  * Clean Architecture に従い、Infrastructure依存を排除したドメインロジックを提供
  * Infrastructure依存はPortパターンで抽象化
  */
-@Service
 public class StoryParameterDomainService {
     
     private static final Logger logger = LoggerFactory.getLogger(StoryParameterDomainService.class);

@@ -1,6 +1,6 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.fragment;
 
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 
 import java.util.List;
 import java.util.Map;
@@ -16,7 +16,7 @@ public interface FragmentHierarchyUseCase {
     /**
      * フラグメント階層構造生成
      */
-    FragmentHierarchyResponse buildHierarchicalStructure(List<FragmentDiscoveryService.FragmentInfo> fragments);
+    FragmentHierarchyResponse buildHierarchicalStructure(List<FragmentSummary> fragments);
 
     /**
      * フラグメント階層レスポンス

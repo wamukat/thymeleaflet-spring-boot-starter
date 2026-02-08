@@ -1,70 +1,39 @@
-# Thymeleaflet Spring Boot Starter - Architecture
+# Architecture Rules
 
-## Clean Architecture Migration (Phase 8)
+このドキュメントは、現在このリポジトリで採用しているアーキテクチャ制約を明文化したものです。  
+実際の自動検証は `src/test/java/io/github/wamukat/thymeleaflet/architecture/ArchitectureConstraintArchTest.java` で実施します。
 
-This project has been migrated to Clean Architecture with UseCase pattern following DDD principles.
+## 1. レイヤ構成
 
-### Architecture Layers
+- `domain`: ビジネス概念・ドメインロジック
+- `application`: ユースケース、ポート（inbound/outbound）
+- `infrastructure`: フレームワーク、I/O、Web、設定、adapter実装
 
-```
-📁 src/main/java/io/github/wamukat/thymeleaflet/
-├── 🎯 application/
-│   ├── port/
-│   │   └── inbound/           # UseCase Interfaces (Inbound Ports)
-│   │       ├── FragmentDiscoveryUseCase.java
-│   │       ├── FragmentPreviewUseCase.java
-│   │       ├── FragmentValidationUseCase.java
-│   │       └── StoryManagementUseCase.java
-│   └── service/               # UseCase Implementations
-│       ├── FragmentDiscoveryUseCaseImpl.java
-│       ├── FragmentPreviewUseCaseImpl.java
-│       ├── FragmentValidationUseCaseImpl.java
-│       ├── StoryManagementUseCaseImpl.java
-│       └── FragmentStoryApplicationService.java    # Foundation Service
-├── 🏗️ domain/                   # Domain Layer
-│   ├── model/                 # Domain Models
-│   ├── service/               # Domain Services
-│   └── port/                  # Domain Ports
-└── 🔧 infrastructure/           # Infrastructure Layer
-    ├── web/controller/        # Controllers (Adapters)
-    ├── discovery/             # Fragment Discovery Services
-    ├── rendering/             # Template Rendering
-    ├── security/              # Security Components
-    └── configuration/         # Spring Configuration
-```
+## 2. 強制ルール（ArchUnitで検証）
 
-### Migration History
+1. `application.port.inbound` / `application.port.outbound` のトップレベルクラスは interface であること
+2. `StorybookProperties` への依存は `infrastructure.configuration` に限定すること
+3. `domain` は `application` / `infrastructure` に依存しないこと
+4. `domain.model` / `domain.model.configuration` は Spring / Servlet に依存しないこと
+5. 以下の outbound port 実装は `infrastructure.adapter..` または `infrastructure.web..` に配置すること
+   - `StoryDataPort`
+   - `DocumentationAnalysisPort`
+   - `FragmentCatalogPort`
+   - `StoryPresentationPort`
+   - `JavaDocLookupPort`
+   - `FragmentDependencyPort`
+6. `application.port.inbound` / `application.port.outbound` は `infrastructure` に依存しないこと
+7. `domain` は Spring stereotype（`@Component`, `@Service`, `@Repository`, `@Controller`）を付けないこと
 
-- **Phase 8.1**: UseCase Port definitions
-- **Phase 8.2**: FragmentPreviewApplicationService → UseCase
-- **Phase 8.3**: Controller integration and navigation fixes
-- **Phase 8.4**: FragmentDiscoveryApplicationService → UseCase
-- **Phase 8.5**: FragmentValidationApplicationService → UseCase  
-- **Phase 8.6**: StoryManagementApplicationService → UseCase
-- **Phase 8.7**: Final ApplicationService cleanup and Clean Architecture completion
-- **Phase 9**: Final integration and performance optimization
+## 3. 運用ルール（開発体験とのバランス）
 
-### Key Features
+- `application.service` から `infrastructure` への依存は「原則避ける」が、現時点では一律禁止しない
+- UI協調処理（`Model` 連携など）は、過剰な抽象化で複雑化させない
+- ただし、新規機能では可能な範囲で port 経由に寄せる
 
-✅ **Clean Architecture**: Clear separation of concerns with defined layers
-✅ **UseCase Pattern**: Business logic encapsulated in UseCase implementations
-✅ **DDD Principles**: Domain-driven design with rich domain models
-✅ **Dependency Inversion**: Dependencies flow inward toward domain
-✅ **SOLID Principles**: Single responsibility, open/closed, interface segregation
-✅ **Testability**: Highly testable with dependency injection
-✅ **Performance**: Optimized transaction management and caching
+## 4. 変更手順
 
-### UseCase Responsibilities
+1. 制約を変える場合は、先にこのドキュメントを更新する
+2. 次に `ArchitectureConstraintArchTest` を更新する
+3. 最後に実装を合わせ、`mvn test` と `npm run test:e2e` を通す
 
-1. **FragmentDiscoveryUseCase**: Fragment search, statistics, hierarchical structure
-2. **FragmentPreviewUseCase**: Fragment rendering, preview generation, JavaDoc processing
-3. **FragmentValidationUseCase**: Input validation, error handling, metrics logging
-4. **StoryManagementUseCase**: Story CRUD operations, parameter management
-
-### Benefits Achieved
-
-- 🎯 **Better Testability**: Each UseCase can be tested independently
-- 🔄 **Maintainability**: Clear boundaries and responsibilities
-- 📈 **Scalability**: Easy to extend with new UseCases
-- 🛡️ **Robustness**: Error handling and validation at UseCase level
-- 🚀 **Performance**: Optimized transactions and reduced coupling

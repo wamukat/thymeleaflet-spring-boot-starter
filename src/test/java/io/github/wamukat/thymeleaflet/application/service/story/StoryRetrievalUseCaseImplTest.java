@@ -42,13 +42,6 @@ class StoryRetrievalUseCaseImplTest {
 
     @Test
     void shouldNotAppendCustomStoryWhenFragmentHasNoParametersAndNoModel() {
-        FragmentDiscoveryService.FragmentInfo fragmentInfo = new FragmentDiscoveryService.FragmentInfo(
-            "components/icon",
-            "simpleIcon",
-            List.of(),
-            FragmentDomainService.FragmentType.SIMPLE,
-            "simpleIcon"
-        );
         FragmentSummary fragmentSummary = FragmentSummary.of(
             "components/icon",
             "simpleIcon",
@@ -57,9 +50,8 @@ class StoryRetrievalUseCaseImplTest {
         );
 
         when(storyDataPort.loadStoryConfiguration("components/icon")).thenReturn(Optional.empty());
-        when(fragmentSummaryMapper.toDomain(fragmentInfo)).thenReturn(fragmentSummary);
 
-        List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentInfo);
+        List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentSummary);
 
         assertThat(stories).extracting(FragmentStoryInfo::getStoryName)
             .containsExactly("default");
@@ -67,13 +59,6 @@ class StoryRetrievalUseCaseImplTest {
 
     @Test
     void shouldAppendCustomStoryWhenFragmentHasParameters() {
-        FragmentDiscoveryService.FragmentInfo fragmentInfo = new FragmentDiscoveryService.FragmentInfo(
-            "components/input",
-            "textInput",
-            List.of("value"),
-            FragmentDomainService.FragmentType.PARAMETERIZED,
-            "textInput(value)"
-        );
         FragmentSummary fragmentSummary = FragmentSummary.of(
             "components/input",
             "textInput",
@@ -82,9 +67,8 @@ class StoryRetrievalUseCaseImplTest {
         );
 
         when(storyDataPort.loadStoryConfiguration("components/input")).thenReturn(Optional.empty());
-        when(fragmentSummaryMapper.toDomain(fragmentInfo)).thenReturn(fragmentSummary);
 
-        List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentInfo);
+        List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentSummary);
 
         assertThat(stories).extracting(FragmentStoryInfo::getStoryName)
             .containsExactly("default", "custom");
@@ -92,13 +76,6 @@ class StoryRetrievalUseCaseImplTest {
 
     @Test
     void shouldAppendCustomStoryWhenAnyStoryHasModel() {
-        FragmentDiscoveryService.FragmentInfo fragmentInfo = new FragmentDiscoveryService.FragmentInfo(
-            "components/profile",
-            "summary",
-            List.of(),
-            FragmentDomainService.FragmentType.DATA_DEPENDENT,
-            "summary"
-        );
         FragmentSummary fragmentSummary = FragmentSummary.of(
             "components/profile",
             "summary",
@@ -120,9 +97,8 @@ class StoryRetrievalUseCaseImplTest {
         );
 
         when(storyDataPort.loadStoryConfiguration("components/profile")).thenReturn(Optional.of(configuration));
-        when(fragmentSummaryMapper.toDomain(fragmentInfo)).thenReturn(fragmentSummary);
 
-        List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentInfo);
+        List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentSummary);
 
         assertThat(stories).extracting(FragmentStoryInfo::getStoryName)
             .containsExactly("default", "custom");

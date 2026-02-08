@@ -2,6 +2,10 @@ package io.github.wamukat.thymeleaflet.infrastructure.configuration;
 
 import java.util.Locale;
 
+import io.github.wamukat.thymeleaflet.domain.service.DocumentationAnalysisService;
+import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
+import io.github.wamukat.thymeleaflet.domain.service.StoryDataRepository;
+import io.github.wamukat.thymeleaflet.domain.service.StoryParameterDomainService;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -49,6 +53,21 @@ public class StorybookAutoConfiguration {
     @Bean
     public ResolvedStorybookConfig resolvedStorybookConfig(StorybookProperties storybookProperties) {
         return ResolvedStorybookConfig.from(storybookProperties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public FragmentDomainService fragmentDomainService() {
+        return new FragmentDomainService();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public StoryParameterDomainService storyParameterDomainService(
+        StoryDataRepository storyDataRepository,
+        DocumentationAnalysisService documentationAnalysisService
+    ) {
+        return new StoryParameterDomainService(storyDataRepository, documentationAnalysisService);
     }
 
     /**

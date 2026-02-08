@@ -1,7 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.story;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +22,7 @@ public interface StoryRetrievalUseCase {
     /**
      * フラグメントのストーリー一覧取得
      */
-    List<FragmentStoryInfo> getStoriesForFragment(FragmentDiscoveryService.FragmentInfo fragmentInfo);
+    List<FragmentStoryInfo> getStoriesForFragment(FragmentSummary fragmentSummary);
 
     /**
      * フラグメント用ストーリー一覧取得
@@ -34,12 +34,12 @@ public interface StoryRetrievalUseCase {
      */
     class StoryListResponse {
         private final boolean success;
-        private final Optional<FragmentDiscoveryService.FragmentInfo> fragment;
+        private final Optional<FragmentSummary> fragment;
         private final List<FragmentStoryInfo> stories;
 
         public StoryListResponse(
             boolean success,
-            Optional<FragmentDiscoveryService.FragmentInfo> fragment,
+            Optional<FragmentSummary> fragment,
             List<FragmentStoryInfo> stories
         ) {
             this.success = success;
@@ -47,7 +47,7 @@ public interface StoryRetrievalUseCase {
             this.stories = stories;
         }
 
-        public static StoryListResponse success(FragmentDiscoveryService.FragmentInfo fragment, List<FragmentStoryInfo> stories) {
+        public static StoryListResponse success(FragmentSummary fragment, List<FragmentStoryInfo> stories) {
             return new StoryListResponse(true, Optional.of(fragment), stories);
         }
 
@@ -57,7 +57,7 @@ public interface StoryRetrievalUseCase {
 
         public boolean isSuccess() { return success; }
 
-        public Optional<FragmentDiscoveryService.FragmentInfo> getFragment() { return fragment; }
+        public Optional<FragmentSummary> getFragment() { return fragment; }
         public List<FragmentStoryInfo> getStories() { return stories; }
     }
 }

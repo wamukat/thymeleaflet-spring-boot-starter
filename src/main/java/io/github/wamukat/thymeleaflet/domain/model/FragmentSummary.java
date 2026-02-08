@@ -89,6 +89,14 @@ public class FragmentSummary {
     public FragmentDomainService.FragmentType getType() {
         return type;
     }
+
+    /**
+     * View compatibility helper.
+     * FragmentSummary does not carry signature diagnostics, so this is always false.
+     */
+    public boolean hasSignatureDiagnostic() {
+        return false;
+    }
     
     @Override
     public boolean equals(Object obj) {

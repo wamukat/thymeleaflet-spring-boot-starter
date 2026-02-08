@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentDependencyPort;
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
@@ -23,7 +24,7 @@ import java.util.regex.Pattern;
  * フラグメント内で利用している依存コンポーネントを抽出
  */
 @Component
-public class FragmentDependencyService {
+public class FragmentDependencyService implements FragmentDependencyPort {
 
     private static final Logger logger = LoggerFactory.getLogger(FragmentDependencyService.class);
 
@@ -85,6 +86,17 @@ public class FragmentDependencyService {
             logger.warn("Failed to extract dependencies for {}::{}: {}", templatePath, fragmentName, e.getMessage());
             return List.of();
         }
+    }
+
+    @Override
+    public List<FragmentDependencyPort.DependencyComponent> findDependenciesForView(String templatePath, String fragmentName) {
+        return findDependencies(templatePath, fragmentName).stream()
+            .map(component -> new FragmentDependencyPort.DependencyComponent(
+                component.templatePath(),
+                component.fragmentName(),
+                component.encodedTemplatePath()
+            ))
+            .toList();
     }
 
     private Optional<DependencyComponent> parseDependency(String expression) {

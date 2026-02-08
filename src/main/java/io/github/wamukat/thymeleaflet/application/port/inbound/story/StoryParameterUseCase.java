@@ -1,7 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.story;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 
 import java.util.Map;
 
@@ -32,15 +32,15 @@ public interface StoryParameterUseCase {
      * パラメータ抽出コマンド
      */
     class ParameterExtractionCommand {
-        private final FragmentDiscoveryService.FragmentInfo fragment;
+        private final FragmentSummary fragment;
         private final Map<String, Object> allModelData;
 
-        public ParameterExtractionCommand(FragmentDiscoveryService.FragmentInfo fragment, Map<String, Object> allModelData) {
+        public ParameterExtractionCommand(FragmentSummary fragment, Map<String, Object> allModelData) {
             this.fragment = fragment;
             this.allModelData = allModelData;
         }
 
-        public FragmentDiscoveryService.FragmentInfo getFragment() { return fragment; }
+        public FragmentSummary getFragment() { return fragment; }
         public Map<String, Object> getAllModelData() { return allModelData; }
     }
 
@@ -48,15 +48,15 @@ public interface StoryParameterUseCase {
      * パラメータ抽出Applicationコマンド
      */
     class ParameterExtractionApplicationCommand {
-        private final FragmentDiscoveryService.FragmentInfo fragment;
+        private final FragmentSummary fragment;
         private final Map<String, Object> allModelData;
 
-        public ParameterExtractionApplicationCommand(FragmentDiscoveryService.FragmentInfo fragment, Map<String, Object> allModelData) {
+        public ParameterExtractionApplicationCommand(FragmentSummary fragment, Map<String, Object> allModelData) {
             this.fragment = fragment;
             this.allModelData = allModelData;
         }
 
-        public FragmentDiscoveryService.FragmentInfo getFragment() { return fragment; }
+        public FragmentSummary getFragment() { return fragment; }
         public Map<String, Object> getAllModelData() { return allModelData; }
     }
 

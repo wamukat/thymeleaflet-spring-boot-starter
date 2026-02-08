@@ -1,6 +1,5 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.preview;
 
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer;
 import org.springframework.ui.Model;
 
 import java.util.List;
@@ -34,11 +33,6 @@ public interface FragmentPreviewUseCase {
      */
     JavaDocInfoResponse getJavaDocInfoWithDetailedLogging(JavaDocInfoCommand command);
 
-    /**
-     * JavaDoc情報直接取得
-     */
-    Optional<JavaDocAnalyzer.JavaDocInfo> getJavaDocInfo(String templatePath, String fragmentName);
-
     // === Command Objects ===
 
     /**
@@ -53,7 +47,7 @@ public interface FragmentPreviewUseCase {
         public String getFullTemplatePath() { return templatePath; }
         public String getFragmentName() { return fragmentName; }
         public String getStoryName() { return storyName; }
-        public org.springframework.ui.Model getModel() { return model; }
+        public Model getModel() { return model; }
     }
 
     /**

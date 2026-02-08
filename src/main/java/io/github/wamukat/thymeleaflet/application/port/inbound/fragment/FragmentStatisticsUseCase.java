@@ -1,6 +1,6 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.fragment;
 
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 
 import java.util.List;
 import java.util.Map;
@@ -16,7 +16,7 @@ public interface FragmentStatisticsUseCase {
     /**
      * フラグメント統計情報生成
      */
-    FragmentStatisticsResponse generateStatistics(List<FragmentDiscoveryService.FragmentInfo> fragments);
+    FragmentStatisticsResponse generateStatistics(List<FragmentSummary> fragments);
 
     /**
      * フラグメント統計レスポンス

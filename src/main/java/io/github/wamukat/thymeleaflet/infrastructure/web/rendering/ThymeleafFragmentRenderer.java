@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.rendering;
 
+import io.github.wamukat.thymeleaflet.application.port.outbound.StoryPresentationPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import org.slf4j.Logger;
@@ -7,8 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.context.ExpressionContext;
 import org.springframework.stereotype.Component;
-import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.springframework.ui.Model;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
  * Pure Infrastructure責任: テンプレートレンダリング技術的処理のみ
  */
 @Component
-public class ThymeleafFragmentRenderer {
+public class ThymeleafFragmentRenderer implements StoryPresentationPort {
 
     private static final Logger logger = LoggerFactory.getLogger(ThymeleafFragmentRenderer.class);
 
@@ -60,6 +61,7 @@ public class ThymeleafFragmentRenderer {
      * ストーリーパラメータをThymeleafモデルに設定し、表示用パラメータを返す
      * Infrastructure責任: Thymeleaf固有のモデル操作
      */
+    @Override
     public Map<String, Object> configureModelWithStoryParameters(
             Map<String, Object> storyParameters,
             Model model) {
