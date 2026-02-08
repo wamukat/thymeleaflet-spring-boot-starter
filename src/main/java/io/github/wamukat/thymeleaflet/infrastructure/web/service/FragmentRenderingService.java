@@ -7,6 +7,7 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.ui.Model;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -155,7 +157,7 @@ public class FragmentRenderingService {
             for (Map.Entry<String, Object> entry : mergedParameters.entrySet()) {
                 logger.info("Setting parameter: {} = {} (type: {})", 
                            entry.getKey(), entry.getValue(), 
-                           entry.getValue() != null ? entry.getValue().getClass().getSimpleName() : "null");
+                           classNameOf(entry.getValue()));
                 model.addAttribute(entry.getKey(), thymeleafFragmentRenderer.resolveTemplateValue(entry.getValue()));
             }
             
@@ -210,6 +212,10 @@ public class FragmentRenderingService {
             
             return RenderingResult.error("thymeleaflet/fragments/error-display :: error(type='danger')");
         }
+    }
+
+    private String classNameOf(@Nullable Object target) {
+        return Objects.isNull(target) ? "null" : target.getClass().getSimpleName();
     }
 
     /**

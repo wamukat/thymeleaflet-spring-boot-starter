@@ -36,36 +36,39 @@ public class PreviewConfigService {
         List<PreviewViewportOption> options = new ArrayList<>();
         Locale locale = LocaleContextHolder.getLocale();
         for (StorybookProperties.ViewportPreset preset : presets) {
-            Optional<String> id = safeString(preset.getId());
-            Integer width = preset.getWidth();
-            Integer height = preset.getHeight();
+            Optional<String> id = normalize(preset.getId());
+            Optional<Integer> width = Optional.ofNullable(preset.getWidth());
+            Optional<Integer> height = Optional.ofNullable(preset.getHeight());
             String label = resolveLabel(preset, locale);
-            if (id.isEmpty() || width == null || height == null) {
+            if (id.isEmpty() || width.isEmpty() || height.isEmpty()) {
                 continue;
             }
-            options.add(new PreviewViewportOption(id.orElseThrow(), label, width, height));
+            options.add(new PreviewViewportOption(
+                id.orElseThrow(),
+                label,
+                width.orElseThrow(),
+                height.orElseThrow()
+            ));
         }
         return options;
     }
 
     private String resolveLabel(StorybookProperties.ViewportPreset preset, Locale locale) {
-        Optional<String> label = safeString(preset.getLabel());
-        Optional<String> labelKey = safeString(preset.getLabelKey());
+        Optional<String> label = normalize(preset.getLabel());
+        Optional<String> labelKey = normalize(preset.getLabelKey());
         if (label.isEmpty() && labelKey.isPresent()) {
             String key = labelKey.orElseThrow();
             return messageSource.getMessage(key, null, key, locale);
         }
         if (label.isEmpty()) {
-            return safeString(preset.getId()).orElse("viewport");
+            return normalize(preset.getId()).orElse("viewport");
         }
         return label.orElseThrow();
     }
 
-    private Optional<String> safeString(@Nullable String value) {
-        if (value == null) {
-            return Optional.empty();
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? Optional.empty() : Optional.of(trimmed);
+    private Optional<String> normalize(@Nullable String value) {
+        return Optional.ofNullable(value)
+            .map(String::trim)
+            .filter(trimmed -> !trimmed.isEmpty());
     }
 }

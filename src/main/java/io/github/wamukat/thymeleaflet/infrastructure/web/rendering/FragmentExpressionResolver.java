@@ -18,13 +18,13 @@ public class FragmentExpressionResolver {
         if (fragmentExpression instanceof Fragment) {
             return fragmentExpression;
         }
-        if (!(fragmentExpression instanceof String)) {
+        if (!(fragmentExpression instanceof String expressionString)) {
             return fragmentExpression;
         }
         if (!(context instanceof IExpressionContext expressionContext)) {
             return fragmentExpression;
         }
-        String expressionString = fragmentExpression.toString().trim();
+        expressionString = expressionString.trim();
         if (!expressionString.startsWith("~{")) {
             return fragmentExpression;
         }

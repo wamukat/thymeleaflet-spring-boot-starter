@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -105,7 +106,7 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
                     Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStoryInfo);
                     defaultParameters = defaultStoryParams.entrySet().stream()
                         .filter(entry -> !"__storybook_background".equals(entry.getKey()))
-                        .filter(entry -> entry.getValue() != null)
+                        .filter(entry -> Objects.nonNull(entry.getValue()))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 }
             }

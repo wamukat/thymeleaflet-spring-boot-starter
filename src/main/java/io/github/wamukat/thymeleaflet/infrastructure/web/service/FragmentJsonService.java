@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -54,47 +55,38 @@ public class FragmentJsonService {
     public void setupFragmentJsonAttributes(Object allFragments, 
                                            Map<String, Object> hierarchicalFragments, 
                                            Model model) {
-        if (allFragments == null) {
-            logger.warn("allFragments is null, skipping JSON setup");
+        // 型チェックと変換処理
+        List<FragmentSummary> fragmentSummaryList;
+        if (!(allFragments instanceof List<?> fragmentList)) {
+            logger.error("allFragments is not a List: {}", classNameOf(allFragments));
             model.addAttribute("fragmentsJson", "[]");
             model.addAttribute("hierarchicalJson", "{}");
             return;
         }
-        
-        // 型チェックと変換処理
-        List<FragmentSummary> fragmentSummaryList;
-        if (allFragments instanceof List<?>) {
-            List<?> fragmentList = (List<?>) allFragments;
-            if (!fragmentList.isEmpty()) {
-                Object firstElement = fragmentList.get(0);
-                if (firstElement instanceof FragmentDiscoveryService.FragmentInfo) {
-                    // FragmentInfo型の場合、FragmentSummaryに変換
-                    logger.info("Converting FragmentInfo list to FragmentSummary list");
-                    @SuppressWarnings("unchecked")
-                    List<FragmentDiscoveryService.FragmentInfo> infraFragments = (List<FragmentDiscoveryService.FragmentInfo>) fragmentList;
-                    fragmentSummaryList = infraFragments.stream()
-                        .map(fragmentSummaryMapper::toDomain)
-                        .collect(Collectors.toList());
-                } else if (firstElement instanceof FragmentSummary) {
-                    // 既にFragmentSummary型の場合
-                    logger.info("Using existing FragmentSummary list");
-                    @SuppressWarnings("unchecked")
-                    List<FragmentSummary> summaryList = (List<FragmentSummary>) fragmentList;
-                    fragmentSummaryList = summaryList;
-                } else {
-                    logger.error("Unsupported fragment type: {}", firstElement.getClass().getName());
-                    model.addAttribute("fragmentsJson", "[]");
-                    model.addAttribute("hierarchicalJson", "{}");
-                    return;
-                }
-            } else {
-                fragmentSummaryList = Collections.emptyList();
-            }
+        if (fragmentList.isEmpty()) {
+            fragmentSummaryList = Collections.emptyList();
         } else {
-            logger.error("allFragments is not a List: {}", allFragments.getClass().getName());
-            model.addAttribute("fragmentsJson", "[]");
-            model.addAttribute("hierarchicalJson", "{}");
-            return;
+            Object firstElement = fragmentList.get(0);
+            if (firstElement instanceof FragmentDiscoveryService.FragmentInfo) {
+                // FragmentInfo型の場合、FragmentSummaryに変換
+                logger.info("Converting FragmentInfo list to FragmentSummary list");
+                @SuppressWarnings("unchecked")
+                List<FragmentDiscoveryService.FragmentInfo> infraFragments = (List<FragmentDiscoveryService.FragmentInfo>) fragmentList;
+                fragmentSummaryList = infraFragments.stream()
+                    .map(fragmentSummaryMapper::toDomain)
+                    .collect(Collectors.toList());
+            } else if (firstElement instanceof FragmentSummary) {
+                // 既にFragmentSummary型の場合
+                logger.info("Using existing FragmentSummary list");
+                @SuppressWarnings("unchecked")
+                List<FragmentSummary> summaryList = (List<FragmentSummary>) fragmentList;
+                fragmentSummaryList = summaryList;
+            } else {
+                logger.error("Unsupported fragment type: {}", classNameOf(firstElement));
+                model.addAttribute("fragmentsJson", "[]");
+                model.addAttribute("hierarchicalJson", "{}");
+                return;
+            }
         }
         
         // 各フラグメントにストーリー情報を付加
@@ -169,5 +161,9 @@ public class FragmentJsonService {
             return sanitized;
         }
         return value.toString();
+    }
+
+    private String classNameOf(@Nullable Object target) {
+        return Objects.isNull(target) ? "null" : target.getClass().getName();
     }
 }
