@@ -8,6 +8,25 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.4] - 2026-02-08
+
+- Changed
+  - Standardized issue labeling to `type:*` taxonomy to streamline release-note grouping.
+- Refactored
+  - Expanded null-safety migration by replacing nullable flows with explicit non-null contracts and `Optional`-based APIs across domain/application/infrastructure layers.
+  - Introduced resolved runtime configuration (`ResolvedStorybookConfig`) with fail-fast validation, separating raw property binding from validated config usage.
+- Build
+  - Enabled Error Prone + NullAway checks and expanded analysis scope to project packages.
+- Test
+  - Added usage restriction test to keep `StorybookProperties` confined to configuration boundaries.
+- Docs
+  - Standardized changelog structure to Keep a Changelog-style categorized entries and documented label policy.
+
+### Issues
+
+- #65 NullAway導入(Phase 1): jspecify + discoveryパッケージ適用
+- #63 Release 0.2.3
+
 ## [0.2.3] - 2026-02-07
 
 - Added
