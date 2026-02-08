@@ -11,6 +11,8 @@
 
 ## PR/Issue Notes
 - PR本文に「どのIssueをクローズするか（例: `Closes #123`）」を明記する。
+- Issue作成時は、リリースノート整理のため `type:*` ラベルを必ず付与する。
+  - 基本: `type:feature` / `type:fix` / `type:refactor` / `type:docs` / `type:test` / `type:build` / `type:chore`
 
 ## PR/Issue Formatting
 - PR/Issue本文は「`\n` の文字列」ではなく、実際の改行（LF）で記載する。
@@ -25,6 +27,11 @@
 - `release/x.y.z` では `pom.xml` と `sample/pom.xml` のバージョン更新、`CHANGELOG.md` 更新を行う。
 - 更新後は PR を作成し、CI/E2E確認後に `main` へマージしてからタグ作成・GitHub Release・デプロイを行う。
 - 確定後は `RELEASE.md` の手順に従ってリリースを進める。
+
+## Changelog Format
+- `CHANGELOG.md` は Keep a Changelog 形式で、各バージョンをカテゴリ別に記載する。
+- 基本カテゴリは `Added` / `Changed` / `Fixed` / `Removed` / `Refactored` / `Docs` / `Build` / `Test`（必要なものだけ使用）。
+- 「Issue一覧だけ」にはせず、まずカテゴリごとにユーザー影響を記載し、必要に応じて末尾に Issue 番号を併記する。
 
 ## Branch Cleanup
 - 「ブランチを整理してください」と依頼されたら、未マージのブランチ有無を確認する。
