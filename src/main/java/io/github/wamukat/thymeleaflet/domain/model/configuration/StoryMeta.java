@@ -26,6 +26,6 @@ public record StoryMeta(
      * ドメインメソッド: メタ情報の有効性確認
      */
     public boolean isValid() {
-        return title != null && !title.trim().isEmpty();
+        return !title.trim().isEmpty();
     }
 }

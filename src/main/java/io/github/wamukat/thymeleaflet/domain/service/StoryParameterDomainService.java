@@ -39,14 +39,14 @@ public class StoryParameterDomainService {
         try {
             // 1. まず、FragmentStoryInfoに既にパラメータが含まれているかチェック
             Map<String, Object> existingParams = storyInfo.parameters();
-            if (existingParams != null && !existingParams.isEmpty()) {
+            if (!existingParams.isEmpty()) {
                 logger.debug("Using existing story parameters from FragmentStoryInfo: {}", existingParams);
                 return new HashMap<>(existingParams);
             }
             
             // 2. stories.ymlからストーリー固有のパラメータをロード
             Map<String, Object> storySpecificParams = storyDataRepository.loadStoryParameters(storyInfo);
-            if (storySpecificParams != null && !storySpecificParams.isEmpty()) {
+            if (!storySpecificParams.isEmpty()) {
                 logger.debug("Loaded story parameters from stories.yml: {}", storySpecificParams);
                 return storySpecificParams;
             }
@@ -131,7 +131,7 @@ public class StoryParameterDomainService {
             return 1;
         }
         // Default to string
-        if (typeInfo.getAllowedValues() != null && !typeInfo.getAllowedValues().isEmpty()) {
+        if (!typeInfo.getAllowedValues().isEmpty()) {
             return typeInfo.getAllowedValues().get(0);
         }
         return "Sample " + capitalizeFirst(paramName);
@@ -145,7 +145,7 @@ public class StoryParameterDomainService {
     }
     
     private Object generateEnumValue(TypeInfo typeInfo) {
-        if (typeInfo.getAllowedValues() != null && !typeInfo.getAllowedValues().isEmpty()) {
+        if (!typeInfo.getAllowedValues().isEmpty()) {
             return createPseudoEnum(typeInfo.getAllowedValues().get(0));
         }
         return PseudoEnum.defaultValue();
@@ -159,7 +159,7 @@ public class StoryParameterDomainService {
     }
     
     private String capitalizeFirst(String str) {
-        if (str == null || str.isEmpty()) return str;
+        if (str.isEmpty()) return str;
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
     

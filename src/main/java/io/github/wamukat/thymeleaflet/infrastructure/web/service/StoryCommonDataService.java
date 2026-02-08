@@ -17,6 +17,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -92,14 +93,15 @@ public class StoryCommonDataService {
         Map<String, Object> displayModel = storyModel;
 
         // defaultストーリーの情報を取得（差異ハイライト用）
-        FragmentStoryInfo defaultStory = null;
+        Optional<FragmentStoryInfo> defaultStory = Optional.empty();
         Map<String, Object> defaultParameters = new HashMap<>();
         
         if (!storyName.equals("default")) {
             var defaultStoryOptional = storyRetrievalUseCase.getStory(templatePath, fragmentName, "default");
             if (defaultStoryOptional.isPresent()) {
-                defaultStory = defaultStoryOptional.orElseThrow();
-                Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStory);
+                FragmentStoryInfo story = defaultStoryOptional.orElseThrow();
+                defaultStory = Optional.of(story);
+                Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(story);
                 defaultParameters = defaultStoryParams.entrySet().stream()
                     .filter(entry -> !"__storybook_background".equals(entry.getKey()))
                     .filter(entry -> entry.getValue() != null)
@@ -120,7 +122,7 @@ public class StoryCommonDataService {
         model.addAttribute("displayModel", displayModel);
         model.addAttribute("dependentComponents",
             fragmentDependencyService.findDependencies(templatePath, fragmentName));
-        model.addAttribute("defaultStory", defaultStory);
+        model.addAttribute("defaultStory", defaultStory.orElse(null));
         model.addAttribute("defaultParameters", defaultParameters);
         model.addAttribute("javadocInfo", javadocInfo.orElse(null));
         model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
@@ -128,12 +130,13 @@ public class StoryCommonDataService {
         previewConfigService.applyPreviewConfig(model);
     }
 
-    private String joinResources(java.util.List<String> resources) {
-        if (resources == null || resources.isEmpty()) {
+    private String joinResources(List<String> resources) {
+        if (resources.isEmpty()) {
             return "";
         }
         return resources.stream()
-            .map(value -> value == null ? "" : value.trim())
+            .filter(Objects::nonNull)
+            .map(String::trim)
             .filter(value -> !value.isEmpty())
             .collect(Collectors.joining(","));
     }

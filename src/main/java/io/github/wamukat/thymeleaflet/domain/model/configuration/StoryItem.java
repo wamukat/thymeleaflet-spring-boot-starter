@@ -54,6 +54,6 @@ public record StoryItem(
      * ドメインメソッド: ストーリーアイテムの有効性確認
      */
     public boolean isValid() {
-        return name != null && !name.trim().isEmpty();
+        return !name.trim().isEmpty();
     }
 }

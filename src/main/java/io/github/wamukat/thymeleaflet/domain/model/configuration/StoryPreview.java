@@ -15,7 +15,7 @@ public record StoryPreview(
     }
 
     public boolean hasWrapper() {
-        return wrapper != null && !wrapper.trim().isEmpty();
+        return !wrapper.trim().isEmpty();
     }
 
     public static StoryPreview empty() {

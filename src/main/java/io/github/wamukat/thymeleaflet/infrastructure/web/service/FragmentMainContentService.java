@@ -15,6 +15,7 @@ import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -144,11 +145,12 @@ public class FragmentMainContentService {
     }
 
     private String joinResources(List<String> resources) {
-        if (resources == null || resources.isEmpty()) {
+        if (resources.isEmpty()) {
             return "";
         }
         return resources.stream()
-            .map(value -> value == null ? "" : value.trim())
+            .filter(Objects::nonNull)
+            .map(String::trim)
             .filter(value -> !value.isEmpty())
             .collect(Collectors.joining(","));
     }

@@ -3,18 +3,12 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 import io.github.wamukat.thymeleaflet.application.port.inbound.coordination.StoryPageCoordinationUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
-import io.github.wamukat.thymeleaflet.infrastructure.web.service.FragmentJsonService;
-import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,8 +81,8 @@ public class StoryPreviewService {
         if (storyInfoOptional.isEmpty()) {
             model.addAttribute("error", "指定されたストーリーが見つかりません: " + fullTemplatePath + "::" + fragmentName + "::" + storyName);
             // 契約テスト保護：エラー時でも必要な属性を設定
-            model.addAttribute("uniquePaths", Arrays.asList("基本データ")); // Thymeleafテンプレート必須属性
-            model.addAttribute("fragments", Arrays.asList()); // 空のリスト
+            model.addAttribute("uniquePaths", List.of("基本データ")); // Thymeleafテンプレート必須属性
+            model.addAttribute("fragments", List.of()); // 空のリスト
             model.addAttribute("hierarchicalFragments", new HashMap<>());
             return StoryPreviewResult.failure("thymeleaflet/fragment-list");
         }
@@ -106,23 +100,18 @@ public class StoryPreviewService {
             return StoryPreviewResult.failure("thymeleaflet/fragment-list");
         }
         
-        // デバッグ: coordinateStoryPageSetup後のallFragments型を確認
-        Object allFragmentsAfterCoordination = model.getAttribute("allFragments");
-        logger.info("After coordination - allFragments type: {}", 
-                   allFragmentsAfterCoordination != null ? allFragmentsAfterCoordination.getClass().getName() : "null");
-        
         // StoryCommonDataServiceを使用して共通データ設定
         storyCommonDataService.setupCommonStoryData(fullTemplatePath, fragmentName, storyName, storyInfo, model);
         
         // 左ナビゲーション表示のためのJSON属性設定 (重要: この処理が失われていた)
         Object allFragmentsObj = model.getAttribute("allFragments");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> hierarchicalFragments = 
-            (Map<String, Object>) model.getAttribute("hierarchicalFragments");
+        Object hierarchicalFragmentsObj = model.getAttribute("hierarchicalFragments");
         
-        if (allFragmentsObj != null && hierarchicalFragments != null) {
+        if (allFragmentsObj != null && hierarchicalFragmentsObj instanceof Map<?, ?> rawHierarchy) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> hierarchy = (Map<String, Object>) rawHierarchy;
             // 型安全版のsetupFragmentJsonAttributesを呼び出し
-            fragmentJsonService.setupFragmentJsonAttributes(allFragmentsObj, hierarchicalFragments, model);
+            fragmentJsonService.setupFragmentJsonAttributes(allFragmentsObj, hierarchy, model);
         }
         
         return StoryPreviewResult.success("thymeleaflet/fragment-list");

@@ -93,7 +93,7 @@ public class FragmentStoryInfo {
      * ストーリーのパラメータを取得（フォールバック機能付き）
      */
     public Map<String, Object> getParameters() {
-        if (story.parameters() != null) {
+        if (!story.parameters().isEmpty()) {
             return story.parameters();
         }
         // フォールバックパラメータが設定されている場合はそれを返す
@@ -114,10 +114,7 @@ public class FragmentStoryInfo {
      * ストーリーのモデル値を取得
      */
     public Map<String, Object> getModel() {
-        if (story.model() != null) {
-            return story.model();
-        }
-        return Collections.emptyMap();
+        return story.model();
     }
 
     /**
@@ -138,20 +135,14 @@ public class FragmentStoryInfo {
      * ストーリーのタイトルを取得
      */
     public String getDisplayTitle() {
-        if (story.title() != null) {
-            return story.title();
-        }
-        return storyName;
+        return story.title();
     }
     
     /**
      * ストーリーの説明を取得
      */
     public String getDisplayDescription() {
-        if (story.description() != null) {
-            return story.description();
-        }
-        return "";
+        return story.description();
     }
     
     /**
