@@ -47,9 +47,9 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
 
         Optional<StoryConfiguration> config = storyDataPort.loadStoryConfiguration(fragmentInfo.getTemplatePath());
         if (config.isPresent()) {
-            StoryGroup group = config.orElseThrow().storyGroups().get(fragmentInfo.getFragmentName());
-            if (group != null) {
-                for (StoryItem story : group.stories()) {
+            Optional<StoryGroup> group = config.orElseThrow().getStoryGroup(fragmentInfo.getFragmentName());
+            if (group.isPresent()) {
+                for (StoryItem story : group.orElseThrow().stories()) {
                     stories.add(FragmentStoryInfo.of(
                         domainFragmentSummary,
                         fragmentInfo.getFragmentName(),

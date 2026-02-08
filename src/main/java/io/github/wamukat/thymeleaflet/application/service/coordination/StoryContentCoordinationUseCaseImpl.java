@@ -68,15 +68,16 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             
             // 2. フラグメント情報取得
             List<FragmentDiscoveryService.FragmentInfo> allFragments = fragmentDiscoveryService.discoverFragments();
-            FragmentDiscoveryService.FragmentInfo selectedFragment = thymeleafFragmentRenderer
+            var selectedFragment = thymeleafFragmentRenderer
                 .findFragmentByIdentifier(allFragments, request.fullTemplatePath(), request.fragmentName());
             
-            if (selectedFragment == null) {
+            if (selectedFragment.isEmpty()) {
                 return StoryContentResult.failure("Fragment not found: " + request.fullTemplatePath() + "::" + request.fragmentName());
             }
+            FragmentDiscoveryService.FragmentInfo fragmentInfo = selectedFragment.orElseThrow();
             
             // 3. ストーリー一覧取得
-            List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(selectedFragment);
+            List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentInfo);
             
             // 4. 共通データセットアップ
             Map<String, Object> storyParameters = storyParameterUseCase.getParametersForStory(storyInfo);
@@ -108,12 +109,11 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             }
             
             // JavaDoc情報取得
-            Object javadocInfo = javaDocLookupService.findJavaDocInfo(request.fullTemplatePath(), request.fragmentName())
-                .orElse(null);
+            var javadocInfo = javaDocLookupService.findJavaDocInfo(request.fullTemplatePath(), request.fragmentName());
             
             logger.info("=== StoryContentCoordination COMPLETED ===");
-            return StoryContentResult.success(storyInfo, selectedFragment, stories, 
-                displayParameters, defaultStory, defaultParameters, java.util.Optional.ofNullable(javadocInfo));
+            return StoryContentResult.success(storyInfo, fragmentInfo, stories,
+                displayParameters, defaultStory, defaultParameters, javadocInfo);
             
         } catch (Exception e) {
             logger.error("Story content coordination failed", e);

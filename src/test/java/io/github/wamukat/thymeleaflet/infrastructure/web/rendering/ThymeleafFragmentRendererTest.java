@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,13 +45,13 @@ class ThymeleafFragmentRendererTest {
         );
 
         // When
-        FragmentDiscoveryService.FragmentInfo found = renderer.findFragmentByIdentifier(
+        Optional<FragmentDiscoveryService.FragmentInfo> found = renderer.findFragmentByIdentifier(
             allFragments, "templates/shared/atoms/button", "primary-button"
         );
 
         // Then
-        assertThat(found).isNotNull();
-        FragmentDiscoveryService.FragmentInfo resolved = Objects.requireNonNull(found);
+        assertThat(found).isPresent();
+        FragmentDiscoveryService.FragmentInfo resolved = found.orElseThrow();
         assertThat(resolved.getTemplatePath()).isEqualTo("templates/shared/atoms/button");
         assertThat(resolved.getFragmentName()).isEqualTo("primary-button");
     }
@@ -65,12 +65,12 @@ class ThymeleafFragmentRendererTest {
         );
 
         // When
-        FragmentDiscoveryService.FragmentInfo found = renderer.findFragmentByIdentifier(
+        Optional<FragmentDiscoveryService.FragmentInfo> found = renderer.findFragmentByIdentifier(
             allFragments, "templates/nonexistent", "unknown-fragment"
         );
 
         // Then
-        assertThat(found).isNull();
+        assertThat(found).isEmpty();
     }
 
     @Test

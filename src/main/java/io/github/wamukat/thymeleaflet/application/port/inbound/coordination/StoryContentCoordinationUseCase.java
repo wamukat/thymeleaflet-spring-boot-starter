@@ -47,7 +47,7 @@ public interface StoryContentCoordinationUseCase {
             Map<String, Object> displayParameters,
             FragmentStoryInfo defaultStory,
             Map<String, Object> defaultParameters,
-            Optional<Object> javadocInfo
+            Optional<?> javadocInfo
         ) {
             return new StoryContentResult(
                 true,
@@ -58,7 +58,7 @@ public interface StoryContentCoordinationUseCase {
                 Optional.of(displayParameters),
                 Optional.of(defaultStory),
                 Optional.of(defaultParameters),
-                javadocInfo
+                javadocInfo.map(value -> (Object) value)
             );
         }
         

@@ -4,18 +4,16 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.lang.Nullable;
 import org.thymeleaf.IEngineConfiguration;
 import org.thymeleaf.context.ExpressionContext;
-import org.thymeleaf.spring6.SpringTemplateEngine;
-import org.thymeleaf.standard.expression.IStandardExpression;
-import org.thymeleaf.standard.expression.IStandardExpressionParser;
-import org.thymeleaf.standard.expression.StandardExpressions;
 import org.springframework.stereotype.Component;
+import org.springframework.lang.Nullable;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -39,22 +37,21 @@ public class ThymeleafFragmentRenderer {
      * 指定されたテンプレートパスとフラグメント名に一致するフラグメントを検索
      * Infrastructure責任: フラグメント選択の技術的処理
      */
-    public @Nullable FragmentDiscoveryService.FragmentInfo findFragmentByIdentifier(
+    public Optional<FragmentDiscoveryService.FragmentInfo> findFragmentByIdentifier(
             List<FragmentDiscoveryService.FragmentInfo> allFragments,
             String templatePath,
             String fragmentName) {
 
         long selectionStart = System.currentTimeMillis();
 
-        FragmentDiscoveryService.FragmentInfo selectedFragment = allFragments.stream()
+        Optional<FragmentDiscoveryService.FragmentInfo> selectedFragment = allFragments.stream()
                 .filter(f -> f.getTemplatePath().equals(templatePath) &&
                              f.getFragmentName().equals(fragmentName))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
 
         logger.debug("Fragment selection took {} ms, selected: {}",
                 System.currentTimeMillis() - selectionStart,
-                selectedFragment != null ? selectedFragment.getFragmentName() : "null");
+                selectedFragment.map(FragmentDiscoveryService.FragmentInfo::getFragmentName).orElse("none"));
 
         return selectedFragment;
     }

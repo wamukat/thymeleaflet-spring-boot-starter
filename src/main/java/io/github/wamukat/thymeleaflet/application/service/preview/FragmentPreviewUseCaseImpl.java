@@ -84,7 +84,7 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
         try {
             String enrichedJson = objectMapper.writeValueAsString(enrichedFragments);
             String hierarchicalJson = objectMapper.writeValueAsString(
-                hierarchicalFragments != null && !hierarchicalFragments.isEmpty() ? hierarchicalFragments.get(0) : Map.of()
+                !hierarchicalFragments.isEmpty() ? hierarchicalFragments.get(0) : Map.of()
             );
             
             model.addAttribute("fragmentsJson", enrichedJson);
