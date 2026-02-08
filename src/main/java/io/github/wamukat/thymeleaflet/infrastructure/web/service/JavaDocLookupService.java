@@ -34,8 +34,7 @@ public class JavaDocLookupService {
         try {
             return javadocInfos.stream()
                 .filter(doc -> {
-                    boolean matchesDescription = doc.getDescription() != null
-                        && doc.getDescription().toLowerCase().contains(fragmentName.toLowerCase());
+                    boolean matchesDescription = doc.getDescription().toLowerCase().contains(fragmentName.toLowerCase());
                     boolean matchesExample = doc.getExamples().stream()
                         .anyMatch(ex -> ex.getFragmentName().equals(fragmentName));
                     return matchesDescription || matchesExample;

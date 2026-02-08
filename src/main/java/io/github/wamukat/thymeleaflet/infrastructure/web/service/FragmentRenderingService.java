@@ -4,11 +4,9 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.fragment.Validati
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,15 +55,15 @@ public class FragmentRenderingService {
      * @return レンダリング結果
      */
     public RenderingResult renderStory(String templatePath, String fragmentName, String storyName, Model model) {
-        return renderStory(templatePath, fragmentName, storyName, model, null, null);
+        return renderStory(templatePath, fragmentName, storyName, model, Map.of(), Map.of());
     }
 
     public RenderingResult renderStory(String templatePath,
                                        String fragmentName,
                                        String storyName,
                                        Model model,
-                                       @Nullable Map<String, Object> parameterOverrides,
-                                       @Nullable Map<String, Object> modelOverrides) {
+                                       Map<String, Object> parameterOverrides,
+                                       Map<String, Object> modelOverrides) {
         try {
             logger.info("=== RENDER STORY START ===");
             logger.info("Request params: templatePath={}, fragmentName={}, storyName={}", 
@@ -99,10 +97,10 @@ public class FragmentRenderingService {
 
             Map<String, Object> storyModel = storyInfo.getModel();
             Map<String, Object> mergedModel = new HashMap<>();
-            if (storyModel != null && !storyModel.isEmpty()) {
+            if (!storyModel.isEmpty()) {
                 mergedModel.putAll(storyModel);
             }
-            if (modelOverrides != null && !modelOverrides.isEmpty()) {
+            if (!modelOverrides.isEmpty()) {
                 mergedModel.putAll(modelOverrides);
             }
             if (!mergedModel.isEmpty()) {
@@ -136,11 +134,8 @@ public class FragmentRenderingService {
             
             // PARAMETERIZEDフラグメントの場合、ストーリー設定またはJavaDocフォールバックを試行
             Map<String, Object> parameters = storyParameterUseCase.getParametersForStory(storyInfo);
-            if (parameters == null) {
-                parameters = Map.of();
-            }
             Map<String, Object> mergedParameters = new HashMap<>(parameters);
-            if (parameterOverrides != null && !parameterOverrides.isEmpty()) {
+            if (!parameterOverrides.isEmpty()) {
                 mergedParameters.putAll(parameterOverrides);
             }
             

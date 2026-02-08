@@ -2,8 +2,6 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.controller;
 
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.FragmentRenderingService;
 import org.jspecify.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,9 +19,7 @@ import java.util.Map;
  */
 @Controller
 public class FragmentRenderingController {
-    
-    private static final Logger logger = LoggerFactory.getLogger(FragmentRenderingController.class);
-    
+
     @Autowired
     private FragmentRenderingService fragmentRenderingService;
     
@@ -56,8 +52,12 @@ public class FragmentRenderingController {
             @PathVariable("storyName") String storyName,
             @RequestBody(required = false) @Nullable RenderOverridesRequest request,
             Model model) {
-        Map<String, Object> parameters = request != null ? request.parameters() : null;
-        Map<String, Object> modelOverrides = request != null ? request.model() : null;
+        Map<String, Object> parameters = request != null && request.parameters() != null
+            ? request.parameters()
+            : Map.of();
+        Map<String, Object> modelOverrides = request != null && request.model() != null
+            ? request.model()
+            : Map.of();
         FragmentRenderingService.RenderingResult result =
             fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model, parameters, modelOverrides);
         return result.templateReference()
