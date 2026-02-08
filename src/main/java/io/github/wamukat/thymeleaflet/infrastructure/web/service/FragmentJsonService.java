@@ -113,9 +113,9 @@ public class FragmentJsonService {
                 fragmentData.put("stories", stories.stream().map(story -> {
                     Map<String, Object> storyData = new HashMap<>();
                     Map<String, Object> storyParameters = story.getParameters();
-                    if (storyParameters == null || storyParameters.isEmpty()) {
+                    if (storyParameters.isEmpty()) {
                         Map<String, Object> fallbackParameters = storyParameterUseCase.getParametersForStory(story);
-                        if (fallbackParameters != null && !fallbackParameters.isEmpty()) {
+                        if (!fallbackParameters.isEmpty()) {
                             storyParameters = fallbackParameters;
                         }
                     }
@@ -123,7 +123,7 @@ public class FragmentJsonService {
                     storyData.put("displayTitle", story.getDisplayTitle());
                     storyData.put("displayDescription", story.getDisplayDescription());
                     storyData.put("hasStoryConfig", story.hasStoryConfig());
-                    if (storyParameters != null && !storyParameters.isEmpty()) {
+                    if (!storyParameters.isEmpty()) {
                         Map<String, Object> sanitizedParameters = new HashMap<>();
                         storyParameters.forEach((key, value) -> sanitizedParameters.put(key, sanitizeParameterValue(value)));
                         storyData.put("parameters", sanitizedParameters);
