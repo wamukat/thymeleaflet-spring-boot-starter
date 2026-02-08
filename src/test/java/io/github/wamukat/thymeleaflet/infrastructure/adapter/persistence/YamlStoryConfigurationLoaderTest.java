@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -108,17 +109,16 @@ class YamlStoryConfigurationLoaderTest {
     }
 
     @Test
-    @DisplayName("nullのtemplatePathの場合はOptional.emptyを返す")
+    @DisplayName("nullのtemplatePathの場合はNullPointerExceptionを送出する")
+    @SuppressWarnings("NullAway")
     void shouldHandleNullTemplatePath() {
-        // When
-        Optional<StoryConfiguration> result = loader.loadStoryConfiguration(null);
-
-        // Then
-        assertThat(result).isEmpty();
+        assertThatThrownBy(() -> loader.loadStoryConfiguration(null))
+            .isInstanceOf(NullPointerException.class);
     }
 
     @Test
     @DisplayName("Story設定ファイルの存在確認が正常に動作する")
+    @SuppressWarnings("NullAway")
     void shouldCheckStoryConfigurationExists() {
         // Given
         String existingTemplatePath = "templates/existing/component";
@@ -136,12 +136,14 @@ class YamlStoryConfigurationLoaderTest {
         // When & Then
         assertThat(loader.storyConfigurationExists(existingTemplatePath)).isTrue();
         assertThat(loader.storyConfigurationExists(nonExistingTemplatePath)).isFalse();
-        assertThat(loader.storyConfigurationExists(null)).isFalse();
+        assertThatThrownBy(() -> loader.storyConfigurationExists(null))
+            .isInstanceOf(NullPointerException.class);
         assertThat(loader.storyConfigurationExists("")).isFalse();
     }
 
     @Test
     @DisplayName("最終更新時刻取得が正常に動作する")
+    @SuppressWarnings("NullAway")
     void shouldGetLastModifiedTime() throws IOException {
         // Given
         String templatePath = "templates/domain/components/button";
@@ -158,7 +160,7 @@ class YamlStoryConfigurationLoaderTest {
         assertThat(result).isPresent();
         assertThat(result.get()).isEqualTo(expectedTime);
         
-        // nullの場合
-        assertThat(loader.getStoryConfigurationLastModified(null)).isEmpty();
+        assertThatThrownBy(() -> loader.getStoryConfigurationLastModified(null))
+            .isInstanceOf(NullPointerException.class);
     }
 }

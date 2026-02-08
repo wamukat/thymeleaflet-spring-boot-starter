@@ -14,6 +14,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,14 +45,15 @@ class ThymeleafFragmentRendererTest {
         );
 
         // When
-        FragmentDiscoveryService.FragmentInfo found = renderer.findFragmentByIdentifier(
+        Optional<FragmentDiscoveryService.FragmentInfo> found = renderer.findFragmentByIdentifier(
             allFragments, "templates/shared/atoms/button", "primary-button"
         );
 
         // Then
-        assertThat(found).isNotNull();
-        assertThat(found.getTemplatePath()).isEqualTo("templates/shared/atoms/button");
-        assertThat(found.getFragmentName()).isEqualTo("primary-button");
+        assertThat(found).isPresent();
+        FragmentDiscoveryService.FragmentInfo resolved = found.orElseThrow();
+        assertThat(resolved.getTemplatePath()).isEqualTo("templates/shared/atoms/button");
+        assertThat(resolved.getFragmentName()).isEqualTo("primary-button");
     }
 
     @Test
@@ -63,12 +65,12 @@ class ThymeleafFragmentRendererTest {
         );
 
         // When
-        FragmentDiscoveryService.FragmentInfo found = renderer.findFragmentByIdentifier(
+        Optional<FragmentDiscoveryService.FragmentInfo> found = renderer.findFragmentByIdentifier(
             allFragments, "templates/nonexistent", "unknown-fragment"
         );
 
         // Then
-        assertThat(found).isNull();
+        assertThat(found).isEmpty();
     }
 
     @Test
@@ -122,8 +124,8 @@ class ThymeleafFragmentRendererTest {
         // Given - レンダリング準備完了の場合
         ThymeleafFragmentRenderer.FragmentRenderingContext readyContext = 
             new ThymeleafFragmentRenderer.FragmentRenderingContext(
-                createFragmentInfo("template", "fragment"),
-                createFragmentStoryInfo("story")
+                Optional.of(createFragmentInfo("template", "fragment")),
+                Optional.of(createFragmentStoryInfo("story"))
             );
 
         // When & Then
@@ -132,8 +134,8 @@ class ThymeleafFragmentRendererTest {
         // Given - フラグメントが未選択の場合
         ThymeleafFragmentRenderer.FragmentRenderingContext notReadyContext = 
             new ThymeleafFragmentRenderer.FragmentRenderingContext(
-                null, // フラグメント未選択
-                createFragmentStoryInfo("story")
+                Optional.empty(), // フラグメント未選択
+                Optional.of(createFragmentStoryInfo("story"))
             );
 
         // When & Then
@@ -170,12 +172,20 @@ class ThymeleafFragmentRendererTest {
     }
 
     private io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo createFragmentStoryInfo(String storyName) {
-        // FragmentStoryInfoのモックオブジェクトを作成（簡易実装）
+        io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem storyItem =
+            new io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem(
+                storyName,
+                storyName,
+                "",
+                Map.of(),
+                io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview.empty(),
+                Map.of()
+            );
         return io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo.of(
             createDomainFragmentSummary("template", "fragment"), 
             "fragment", 
             storyName, 
-            null
+            storyItem
         );
     }
     

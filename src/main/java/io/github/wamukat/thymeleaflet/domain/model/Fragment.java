@@ -31,18 +31,15 @@ public class Fragment {
                    Map<String, Object> metadata) {
         this.templatePath = Objects.requireNonNull(templatePath, "Template path cannot be null");
         this.name = Objects.requireNonNull(name, "Fragment name cannot be null");
-        this.category = category != null ? category : "component";
+        this.category = Objects.requireNonNullElse(category, "component");
         
         // 防御的コピー + 不変化
-        this.stories = stories != null ? 
-            Collections.unmodifiableMap(new LinkedHashMap<>(stories)) : 
-            Collections.emptyMap();
-        this.requiredParameters = requiredParameters != null ?
-            Collections.unmodifiableSet(new LinkedHashSet<>(requiredParameters)) :
-            Collections.emptySet();
-        this.metadata = metadata != null ?
-            Collections.unmodifiableMap(new HashMap<>(metadata)) :
-            Collections.emptyMap();
+        this.stories = Collections.unmodifiableMap(
+            new LinkedHashMap<>(Objects.requireNonNullElse(stories, Collections.emptyMap())));
+        this.requiredParameters = Collections.unmodifiableSet(
+            new LinkedHashSet<>(Objects.requireNonNullElse(requiredParameters, Collections.emptySet())));
+        this.metadata = Collections.unmodifiableMap(
+            new HashMap<>(Objects.requireNonNullElse(metadata, Collections.emptyMap())));
     }
 
     /**
@@ -61,14 +58,28 @@ public class Fragment {
      * Fragment作成 - ファクトリメソッド（基本版）
      */
     public static Fragment of(SecureTemplatePath templatePath, FragmentName name) {
-        return new Fragment(templatePath, name, null, null, null, null);
+        return new Fragment(
+            templatePath,
+            name,
+            "component",
+            Collections.emptyMap(),
+            Collections.emptySet(),
+            Collections.emptyMap()
+        );
     }
 
     /**
      * Fragment作成 - ファクトリメソッド（カテゴリ付き版）
      */
     public static Fragment of(SecureTemplatePath templatePath, FragmentName name, String category) {
-        return new Fragment(templatePath, name, category, null, null, null);
+        return new Fragment(
+            templatePath,
+            name,
+            category,
+            Collections.emptyMap(),
+            Collections.emptySet(),
+            Collections.emptyMap()
+        );
     }
 
     // === ドメインメソッド ===
@@ -136,8 +147,8 @@ public class Fragment {
      * フラグメントの説明を取得
      */
     public String getDescription() {
-        String description = (String) metadata.get("description");
-        return description != null ? description : "";
+        Object description = metadata.get("description");
+        return description instanceof String value ? value : "";
     }
 
     public SecureTemplatePath getTemplatePath() {

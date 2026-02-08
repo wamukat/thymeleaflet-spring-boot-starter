@@ -2,6 +2,8 @@ package io.github.wamukat.thymeleaflet.application.port.inbound.story;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 
+import java.util.Optional;
+
 /**
  * ストーリー検証専用ユースケース - Inbound Port
  * 
@@ -38,23 +40,21 @@ public interface StoryValidationUseCase {
      * ストーリー検証結果
      */
     class StoryValidationResult {
-        private final FragmentStoryInfo story;
-        private final boolean success;
+        private final Optional<FragmentStoryInfo> story;
 
-        private StoryValidationResult(FragmentStoryInfo story, boolean success) {
+        private StoryValidationResult(Optional<FragmentStoryInfo> story) {
             this.story = story;
-            this.success = success;
         }
 
         public static StoryValidationResult success(FragmentStoryInfo story) {
-            return new StoryValidationResult(story, true);
+            return new StoryValidationResult(Optional.of(story));
         }
 
         public static StoryValidationResult failure() {
-            return new StoryValidationResult(null, false);
+            return new StoryValidationResult(Optional.empty());
         }
 
-        public FragmentStoryInfo getStory() { return story; }
-        public boolean isSuccess() { return success; }
+        public Optional<FragmentStoryInfo> getStory() { return story; }
+        public boolean isSuccess() { return story.isPresent(); }
     }
 }

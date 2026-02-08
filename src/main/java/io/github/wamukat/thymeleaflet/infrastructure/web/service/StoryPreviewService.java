@@ -3,21 +3,16 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 import io.github.wamukat.thymeleaflet.application.port.inbound.coordination.StoryPageCoordinationUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
-import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
-import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
-import io.github.wamukat.thymeleaflet.infrastructure.web.service.FragmentJsonService;
-import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ストーリープレビューページ処理専用サービス
@@ -66,9 +61,12 @@ public class StoryPreviewService {
         // セキュアパス変換
         SecurePathConversionService.SecurityConversionResult conversionResult = securePathConversionService.convertSecurePath(templatePath, model);
         if (!conversionResult.succeeded()) {
-            return StoryPreviewResult.failure(conversionResult.templateReference());
+            return StoryPreviewResult.failure(
+                conversionResult.templateReference().orElse(
+                    "thymeleaflet/fragments/error-display :: error(type='danger')")
+            );
         }
-        String fullTemplatePath = conversionResult.fullTemplatePath();
+        String fullTemplatePath = conversionResult.fullTemplatePath().orElseThrow();
         
         // 外部仕様として必要な属性を最優先で設定（契約テスト保護）
         model.addAttribute("templatePathEncoded", templatePath.replace("/", ".")); // 契約テスト必須属性：パス変換
@@ -77,16 +75,18 @@ public class StoryPreviewService {
         
         // 対象ストーリーを取得
         logger.info("Calling storyManagementUseCase.getStory with: templatePath={}, fragmentName={}, storyName={}", fullTemplatePath, fragmentName, storyName);
-        FragmentStoryInfo storyInfo = storyRetrievalUseCase.getStory(fullTemplatePath, fragmentName, storyName);
-        
-        if (storyInfo == null) {
+        Optional<FragmentStoryInfo> storyInfoOptional = storyRetrievalUseCase
+            .getStory(fullTemplatePath, fragmentName, storyName);
+
+        if (storyInfoOptional.isEmpty()) {
             model.addAttribute("error", "指定されたストーリーが見つかりません: " + fullTemplatePath + "::" + fragmentName + "::" + storyName);
             // 契約テスト保護：エラー時でも必要な属性を設定
-            model.addAttribute("uniquePaths", Arrays.asList("基本データ")); // Thymeleafテンプレート必須属性
-            model.addAttribute("fragments", Arrays.asList()); // 空のリスト
+            model.addAttribute("uniquePaths", List.of("基本データ")); // Thymeleafテンプレート必須属性
+            model.addAttribute("fragments", List.of()); // 空のリスト
             model.addAttribute("hierarchicalFragments", new HashMap<>());
             return StoryPreviewResult.failure("thymeleaflet/fragment-list");
         }
+        FragmentStoryInfo storyInfo = storyInfoOptional.orElseThrow();
         
         // フラグメント一覧ページと同じ基本データを設定 (協調UseCase使用)
         StoryPageCoordinationUseCase.StoryPageRequest coordinationRequest = 
@@ -95,28 +95,23 @@ public class StoryPreviewService {
             storyPageCoordinationUseCase.coordinateStoryPageSetup(coordinationRequest);
         
         if (!coordinationResult.succeeded()) {
-            logger.error("Story page coordination failed: {}", coordinationResult.errorMessage());
-            model.addAttribute("error", coordinationResult.errorMessage());
+            logger.error("Story page coordination failed: {}", coordinationResult.errorMessage().orElse("unknown"));
+            model.addAttribute("error", coordinationResult.errorMessage().orElse("Story page coordination failed"));
             return StoryPreviewResult.failure("thymeleaflet/fragment-list");
         }
-        
-        // デバッグ: coordinateStoryPageSetup後のallFragments型を確認
-        Object allFragmentsAfterCoordination = model.getAttribute("allFragments");
-        logger.info("After coordination - allFragments type: {}", 
-                   allFragmentsAfterCoordination != null ? allFragmentsAfterCoordination.getClass().getName() : "null");
         
         // StoryCommonDataServiceを使用して共通データ設定
         storyCommonDataService.setupCommonStoryData(fullTemplatePath, fragmentName, storyName, storyInfo, model);
         
         // 左ナビゲーション表示のためのJSON属性設定 (重要: この処理が失われていた)
         Object allFragmentsObj = model.getAttribute("allFragments");
-        @SuppressWarnings("unchecked")
-        Map<String, Object> hierarchicalFragments = 
-            (Map<String, Object>) model.getAttribute("hierarchicalFragments");
+        Object hierarchicalFragmentsObj = model.getAttribute("hierarchicalFragments");
         
-        if (allFragmentsObj != null && hierarchicalFragments != null) {
+        if (allFragmentsObj != null && hierarchicalFragmentsObj instanceof Map<?, ?> rawHierarchy) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> hierarchy = (Map<String, Object>) rawHierarchy;
             // 型安全版のsetupFragmentJsonAttributesを呼び出し
-            fragmentJsonService.setupFragmentJsonAttributes(allFragmentsObj, hierarchicalFragments, model);
+            fragmentJsonService.setupFragmentJsonAttributes(allFragmentsObj, hierarchy, model);
         }
         
         return StoryPreviewResult.success("thymeleaflet/fragment-list");

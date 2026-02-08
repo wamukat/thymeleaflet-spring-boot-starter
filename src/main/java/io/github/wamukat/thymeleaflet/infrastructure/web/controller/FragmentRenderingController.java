@@ -1,8 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.controller;
 
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.FragmentRenderingService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * フラグメント動的レンダリング専用コントローラー
@@ -20,9 +20,7 @@ import java.util.Map;
  */
 @Controller
 public class FragmentRenderingController {
-    
-    private static final Logger logger = LoggerFactory.getLogger(FragmentRenderingController.class);
-    
+
     @Autowired
     private FragmentRenderingService fragmentRenderingService;
     
@@ -41,7 +39,8 @@ public class FragmentRenderingController {
         FragmentRenderingService.RenderingResult result = 
             fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model);
         
-        return result.templateReference();
+        return result.templateReference()
+            .orElse("thymeleaflet/fragments/error-display :: error(type='danger')");
     }
 
     /**
@@ -52,14 +51,19 @@ public class FragmentRenderingController {
             @PathVariable("templatePath") String templatePath,
             @PathVariable("fragmentName") String fragmentName,
             @PathVariable("storyName") String storyName,
-            @RequestBody(required = false) RenderOverridesRequest request,
+            @RequestBody(required = false) @Nullable RenderOverridesRequest request,
             Model model) {
-        Map<String, Object> parameters = request != null ? request.parameters() : null;
-        Map<String, Object> modelOverrides = request != null ? request.model() : null;
+        Map<String, Object> parameters = Optional.ofNullable(request)
+            .map(RenderOverridesRequest::parameters)
+            .orElse(Map.of());
+        Map<String, Object> modelOverrides = Optional.ofNullable(request)
+            .map(RenderOverridesRequest::model)
+            .orElse(Map.of());
         FragmentRenderingService.RenderingResult result =
             fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model, parameters, modelOverrides);
-        return result.templateReference();
+        return result.templateReference()
+            .orElse("thymeleaflet/fragments/error-display :: error(type='danger')");
     }
 
-    public record RenderOverridesRequest(Map<String, Object> parameters, Map<String, Object> model) {}
+    public record RenderOverridesRequest(@Nullable Map<String, Object> parameters, @Nullable Map<String, Object> model) {}
 }

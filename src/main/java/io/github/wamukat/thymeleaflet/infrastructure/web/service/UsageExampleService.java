@@ -17,6 +17,7 @@ import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 使用例生成処理専用サービス
@@ -84,14 +85,16 @@ public class UsageExampleService {
             validationUseCase.validateStoryRequest(requestValidationCommand);
             
             // 対象ストーリーを取得
-            FragmentStoryInfo storyInfo = storyRetrievalUseCase.getStory(fullTemplatePath, fragmentName, storyName);
-            
-            if (storyInfo == null) {
+            Optional<FragmentStoryInfo> storyInfoOptional = storyRetrievalUseCase
+                .getStory(fullTemplatePath, fragmentName, storyName);
+
+            if (storyInfoOptional.isEmpty()) {
                 model.addAttribute("hasError", true);
                 model.addAttribute("errorMessage", "ストーリーが見つかりません");
                 model.addAttribute("usageExample", "<!-- ストーリーが見つかりません -->");
                 return UsageExampleResult.success();
             }
+            FragmentStoryInfo storyInfo = storyInfoOptional.orElseThrow();
             
             // パラメータを取得（JavaDocフォールバックを含む）
             Map<String, Object> storyParameters = storyParameterUseCase.getParametersForStory(storyInfo);
@@ -99,9 +102,8 @@ public class UsageExampleService {
             
             // SIMPLEフラグメントの場合、パラメータが空でも正常
             boolean isSimpleFragment = storyInfo.getFragmentSummary().getType() == FragmentDomainService.FragmentType.SIMPLE;
-            boolean hasRequiredParams = storyInfo.getFragmentSummary().getParameters() != null
-                && !storyInfo.getFragmentSummary().getParameters().isEmpty();
-            boolean hasModel = storyModel != null && !storyModel.isEmpty();
+            boolean hasRequiredParams = !storyInfo.getFragmentSummary().getParameters().isEmpty();
+            boolean hasModel = !storyModel.isEmpty();
             boolean shouldShowError = storyParameters.isEmpty() && hasRequiredParams && !hasModel;
             
             // デバッグログ追加
@@ -183,22 +185,22 @@ public class UsageExampleService {
      */
     public static class UsageExampleResult {
         private final boolean succeeded;
-        private final String errorMessage;
+        private final Optional<String> errorMessage;
         
-        private UsageExampleResult(boolean succeeded, String errorMessage) {
+        private UsageExampleResult(boolean succeeded, Optional<String> errorMessage) {
             this.succeeded = succeeded;
             this.errorMessage = errorMessage;
         }
         
         public static UsageExampleResult success() {
-            return new UsageExampleResult(true, null);
+            return new UsageExampleResult(true, Optional.empty());
         }
         
         public static UsageExampleResult failure(String errorMessage) {
-            return new UsageExampleResult(false, errorMessage);
+            return new UsageExampleResult(false, Optional.of(errorMessage));
         }
         
         public boolean succeeded() { return succeeded; }
-        public String errorMessage() { return errorMessage; }
+        public Optional<String> errorMessage() { return errorMessage; }
     }
 }

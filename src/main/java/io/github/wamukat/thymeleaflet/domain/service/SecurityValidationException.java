@@ -22,7 +22,7 @@ public class SecurityValidationException extends RuntimeException {
     public SecurityValidationException(String message, SecurityViolationType violationType) {
         super(message);
         this.violationType = violationType;
-        this.detectedValue = null;
+        this.detectedValue = "";
     }
 
     /**
@@ -41,7 +41,7 @@ public class SecurityValidationException extends RuntimeException {
             this.violationType = SecurityViolationType.GENERAL_SECURITY_VIOLATION;
         }
         
-        this.detectedValue = null;
+        this.detectedValue = "";
     }
 
     @Override

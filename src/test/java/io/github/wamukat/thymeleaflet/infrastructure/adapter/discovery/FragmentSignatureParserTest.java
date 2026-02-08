@@ -15,9 +15,10 @@ class FragmentSignatureParserTest {
     void parsesNameOnly() {
         FragmentSignatureParser.ParseResult result = parser.parse("profileCard");
 
-        assertThat(result.success()).isTrue();
-        assertThat(result.fragmentName()).isEqualTo("profileCard");
-        assertThat(result.parameters()).isEmpty();
+        assertThat(result).isInstanceOf(FragmentSignatureParser.ParseSuccess.class);
+        FragmentSignatureParser.ParseSuccess success = (FragmentSignatureParser.ParseSuccess) result;
+        assertThat(success.fragmentName()).isEqualTo("profileCard");
+        assertThat(success.parameters()).isEmpty();
     }
 
     @Test
@@ -25,9 +26,10 @@ class FragmentSignatureParserTest {
     void parsesEmptyParameterList() {
         FragmentSignatureParser.ParseResult result = parser.parse("profileCard()");
 
-        assertThat(result.success()).isTrue();
-        assertThat(result.fragmentName()).isEqualTo("profileCard");
-        assertThat(result.parameters()).isEmpty();
+        assertThat(result).isInstanceOf(FragmentSignatureParser.ParseSuccess.class);
+        FragmentSignatureParser.ParseSuccess success = (FragmentSignatureParser.ParseSuccess) result;
+        assertThat(success.fragmentName()).isEqualTo("profileCard");
+        assertThat(success.parameters()).isEmpty();
     }
 
     @Test
@@ -35,9 +37,10 @@ class FragmentSignatureParserTest {
     void parsesParameterList() {
         FragmentSignatureParser.ParseResult result = parser.parse("profileCard(name, age)");
 
-        assertThat(result.success()).isTrue();
-        assertThat(result.fragmentName()).isEqualTo("profileCard");
-        assertThat(result.parameters()).containsExactly("name", "age");
+        assertThat(result).isInstanceOf(FragmentSignatureParser.ParseSuccess.class);
+        FragmentSignatureParser.ParseSuccess success = (FragmentSignatureParser.ParseSuccess) result;
+        assertThat(success.fragmentName()).isEqualTo("profileCard");
+        assertThat(success.parameters()).containsExactly("name", "age");
     }
 
     @Test
@@ -45,9 +48,10 @@ class FragmentSignatureParserTest {
     void parsesWithWhitespace() {
         FragmentSignatureParser.ParseResult result = parser.parse(" profileCard ( name , age ) ");
 
-        assertThat(result.success()).isTrue();
-        assertThat(result.fragmentName()).isEqualTo("profileCard");
-        assertThat(result.parameters()).containsExactly("name", "age");
+        assertThat(result).isInstanceOf(FragmentSignatureParser.ParseSuccess.class);
+        FragmentSignatureParser.ParseSuccess success = (FragmentSignatureParser.ParseSuccess) result;
+        assertThat(success.fragmentName()).isEqualTo("profileCard");
+        assertThat(success.parameters()).containsExactly("name", "age");
     }
 
     @Test
@@ -55,8 +59,9 @@ class FragmentSignatureParserTest {
     void rejectsEmptyToken() {
         FragmentSignatureParser.ParseResult result = parser.parse("profileCard(name,,age)");
 
-        assertThat(result.success()).isFalse();
-        assertThat(result.code()).isEqualTo(FragmentSignatureParser.DiagnosticCode.INVALID_SIGNATURE);
+        assertThat(result).isInstanceOf(FragmentSignatureParser.ParseError.class);
+        FragmentSignatureParser.ParseError error = (FragmentSignatureParser.ParseError) result;
+        assertThat(error.code()).isEqualTo(FragmentSignatureParser.DiagnosticCode.INVALID_SIGNATURE);
     }
 
     @Test
@@ -64,8 +69,9 @@ class FragmentSignatureParserTest {
     void rejectsUnbalancedParenthesis() {
         FragmentSignatureParser.ParseResult result = parser.parse("profileCard(name");
 
-        assertThat(result.success()).isFalse();
-        assertThat(result.code()).isEqualTo(FragmentSignatureParser.DiagnosticCode.INVALID_SIGNATURE);
+        assertThat(result).isInstanceOf(FragmentSignatureParser.ParseError.class);
+        FragmentSignatureParser.ParseError error = (FragmentSignatureParser.ParseError) result;
+        assertThat(error.code()).isEqualTo(FragmentSignatureParser.DiagnosticCode.INVALID_SIGNATURE);
     }
 
     @Test
@@ -73,7 +79,8 @@ class FragmentSignatureParserTest {
     void rejectsAssignmentStyle() {
         FragmentSignatureParser.ParseResult result = parser.parse("profileCard(name='x')");
 
-        assertThat(result.success()).isFalse();
-        assertThat(result.code()).isEqualTo(FragmentSignatureParser.DiagnosticCode.UNSUPPORTED_SYNTAX);
+        assertThat(result).isInstanceOf(FragmentSignatureParser.ParseError.class);
+        FragmentSignatureParser.ParseError error = (FragmentSignatureParser.ParseError) result;
+        assertThat(error.code()).isEqualTo(FragmentSignatureParser.DiagnosticCode.UNSUPPORTED_SYNTAX);
     }
 }

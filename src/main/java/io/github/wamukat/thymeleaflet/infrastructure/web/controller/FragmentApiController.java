@@ -38,8 +38,8 @@ public class FragmentApiController {
             usageExampleService.generateUsageExample(templatePath, fragmentName, storyName, model);
         
         if (!result.succeeded()) {
-            logger.error("Usage example generation failed: {}", result.errorMessage());
-            model.addAttribute("error", result.errorMessage());
+            logger.error("Usage example generation failed: {}", result.errorMessage().orElse("unknown"));
+            model.addAttribute("error", result.errorMessage().orElse("Usage example generation failed"));
             return "thymeleaflet/fragments/error-display :: error(type='danger')";
         }
         

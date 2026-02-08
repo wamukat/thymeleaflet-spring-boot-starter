@@ -30,12 +30,10 @@ public class Story {
         this.parentFragment = Objects.requireNonNull(parentFragment, "Parent fragment cannot be null");
         
         // 防御的コピー + 不変化
-        this.parameters = parameters != null ?
-            Collections.unmodifiableMap(new HashMap<>(parameters)) :
-            Collections.emptyMap();
-        this.metadata = metadata != null ?
-            Collections.unmodifiableMap(new HashMap<>(metadata)) :
-            Collections.emptyMap();
+        this.parameters = Collections.unmodifiableMap(
+            new HashMap<>(Objects.requireNonNull(parameters, "parameters cannot be null")));
+        this.metadata = Collections.unmodifiableMap(
+            new HashMap<>(Objects.requireNonNull(metadata, "metadata cannot be null")));
             
         this.storyType = determineStoryType(name);
     }
@@ -79,11 +77,12 @@ public class Story {
      * パラメータを設定した新しいStoryインスタンスを返す
      */
     public Story withParameter(String key, Object value) {
-        if (key == null || key.trim().isEmpty()) {
+        String normalizedKey = Objects.requireNonNull(key, "key cannot be null").trim();
+        if (normalizedKey.isEmpty()) {
             return this; // 変更なし
         }
         Map<String, Object> newParams = new HashMap<>(this.parameters);
-        newParams.put(key.trim(), value);
+        newParams.put(normalizedKey, value);
         return Story.of(name, parentFragment, newParams, metadata);
     }
 
@@ -91,7 +90,7 @@ public class Story {
      * 複数パラメータを設定した新しいStoryインスタンスを返す
      */
     public Story withParameters(Map<String, Object> params) {
-        if (params == null || params.isEmpty()) {
+        if (Objects.requireNonNull(params, "params cannot be null").isEmpty()) {
             return this; // 変更なし
         }
         Map<String, Object> newParams = new HashMap<>(this.parameters);
@@ -107,11 +106,12 @@ public class Story {
      * メタデータを設定した新しいStoryインスタンスを返す
      */
     public Story withMetadata(String key, Object value) {
-        if (key == null || key.trim().isEmpty()) {
+        String normalizedKey = Objects.requireNonNull(key, "key cannot be null").trim();
+        if (normalizedKey.isEmpty()) {
             return this; // 変更なし
         }
         Map<String, Object> newMetadata = new HashMap<>(this.metadata);
-        newMetadata.put(key.trim(), value);
+        newMetadata.put(normalizedKey, value);
         return Story.of(name, parentFragment, parameters, newMetadata);
     }
 
@@ -207,8 +207,8 @@ public class Story {
      * ストーリーの説明を取得
      */
     public String getDescription() {
-        String description = (String) metadata.get("description");
-        return description != null ? description : "";
+        Object description = metadata.get("description");
+        return description instanceof String text ? text : "";
     }
 
     public StoryName getName() {
@@ -282,10 +282,10 @@ public class Story {
         private ValidationResult(boolean valid, List<String> errors, List<String> warnings) {
             this.valid = valid;
             this.errors = Collections.unmodifiableList(
-                errors != null ? new ArrayList<>(errors) : new ArrayList<>()
+                new ArrayList<>(Objects.requireNonNull(errors, "errors cannot be null"))
             );
             this.warnings = Collections.unmodifiableList(
-                warnings != null ? new ArrayList<>(warnings) : new ArrayList<>()
+                new ArrayList<>(Objects.requireNonNull(warnings, "warnings cannot be null"))
             );
         }
 
@@ -300,21 +300,21 @@ public class Story {
          * 成功結果作成 - ファクトリメソッド（成功版）
          */
         public static ValidationResult success() {
-            return new ValidationResult(true, null, null);
+            return new ValidationResult(true, Collections.emptyList(), Collections.emptyList());
         }
 
         /**
          * 成功結果作成 - ファクトリメソッド（警告付き成功版）
          */
         public static ValidationResult successWithWarnings(List<String> warnings) {
-            return new ValidationResult(true, null, warnings);
+            return new ValidationResult(true, Collections.emptyList(), warnings);
         }
 
         /**
          * 失敗結果作成 - ファクトリメソッド（エラー版）
          */
         public static ValidationResult failure(List<String> errors) {
-            return new ValidationResult(false, errors, null);
+            return new ValidationResult(false, errors, Collections.emptyList());
         }
 
         /**

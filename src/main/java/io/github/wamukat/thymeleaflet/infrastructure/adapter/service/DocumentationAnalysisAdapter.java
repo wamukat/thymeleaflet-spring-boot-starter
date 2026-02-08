@@ -4,7 +4,7 @@ import io.github.wamukat.thymeleaflet.application.port.outbound.DocumentationAna
 import io.github.wamukat.thymeleaflet.domain.model.TypeInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocContentService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.TypeInformationExtractor;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -26,32 +27,32 @@ public class DocumentationAnalysisAdapter implements DocumentationAnalysisPort {
     
     private final TypeInformationExtractor typeInformationExtractor;
     private final JavaDocContentService javaDocContentService;
-    private final StorybookProperties storybookProperties;
+    private final ResolvedStorybookConfig storybookConfig;
     private final Map<String, List<TypeInfo>> typeInfoCache = new ConcurrentHashMap<>();
     
     public DocumentationAnalysisAdapter(TypeInformationExtractor typeInformationExtractor,
                                         JavaDocContentService javaDocContentService,
-                                        StorybookProperties storybookProperties) {
+                                        ResolvedStorybookConfig storybookConfig) {
         this.typeInformationExtractor = typeInformationExtractor;
         this.javaDocContentService = javaDocContentService;
-        this.storybookProperties = storybookProperties;
+        this.storybookConfig = storybookConfig;
     }
     
     @Override
     public List<TypeInfo> extractTypeInformation(String templatePath) {
-        if (storybookProperties.getCache().isEnabled()) {
-            List<TypeInfo> cached = typeInfoCache.get(templatePath);
-            if (cached != null) {
-                return cached;
+        if (storybookConfig.getCache().isEnabled()) {
+            Optional<List<TypeInfo>> cached = Optional.ofNullable(typeInfoCache.get(templatePath));
+            if (cached.isPresent()) {
+                return cached.orElseThrow();
             }
         }
         try {
-            String htmlContent = javaDocContentService.loadTemplateContent(templatePath);
-            if (htmlContent == null || htmlContent.isBlank()) {
+            var htmlContent = javaDocContentService.loadTemplateContent(templatePath);
+            if (htmlContent.isEmpty() || htmlContent.get().isBlank()) {
                 return new ArrayList<>();
             }
-            List<TypeInfo> result = typeInformationExtractor.extractTypeInformationFromHtml(htmlContent);
-            if (storybookProperties.getCache().isEnabled()) {
+            List<TypeInfo> result = typeInformationExtractor.extractTypeInformationFromHtml(htmlContent.get());
+            if (storybookConfig.getCache().isEnabled()) {
                 typeInfoCache.put(templatePath, result);
             }
             return result;

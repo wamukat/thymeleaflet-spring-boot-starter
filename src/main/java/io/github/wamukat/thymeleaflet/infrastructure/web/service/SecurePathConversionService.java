@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
+import java.util.Optional;
+
 /**
  * セキュアパス変換専用サービス
  * 
@@ -45,25 +47,29 @@ public class SecurePathConversionService {
      */
     public static class SecurityConversionResult {
         private final boolean succeeded;
-        private final String fullTemplatePath;
-        private final String templateReference;
+        private final Optional<String> fullTemplatePath;
+        private final Optional<String> templateReference;
         
-        private SecurityConversionResult(boolean succeeded, String fullTemplatePath, String templateReference) {
+        private SecurityConversionResult(
+            boolean succeeded,
+            Optional<String> fullTemplatePath,
+            Optional<String> templateReference
+        ) {
             this.succeeded = succeeded;
             this.fullTemplatePath = fullTemplatePath;
             this.templateReference = templateReference;
         }
         
         public static SecurityConversionResult success(String fullTemplatePath) {
-            return new SecurityConversionResult(true, fullTemplatePath, null);
+            return new SecurityConversionResult(true, Optional.of(fullTemplatePath), Optional.empty());
         }
         
         public static SecurityConversionResult failure(String templateReference) {
-            return new SecurityConversionResult(false, null, templateReference);
+            return new SecurityConversionResult(false, Optional.empty(), Optional.of(templateReference));
         }
         
         public boolean succeeded() { return succeeded; }
-        public String fullTemplatePath() { return fullTemplatePath; }
-        public String templateReference() { return templateReference; }
+        public Optional<String> fullTemplatePath() { return fullTemplatePath; }
+        public Optional<String> templateReference() { return templateReference; }
     }
 }

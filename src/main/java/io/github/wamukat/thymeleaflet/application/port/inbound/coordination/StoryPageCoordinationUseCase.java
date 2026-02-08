@@ -2,6 +2,8 @@ package io.github.wamukat.thymeleaflet.application.port.inbound.coordination;
 
 import org.springframework.ui.Model;
 
+import java.util.Optional;
+
 /**
  * ストーリーページ協調ユースケース
  * 
@@ -33,14 +35,14 @@ public interface StoryPageCoordinationUseCase {
      */
     record StoryPageResult(
         boolean succeeded,
-        String errorMessage
+        Optional<String> errorMessage
     ) {
         public static StoryPageResult success() {
-            return new StoryPageResult(true, null);
+            return new StoryPageResult(true, Optional.empty());
         }
         
         public static StoryPageResult failure(String errorMessage) {
-            return new StoryPageResult(false, errorMessage);
+            return new StoryPageResult(false, Optional.of(errorMessage));
         }
     }
 }

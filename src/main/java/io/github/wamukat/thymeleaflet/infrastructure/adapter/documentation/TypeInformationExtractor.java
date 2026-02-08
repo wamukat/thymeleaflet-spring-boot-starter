@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -93,9 +94,9 @@ public class TypeInformationExtractor {
     private TypeInfo analyzeParameterType(JavaDocAnalyzer.ParameterInfo paramInfo, JavaDocAnalyzer.JavaDocInfo javadocInfo) {
         String paramName = paramInfo.getName();
         String paramType = paramInfo.getType();
-        String description = paramInfo.getDescription();
+        Optional<String> description = paramInfo.getDescriptionOptional();
         
-        logger.debug("Analyzing parameter type: name='{}', type='{}', description='{}'", paramName, paramType, description);
+        logger.debug("Analyzing parameter type: name='{}', type='{}', description='{}'", paramName, paramType, description.orElse(""));
         
         // 型カテゴリ判定
         TypeInfo.TypeCategory category = determineTypeCategory(paramType, description);
@@ -120,7 +121,7 @@ public class TypeInformationExtractor {
             .typeCategory(category)
             .inferenceLevel(inferenceLevel)
             .allowedValues(allowedValues)
-            .description(description)
+            .description(description.orElse(""))
             .build();
     }
 
@@ -128,7 +129,7 @@ public class TypeInformationExtractor {
      * 型カテゴリの技術的判定
      * Infrastructure責任: 型分類アルゴリズム
      */
-    private TypeInfo.TypeCategory determineTypeCategory(String paramType, String description) {
+    private TypeInfo.TypeCategory determineTypeCategory(String paramType, Optional<String> description) {
         // プリミティブ型判定
         if (isPrimitiveType(paramType)) {
             return TypeInfo.TypeCategory.PRIMITIVE;
@@ -156,7 +157,7 @@ public class TypeInformationExtractor {
      * 推論レベルの技術的判定
      * Infrastructure責任: 信頼度アルゴリズム
      */
-    private TypeInfo.InferenceLevel determineInferenceLevel(String paramType, TypeInfo.TypeCategory category, String description) {
+    private TypeInfo.InferenceLevel determineInferenceLevel(String paramType, TypeInfo.TypeCategory category, Optional<String> description) {
         // 既知のパターンによる高信頼度判定
         if (category == TypeInfo.TypeCategory.PRIMITIVE && isPrimitiveType(paramType)) {
             return TypeInfo.InferenceLevel.EXPLICIT;
@@ -168,7 +169,7 @@ public class TypeInformationExtractor {
         }
         
         // 説明文からの推論
-        if (description != null && containsTypeHints(description)) {
+        if (description.filter(this::containsTypeHints).isPresent()) {
             return TypeInfo.InferenceLevel.INFERRED_FROM_CONTEXT;
         }
         
@@ -179,7 +180,7 @@ public class TypeInformationExtractor {
      * Enum値の技術的抽出
      * Infrastructure責任: パターンマッチング・値抽出
      */
-    private List<String> extractEnumValues(String paramType, String description, JavaDocAnalyzer.JavaDocInfo javadocInfo) {
+    private List<String> extractEnumValues(String paramType, Optional<String> description, JavaDocAnalyzer.JavaDocInfo javadocInfo) {
         List<String> values = new ArrayList<>();
         
         // TransactionType特別処理
@@ -189,8 +190,8 @@ public class TypeInformationExtractor {
         }
         
         // 説明文からEnum値を抽出（簡易実装）
-        if (description != null) {
-            String[] words = description.split("\\s+");
+        if (description.isPresent()) {
+            String[] words = description.get().split("\\s+");
             for (String word : words) {
                 if (ENUM_VALUE_PATTERN.matcher(word).matches()) {
                     values.add(word);
@@ -215,7 +216,7 @@ public class TypeInformationExtractor {
      * Enum型判定
      * Infrastructure技術的パターンマッチング
      */
-    private boolean isEnumType(String type, String description) {
+    private boolean isEnumType(String type, Optional<String> description) {
         // 既知のEnum型名
         if (KNOWN_ENUM_PATTERNS.contains(type)) {
             return true;
@@ -227,11 +228,7 @@ public class TypeInformationExtractor {
         }
         
         // 説明文にEnum値らしきものがあるか
-        if (description != null) {
-            return ENUM_VALUE_PATTERN.matcher(description).find();
-        }
-        
-        return false;
+        return description.map(text -> ENUM_VALUE_PATTERN.matcher(text).find()).orElse(false);
     }
 
     /**
@@ -243,7 +240,7 @@ public class TypeInformationExtractor {
         if (type.endsWith("[]")) {
             String baseType = type.substring(0, type.length() - 2);
             // Enum型の配列はEnumとして扱う（Collection型ではない）
-            if (isEnumType(baseType, null)) {
+            if (isEnumType(baseType, Optional.empty())) {
                 return false;
             }
             return true;
@@ -277,10 +274,9 @@ public class TypeInformationExtractor {
      * 名前による型情報検索
      * Infrastructure技術的検索処理
      */
-    public TypeInfo findTypeInfoByName(List<TypeInfo> typeInfos, String parameterName) {
+    public Optional<TypeInfo> findTypeInfoByName(List<TypeInfo> typeInfos, String parameterName) {
         return typeInfos.stream()
             .filter(typeInfo -> typeInfo.getParameterName().equals(parameterName))
-            .findFirst()
-            .orElse(null);
+            .findFirst();
     }
 }

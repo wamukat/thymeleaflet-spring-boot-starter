@@ -107,7 +107,9 @@ public class FragmentHierarchyUseCaseImpl implements FragmentHierarchyUseCase {
                         List<FragmentDiscoveryService.FragmentInfo> fragmentList = 
                             (List<FragmentDiscoveryService.FragmentInfo>) fragmentsMap.get(fragmentKey);
                         // フラグメントリスト内も名前でソート
-                        List<FragmentDiscoveryService.FragmentInfo> sortedList = fragmentList.stream()
+                        List<FragmentDiscoveryService.FragmentInfo> sortedList = fragmentList == null
+                            ? List.of()
+                            : fragmentList.stream()
                             .sorted(Comparator.comparing(FragmentDiscoveryService.FragmentInfo::getFragmentName))
                             .collect(Collectors.toList());
                         sortedFragmentsMap.put(fragmentKey, sortedList);

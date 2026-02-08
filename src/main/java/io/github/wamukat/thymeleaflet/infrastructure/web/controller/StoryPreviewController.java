@@ -16,6 +16,7 @@ import org.springframework.web.util.UriUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ストーリープレビュー表示専用コントローラー
@@ -41,7 +42,7 @@ public class StoryPreviewController {
     private ThymeleafletVersionResolver thymeleafletVersionResolver;
 
     @Value("${thymeleaflet.base-path:/thymeleaflet}")
-    private String basePath;
+    private String basePath = "/thymeleaflet";
     
     /**
      * 個別ストーリープレビューページ（統一テンプレート構造を使用）
@@ -54,9 +55,9 @@ public class StoryPreviewController {
             @PathVariable("storyName") String storyName,
             Model model) {
         model.addAttribute("thymeleafletVersion", thymeleafletVersionResolver.resolve());
-        String redirectTarget = resolveRedirectTarget(templatePath, fragmentName, storyName, model);
-        if (redirectTarget != null) {
-            return redirectTarget;
+        Optional<String> redirectTarget = resolveRedirectTarget(templatePath, fragmentName, storyName, model);
+        if (redirectTarget.isPresent()) {
+            return redirectTarget.get();
         }
 
         StoryPreviewService.StoryPreviewResult result = 
@@ -76,9 +77,9 @@ public class StoryPreviewController {
             @PathVariable("storyName") String storyName,
             Model model) {
         model.addAttribute("thymeleafletVersion", thymeleafletVersionResolver.resolve());
-        String redirectTarget = resolveRedirectTarget(templatePath, fragmentName, storyName, model);
-        if (redirectTarget != null) {
-            return redirectTarget + "/content";
+        Optional<String> redirectTarget = resolveRedirectTarget(templatePath, fragmentName, storyName, model);
+        if (redirectTarget.isPresent()) {
+            return redirectTarget.get() + "/content";
         }
 
         StoryContentService.StoryContentResult result = 
@@ -87,36 +88,36 @@ public class StoryPreviewController {
         return result.templateReference();
     }
     
-    private String resolveRedirectTarget(String templatePath, String fragmentName, String storyName, Model model) {
+    private Optional<String> resolveRedirectTarget(String templatePath, String fragmentName, String storyName, Model model) {
         if (!"default".equals(storyName)) {
-            return null;
+            return Optional.empty();
         }
 
         SecurePathConversionService.SecurityConversionResult conversionResult =
             securePathConversionService.convertSecurePath(templatePath, model);
         if (!conversionResult.succeeded()) {
-            return null;
+            return Optional.empty();
         }
-        String fullTemplatePath = conversionResult.fullTemplatePath();
+        String fullTemplatePath = conversionResult.fullTemplatePath().orElseThrow();
 
         StoryRetrievalUseCase.StoryListResponse listResponse =
             storyRetrievalUseCase.getStoriesForFragment(fullTemplatePath, fragmentName);
-        if (!listResponse.isSuccess() || listResponse.getStories() == null || listResponse.getStories().isEmpty()) {
-            return null;
+        if (!listResponse.isSuccess() || listResponse.getStories().isEmpty()) {
+            return Optional.empty();
         }
 
         List<FragmentStoryInfo> stories = listResponse.getStories();
         boolean hasDefault = stories.stream().anyMatch(story -> "default".equals(story.getStoryName()));
         if (hasDefault) {
-            return null;
+            return Optional.empty();
         }
 
         String firstStoryName = stories.get(0).getStoryName();
-        if (firstStoryName == null || firstStoryName.isBlank()) {
-            return null;
+        if (firstStoryName.isBlank()) {
+            return Optional.empty();
         }
 
         String encodedStory = UriUtils.encodePathSegment(firstStoryName, StandardCharsets.UTF_8);
-        return "redirect:" + basePath + "/" + templatePath + "/" + fragmentName + "/" + encodedStory;
+        return Optional.of("redirect:" + basePath + "/" + templatePath + "/" + fragmentName + "/" + encodedStory);
     }
 }

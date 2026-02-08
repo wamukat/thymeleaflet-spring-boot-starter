@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.fragment;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * メトリクス記録専用ユースケース - Inbound Port
@@ -19,12 +20,12 @@ public interface MetricsUseCase {
      * メトリクスコマンド
      */
     class MetricsCommand {
-        private final Map<String, Object> data;
+        private final Optional<Map<String, Object>> data;
         private final long discoveryTime;
         private final int fragmentCount;
 
         public MetricsCommand(Map<String, Object> data) {
-            this.data = data;
+            this.data = Optional.of(data);
             this.discoveryTime = 0;
             this.fragmentCount = 0;
         }
@@ -32,10 +33,10 @@ public interface MetricsUseCase {
         public MetricsCommand(long discoveryTime, int fragmentCount) {
             this.discoveryTime = discoveryTime;
             this.fragmentCount = fragmentCount;
-            this.data = null;
+            this.data = Optional.empty();
         }
 
-        public Map<String, Object> getData() { return data; }
+        public Optional<Map<String, Object>> getData() { return data; }
         public long getDiscoveryTime() { return discoveryTime; }
         public int getFragmentCount() { return fragmentCount; }
     }

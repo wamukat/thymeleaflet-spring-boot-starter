@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -99,13 +100,13 @@ public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUs
             // 2. 選択されたフラグメント・ストーリー取得
             FragmentDiscoveryUseCase.FragmentDetailResponse fragmentDetailResponse = 
                 fragmentDiscoveryUseCase.discoverFragment(request.fullTemplatePath(), request.fragmentName());
-            FragmentDiscoveryService.FragmentInfo selectedFragment = fragmentDetailResponse.getFragment();
-            
-            FragmentStoryInfo selectedStory = null;
-            if (selectedFragment != null) {
+            Optional<FragmentDiscoveryService.FragmentInfo> selectedFragment = fragmentDetailResponse.getFragment();
+
+            Optional<FragmentStoryInfo> selectedStory = Optional.empty();
+            if (selectedFragment.isPresent()) {
                 selectedStory = storyRetrievalUseCase.getStory(
-                    request.fullTemplatePath(), 
-                    request.fragmentName(), 
+                    request.fullTemplatePath(),
+                    request.fragmentName(),
                     request.storyName()
                 );
             }
@@ -117,20 +118,18 @@ public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUs
             request.model().addAttribute("uniquePaths", uniquePaths);
             request.model().addAttribute("hierarchicalFragments", hierarchicalFragments);
             request.model().addAttribute("totalCount", allFragments.size());
-            request.model().addAttribute("selectedFragment", selectedFragment);
-            request.model().addAttribute("selectedStory", selectedStory);
-            request.model().addAttribute("storyInfo", selectedStory);
+            request.model().addAttribute("selectedFragment", selectedFragment.orElse(null));
+            request.model().addAttribute("selectedStory", selectedStory.orElse(null));
+            request.model().addAttribute("storyInfo", selectedStory.orElse(null));
             
             // 4. ストーリーコンテンツデータ設定 (旧setupStoryContentData相当処理)
-            if (selectedFragment != null && selectedStory != null) {
+            if (selectedFragment.isPresent() && selectedStory.isPresent()) {
                 FragmentPreviewUseCase.PageSetupCommand pageSetupCommand = 
                     new FragmentPreviewUseCase.PageSetupCommand(request.fullTemplatePath(), request.fragmentName(), request.storyName(), request.model());
                 FragmentPreviewUseCase.PageSetupResponse pageSetupResponse = fragmentPreviewUseCase.setupStoryContentData(pageSetupCommand);
                 
-                if (pageSetupResponse == null) {
-                    logger.warn("Story content data setup returned null, but continuing");
-                } else if (!pageSetupResponse.isSucceeded()) {
-                    logger.warn("Story content data setup failed: {}, but continuing", pageSetupResponse.errorMessage());
+                if (!pageSetupResponse.isSucceeded()) {
+                    logger.warn("Story content data setup failed: {}, but continuing", pageSetupResponse.errorMessage().orElse("unknown"));
                 }
             }
             

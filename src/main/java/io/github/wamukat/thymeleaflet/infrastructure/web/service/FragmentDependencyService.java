@@ -2,7 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,7 +35,7 @@ public class FragmentDependencyService {
     );
 
     @Autowired
-    private StorybookProperties storybookProperties;
+    private ResolvedStorybookConfig storybookConfig;
 
     @Autowired
     private ResourcePathValidator resourcePathValidator;
@@ -42,7 +43,7 @@ public class FragmentDependencyService {
     private final Map<String, List<DependencyComponent>> dependencyCache = new ConcurrentHashMap<>();
 
     public List<DependencyComponent> findDependencies(String templatePath, String fragmentName) {
-        if (storybookProperties.getCache().isEnabled()) {
+        if (storybookConfig.getCache().isEnabled()) {
             String cacheKey = templatePath + "::" + fragmentName;
             List<DependencyComponent> cached = dependencyCache.get(cacheKey);
             if (cached != null) {
@@ -52,7 +53,7 @@ public class FragmentDependencyService {
         try {
             Resource resource = resourcePathValidator.findTemplate(
                 templatePath,
-                storybookProperties.getResources().getTemplatePaths()
+                storybookConfig.getResources().getTemplatePaths()
             );
 
             if (!resource.exists()) {
@@ -60,23 +61,23 @@ public class FragmentDependencyService {
             }
 
             String html = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            String fragmentBlock = extractFragmentBlock(html, fragmentName);
-            String target = fragmentBlock != null ? fragmentBlock : html;
+            String target = extractFragmentBlock(html, fragmentName).orElse(html);
 
             Map<String, DependencyComponent> dependencies = new LinkedHashMap<>();
             for (String expression : extractDependencyExpressions(target)) {
-                DependencyComponent component = parseDependency(expression);
-                if (component == null) {
+                Optional<DependencyComponent> component = parseDependency(expression);
+                if (component.isEmpty()) {
                     continue;
                 }
-                if (component.templatePath().equals(templatePath) && component.fragmentName().equals(fragmentName)) {
+                DependencyComponent resolvedComponent = component.orElseThrow();
+                if (resolvedComponent.templatePath().equals(templatePath) && resolvedComponent.fragmentName().equals(fragmentName)) {
                     continue;
                 }
-                dependencies.put(component.key(), component);
+                dependencies.put(resolvedComponent.key(), resolvedComponent);
             }
 
             List<DependencyComponent> result = new ArrayList<>(dependencies.values());
-            if (storybookProperties.getCache().isEnabled()) {
+            if (storybookConfig.getCache().isEnabled()) {
                 dependencyCache.put(templatePath + "::" + fragmentName, List.copyOf(result));
             }
             return result;
@@ -86,21 +87,21 @@ public class FragmentDependencyService {
         }
     }
 
-    private DependencyComponent parseDependency(String expression) {
+    private Optional<DependencyComponent> parseDependency(String expression) {
         String[] parts = expression.split("::");
         if (parts.length < 2) {
-            return null;
+            return Optional.empty();
         }
         String templatePath = parts[0].trim();
         String fragmentPart = parts[1].trim();
         String fragmentName = fragmentPart.split("\\(")[0].trim();
 
         if (templatePath.isEmpty() || fragmentName.isEmpty()) {
-            return null;
+            return Optional.empty();
         }
 
         String encodedPath = SecureTemplatePath.createUnsafe(templatePath.replace("/", ".")).forUrl();
-        return new DependencyComponent(templatePath, fragmentName, encodedPath);
+        return Optional.of(new DependencyComponent(templatePath, fragmentName, encodedPath));
     }
 
     private List<String> extractDependencyExpressions(String html) {
@@ -128,7 +129,7 @@ public class FragmentDependencyService {
         return expressions;
     }
 
-    private String extractFragmentBlock(String html, String fragmentName) {
+    private Optional<String> extractFragmentBlock(String html, String fragmentName) {
         Matcher matcher = FRAGMENT_DECL_PATTERN.matcher(html);
         while (matcher.find()) {
             String definition = matcher.group(1).trim();
@@ -139,54 +140,55 @@ public class FragmentDependencyService {
 
             int tagStart = html.lastIndexOf('<', matcher.start());
             if (tagStart == -1) {
-                return null;
+                return Optional.empty();
             }
             int tagEnd = html.indexOf('>', matcher.end());
             if (tagEnd == -1) {
-                return null;
+                return Optional.empty();
             }
 
-            String tagName = extractTagName(html.substring(tagStart, tagEnd + 1));
-            if (tagName == null) {
-                return null;
+            Optional<String> tagName = extractTagName(html.substring(tagStart, tagEnd + 1));
+            if (tagName.isEmpty()) {
+                return Optional.empty();
             }
+            String resolvedTagName = tagName.orElseThrow();
 
             int depth = 0;
             int index = tagStart;
             while (index < html.length()) {
-                int nextOpen = html.indexOf("<" + tagName, index);
-                int nextClose = html.indexOf("</" + tagName, index);
+                int nextOpen = html.indexOf("<" + resolvedTagName, index);
+                int nextClose = html.indexOf("</" + resolvedTagName, index);
 
                 if (nextClose == -1) {
-                    return html.substring(tagStart);
+                    return Optional.of(html.substring(tagStart));
                 }
 
                 if (nextOpen != -1 && nextOpen < nextClose) {
                     depth++;
-                    index = nextOpen + tagName.length() + 1;
+                    index = nextOpen + resolvedTagName.length() + 1;
                     continue;
                 }
 
                 depth--;
                 int closeEnd = html.indexOf('>', nextClose);
                 if (closeEnd == -1) {
-                    return html.substring(tagStart);
+                    return Optional.of(html.substring(tagStart));
                 }
                 index = closeEnd + 1;
                 if (depth <= 0) {
-                    return html.substring(tagStart, index);
+                    return Optional.of(html.substring(tagStart, index));
                 }
             }
         }
-        return null;
+        return Optional.empty();
     }
 
-    private String extractTagName(String tag) {
+    private Optional<String> extractTagName(String tag) {
         Matcher matcher = Pattern.compile("<\\s*([a-zA-Z0-9:-]+)").matcher(tag);
         if (matcher.find()) {
-            return matcher.group(1);
+            return Optional.of(matcher.group(1));
         }
-        return null;
+        return Optional.empty();
     }
 
     public record DependencyComponent(String templatePath, String fragmentName, String encodedTemplatePath) {

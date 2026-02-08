@@ -6,7 +6,7 @@ import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +15,8 @@ import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +46,7 @@ public class FragmentMainContentService {
     private FragmentSummaryMapper fragmentSummaryMapper;
 
     @Autowired
-    private StorybookProperties storybookProperties;
+    private ResolvedStorybookConfig storybookConfig;
 
     @Autowired
     private PreviewConfigService previewConfigService;
@@ -97,8 +99,8 @@ public class FragmentMainContentService {
             model.addAttribute("uniquePaths", uniquePaths);
             model.addAttribute("hierarchicalFragments", hierarchicalFragments);
             model.addAttribute("totalCount", allFragments.size());
-            model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
-            model.addAttribute("previewScripts", joinResources(storybookProperties.getResources().getScripts()));
+            model.addAttribute("previewStylesheets", joinResources(storybookConfig.getResources().getStylesheets()));
+            model.addAttribute("previewScripts", joinResources(storybookConfig.getResources().getScripts()));
             previewConfigService.applyPreviewConfig(model);
             
             long totalTime = System.currentTimeMillis() - startTime;
@@ -117,11 +119,11 @@ public class FragmentMainContentService {
      */
     public static class MainContentResult {
         private final boolean succeeded;
-        private final String errorMessage;
+        private final Optional<String> errorMessage;
         private final int fragmentCount;
         private final long processingTime;
         
-        private MainContentResult(boolean succeeded, String errorMessage, int fragmentCount, long processingTime) {
+        private MainContentResult(boolean succeeded, Optional<String> errorMessage, int fragmentCount, long processingTime) {
             this.succeeded = succeeded;
             this.errorMessage = errorMessage;
             this.fragmentCount = fragmentCount;
@@ -129,25 +131,25 @@ public class FragmentMainContentService {
         }
         
         public static MainContentResult success(int fragmentCount, long processingTime) {
-            return new MainContentResult(true, null, fragmentCount, processingTime);
+            return new MainContentResult(true, Optional.empty(), fragmentCount, processingTime);
         }
         
         public static MainContentResult failure(String errorMessage) {
-            return new MainContentResult(false, errorMessage, 0, 0);
+            return new MainContentResult(false, Optional.of(errorMessage), 0, 0);
         }
         
         public boolean succeeded() { return succeeded; }
-        public String errorMessage() { return errorMessage; }
+        public Optional<String> errorMessage() { return errorMessage; }
         public int fragmentCount() { return fragmentCount; }
         public long processingTime() { return processingTime; }
     }
 
     private String joinResources(List<String> resources) {
-        if (resources == null || resources.isEmpty()) {
+        if (resources.isEmpty()) {
             return "";
         }
         return resources.stream()
-            .map(value -> value == null ? "" : value.trim())
+            .map(String::trim)
             .filter(value -> !value.isEmpty())
             .collect(Collectors.joining(","));
     }

@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -55,7 +56,7 @@ class StoryRetrievalUseCaseImplTest {
             FragmentDomainService.FragmentType.SIMPLE
         );
 
-        when(storyDataPort.loadStoryConfiguration("components/icon")).thenReturn(null);
+        when(storyDataPort.loadStoryConfiguration("components/icon")).thenReturn(Optional.empty());
         when(fragmentSummaryMapper.toDomain(fragmentInfo)).thenReturn(fragmentSummary);
 
         List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentInfo);
@@ -80,7 +81,7 @@ class StoryRetrievalUseCaseImplTest {
             FragmentDomainService.FragmentType.PARAMETERIZED
         );
 
-        when(storyDataPort.loadStoryConfiguration("components/input")).thenReturn(null);
+        when(storyDataPort.loadStoryConfiguration("components/input")).thenReturn(Optional.empty());
         when(fragmentSummaryMapper.toDomain(fragmentInfo)).thenReturn(fragmentSummary);
 
         List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentInfo);
@@ -118,7 +119,7 @@ class StoryRetrievalUseCaseImplTest {
             Map.of("summary", storyGroup)
         );
 
-        when(storyDataPort.loadStoryConfiguration("components/profile")).thenReturn(configuration);
+        when(storyDataPort.loadStoryConfiguration("components/profile")).thenReturn(Optional.of(configuration));
         when(fragmentSummaryMapper.toDomain(fragmentInfo)).thenReturn(fragmentSummary);
 
         List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentInfo);

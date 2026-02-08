@@ -1,5 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.inbound.fragment;
 
+import java.util.Optional;
+
 /**
  * 汎用検証専用ユースケース - Inbound Port
  * 
@@ -22,33 +24,33 @@ public interface ValidationUseCase {
      * 検証コマンド
      */
     class ValidationCommand {
-        private final String target;
-        private final Object data;
-        private final String templatePath;
-        private final String fragmentName;
-        private final String storyName;
+        private final Optional<String> target;
+        private final Optional<Object> data;
+        private final Optional<String> templatePath;
+        private final Optional<String> fragmentName;
+        private final Optional<String> storyName;
 
         public ValidationCommand(String target, Object data) {
-            this.target = target;
-            this.data = data;
-            this.templatePath = null;
-            this.fragmentName = null;
-            this.storyName = null;
+            this.target = Optional.of(target);
+            this.data = Optional.of(data);
+            this.templatePath = Optional.empty();
+            this.fragmentName = Optional.empty();
+            this.storyName = Optional.empty();
         }
 
         public ValidationCommand(String templatePath, String fragmentName, String storyName) {
-            this.templatePath = templatePath;
-            this.fragmentName = fragmentName;
-            this.storyName = storyName;
-            this.target = templatePath + "::" + fragmentName + "::" + storyName;
-            this.data = null;
+            this.templatePath = Optional.of(templatePath);
+            this.fragmentName = Optional.of(fragmentName);
+            this.storyName = Optional.of(storyName);
+            this.target = Optional.of(templatePath + "::" + fragmentName + "::" + storyName);
+            this.data = Optional.empty();
         }
 
-        public String getTarget() { return target; }
-        public Object getData() { return data; }
-        public String getTemplatePath() { return templatePath; }
-        public String getFragmentName() { return fragmentName; }
-        public String getStoryName() { return storyName; }
+        public Optional<String> getTarget() { return target; }
+        public Optional<Object> getData() { return data; }
+        public Optional<String> getTemplatePath() { return templatePath; }
+        public Optional<String> getFragmentName() { return fragmentName; }
+        public Optional<String> getStoryName() { return storyName; }
     }
 
 }

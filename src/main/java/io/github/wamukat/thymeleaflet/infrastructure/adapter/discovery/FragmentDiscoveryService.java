@@ -1,7 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +15,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,13 +33,14 @@ public class FragmentDiscoveryService {
     
     private final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 
-    private volatile List<FragmentInfo> cachedFragments;
+    private volatile boolean cacheInitialized;
+    private volatile List<FragmentInfo> cachedFragments = List.of();
     
     @Autowired
     private FragmentDomainService fragmentDomainService;
     
     @Autowired
-    private StorybookProperties storybookProperties;
+    private ResolvedStorybookConfig storybookConfig;
 
     @Autowired
     private FragmentSignatureParser fragmentSignatureParser;
@@ -48,14 +50,14 @@ public class FragmentDiscoveryService {
      */
     public List<FragmentInfo> discoverFragments() {
         logger.debug("[DEBUG_FRAGMENT_PARAMS] Starting fragment discovery process");
-        if (storybookProperties.getCache().isEnabled() && cachedFragments != null) {
+        if (storybookConfig.getCache().isEnabled() && cacheInitialized) {
             return cachedFragments;
         }
         List<FragmentInfo> fragments = new ArrayList<>();
         
         try {
             // 複数のテンプレートパスから検索
-            List<String> templatePaths = storybookProperties.getResources().getTemplatePaths();
+            List<String> templatePaths = storybookConfig.getResources().getTemplatePaths();
             logger.debug("[DEBUG_FRAGMENT_PARAMS] Searching in template paths: {}", templatePaths);
             
             for (String templatePath : templatePaths) {
@@ -93,8 +95,9 @@ public class FragmentDiscoveryService {
             logger.debug("[DEBUG_FRAGMENT_PARAMS] Final fragment: {}", fragment.toString());
         }
         
-        if (storybookProperties.getCache().isEnabled()) {
+        if (storybookConfig.getCache().isEnabled()) {
             cachedFragments = Collections.unmodifiableList(new ArrayList<>(fragments));
+            cacheInitialized = true;
             return cachedFragments;
         }
 
@@ -110,10 +113,7 @@ public class FragmentDiscoveryService {
         
         while (matcher.find()) {
             String fragmentDefinition = matcher.group(1);
-            FragmentInfo fragmentInfo = analyzeFragment(templatePath, fragmentDefinition);
-            if (fragmentInfo != null) {
-                fragments.add(fragmentInfo);
-            }
+            analyzeFragment(templatePath, fragmentDefinition).ifPresent(fragments::add);
         }
         
         return fragments;
@@ -122,69 +122,57 @@ public class FragmentDiscoveryService {
     /**
      * フラグメント定義を解析してFragmentInfoを作成
      */
-    private FragmentInfo analyzeFragment(String templatePath, String fragmentDefinition) {
+    private Optional<FragmentInfo> analyzeFragment(String templatePath, String fragmentDefinition) {
         logger.debug("[DEBUG_FRAGMENT_PARAMS] Analyzing fragment: template={}, definition={}", templatePath, fragmentDefinition);
 
-        String fragmentName;
-        List<String> parameters;
-
         FragmentSignatureParser.ParseResult parseResult = fragmentSignatureParser.parse(fragmentDefinition);
-        if (parseResult.success()) {
-            fragmentName = parseResult.fragmentName();
-            parameters = new ArrayList<>(parseResult.parameters());
+        if (parseResult instanceof FragmentSignatureParser.ParseSuccess parseSuccess) {
+            String fragmentName = parseSuccess.fragmentName();
+            List<String> parameters = new ArrayList<>(parseSuccess.parameters());
             logger.debug("[DEBUG_FRAGMENT_PARAMS] Parsed by FragmentSignatureParser: name={}, parameters={}", fragmentName, parameters);
-        } else {
-            SignatureDiagnostic signatureDiagnostic = createSignatureDiagnostic(parseResult);
-            logger.warn(
-                "[FRAGMENT_SIGNATURE_DIAGNOSTIC] severity={} code={} template={} fragmentDefinition={} fallback={} devMessage={}",
-                signatureDiagnostic.getSeverity(),
-                signatureDiagnostic.getCode(),
+
+            FragmentDomainService.FragmentType type = fragmentDomainService.determineFragmentType(templatePath, fragmentName, parameters);
+
+            FragmentInfo fragmentInfo = new FragmentInfo(
                 templatePath,
-                fragmentDefinition,
-                "skipped",
-                signatureDiagnostic.getDeveloperMessage()
+                fragmentName,
+                parameters,
+                type,
+                fragmentDefinition
             );
-            return null;
+
+            logger.debug("[DEBUG_FRAGMENT_PARAMS] Created FragmentInfo: path={}, name={}, params={}, type={}",
+                templatePath, fragmentName, parameters, type);
+            return Optional.of(fragmentInfo);
         }
 
-        FragmentDomainService.FragmentType type = fragmentDomainService.determineFragmentType(templatePath, fragmentName, parameters);
-        
-        FragmentInfo fragmentInfo = new FragmentInfo(
+        FragmentSignatureParser.ParseError parseError = (FragmentSignatureParser.ParseError) parseResult;
+        SignatureDiagnostic signatureDiagnostic = createSignatureDiagnostic(parseError);
+        logger.warn(
+            "[FRAGMENT_SIGNATURE_DIAGNOSTIC] severity={} code={} template={} fragmentDefinition={} fallback={} devMessage={}",
+            signatureDiagnostic.getSeverity(),
+            signatureDiagnostic.getCode(),
             templatePath,
-            fragmentName,
-            parameters,
-            type,
-            fragmentDefinition
+            fragmentDefinition,
+            "skipped",
+            signatureDiagnostic.getDeveloperMessage()
         );
-        
-        logger.debug("[DEBUG_FRAGMENT_PARAMS] Created FragmentInfo: path={}, name={}, params={}, type={}", 
-                   templatePath, fragmentName, parameters, type);
-        
-        return fragmentInfo;
+        return Optional.empty();
     }
 
-    private SignatureDiagnostic createSignatureDiagnostic(FragmentSignatureParser.ParseResult parseResult) {
-        if (parseResult == null || parseResult.code() == null) {
-            return new SignatureDiagnostic(
-                "UNKNOWN",
-                "WARNING",
-                "This fragment declaration may not be fully supported.",
-                "Signature parse failed with unknown reason"
-            );
-        }
-
-        return switch (parseResult.code()) {
+    private SignatureDiagnostic createSignatureDiagnostic(FragmentSignatureParser.ParseError parseError) {
+        return switch (parseError.code()) {
             case INVALID_SIGNATURE -> new SignatureDiagnostic(
                 "INVALID_SIGNATURE",
                 "WARNING",
                 "Invalid fragment signature. Please check th:fragment syntax.",
-                parseResult.message()
+                parseError.message()
             );
             case UNSUPPORTED_SYNTAX -> new SignatureDiagnostic(
                 "UNSUPPORTED_SYNTAX",
                 "WARNING",
                 "This fragment signature uses syntax not yet supported in Thymeleaflet UI.",
-                parseResult.message()
+                parseError.message()
             );
         };
     }
@@ -195,7 +183,7 @@ public class FragmentDiscoveryService {
      */
     private String extractTemplatePath(String resourceUri) {
         // 複数のテンプレートパスから最初に見つかるものを使用
-        for (String templatePath : storybookProperties.getResources().getTemplatePaths()) {
+        for (String templatePath : storybookConfig.getResources().getTemplatePaths()) {
             String pathWithoutSlash = templatePath.substring(1); // 先頭の / を除去
             int index = resourceUri.indexOf(pathWithoutSlash);
             if (index != -1) {
@@ -225,7 +213,7 @@ public class FragmentDiscoveryService {
         
         public FragmentInfo(String templatePath, String fragmentName, List<String> parameters, 
                            FragmentDomainService.FragmentType type, String originalDefinition) {
-            this(templatePath, fragmentName, parameters, type, originalDefinition, null);
+            this(templatePath, fragmentName, parameters, type, originalDefinition, SignatureDiagnostic.none());
         }
 
         public FragmentInfo(String templatePath, String fragmentName, List<String> parameters,
@@ -246,7 +234,7 @@ public class FragmentDiscoveryService {
         public FragmentDomainService.FragmentType getType() { return type; }
         public String getOriginalDefinition() { return originalDefinition; }
         public SignatureDiagnostic getSignatureDiagnostic() { return signatureDiagnostic; }
-        public boolean hasSignatureDiagnostic() { return signatureDiagnostic != null; }
+        public boolean hasSignatureDiagnostic() { return !signatureDiagnostic.isNone(); }
 
         @Override
         public String toString() {
@@ -256,6 +244,8 @@ public class FragmentDiscoveryService {
     }
 
     public static class SignatureDiagnostic {
+        private static final SignatureDiagnostic NONE = new SignatureDiagnostic("NONE", "INFO", "", "");
+
         private final String code;
         private final String severity;
         private final String userMessage;
@@ -272,6 +262,8 @@ public class FragmentDiscoveryService {
         public String getSeverity() { return severity; }
         public String getUserMessage() { return userMessage; }
         public String getDeveloperMessage() { return developerMessage; }
+        public boolean isNone() { return this == NONE; }
+        public static SignatureDiagnostic none() { return NONE; }
     }
     
 }

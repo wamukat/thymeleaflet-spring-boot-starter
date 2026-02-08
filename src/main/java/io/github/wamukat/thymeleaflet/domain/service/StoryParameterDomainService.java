@@ -39,14 +39,14 @@ public class StoryParameterDomainService {
         try {
             // 1. まず、FragmentStoryInfoに既にパラメータが含まれているかチェック
             Map<String, Object> existingParams = storyInfo.parameters();
-            if (existingParams != null && !existingParams.isEmpty()) {
+            if (!existingParams.isEmpty()) {
                 logger.debug("Using existing story parameters from FragmentStoryInfo: {}", existingParams);
                 return new HashMap<>(existingParams);
             }
             
             // 2. stories.ymlからストーリー固有のパラメータをロード
             Map<String, Object> storySpecificParams = storyDataRepository.loadStoryParameters(storyInfo);
-            if (storySpecificParams != null && !storySpecificParams.isEmpty()) {
+            if (!storySpecificParams.isEmpty()) {
                 logger.debug("Loaded story parameters from stories.yml: {}", storySpecificParams);
                 return storySpecificParams;
             }
@@ -56,13 +56,11 @@ public class StoryParameterDomainService {
                 storyInfo.getFragmentSummary().getTemplatePath());
             
             for (String paramName : storyInfo.getFragmentSummary().getParameters()) {
-                TypeInfo typeInfo = findTypeInfoByName(typeInfos, paramName);
+                Optional<TypeInfo> typeInfo = findTypeInfoByName(typeInfos, paramName);
                 Object parameterValue = generateParameterValue(paramName, typeInfo);
-                
-                if (parameterValue != null) {
-                    parameters.put(paramName, parameterValue);
-                    logger.debug("Generated default parameter: {}={}", paramName, parameterValue);
-                }
+
+                parameters.put(paramName, parameterValue);
+                logger.debug("Generated default parameter: {}={}", paramName, parameterValue);
             }
             
         } catch (Exception e) {
@@ -76,16 +74,17 @@ public class StoryParameterDomainService {
     /**
      * パラメータ値を生成
      */
-    public Object generateParameterValue(String paramName, TypeInfo typeInfo) {
-        if (typeInfo == null) {
+    public Object generateParameterValue(String paramName, Optional<TypeInfo> typeInfo) {
+        if (typeInfo.isEmpty()) {
             return generateDefaultValue(paramName);
         }
-        
-        switch (typeInfo.getTypeCategory()) {
+        TypeInfo resolvedTypeInfo = typeInfo.orElseThrow();
+
+        switch (resolvedTypeInfo.getTypeCategory()) {
             case PRIMITIVE:
-                return generatePrimitiveValue(paramName, typeInfo);
+                return generatePrimitiveValue(paramName, resolvedTypeInfo);
             case ENUM:
-                return generateEnumValue(typeInfo);
+                return generateEnumValue(resolvedTypeInfo);
             case COLLECTION:
                 return generateCollectionValue();
             case OBJECT:
@@ -95,11 +94,10 @@ public class StoryParameterDomainService {
         }
     }
     
-    private TypeInfo findTypeInfoByName(List<TypeInfo> typeInfos, String parameterName) {
+    private Optional<TypeInfo> findTypeInfoByName(List<TypeInfo> typeInfos, String parameterName) {
         return typeInfos.stream()
                 .filter(typeInfo -> typeInfo.getParameterName().equals(parameterName))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
     
     private Object generateDefaultValue(String paramName) {
@@ -131,7 +129,7 @@ public class StoryParameterDomainService {
             return 1;
         }
         // Default to string
-        if (typeInfo.getAllowedValues() != null && !typeInfo.getAllowedValues().isEmpty()) {
+        if (!typeInfo.getAllowedValues().isEmpty()) {
             return typeInfo.getAllowedValues().get(0);
         }
         return "Sample " + capitalizeFirst(paramName);
@@ -145,7 +143,7 @@ public class StoryParameterDomainService {
     }
     
     private Object generateEnumValue(TypeInfo typeInfo) {
-        if (typeInfo.getAllowedValues() != null && !typeInfo.getAllowedValues().isEmpty()) {
+        if (!typeInfo.getAllowedValues().isEmpty()) {
             return createPseudoEnum(typeInfo.getAllowedValues().get(0));
         }
         return PseudoEnum.defaultValue();
@@ -159,7 +157,7 @@ public class StoryParameterDomainService {
     }
     
     private String capitalizeFirst(String str) {
-        if (str == null || str.isEmpty()) return str;
+        if (str.isEmpty()) return str;
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
     

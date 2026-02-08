@@ -4,10 +4,10 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.fragment.Validati
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +16,8 @@ import org.springframework.ui.Model;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * フラグメント動的レンダリング処理専用サービス
@@ -55,7 +57,7 @@ public class FragmentRenderingService {
      * @return レンダリング結果
      */
     public RenderingResult renderStory(String templatePath, String fragmentName, String storyName, Model model) {
-        return renderStory(templatePath, fragmentName, storyName, model, null, null);
+        return renderStory(templatePath, fragmentName, storyName, model, Map.of(), Map.of());
     }
 
     public RenderingResult renderStory(String templatePath,
@@ -73,31 +75,34 @@ public class FragmentRenderingService {
             SecurePathConversionService.SecurityConversionResult conversionResult = 
                 securePathConversionService.convertSecurePath(templatePath, model);
             if (!conversionResult.succeeded()) {
-                return RenderingResult.error(conversionResult.templateReference());
+                return RenderingResult.error(conversionResult.templateReference()
+                    .orElse("thymeleaflet/fragments/error-display :: error(type='danger')"));
             }
-            String fullTemplatePath = conversionResult.fullTemplatePath();
+            String fullTemplatePath = conversionResult.fullTemplatePath().orElseThrow();
             logger.info("Full template path: {}", fullTemplatePath);
         
             // 対象ストーリーを取得
-            FragmentStoryInfo storyInfo = storyRetrievalUseCase.getStory(fullTemplatePath, fragmentName, storyName);
+            Optional<FragmentStoryInfo> storyInfoOptional = storyRetrievalUseCase
+                .getStory(fullTemplatePath, fragmentName, storyName);
             
             logger.info("=== Story Config Debug ===");
-            logger.info("Story Info: {}", storyInfo);
+            logger.info("Story Info: {}", storyInfoOptional.orElse(null));
             
-            if (storyInfo == null) {
+            if (storyInfoOptional.isEmpty()) {
                 logger.info("Story info is null, returning error");
                 return RenderingResult.error("thymeleaflet/fragments/error-display :: error(type='info', title=null, message=null, showActionButton=true, actionText=null, actionScript=null, templatePath=null)");
             }
+            FragmentStoryInfo storyInfo = storyInfoOptional.orElseThrow();
             
             logger.info("Has Story Config: {}", storyInfo.hasStoryConfig());
             logger.info("Fragment Type: {}", storyInfo.getFragmentSummary().getType());
 
             Map<String, Object> storyModel = storyInfo.getModel();
             Map<String, Object> mergedModel = new HashMap<>();
-            if (storyModel != null && !storyModel.isEmpty()) {
+            if (!storyModel.isEmpty()) {
                 mergedModel.putAll(storyModel);
             }
-            if (modelOverrides != null && !modelOverrides.isEmpty()) {
+            if (!modelOverrides.isEmpty()) {
                 mergedModel.putAll(modelOverrides);
             }
             if (!mergedModel.isEmpty()) {
@@ -131,11 +136,8 @@ public class FragmentRenderingService {
             
             // PARAMETERIZEDフラグメントの場合、ストーリー設定またはJavaDocフォールバックを試行
             Map<String, Object> parameters = storyParameterUseCase.getParametersForStory(storyInfo);
-            if (parameters == null) {
-                parameters = Map.of();
-            }
             Map<String, Object> mergedParameters = new HashMap<>(parameters);
-            if (parameterOverrides != null && !parameterOverrides.isEmpty()) {
+            if (!parameterOverrides.isEmpty()) {
                 mergedParameters.putAll(parameterOverrides);
             }
             
@@ -155,7 +157,7 @@ public class FragmentRenderingService {
             for (Map.Entry<String, Object> entry : mergedParameters.entrySet()) {
                 logger.info("Setting parameter: {} = {} (type: {})", 
                            entry.getKey(), entry.getValue(), 
-                           entry.getValue() != null ? entry.getValue().getClass().getSimpleName() : "null");
+                           classNameOf(entry.getValue()));
                 model.addAttribute(entry.getKey(), thymeleafFragmentRenderer.resolveTemplateValue(entry.getValue()));
             }
             
@@ -212,27 +214,31 @@ public class FragmentRenderingService {
         }
     }
 
+    private String classNameOf(@Nullable Object target) {
+        return Objects.isNull(target) ? "null" : target.getClass().getSimpleName();
+    }
+
     /**
      * レンダリング処理結果
      */
     public static class RenderingResult {
         private final boolean succeeded;
-        private final String templateReference;
+        private final Optional<String> templateReference;
         
-        private RenderingResult(boolean succeeded, String templateReference) {
+        private RenderingResult(boolean succeeded, Optional<String> templateReference) {
             this.succeeded = succeeded;
             this.templateReference = templateReference;
         }
         
         public static RenderingResult success(String templateReference) {
-            return new RenderingResult(true, templateReference);
+            return new RenderingResult(true, Optional.of(templateReference));
         }
         
         public static RenderingResult error(String templateReference) {
-            return new RenderingResult(false, templateReference);
+            return new RenderingResult(false, Optional.of(templateReference));
         }
         
         public boolean succeeded() { return succeeded; }
-        public String templateReference() { return templateReference; }
+        public Optional<String> templateReference() { return templateReference; }
     }
 }

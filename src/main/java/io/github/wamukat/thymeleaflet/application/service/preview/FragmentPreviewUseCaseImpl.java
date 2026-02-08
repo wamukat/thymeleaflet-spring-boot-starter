@@ -15,6 +15,7 @@ import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * フラグメントプレビュー専用ユースケース実装（縮小版）
@@ -53,25 +54,25 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
             storyContentCoordinationUseCase.coordinateStoryContentSetup(request);
 
         if (!result.succeeded()) {
-            logger.warn("setupStoryContentData: {}", result.errorMessage());
-            return PageSetupResponse.failure(result.errorMessage());
+            logger.warn("setupStoryContentData: {}", result.errorMessage().orElse("Story setup failed"));
+            return PageSetupResponse.failure(result.errorMessage().orElse("Story setup failed"));
         }
 
-        FragmentStoryInfo storyInfo = result.storyInfo();
+        FragmentStoryInfo storyInfo = result.storyInfo().orElseThrow();
         Map<String, Object> displayModel = storyInfo.getModel();
 
-        command.getModel().addAttribute("selectedFragment", result.selectedFragment());
+        command.getModel().addAttribute("selectedFragment", result.selectedFragment().orElse(null));
         command.getModel().addAttribute("selectedStory", storyInfo);
         command.getModel().addAttribute("storyInfo", storyInfo);
-        command.getModel().addAttribute("stories", result.stories());
-        command.getModel().addAttribute("displayParameters", result.displayParameters());
+        command.getModel().addAttribute("stories", result.stories().orElse(List.of()));
+        command.getModel().addAttribute("displayParameters", result.displayParameters().orElse(Map.of()));
         command.getModel().addAttribute("displayModel", displayModel);
         command.getModel().addAttribute("templatePathEncoded", command.getFullTemplatePath().replace("/", "."));
-        command.getModel().addAttribute("javadocInfo", result.javadocInfo());
+        command.getModel().addAttribute("javadocInfo", result.javadocInfo().orElse(null));
         command.getModel().addAttribute("dependentComponents",
             fragmentDependencyService.findDependencies(command.getFullTemplatePath(), command.getFragmentName()));
-        command.getModel().addAttribute("defaultStory", result.defaultStory());
-        command.getModel().addAttribute("defaultParameters", result.defaultParameters());
+        command.getModel().addAttribute("defaultStory", result.defaultStory().orElse(null));
+        command.getModel().addAttribute("defaultParameters", result.defaultParameters().orElse(Map.of()));
 
         logger.info("setupStoryContentData completed for {}::{}::{}", command.getFullTemplatePath(), command.getFragmentName(), command.getStoryName());
 
@@ -83,7 +84,7 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
         try {
             String enrichedJson = objectMapper.writeValueAsString(enrichedFragments);
             String hierarchicalJson = objectMapper.writeValueAsString(
-                hierarchicalFragments != null && !hierarchicalFragments.isEmpty() ? hierarchicalFragments.get(0) : Map.of()
+                !hierarchicalFragments.isEmpty() ? hierarchicalFragments.get(0) : Map.of()
             );
             
             model.addAttribute("fragmentsJson", enrichedJson);
@@ -102,7 +103,7 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
     }
 
     @Override
-    public JavaDocAnalyzer.JavaDocInfo getJavaDocInfo(String templatePath, String fragmentName) {
+    public Optional<JavaDocAnalyzer.JavaDocInfo> getJavaDocInfo(String templatePath, String fragmentName) {
         return javaDocLookupService.findJavaDocInfo(templatePath, fragmentName);
     }
 }

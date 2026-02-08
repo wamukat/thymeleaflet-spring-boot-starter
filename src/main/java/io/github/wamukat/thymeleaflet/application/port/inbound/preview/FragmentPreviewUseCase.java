@@ -5,6 +5,7 @@ import org.springframework.ui.Model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * フラグメントプレビュー専用ユースケース - Inbound Port
@@ -36,7 +37,7 @@ public interface FragmentPreviewUseCase {
     /**
      * JavaDoc情報直接取得
      */
-    JavaDocAnalyzer.JavaDocInfo getJavaDocInfo(String templatePath, String fragmentName);
+    Optional<JavaDocAnalyzer.JavaDocInfo> getJavaDocInfo(String templatePath, String fragmentName);
 
     // === Command Objects ===
 
@@ -67,24 +68,24 @@ public interface FragmentPreviewUseCase {
      * ページセットアップレスポンス
      */
     class PageSetupResponse {
-        private final String errorMessage;
+        private final Optional<String> errorMessage;
 
-        private PageSetupResponse(String errorMessage) {
+        private PageSetupResponse(Optional<String> errorMessage) {
             this.errorMessage = errorMessage;
         }
         public static PageSetupResponse success() {
-            return new PageSetupResponse(null);
+            return new PageSetupResponse(Optional.empty());
         }
 
         public static PageSetupResponse failure(String errorMessage) {
-            return new PageSetupResponse(errorMessage);
+            return new PageSetupResponse(Optional.of(errorMessage));
         }
 
         public boolean isSucceeded() {
-            return errorMessage == null;
+            return errorMessage.isEmpty();
         }
 
-        public String errorMessage() { return errorMessage; }
+        public Optional<String> errorMessage() { return errorMessage; }
     }
 
     /**

@@ -28,7 +28,7 @@ public class FragmentSummary {
     private FragmentSummary(String templatePath, String fragmentName, List<String> parameters, FragmentDomainService.FragmentType type) {
         this.templatePath = Objects.requireNonNull(templatePath, "templatePath cannot be null");
         this.fragmentName = Objects.requireNonNull(fragmentName, "fragmentName cannot be null");
-        this.parameters = parameters != null ? List.copyOf(parameters) : Collections.emptyList();
+        this.parameters = List.copyOf(Objects.requireNonNull(parameters, "parameters cannot be null"));
         this.type = Objects.requireNonNull(type, "type cannot be null");
     }
     

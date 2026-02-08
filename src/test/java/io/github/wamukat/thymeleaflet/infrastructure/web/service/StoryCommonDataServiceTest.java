@@ -8,6 +8,7 @@ import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,7 @@ class StoryCommonDataServiceTest {
         properties.setResources(resources);
         PreviewConfigService previewConfigService = buildPreviewConfigService(properties);
 
-        ReflectionTestUtils.setField(service, "storybookProperties", properties);
+        ReflectionTestUtils.setField(service, "storybookConfig", ResolvedStorybookConfig.from(properties));
         ReflectionTestUtils.setField(service, "storyParameterUseCase", storyParameterUseCase);
         ReflectionTestUtils.setField(service, "thymeleafFragmentRenderer", thymeleafFragmentRenderer);
         ReflectionTestUtils.setField(service, "storyRetrievalUseCase", storyRetrievalUseCase);
@@ -101,7 +102,7 @@ class StoryCommonDataServiceTest {
         StorybookProperties properties = new StorybookProperties();
         PreviewConfigService previewConfigService = buildPreviewConfigService(properties);
 
-        ReflectionTestUtils.setField(service, "storybookProperties", properties);
+        ReflectionTestUtils.setField(service, "storybookConfig", ResolvedStorybookConfig.from(properties));
         ReflectionTestUtils.setField(service, "storyParameterUseCase", storyParameterUseCase);
         ReflectionTestUtils.setField(service, "thymeleafFragmentRenderer", thymeleafFragmentRenderer);
         ReflectionTestUtils.setField(service, "storyRetrievalUseCase", storyRetrievalUseCase);
@@ -141,9 +142,9 @@ class StoryCommonDataServiceTest {
                 JavaDocAnalyzer.ParameterInfo.of("text", "String")
             ),
             List.of(),
-            null
+            java.util.Optional.empty()
         );
-        when(javaDocLookupService.findJavaDocInfo("components/button", "primaryButton")).thenReturn(javaDocInfo);
+        when(javaDocLookupService.findJavaDocInfo("components/button", "primaryButton")).thenReturn(java.util.Optional.of(javaDocInfo));
 
         Model model = new ExtendedModelMap();
         service.setupCommonStoryData("components/button", "primaryButton", "default", storyInfo, model);
@@ -162,7 +163,7 @@ class StoryCommonDataServiceTest {
     private PreviewConfigService buildPreviewConfigService(StorybookProperties properties) {
         PreviewConfigService previewConfigService = new PreviewConfigService();
         StaticMessageSource messageSource = new StaticMessageSource();
-        ReflectionTestUtils.setField(previewConfigService, "storybookProperties", properties);
+        ReflectionTestUtils.setField(previewConfigService, "storybookConfig", ResolvedStorybookConfig.from(properties));
         ReflectionTestUtils.setField(previewConfigService, "messageSource", messageSource);
         return previewConfigService;
     }

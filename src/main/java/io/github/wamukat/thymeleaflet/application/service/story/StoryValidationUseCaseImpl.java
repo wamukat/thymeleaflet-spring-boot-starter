@@ -2,7 +2,6 @@ package io.github.wamukat.thymeleaflet.application.service.story;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryValidationUseCase;
 import io.github.wamukat.thymeleaflet.application.port.outbound.StoryDataPort;
-import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,16 +21,12 @@ public class StoryValidationUseCaseImpl implements StoryValidationUseCase {
 
     @Override
     public StoryValidationResult validateStory(StoryValidationCommand command) {
-        FragmentStoryInfo story = storyDataPort.getStory(
+        return storyDataPort.getStory(
             command.getTemplatePath(), 
             command.getFragmentName(), 
             command.getStoryName()
-        );
-        
-        if (story == null) {
-            return StoryValidationResult.failure();
-        }
-        
-        return StoryValidationResult.success(story);
+        )
+            .map(StoryValidationResult::success)
+            .orElseGet(StoryValidationResult::failure);
     }
 }

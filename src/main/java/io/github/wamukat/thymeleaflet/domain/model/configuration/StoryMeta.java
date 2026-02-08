@@ -2,6 +2,8 @@ package io.github.wamukat.thymeleaflet.domain.model.configuration;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 /**
  * ストーリー設定メタ情報 - Value Object (Expert改善版)
  * 
@@ -18,14 +20,14 @@ public record StoryMeta(
 ) {
     // Expert推奨: Compact constructor for validation and immutability
     public StoryMeta {
-        title = title != null ? title : "Default Title";
-        description = description != null ? description : "";
+        title = Objects.requireNonNullElse(title, "Default Title");
+        description = Objects.requireNonNullElse(description, "");
     }
 
     /**
      * ドメインメソッド: メタ情報の有効性確認
      */
     public boolean isValid() {
-        return title != null && !title.trim().isEmpty();
+        return !title.trim().isEmpty();
     }
 }

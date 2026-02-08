@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -61,23 +63,23 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
                 new StoryValidationUseCase.StoryValidationCommand(request.fullTemplatePath(), request.fragmentName(), request.storyName());
             StoryValidationUseCase.StoryValidationResult validationResult = 
                 storyValidationUseCase.validateStory(validationCommand);
-            FragmentStoryInfo storyInfo = validationResult.getStory();
-            
-            if (storyInfo == null) {
+            if (!validationResult.isSuccess()) {
                 return StoryContentResult.failure("Story not found");
             }
+            FragmentStoryInfo storyInfo = validationResult.getStory().orElseThrow();
             
             // 2. フラグメント情報取得
             List<FragmentDiscoveryService.FragmentInfo> allFragments = fragmentDiscoveryService.discoverFragments();
-            FragmentDiscoveryService.FragmentInfo selectedFragment = thymeleafFragmentRenderer
+            var selectedFragment = thymeleafFragmentRenderer
                 .findFragmentByIdentifier(allFragments, request.fullTemplatePath(), request.fragmentName());
             
-            if (selectedFragment == null) {
+            if (selectedFragment.isEmpty()) {
                 return StoryContentResult.failure("Fragment not found: " + request.fullTemplatePath() + "::" + request.fragmentName());
             }
+            FragmentDiscoveryService.FragmentInfo fragmentInfo = selectedFragment.orElseThrow();
             
             // 3. ストーリー一覧取得
-            List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(selectedFragment);
+            List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentInfo);
             
             // 4. 共通データセットアップ
             Map<String, Object> storyParameters = storyParameterUseCase.getParametersForStory(storyInfo);
@@ -92,26 +94,29 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             Map<String, Object> displayParameters = thymeleafFragmentRenderer.configureModelWithStoryParameters(storyParameters, request.model());
             
             // defaultストーリーの情報取得（差異ハイライト用）
-            FragmentStoryInfo defaultStory = null;
+            Optional<FragmentStoryInfo> defaultStory = Optional.of(storyInfo);
             Map<String, Object> defaultParameters = new HashMap<>();
             
             if (!request.storyName().equals("default")) {
-                defaultStory = storyRetrievalUseCase.getStory(request.fullTemplatePath(), request.fragmentName(), "default");
-                if (defaultStory != null) {
-                    Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStory);
+                var defaultStoryOptional = storyRetrievalUseCase
+                    .getStory(request.fullTemplatePath(), request.fragmentName(), "default");
+                if (defaultStoryOptional.isPresent()) {
+                    FragmentStoryInfo defaultStoryInfo = defaultStoryOptional.orElseThrow();
+                    defaultStory = Optional.of(defaultStoryInfo);
+                    Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStoryInfo);
                     defaultParameters = defaultStoryParams.entrySet().stream()
                         .filter(entry -> !"__storybook_background".equals(entry.getKey()))
-                        .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+                        .filter(entry -> Objects.nonNull(entry.getValue()))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 }
             }
             
             // JavaDoc情報取得
-            Object javadocInfo = javaDocLookupService.findJavaDocInfo(request.fullTemplatePath(), request.fragmentName());
+            var javadocInfo = javaDocLookupService.findJavaDocInfo(request.fullTemplatePath(), request.fragmentName());
             
             logger.info("=== StoryContentCoordination COMPLETED ===");
-            return StoryContentResult.success(storyInfo, selectedFragment, stories, 
-                displayParameters, defaultStory, defaultParameters, javadocInfo);
+            return StoryContentResult.success(storyInfo, fragmentInfo, stories,
+                displayParameters, defaultStory.orElseThrow(), defaultParameters, javadocInfo);
             
         } catch (Exception e) {
             logger.error("Story content coordination failed", e);

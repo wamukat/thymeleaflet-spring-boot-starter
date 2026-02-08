@@ -180,14 +180,18 @@ class JavaDocAnalyzerTest {
     }
 
     @Test
-    @DisplayName("空またはnullのHTMLコンテンツでも正常に処理される")
+    @DisplayName("空文字は空リストを返し、null入力は例外になる")
+    @SuppressWarnings("NullAway")
     void shouldHandleEmptyOrNullHtml() {
         // When & Then
         List<JavaDocAnalyzer.JavaDocInfo> resultEmpty = analyzer.analyzeJavaDocFromHtml("");
         assertThat(resultEmpty).isEmpty();
-        
-        List<JavaDocAnalyzer.JavaDocInfo> resultNull = analyzer.analyzeJavaDocFromHtml(null);
-        assertThat(resultNull).isEmpty();
+
+        NullPointerException thrown = assertThrows(
+                NullPointerException.class,
+                () -> analyzer.analyzeJavaDocFromHtml(null)
+        );
+        assertThat(thrown).hasMessage("htmlContent cannot be null");
     }
 
     @Test

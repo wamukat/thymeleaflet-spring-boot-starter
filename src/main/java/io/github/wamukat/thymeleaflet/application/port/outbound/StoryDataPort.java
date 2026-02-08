@@ -4,6 +4,7 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfiguration;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * ストーリーデータアクセスポート
@@ -16,7 +17,7 @@ public interface StoryDataPort {
     /**
      * ストーリー設定を読み込む
      */
-    StoryConfiguration loadStoryConfiguration(String templatePath);
+    Optional<StoryConfiguration> loadStoryConfiguration(String templatePath);
     
     /**
      * ストーリー固有のパラメータを読み込む
@@ -26,5 +27,5 @@ public interface StoryDataPort {
     /**
      * 指定されたストーリー情報を取得
      */
-    FragmentStoryInfo getStory(String templatePath, String fragmentName, String storyName);
+    Optional<FragmentStoryInfo> getStory(String templatePath, String fragmentName, String storyName);
 }

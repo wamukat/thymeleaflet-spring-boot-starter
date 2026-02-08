@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * ストーリー設定 - ドメインValue Object (Expert改善版)
@@ -24,16 +26,16 @@ public record StoryConfiguration(
 ) {
     // Expert推奨: Compact constructor for validation and immutability
     public StoryConfiguration {
-        meta = meta != null ? meta : new StoryMeta("Default Title", "");
-        storyGroups = storyGroups != null ? 
-            Collections.unmodifiableMap(storyGroups) : Collections.emptyMap();
+        meta = Objects.requireNonNullElse(meta, new StoryMeta("Default Title", ""));
+        storyGroups = Collections.unmodifiableMap(
+            Objects.requireNonNullElse(storyGroups, Collections.emptyMap()));
     }
 
     /**
      * ドメインメソッド: ストーリーグループ取得
      */
-    public StoryGroup getStoryGroup(String groupName) {
-        return storyGroups.get(groupName);
+    public Optional<StoryGroup> getStoryGroup(String groupName) {
+        return Optional.ofNullable(storyGroups.get(groupName));
     }
     
     /**
@@ -49,6 +51,6 @@ public record StoryConfiguration(
      * ドメインメソッド: 設定の有効性確認
      */
     public boolean isValid() {
-        return meta != null && !storyGroups.isEmpty();
+        return !storyGroups.isEmpty();
     }
 }

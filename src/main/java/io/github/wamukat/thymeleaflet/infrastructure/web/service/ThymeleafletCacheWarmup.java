@@ -3,7 +3,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocContentService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.service.DocumentationAnalysisAdapter;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -19,18 +19,18 @@ public class ThymeleafletCacheWarmup {
 
     private static final Logger logger = LoggerFactory.getLogger(ThymeleafletCacheWarmup.class);
 
-    private final StorybookProperties storybookProperties;
+    private final ResolvedStorybookConfig storybookConfig;
     private final FragmentDiscoveryService fragmentDiscoveryService;
     private final JavaDocContentService javaDocContentService;
     private final DocumentationAnalysisAdapter documentationAnalysisAdapter;
     private final FragmentDependencyService fragmentDependencyService;
 
-    public ThymeleafletCacheWarmup(StorybookProperties storybookProperties,
+    public ThymeleafletCacheWarmup(ResolvedStorybookConfig storybookConfig,
                                    FragmentDiscoveryService fragmentDiscoveryService,
                                    JavaDocContentService javaDocContentService,
                                    DocumentationAnalysisAdapter documentationAnalysisAdapter,
                                    FragmentDependencyService fragmentDependencyService) {
-        this.storybookProperties = storybookProperties;
+        this.storybookConfig = storybookConfig;
         this.fragmentDiscoveryService = fragmentDiscoveryService;
         this.javaDocContentService = javaDocContentService;
         this.documentationAnalysisAdapter = documentationAnalysisAdapter;
@@ -39,7 +39,7 @@ public class ThymeleafletCacheWarmup {
 
     @EventListener(ApplicationReadyEvent.class)
     public void preloadCaches() {
-        if (!storybookProperties.getCache().isEnabled() || !storybookProperties.getCache().isPreload()) {
+        if (!storybookConfig.getCache().isEnabled() || !storybookConfig.getCache().isPreload()) {
             return;
         }
 

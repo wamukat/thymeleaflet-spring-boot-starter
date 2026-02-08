@@ -45,8 +45,8 @@ public class YamlStoryConfigurationLoader {
      * Infrastructure技術的責任: ファイル読み込み・YAML解析のみ
      */
     public Optional<StoryConfiguration> loadStoryConfiguration(String templatePath) {
-        if (templatePath == null || templatePath.trim().isEmpty()) {
-            logger.debug("Template path is null or empty");
+        if (templatePath.isBlank()) {
+            logger.debug("Template path is empty");
             return Optional.empty();
         }
 
@@ -61,14 +61,14 @@ public class YamlStoryConfigurationLoader {
 
             try (InputStream inputStream = resource.getInputStream()) {
                 StoryConfiguration config = yamlMapper.readValue(inputStream, StoryConfiguration.class);
-                
-                if (config != null) {
-                    logger.debug("Successfully loaded story configuration from: {}", storyFilePath);
-                    return Optional.of(config);
-                } else {
+
+                Optional<StoryConfiguration> configuration = Optional.ofNullable(config);
+                if (configuration.isEmpty()) {
                     logger.warn("YAML parsing resulted in null configuration: {}", storyFilePath);
-                    return Optional.empty();
+                } else {
+                    logger.debug("Successfully loaded story configuration from: {}", storyFilePath);
                 }
+                return configuration;
             }
 
         } catch (IOException e) {
@@ -85,7 +85,7 @@ public class YamlStoryConfigurationLoader {
      * Infrastructure技術的責任: ファイルシステム操作
      */
     public boolean storyConfigurationExists(String templatePath) {
-        if (templatePath == null || templatePath.trim().isEmpty()) {
+        if (templatePath.isBlank()) {
             return false;
         }
 
@@ -105,7 +105,7 @@ public class YamlStoryConfigurationLoader {
      * Infrastructure技術的責任: ファイルシステム操作
      */
     public Optional<Long> getStoryConfigurationLastModified(String templatePath) {
-        if (templatePath == null || templatePath.trim().isEmpty()) {
+        if (templatePath.isBlank()) {
             return Optional.empty();
         }
 

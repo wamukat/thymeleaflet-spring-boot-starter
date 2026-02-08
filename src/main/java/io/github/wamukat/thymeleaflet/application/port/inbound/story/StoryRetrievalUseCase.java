@@ -4,6 +4,7 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ストーリー取得専用ユースケース - Inbound Port
@@ -16,7 +17,7 @@ public interface StoryRetrievalUseCase {
     /**
      * ストーリー取得
      */
-    FragmentStoryInfo getStory(String templatePath, String fragmentName, String storyName);
+    Optional<FragmentStoryInfo> getStory(String templatePath, String fragmentName, String storyName);
 
     /**
      * フラグメントのストーリー一覧取得
@@ -33,26 +34,30 @@ public interface StoryRetrievalUseCase {
      */
     class StoryListResponse {
         private final boolean success;
-        private final FragmentDiscoveryService.FragmentInfo fragment;
+        private final Optional<FragmentDiscoveryService.FragmentInfo> fragment;
         private final List<FragmentStoryInfo> stories;
 
-        public StoryListResponse(boolean success, FragmentDiscoveryService.FragmentInfo fragment, List<FragmentStoryInfo> stories) {
+        public StoryListResponse(
+            boolean success,
+            Optional<FragmentDiscoveryService.FragmentInfo> fragment,
+            List<FragmentStoryInfo> stories
+        ) {
             this.success = success;
             this.fragment = fragment;
             this.stories = stories;
         }
 
         public static StoryListResponse success(FragmentDiscoveryService.FragmentInfo fragment, List<FragmentStoryInfo> stories) {
-            return new StoryListResponse(true, fragment, stories);
+            return new StoryListResponse(true, Optional.of(fragment), stories);
         }
 
         public static StoryListResponse failure() {
-            return new StoryListResponse(false, null, null);
+            return new StoryListResponse(false, Optional.empty(), List.of());
         }
 
         public boolean isSuccess() { return success; }
 
-        public FragmentDiscoveryService.FragmentInfo getFragment() { return fragment; }
+        public Optional<FragmentDiscoveryService.FragmentInfo> getFragment() { return fragment; }
         public List<FragmentStoryInfo> getStories() { return stories; }
     }
 }

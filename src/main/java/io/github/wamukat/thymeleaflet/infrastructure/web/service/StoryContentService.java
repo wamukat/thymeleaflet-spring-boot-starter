@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
+import java.util.List;
+
 /**
  * ストーリーコンテンツHTMX処理専用サービス
  * 
@@ -47,9 +49,12 @@ public class StoryContentService {
         // セキュアパス変換
         SecurePathConversionService.SecurityConversionResult conversionResult = securePathConversionService.convertSecurePath(templatePath, model);
         if (!conversionResult.succeeded()) {
-            return StoryContentResult.failure(conversionResult.templateReference());
+            return StoryContentResult.failure(
+                conversionResult.templateReference().orElse(
+                    "thymeleaflet/fragments/error-display :: error(type='danger')")
+            );
         }
-        String fullTemplatePath = conversionResult.fullTemplatePath();
+        String fullTemplatePath = conversionResult.fullTemplatePath().orElseThrow();
         
         // ストーリーコンテンツ協調処理 (協調UseCase使用)
         StoryContentCoordinationUseCase.StoryContentRequest contentRequest = 
@@ -58,19 +63,25 @@ public class StoryContentService {
             storyContentCoordinationUseCase.coordinateStoryContentSetup(contentRequest);
         
         if (!contentResult.succeeded()) {
-            logger.error("Story content coordination failed: {}", contentResult.errorMessage());
-            model.addAttribute("error", contentResult.errorMessage());
+            logger.error("Story content coordination failed: {}", contentResult.errorMessage().orElse("unknown"));
+            model.addAttribute("error", contentResult.errorMessage().orElse("Story content coordination failed"));
             return StoryContentResult.failure("thymeleaflet/fragments/error-display :: error(type='danger')");
         }
         
         // モデルに協調処理結果を設定
-        model.addAttribute("selectedFragment", contentResult.selectedFragment());
-        model.addAttribute("selectedStory", contentResult.storyInfo());
-        model.addAttribute("storyInfo", contentResult.storyInfo());
-        model.addAttribute("stories", contentResult.stories());
+        model.addAttribute("selectedFragment", contentResult.selectedFragment().orElse(null));
+        model.addAttribute("selectedStory", contentResult.storyInfo().orElse(null));
+        model.addAttribute("storyInfo", contentResult.storyInfo().orElse(null));
+        model.addAttribute("stories", contentResult.stories().orElse(List.of()));
         
         // StoryCommonDataServiceを使用して共通データ設定
-        storyCommonDataService.setupCommonStoryData(fullTemplatePath, fragmentName, storyName, contentResult.storyInfo(), model);
+        storyCommonDataService.setupCommonStoryData(
+            fullTemplatePath,
+            fragmentName,
+            storyName,
+            contentResult.storyInfo().orElseThrow(),
+            model
+        );
         
         SecureTemplatePath secureTemplatePath = SecureTemplatePath.createUnsafe(templatePath);
         model.addAttribute("templatePathEncoded", secureTemplatePath.forUrl());

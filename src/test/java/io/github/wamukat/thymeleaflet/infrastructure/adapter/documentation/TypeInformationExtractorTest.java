@@ -10,6 +10,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,7 +41,7 @@ class TypeInformationExtractorTest {
         String htmlContent = "<!-- JavaDoc content -->";
         
         JavaDocAnalyzer.ParameterInfo paramInfo1 = JavaDocAnalyzer.ParameterInfo.of(
-            "text", "String", true, null, "Button display text", Collections.emptyList()
+            "text", "String", true, Optional.empty(), Optional.of("Button display text"), Collections.emptyList()
         );
         JavaDocAnalyzer.ParameterInfo paramInfo2 = JavaDocAnalyzer.ParameterInfo.of(
             "variant", "ButtonType", false, "primary", "Button style variant", Arrays.asList("primary", "secondary")
@@ -50,7 +51,7 @@ class TypeInformationExtractorTest {
             "Button component",
             Arrays.asList(paramInfo1, paramInfo2),
             Collections.emptyList(),
-            null
+            java.util.Optional.empty()
         );
 
         when(mockJavaDocAnalyzer.analyzeJavaDocFromHtml(any(String.class)))
@@ -82,7 +83,7 @@ class TypeInformationExtractorTest {
         String htmlContent = "test";
         
         JavaDocAnalyzer.ParameterInfo stringParam = JavaDocAnalyzer.ParameterInfo.of(
-            "text", "String", true, null, "String parameter", Collections.emptyList()
+            "text", "String", true, Optional.empty(), Optional.of("String parameter"), Collections.emptyList()
         );
         JavaDocAnalyzer.ParameterInfo booleanParam = JavaDocAnalyzer.ParameterInfo.of(
             "enabled", "Boolean", false, "true", "Boolean parameter", Collections.emptyList()
@@ -95,7 +96,7 @@ class TypeInformationExtractorTest {
             "Test component",
             Arrays.asList(stringParam, booleanParam, intParam),
             Collections.emptyList(),
-            null
+            java.util.Optional.empty()
         );
 
         when(mockJavaDocAnalyzer.analyzeJavaDocFromHtml(any(String.class)))
@@ -121,7 +122,7 @@ class TypeInformationExtractorTest {
         String htmlContent = "test";
         
         JavaDocAnalyzer.ParameterInfo enumParam1 = JavaDocAnalyzer.ParameterInfo.of(
-            "transactionType", "TransactionType", true, null, "Transaction type", Arrays.asList("EARN", "USE")
+            "transactionType", "TransactionType", true, Optional.empty(), Optional.of("Transaction type"), Arrays.asList("EARN", "USE")
         );
         JavaDocAnalyzer.ParameterInfo enumParam2 = JavaDocAnalyzer.ParameterInfo.of(
             "status", "Status", false, "ACTIVE", "Status value", Arrays.asList("ACTIVE", "INACTIVE")
@@ -131,7 +132,7 @@ class TypeInformationExtractorTest {
             "Test component with enums",
             Arrays.asList(enumParam1, enumParam2),
             Collections.emptyList(),
-            null
+            java.util.Optional.empty()
         );
 
         when(mockJavaDocAnalyzer.analyzeJavaDocFromHtml(any(String.class)))
@@ -162,17 +163,17 @@ class TypeInformationExtractorTest {
         String htmlContent = "test";
         
         JavaDocAnalyzer.ParameterInfo listParam = JavaDocAnalyzer.ParameterInfo.of(
-            "items", "List<String>", false, null, "List of items", Collections.emptyList()
+            "items", "List<String>", false, Optional.empty(), Optional.of("List of items"), Collections.emptyList()
         );
         JavaDocAnalyzer.ParameterInfo setParam = JavaDocAnalyzer.ParameterInfo.of(
-            "tags", "Set<Tag>", false, null, "Set of tags", Collections.emptyList()
+            "tags", "Set<Tag>", false, Optional.empty(), Optional.of("Set of tags"), Collections.emptyList()
         );
         
         JavaDocAnalyzer.JavaDocInfo mockJavaDocInfo = JavaDocAnalyzer.JavaDocInfo.of(
             "Test component with collections",
             Arrays.asList(listParam, setParam),
             Collections.emptyList(),
-            null
+            java.util.Optional.empty()
         );
 
         when(mockJavaDocAnalyzer.analyzeJavaDocFromHtml(any(String.class)))
@@ -210,15 +211,15 @@ class TypeInformationExtractorTest {
         List<TypeInfo> typeInfos = Arrays.asList(typeInfo1, typeInfo2);
 
         // When
-        TypeInfo found = extractor.findTypeInfoByName(typeInfos, "text");
-        TypeInfo notFound = extractor.findTypeInfoByName(typeInfos, "nonexistent");
+        var found = extractor.findTypeInfoByName(typeInfos, "text");
+        var notFound = extractor.findTypeInfoByName(typeInfos, "nonexistent");
 
         // Then
-        assertThat(found).isNotNull();
-        assertThat(found.getParameterName()).isEqualTo("text");
-        assertThat(found.getJavaTypeName()).isEqualTo("String");
+        assertThat(found).isPresent();
+        assertThat(found.get().getParameterName()).isEqualTo("text");
+        assertThat(found.get().getJavaTypeName()).isEqualTo("String");
         
-        assertThat(notFound).isNull();
+        assertThat(notFound).isEmpty();
     }
 
     @Test

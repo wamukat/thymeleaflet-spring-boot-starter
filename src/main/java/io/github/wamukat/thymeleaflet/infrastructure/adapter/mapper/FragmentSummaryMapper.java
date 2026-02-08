@@ -4,6 +4,8 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 /**
  * FragmentSummary境界変換マッパー
  * 
@@ -20,15 +22,14 @@ public class FragmentSummaryMapper {
      * Infrastructure FragmentInfo → Domain FragmentSummary変換
      */
     public FragmentSummary toDomain(FragmentDiscoveryService.FragmentInfo infrastructureFragmentInfo) {
-        if (infrastructureFragmentInfo == null) {
-            return null;
-        }
+        FragmentDiscoveryService.FragmentInfo fragmentInfo =
+            Objects.requireNonNull(infrastructureFragmentInfo, "infrastructureFragmentInfo must not be null");
         
         return FragmentSummary.of(
-            infrastructureFragmentInfo.getTemplatePath(),
-            infrastructureFragmentInfo.getFragmentName(),
-            infrastructureFragmentInfo.getParameters(),
-            infrastructureFragmentInfo.getType()
+            fragmentInfo.getTemplatePath(),
+            fragmentInfo.getFragmentName(),
+            fragmentInfo.getParameters(),
+            fragmentInfo.getType()
         );
     }
     
@@ -36,15 +37,14 @@ public class FragmentSummaryMapper {
      * Domain FragmentSummary → Infrastructure FragmentInfo変換
      */
     public FragmentDiscoveryService.FragmentInfo toInfrastructure(FragmentSummary domainFragmentSummary) {
-        if (domainFragmentSummary == null) {
-            return null;
-        }
+        FragmentSummary fragmentSummary =
+            Objects.requireNonNull(domainFragmentSummary, "domainFragmentSummary must not be null");
         
         return new FragmentDiscoveryService.FragmentInfo(
-            domainFragmentSummary.getTemplatePath(),
-            domainFragmentSummary.getFragmentName(),
-            domainFragmentSummary.getParameters(),
-            domainFragmentSummary.getType(),
+            fragmentSummary.getTemplatePath(),
+            fragmentSummary.getFragmentName(),
+            fragmentSummary.getParameters(),
+            fragmentSummary.getType(),
             "" // originalDefinition は空文字列として設定
         );
     }

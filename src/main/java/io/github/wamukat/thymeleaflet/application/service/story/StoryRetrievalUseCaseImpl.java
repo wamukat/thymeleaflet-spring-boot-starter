@@ -17,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * ストーリー取得専用ユースケース実装
@@ -34,27 +35,25 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
     private StoryDataPort storyDataPort;
 
     @Override
-    public FragmentStoryInfo getStory(String templatePath, String fragmentName, String storyName) {
+    public Optional<FragmentStoryInfo> getStory(String templatePath, String fragmentName, String storyName) {
         return storyDataPort.getStory(templatePath, fragmentName, storyName);
     }
 
     @Override
     public List<FragmentStoryInfo> getStoriesForFragment(FragmentDiscoveryService.FragmentInfo fragmentInfo) {
         // StoryDataPortを使用してストーリー設定を取得
-        StoryConfiguration config = storyDataPort.loadStoryConfiguration(fragmentInfo.getTemplatePath());
-        
         FragmentSummary domainFragmentSummary = fragmentSummaryMapper.toDomain(fragmentInfo);
         List<FragmentStoryInfo> stories = new ArrayList<>();
-        
-        if (config != null && config.storyGroups() != null) {
-            StoryGroup group = config.storyGroups().get(fragmentInfo.getFragmentName());
-            
-            if (group != null && group.stories() != null) {
-                for (StoryItem story : group.stories()) {
+
+        Optional<StoryConfiguration> config = storyDataPort.loadStoryConfiguration(fragmentInfo.getTemplatePath());
+        if (config.isPresent()) {
+            Optional<StoryGroup> group = config.orElseThrow().getStoryGroup(fragmentInfo.getFragmentName());
+            if (group.isPresent()) {
+                for (StoryItem story : group.orElseThrow().stories()) {
                     stories.add(FragmentStoryInfo.of(
-                        domainFragmentSummary, 
+                        domainFragmentSummary,
                         fragmentInfo.getFragmentName(),
-                        story.name(), 
+                        story.name(),
                         story
                     ));
                 }
@@ -63,11 +62,19 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
         
         // ストーリーが定義されていない場合はデフォルトストーリーを作成
         if (stories.isEmpty()) {
+            StoryItem defaultStory = new StoryItem(
+                "default",
+                "default",
+                "",
+                Collections.emptyMap(),
+                StoryPreview.empty(),
+                Collections.emptyMap()
+            );
             stories.add(FragmentStoryInfo.of(
                 domainFragmentSummary, 
                 fragmentInfo.getFragmentName(),
                 "default", 
-                null
+                defaultStory
             ));
         }
 
@@ -104,32 +111,22 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
     }
 
     private boolean canUseCustomStory(List<FragmentStoryInfo> stories, FragmentSummary fragmentSummary) {
-        boolean hasParameters = fragmentSummary != null
-            && fragmentSummary.getParameters() != null
-            && !fragmentSummary.getParameters().isEmpty();
+        boolean hasParameters = !fragmentSummary.getParameters().isEmpty();
         if (hasParameters) {
             return true;
         }
         return stories.stream()
             .map(FragmentStoryInfo::getModel)
-            .anyMatch(model -> model != null && !model.isEmpty());
+            .anyMatch(model -> !model.isEmpty());
     }
 
     @Override
     public StoryListResponse getStoriesForFragment(String templatePath, String fragmentName) {
-        // フラグメント情報を取得
-        List<FragmentDiscoveryService.FragmentInfo> allFragments = fragmentDiscoveryService.discoverFragments();
-        FragmentDiscoveryService.FragmentInfo fragment = allFragments.stream()
+        return fragmentDiscoveryService.discoverFragments().stream()
             .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
             .findFirst()
-            .orElse(null);
-        
-        if (fragment == null) {
-            return StoryListResponse.failure();
-        }
-        
-        List<FragmentStoryInfo> stories = getStoriesForFragment(fragment);
-        return StoryListResponse.success(fragment, stories);
+            .map(fragment -> StoryListResponse.success(fragment, getStoriesForFragment(fragment)))
+            .orElseGet(StoryListResponse::failure);
     }
 
     @Autowired

@@ -3,7 +3,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +17,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -46,7 +48,7 @@ public class StoryCommonDataService {
     private FragmentDependencyService fragmentDependencyService;
 
     @Autowired
-    private StorybookProperties storybookProperties;
+    private ResolvedStorybookConfig storybookConfig;
 
     @Autowired
     private PreviewConfigService previewConfigService;
@@ -69,7 +71,7 @@ public class StoryCommonDataService {
                                    FragmentStoryInfo storyInfo, Model model) {
         // stories.ymlのmodelを事前にモデルへ注入
         Map<String, Object> storyModel = storyInfo.getModel();
-        if (storyModel != null && !storyModel.isEmpty()) {
+        if (!storyModel.isEmpty()) {
             for (Map.Entry<String, Object> entry : storyModel.entrySet()) {
                 model.addAttribute(entry.getKey(), entry.getValue());
             }
@@ -88,25 +90,27 @@ public class StoryCommonDataService {
         // パラメータをモデルに設定し、表示用パラメータを取得
         Map<String, Object> displayParameters = thymeleafFragmentRenderer.configureModelWithStoryParameters(storyParameters, model);
 
-        Map<String, Object> displayModel = storyModel != null ? storyModel : new HashMap<>();
+        Map<String, Object> displayModel = storyModel;
 
         // defaultストーリーの情報を取得（差異ハイライト用）
-        FragmentStoryInfo defaultStory = null;
+        Optional<FragmentStoryInfo> defaultStory = Optional.empty();
         Map<String, Object> defaultParameters = new HashMap<>();
         
         if (!storyName.equals("default")) {
-            defaultStory = storyRetrievalUseCase.getStory(templatePath, fragmentName, "default");
-            if (defaultStory != null) {
-                Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(defaultStory);
+            var defaultStoryOptional = storyRetrievalUseCase.getStory(templatePath, fragmentName, "default");
+            if (defaultStoryOptional.isPresent()) {
+                FragmentStoryInfo story = defaultStoryOptional.orElseThrow();
+                defaultStory = Optional.of(story);
+                Map<String, Object> defaultStoryParams = storyParameterUseCase.getParametersForStory(story);
                 defaultParameters = defaultStoryParams.entrySet().stream()
                     .filter(entry -> !"__storybook_background".equals(entry.getKey()))
-                    .filter(entry -> entry.getKey() != null && entry.getValue() != null)
+                    .filter(entry -> Objects.nonNull(entry.getValue()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             }
         }
         
         // JavaDoc情報を取得
-        io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo javadocInfo =
+        Optional<io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo> javadocInfo =
             javaDocLookupService.findJavaDocInfo(templatePath, fragmentName);
 
         List<String> orderedParameterNames = resolveOrderedParameterNames(storyInfo, displayParameters, javadocInfo);
@@ -118,20 +122,20 @@ public class StoryCommonDataService {
         model.addAttribute("displayModel", displayModel);
         model.addAttribute("dependentComponents",
             fragmentDependencyService.findDependencies(templatePath, fragmentName));
-        model.addAttribute("defaultStory", defaultStory);
+        model.addAttribute("defaultStory", defaultStory.orElse(null));
         model.addAttribute("defaultParameters", defaultParameters);
-        model.addAttribute("javadocInfo", javadocInfo);
-        model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
-        model.addAttribute("previewScripts", joinResources(storybookProperties.getResources().getScripts()));
+        model.addAttribute("javadocInfo", javadocInfo.orElse(null));
+        model.addAttribute("previewStylesheets", joinResources(storybookConfig.getResources().getStylesheets()));
+        model.addAttribute("previewScripts", joinResources(storybookConfig.getResources().getScripts()));
         previewConfigService.applyPreviewConfig(model);
     }
 
-    private String joinResources(java.util.List<String> resources) {
-        if (resources == null || resources.isEmpty()) {
+    private String joinResources(List<String> resources) {
+        if (resources.isEmpty()) {
             return "";
         }
         return resources.stream()
-            .map(value -> value == null ? "" : value.trim())
+            .map(String::trim)
             .filter(value -> !value.isEmpty())
             .collect(Collectors.joining(","));
     }
@@ -139,25 +143,23 @@ public class StoryCommonDataService {
     private List<String> resolveOrderedParameterNames(
         FragmentStoryInfo storyInfo,
         Map<String, Object> displayParameters,
-        io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo javadocInfo
+        Optional<io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo> javadocInfo
     ) {
         LinkedHashSet<String> ordered = new LinkedHashSet<>();
 
-        if (javadocInfo != null && javadocInfo.getParameters() != null) {
-            for (var parameterInfo : javadocInfo.getParameters()) {
-                if (parameterInfo.getName() != null && !parameterInfo.getName().isBlank()) {
-                    ordered.add(parameterInfo.getName());
+        javadocInfo
+            .map(io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo::getParameters)
+            .ifPresent(parameters -> {
+                for (var parameterInfo : parameters) {
+                    if (!parameterInfo.getName().isBlank()) {
+                        ordered.add(parameterInfo.getName());
+                    }
                 }
-            }
-        }
+            });
 
-        if (storyInfo != null && storyInfo.getFragmentSummary() != null && storyInfo.getFragmentSummary().getParameters() != null) {
-            ordered.addAll(storyInfo.getFragmentSummary().getParameters());
-        }
+        ordered.addAll(storyInfo.getFragmentSummary().getParameters());
 
-        if (displayParameters != null) {
-            ordered.addAll(displayParameters.keySet());
-        }
+        ordered.addAll(displayParameters.keySet());
 
         return new ArrayList<>(ordered);
     }
@@ -166,14 +168,12 @@ public class StoryCommonDataService {
         Map<String, Object> displayParameters,
         List<String> orderedParameterNames
     ) {
-        Map<String, Object> source = displayParameters != null ? displayParameters : Map.of();
+        Map<String, Object> source = displayParameters;
         LinkedHashMap<String, Object> ordered = new LinkedHashMap<>();
 
-        if (orderedParameterNames != null) {
-            for (String parameterName : orderedParameterNames) {
-                if (source.containsKey(parameterName)) {
-                    ordered.put(parameterName, source.get(parameterName));
-                }
+        for (String parameterName : orderedParameterNames) {
+            if (source.containsKey(parameterName)) {
+                ordered.put(parameterName, source.get(parameterName));
             }
         }
 

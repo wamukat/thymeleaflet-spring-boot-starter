@@ -37,7 +37,7 @@ class StoryMechanismTest {
         
         try {
             // Storyの設定を取得
-            var storyInfo = storyRetrievalUseCase.getStory(templatePath, fragmentName, storyName);
+            var storyInfo = storyRetrievalUseCase.getStory(templatePath, fragmentName, storyName).orElse(null);
             
             if (storyInfo != null) {
                 
