@@ -46,6 +46,11 @@ public class StorybookAutoConfiguration {
         // 起動時のログ出力用
     }
 
+    @Bean
+    public ResolvedStorybookConfig resolvedStorybookConfig(StorybookProperties storybookProperties) {
+        return ResolvedStorybookConfig.from(storybookProperties);
+    }
+
     /**
      * Replace the default AcceptHeaderLocaleResolver with CookieLocaleResolver.
      */

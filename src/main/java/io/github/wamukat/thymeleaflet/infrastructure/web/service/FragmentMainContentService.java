@@ -6,7 +6,7 @@ import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +46,7 @@ public class FragmentMainContentService {
     private FragmentSummaryMapper fragmentSummaryMapper;
 
     @Autowired
-    private StorybookProperties storybookProperties;
+    private ResolvedStorybookConfig storybookConfig;
 
     @Autowired
     private PreviewConfigService previewConfigService;
@@ -99,8 +99,8 @@ public class FragmentMainContentService {
             model.addAttribute("uniquePaths", uniquePaths);
             model.addAttribute("hierarchicalFragments", hierarchicalFragments);
             model.addAttribute("totalCount", allFragments.size());
-            model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
-            model.addAttribute("previewScripts", joinResources(storybookProperties.getResources().getScripts()));
+            model.addAttribute("previewStylesheets", joinResources(storybookConfig.getResources().getStylesheets()));
+            model.addAttribute("previewScripts", joinResources(storybookConfig.getResources().getScripts()));
             previewConfigService.applyPreviewConfig(model);
             
             long totalTime = System.currentTimeMillis() - startTime;
@@ -149,7 +149,6 @@ public class FragmentMainContentService {
             return "";
         }
         return resources.stream()
-            .filter(Objects::nonNull)
             .map(String::trim)
             .filter(value -> !value.isEmpty())
             .collect(Collectors.joining(","));

@@ -2,7 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +35,7 @@ public class FragmentDependencyService {
     );
 
     @Autowired
-    private StorybookProperties storybookProperties;
+    private ResolvedStorybookConfig storybookConfig;
 
     @Autowired
     private ResourcePathValidator resourcePathValidator;
@@ -43,7 +43,7 @@ public class FragmentDependencyService {
     private final Map<String, List<DependencyComponent>> dependencyCache = new ConcurrentHashMap<>();
 
     public List<DependencyComponent> findDependencies(String templatePath, String fragmentName) {
-        if (storybookProperties.getCache().isEnabled()) {
+        if (storybookConfig.getCache().isEnabled()) {
             String cacheKey = templatePath + "::" + fragmentName;
             List<DependencyComponent> cached = dependencyCache.get(cacheKey);
             if (cached != null) {
@@ -53,7 +53,7 @@ public class FragmentDependencyService {
         try {
             Resource resource = resourcePathValidator.findTemplate(
                 templatePath,
-                storybookProperties.getResources().getTemplatePaths()
+                storybookConfig.getResources().getTemplatePaths()
             );
 
             if (!resource.exists()) {
@@ -77,7 +77,7 @@ public class FragmentDependencyService {
             }
 
             List<DependencyComponent> result = new ArrayList<>(dependencies.values());
-            if (storybookProperties.getCache().isEnabled()) {
+            if (storybookConfig.getCache().isEnabled()) {
                 dependencyCache.put(templatePath + "::" + fragmentName, List.copyOf(result));
             }
             return result;

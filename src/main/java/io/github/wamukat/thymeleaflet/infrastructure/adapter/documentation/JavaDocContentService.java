@@ -1,7 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation;
 
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
@@ -23,21 +23,21 @@ public class JavaDocContentService {
     private static final Logger logger = LoggerFactory.getLogger(JavaDocContentService.class);
 
     private final JavaDocAnalyzer javaDocAnalyzer;
-    private final StorybookProperties storybookProperties;
+    private final ResolvedStorybookConfig storybookConfig;
     private final ResourcePathValidator resourcePathValidator;
     private final Map<String, List<JavaDocAnalyzer.JavaDocInfo>> javaDocCache = new ConcurrentHashMap<>();
     private final Map<String, String> templateCache = new ConcurrentHashMap<>();
 
     public JavaDocContentService(JavaDocAnalyzer javaDocAnalyzer,
-                                 StorybookProperties storybookProperties,
+                                 ResolvedStorybookConfig storybookConfig,
                                  ResourcePathValidator resourcePathValidator) {
         this.javaDocAnalyzer = javaDocAnalyzer;
-        this.storybookProperties = storybookProperties;
+        this.storybookConfig = storybookConfig;
         this.resourcePathValidator = resourcePathValidator;
     }
 
     public Optional<String> loadTemplateContent(String templatePath) {
-        if (storybookProperties.getCache().isEnabled()) {
+        if (storybookConfig.getCache().isEnabled()) {
             Optional<String> cached = Optional.ofNullable(templateCache.get(templatePath));
             if (cached.isPresent()) {
                 return cached;
@@ -46,7 +46,7 @@ public class JavaDocContentService {
         try {
             Resource resource = resourcePathValidator.findTemplate(
                 templatePath,
-                storybookProperties.getResources().getTemplatePaths()
+                storybookConfig.getResources().getTemplatePaths()
             );
 
             if (!resource.exists()) {
@@ -55,7 +55,7 @@ public class JavaDocContentService {
             }
 
             String content = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            if (storybookProperties.getCache().isEnabled()) {
+            if (storybookConfig.getCache().isEnabled()) {
                 templateCache.put(templatePath, content);
             }
             return Optional.of(content);
@@ -66,7 +66,7 @@ public class JavaDocContentService {
     }
 
     public List<JavaDocAnalyzer.JavaDocInfo> loadJavaDocInfos(String templatePath) {
-        if (storybookProperties.getCache().isEnabled()) {
+        if (storybookConfig.getCache().isEnabled()) {
             Optional<List<JavaDocAnalyzer.JavaDocInfo>> cached = Optional.ofNullable(javaDocCache.get(templatePath));
             if (cached.isPresent()) {
                 return cached.orElseThrow();
@@ -79,7 +79,7 @@ public class JavaDocContentService {
 
         try {
             List<JavaDocAnalyzer.JavaDocInfo> docs = javaDocAnalyzer.analyzeJavaDocFromHtml(htmlContent.get());
-            if (storybookProperties.getCache().isEnabled()) {
+            if (storybookConfig.getCache().isEnabled()) {
                 javaDocCache.put(templatePath, docs);
             }
             return docs;

@@ -1,7 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
-import org.jspecify.annotations.Nullable;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -11,7 +10,6 @@ import org.springframework.ui.Model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 /**
  * プレビュー設定を画面向けに整形するサービス
@@ -20,55 +18,43 @@ import java.util.Optional;
 public class PreviewConfigService {
 
     @Autowired
-    private StorybookProperties storybookProperties;
+    private ResolvedStorybookConfig storybookConfig;
 
     @Autowired
     private MessageSource messageSource;
 
     public void applyPreviewConfig(Model model) {
-        StorybookProperties.PreviewConfig preview = storybookProperties.getPreview();
+        ResolvedStorybookConfig.PreviewConfig preview = storybookConfig.getPreview();
         model.addAttribute("previewViewportPresets", buildViewportOptions(preview.getViewports()));
         model.addAttribute("previewLightColor", preview.getBackgroundLight());
         model.addAttribute("previewDarkColor", preview.getBackgroundDark());
     }
 
-    private List<PreviewViewportOption> buildViewportOptions(List<StorybookProperties.ViewportPreset> presets) {
+    private List<PreviewViewportOption> buildViewportOptions(List<ResolvedStorybookConfig.ViewportPreset> presets) {
         List<PreviewViewportOption> options = new ArrayList<>();
         Locale locale = LocaleContextHolder.getLocale();
-        for (StorybookProperties.ViewportPreset preset : presets) {
-            Optional<String> id = normalize(preset.getId());
-            Optional<Integer> width = Optional.ofNullable(preset.getWidth());
-            Optional<Integer> height = Optional.ofNullable(preset.getHeight());
+        for (ResolvedStorybookConfig.ViewportPreset preset : presets) {
             String label = resolveLabel(preset, locale);
-            if (id.isEmpty() || width.isEmpty() || height.isEmpty()) {
-                continue;
-            }
             options.add(new PreviewViewportOption(
-                id.orElseThrow(),
+                preset.getId(),
                 label,
-                width.orElseThrow(),
-                height.orElseThrow()
+                preset.getWidth(),
+                preset.getHeight()
             ));
         }
         return options;
     }
 
-    private String resolveLabel(StorybookProperties.ViewportPreset preset, Locale locale) {
-        Optional<String> label = normalize(preset.getLabel());
-        Optional<String> labelKey = normalize(preset.getLabelKey());
-        if (label.isEmpty() && labelKey.isPresent()) {
-            String key = labelKey.orElseThrow();
+    private String resolveLabel(ResolvedStorybookConfig.ViewportPreset preset, Locale locale) {
+        String label = preset.getLabel().trim();
+        String labelKey = preset.getLabelKey().trim();
+        if (label.isEmpty() && !labelKey.isEmpty()) {
+            String key = labelKey;
             return messageSource.getMessage(key, null, key, locale);
         }
         if (label.isEmpty()) {
-            return normalize(preset.getId()).orElse("viewport");
+            return preset.getId();
         }
-        return label.orElseThrow();
-    }
-
-    private Optional<String> normalize(@Nullable String value) {
-        return Optional.ofNullable(value)
-            .map(String::trim)
-            .filter(trimmed -> !trimmed.isEmpty());
+        return label;
     }
 }

@@ -6,6 +6,7 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +52,7 @@ class FragmentMainContentServiceTest {
         properties.setResources(resources);
         PreviewConfigService previewConfigService = buildPreviewConfigService(properties);
 
-        ReflectionTestUtils.setField(service, "storybookProperties", properties);
+        ReflectionTestUtils.setField(service, "storybookConfig", ResolvedStorybookConfig.from(properties));
         ReflectionTestUtils.setField(service, "fragmentDiscoveryService", fragmentDiscoveryService);
         ReflectionTestUtils.setField(service, "fragmentStatisticsUseCase", fragmentStatisticsUseCase);
         ReflectionTestUtils.setField(service, "fragmentHierarchyUseCase", fragmentHierarchyUseCase);
@@ -97,7 +98,7 @@ class FragmentMainContentServiceTest {
     private PreviewConfigService buildPreviewConfigService(StorybookProperties properties) {
         PreviewConfigService previewConfigService = new PreviewConfigService();
         StaticMessageSource messageSource = new StaticMessageSource();
-        ReflectionTestUtils.setField(previewConfigService, "storybookProperties", properties);
+        ReflectionTestUtils.setField(previewConfigService, "storybookConfig", ResolvedStorybookConfig.from(properties));
         ReflectionTestUtils.setField(previewConfigService, "messageSource", messageSource);
         return previewConfigService;
     }

@@ -1,7 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +40,7 @@ public class FragmentDiscoveryService {
     private FragmentDomainService fragmentDomainService;
     
     @Autowired
-    private StorybookProperties storybookProperties;
+    private ResolvedStorybookConfig storybookConfig;
 
     @Autowired
     private FragmentSignatureParser fragmentSignatureParser;
@@ -50,14 +50,14 @@ public class FragmentDiscoveryService {
      */
     public List<FragmentInfo> discoverFragments() {
         logger.debug("[DEBUG_FRAGMENT_PARAMS] Starting fragment discovery process");
-        if (storybookProperties.getCache().isEnabled() && cacheInitialized) {
+        if (storybookConfig.getCache().isEnabled() && cacheInitialized) {
             return cachedFragments;
         }
         List<FragmentInfo> fragments = new ArrayList<>();
         
         try {
             // 複数のテンプレートパスから検索
-            List<String> templatePaths = storybookProperties.getResources().getTemplatePaths();
+            List<String> templatePaths = storybookConfig.getResources().getTemplatePaths();
             logger.debug("[DEBUG_FRAGMENT_PARAMS] Searching in template paths: {}", templatePaths);
             
             for (String templatePath : templatePaths) {
@@ -95,7 +95,7 @@ public class FragmentDiscoveryService {
             logger.debug("[DEBUG_FRAGMENT_PARAMS] Final fragment: {}", fragment.toString());
         }
         
-        if (storybookProperties.getCache().isEnabled()) {
+        if (storybookConfig.getCache().isEnabled()) {
             cachedFragments = Collections.unmodifiableList(new ArrayList<>(fragments));
             cacheInitialized = true;
             return cachedFragments;
@@ -183,7 +183,7 @@ public class FragmentDiscoveryService {
      */
     private String extractTemplatePath(String resourceUri) {
         // 複数のテンプレートパスから最初に見つかるものを使用
-        for (String templatePath : storybookProperties.getResources().getTemplatePaths()) {
+        for (String templatePath : storybookConfig.getResources().getTemplatePaths()) {
             String pathWithoutSlash = templatePath.substring(1); // 先頭の / を除去
             int index = resourceUri.indexOf(pathWithoutSlash);
             if (index != -1) {

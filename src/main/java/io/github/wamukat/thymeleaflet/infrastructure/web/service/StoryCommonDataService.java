@@ -3,7 +3,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public class StoryCommonDataService {
     private FragmentDependencyService fragmentDependencyService;
 
     @Autowired
-    private StorybookProperties storybookProperties;
+    private ResolvedStorybookConfig storybookConfig;
 
     @Autowired
     private PreviewConfigService previewConfigService;
@@ -125,8 +125,8 @@ public class StoryCommonDataService {
         model.addAttribute("defaultStory", defaultStory.orElse(null));
         model.addAttribute("defaultParameters", defaultParameters);
         model.addAttribute("javadocInfo", javadocInfo.orElse(null));
-        model.addAttribute("previewStylesheets", joinResources(storybookProperties.getResources().getStylesheets()));
-        model.addAttribute("previewScripts", joinResources(storybookProperties.getResources().getScripts()));
+        model.addAttribute("previewStylesheets", joinResources(storybookConfig.getResources().getStylesheets()));
+        model.addAttribute("previewScripts", joinResources(storybookConfig.getResources().getScripts()));
         previewConfigService.applyPreviewConfig(model);
     }
 
@@ -135,7 +135,6 @@ public class StoryCommonDataService {
             return "";
         }
         return resources.stream()
-            .filter(Objects::nonNull)
             .map(String::trim)
             .filter(value -> !value.isEmpty())
             .collect(Collectors.joining(","));
