@@ -8,6 +8,27 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.5] - 2026-02-08
+
+- Fixed
+  - Aligned source-build and demo image Java requirements to avoid deployment build failures on Error Prone/NullAway-enabled compilation.
+  - Resolved `ResolvedStorybookConfig` nullable nested-config handling issues flagged by NullAway.
+- Refactored
+  - Introduced and applied architecture boundary tests (ArchUnit) for ports, domain purity, and configuration-boundary usage.
+  - Reduced direct infrastructure coupling in application services by introducing fragment catalog abstraction where effective.
+  - Balanced architecture strictness with developer experience by avoiding over-abstraction in UI model coordination paths.
+- Test
+  - Added integration coverage for story-parameter retrieval behavior to protect refactoring safety.
+- Docs
+  - Added `ARCHITECTURE.md` to explicitly document currently enforced architecture rules and operational policy.
+  - Updated `AGENTS.md` with release guardrails (release branch flow, release checklist, and Java build/runtime notes).
+- Build
+  - Updated Maven project version and sample app dependency to `0.2.5`.
+
+### Issues
+
+- #73 ArchUnit設計制約の追加と運用ポリシー整備
+
 ## [0.2.4] - 2026-02-08
 
 - Changed
