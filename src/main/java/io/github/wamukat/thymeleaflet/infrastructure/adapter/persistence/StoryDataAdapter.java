@@ -55,31 +55,32 @@ public class StoryDataAdapter implements StoryDataPort {
         Map<String, Object> parameters = new HashMap<>();
         
         try {
-            StoryConfiguration config = loadStoryConfiguration(
+            Optional<StoryConfiguration> config = loadStoryConfiguration(
                 storyInfo.getFragmentSummary().getTemplatePath()
-            ).orElse(null);
-            
-            if (config != null && config.storyGroups() != null) {
-                String fragmentName = storyInfo.getFragmentSummary().getFragmentName();
-                String storyName = storyInfo.getStoryName();
-                
-                // フラグメント名に対応するStoryGroupを取得
-                StoryGroup fragmentGroup = config.storyGroups().get(fragmentName);
-                
-                if (fragmentGroup != null && fragmentGroup.stories() != null) {
-                    // 指定されたストーリー名に対応するストーリーを検索
-                    fragmentGroup.stories().stream()
-                        .filter(story -> storyName.equals(story.name()))
-                        .findFirst()
-                        .ifPresent(story -> {
-                            if (story.parameters() != null) {
-                                parameters.putAll(story.parameters());
-                                logger.debug("Loaded story parameters for {}::{}: {}", 
-                                           fragmentName, storyName, parameters);
-                            }
-                        });
-                }
+            );
+
+            if (config.isEmpty()) {
+                return parameters;
             }
+
+            String fragmentName = storyInfo.getFragmentSummary().getFragmentName();
+            String storyName = storyInfo.getStoryName();
+
+            // フラグメント名に対応するStoryGroupを取得
+            Optional<StoryGroup> fragmentGroup = config.orElseThrow().getStoryGroup(fragmentName);
+            if (fragmentGroup.isEmpty()) {
+                return parameters;
+            }
+
+            // 指定されたストーリー名に対応するストーリーを検索
+            fragmentGroup.orElseThrow().stories().stream()
+                .filter(story -> storyName.equals(story.name()))
+                .findFirst()
+                .ifPresent(story -> {
+                    parameters.putAll(story.parameters());
+                    logger.debug("Loaded story parameters for {}::{}: {}",
+                        fragmentName, storyName, parameters);
+                });
             
         } catch (Exception e) {
             logger.error("Failed to load story parameters for {}: {}", 
@@ -101,11 +102,12 @@ public class StoryDataAdapter implements StoryDataPort {
             }
             
             // StoryConfiguration.storyGroups()はMap<String, StoryGroup>を返す
-            StoryGroup storyGroup = storyConfiguration.get().storyGroups().get(fragmentName);
-            if (storyGroup == null) {
+            Optional<StoryGroup> storyGroupOptional = storyConfiguration.get().getStoryGroup(fragmentName);
+            if (storyGroupOptional.isEmpty()) {
                 logger.debug("Story group not found for fragment: {}, returning default story", fragmentName);
                 return createDefaultStory(templatePath, fragmentName, storyName);
             }
+            StoryGroup storyGroup = storyGroupOptional.orElseThrow();
             
             // Custom story: base storyから作成して返す
             if ("custom".equals(storyName)) {
