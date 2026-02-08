@@ -27,6 +27,7 @@
 - `release/x.y.z` では `pom.xml` と `sample/pom.xml` のバージョン更新、`CHANGELOG.md` 更新を行う。
 - 更新後は PR を作成し、CI/E2E確認後に `main` へマージしてからタグ作成・GitHub Release・デプロイを行う。
 - 確定後は `RELEASE.md` の手順に従ってリリースを進める。
+- リリース後にデモデプロイを実施する場合は、`Dockerfile` の Java バージョンとコンパイル要件が一致していることを確認する。
 
 ## Changelog Format
 - `CHANGELOG.md` は Keep a Changelog 形式で、各バージョンをカテゴリ別に記載する。
@@ -44,6 +45,11 @@
 ## Browser Tooling
 - ブラウザ確認・操作は `agent-browser` を優先して利用する。
 
+## Build Environment
+- ライブラリ利用時の要件は Java 17+。
+- このリポジトリをソースからビルドする場合は Java 21+（Error Prone / NullAway要件）。
+- Dockerイメージも Java 21系を利用する（build/runtime ともに揃える）。
+
 ## Null Safety (NullAway)
 - `null` で状態を表現しない（可能な限り非null設計を優先する）。
 - `@Nullable` を付ける前に、以下を先に検討する:
@@ -52,6 +58,7 @@
   - 未初期化状態は sentinel / Null Object パターンで表現する
   - コレクションは空コレクションを基本とする
 - `@Nullable` は外部仕様上やむを得ない境界でのみ使い、理由をコード上で説明できる状態にする。
+- nullable な設定値は、境界（例: `Properties` → 解決済み設定オブジェクト変換）で正規化し、内部処理は非null前提に寄せる。
 
 ## Docs Screenshot Workflow
 - キャプチャは Playwright を使って取得する（`npx -p playwright` で依存を一時的に利用）。
@@ -62,7 +69,6 @@
   - 該当フラグメントをクリックして選択。
   - ストーリー切り替えはストーリーリンクをクリック。
   - ビューポート切り替えは `<select>` の `option[value=...]` を `selectOption` で変更。
-  - 画面回転は `Rotate viewport` ボタンをクリック。
 - 取得対象:
   - 全体: `page.screenshot`
   - カード: `.card-thymeleaflet` を `h3` 見出しテキストで絞り込み、`locator.screenshot`。
