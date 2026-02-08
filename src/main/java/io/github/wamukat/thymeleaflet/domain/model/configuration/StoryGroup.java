@@ -41,10 +41,6 @@ public record StoryGroup(
      * ドメインメソッド: 名前でストーリー検索
      */
     public Optional<StoryItem> findStoryByName(String name) {
-        if (name == null) {
-            return Optional.empty();
-        }
-        
         return stories.stream()
             .filter(story -> story.name().equals(name))
             .findFirst();
