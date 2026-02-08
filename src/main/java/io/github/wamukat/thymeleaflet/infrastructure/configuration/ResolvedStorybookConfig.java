@@ -174,11 +174,14 @@ public final class ResolvedStorybookConfig {
             String backgroundDark = normalizeOrDefault(source.getBackgroundDark(), DEFAULT_BACKGROUND_DARK);
 
             List<ViewportPreset> viewports = new ArrayList<>();
-            for (StorybookProperties.ViewportPreset preset : source.getViewports()) {
-                if (preset == null) {
-                    throw new IllegalArgumentException("Viewport preset cannot be null");
+            List<StorybookProperties.ViewportPreset> rawViewports = source.getViewports();
+            if (rawViewports != null) {
+                for (StorybookProperties.ViewportPreset preset : rawViewports) {
+                    if (preset == null) {
+                        throw new IllegalArgumentException("Viewport preset cannot be null");
+                    }
+                    viewports.add(ViewportPreset.from(preset));
                 }
-                viewports.add(ViewportPreset.from(preset));
             }
             if (viewports.size() > 10) {
                 throw new IllegalArgumentException("Maximum 10 viewport presets allowed");
@@ -267,7 +270,7 @@ public final class ResolvedStorybookConfig {
         return normalized.isEmpty() ? defaultValue : normalized;
     }
 
-    private static List<String> sanitizeNonBlankList(List<String> values, String fieldName) {
+    private static List<String> sanitizeNonBlankList(@Nullable List<String> values, String fieldName) {
         List<String> source = values != null ? values : List.of();
         List<String> normalized = new ArrayList<>();
         for (String value : source) {

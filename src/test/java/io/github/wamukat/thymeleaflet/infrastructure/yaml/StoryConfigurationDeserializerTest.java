@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -84,23 +85,21 @@ class StoryConfigurationDeserializerTest {
         assertThat(groups).containsKeys("primary", "secondary");
         
         // Primary groupの確認
-        StoryGroup primaryGroup = groups.get("primary");
+        StoryGroup primaryGroup = Objects.requireNonNull(groups.get("primary"));
         assertThat(primaryGroup.title()).isEqualTo("Primary Buttons");
         assertThat(primaryGroup.stories()).hasSize(2);
         
-        StoryItem defaultStory = primaryGroup.findStoryByName("default").orElse(null);
-        assertThat(defaultStory).isNotNull();
+        StoryItem defaultStory = primaryGroup.findStoryByName("default").orElseThrow();
         assertThat(defaultStory.title()).isEqualTo("Default State");
         assertThat(defaultStory.parameters()).containsEntry("text", "Click Me");
         assertThat(defaultStory.parameters()).containsEntry("variant", "primary");
         
         // Secondary groupの確認
-        StoryGroup secondaryGroup = groups.get("secondary");
+        StoryGroup secondaryGroup = Objects.requireNonNull(groups.get("secondary"));
         assertThat(secondaryGroup.title()).isEqualTo("Secondary Buttons");
         assertThat(secondaryGroup.stories()).hasSize(1);
         
-        StoryItem outlineStory = secondaryGroup.findStoryByName("outline").orElse(null);
-        assertThat(outlineStory).isNotNull();
+        StoryItem outlineStory = secondaryGroup.findStoryByName("outline").orElseThrow();
         assertThat(outlineStory.parameters()).containsEntry("variant", "outline");
     }
 
@@ -171,8 +170,7 @@ class StoryConfigurationDeserializerTest {
         Map<String, StoryGroup> groups = result.storyGroups();
         assertThat(groups).hasSize(1);
         
-        StoryGroup emptyGroup = groups.get("empty");
-        assertThat(emptyGroup).isNotNull();
+        StoryGroup emptyGroup = Objects.requireNonNull(groups.get("empty"));
         assertThat(emptyGroup.stories()).isEmpty();
         assertThat(emptyGroup.getStoryCount()).isEqualTo(0);
     }
@@ -200,10 +198,8 @@ class StoryConfigurationDeserializerTest {
 
         // Then
         assertThat(result).isNotNull();
-        StoryGroup group = result.getStoryGroup("simple").orElse(null);
-        StoryItem story = group != null ? group.findStoryByName("noparams").orElse(null) : null;
-        
-        assertThat(story).isNotNull();
+        StoryGroup group = result.getStoryGroup("simple").orElseThrow();
+        StoryItem story = group.findStoryByName("noparams").orElseThrow();
         assertThat(story.parameters()).isEmpty();
         assertThat(story.hasParameters()).isFalse();
     }
@@ -260,10 +256,8 @@ class StoryConfigurationDeserializerTest {
 
         // Then
         assertThat(result).isNotNull();
-        StoryGroup group = result.getStoryGroup("advanced").orElse(null);
-        StoryItem story = group != null ? group.findStoryByName("complex").orElse(null) : null;
-        
-        assertThat(story).isNotNull();
+        StoryGroup group = result.getStoryGroup("advanced").orElseThrow();
+        StoryItem story = group.findStoryByName("complex").orElseThrow();
         assertThat(story.parameters()).containsKey("text");
         assertThat(story.parameters()).containsKey("style");
         assertThat(story.parameters()).containsKey("features");

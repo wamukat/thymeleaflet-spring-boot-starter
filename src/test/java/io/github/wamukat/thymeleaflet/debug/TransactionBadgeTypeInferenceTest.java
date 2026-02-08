@@ -12,6 +12,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,8 +43,8 @@ class TransactionBadgeTypeInferenceTest {
             "transactionType", 
             "TransactionType", 
             true, 
-            null, 
-            "取引タイプ（EARN/USE/その他）", 
+            Optional.empty(),
+            Optional.of("取引タイプ（EARN/USE/その他）"),
             Collections.emptyList()
         );
         
@@ -84,8 +85,8 @@ class TransactionBadgeTypeInferenceTest {
             "transactionType", 
             "TransactionType", 
             true, 
-            null, 
-            "取引タイプ（EARN/USE/その他）values: \"EARN\", \"USE\"", 
+            Optional.empty(),
+            Optional.of("取引タイプ（EARN/USE/その他）values: \"EARN\", \"USE\""),
             Arrays.asList("EARN", "USE")
         );
         
@@ -119,8 +120,8 @@ class TransactionBadgeTypeInferenceTest {
             "status", 
             "String", // ENUMではなくStringと誤認される可能性
             false, 
-            null, 
-            "状態値（ACTIVE/INACTIVE等）", 
+            Optional.empty(),
+            Optional.of("状態値（ACTIVE/INACTIVE等）"),
             Collections.emptyList()
         );
         

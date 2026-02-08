@@ -181,6 +181,7 @@ class JavaDocAnalyzerTest {
 
     @Test
     @DisplayName("空文字は空リストを返し、null入力は例外になる")
+    @SuppressWarnings("NullAway")
     void shouldHandleEmptyOrNullHtml() {
         // When & Then
         List<JavaDocAnalyzer.JavaDocInfo> resultEmpty = analyzer.analyzeJavaDocFromHtml("");
