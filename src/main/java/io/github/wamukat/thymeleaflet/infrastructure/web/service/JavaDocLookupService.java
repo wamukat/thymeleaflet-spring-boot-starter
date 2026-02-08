@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
+import io.github.wamukat.thymeleaflet.application.port.outbound.JavaDocLookupPort;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocContentService;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ import java.util.Optional;
  * 責務: テンプレートからJavaDoc情報を取得する処理を一箇所に集約
  */
 @Component
-public class JavaDocLookupService {
+public class JavaDocLookupService implements JavaDocLookupPort {
 
     private static final Logger logger = LoggerFactory.getLogger(JavaDocLookupService.class);
 
@@ -46,6 +47,12 @@ public class JavaDocLookupService {
         }
     }
 
+    @Override
+    public Optional<Object> findJavaDocInfoForView(String templatePath, String fragmentName) {
+        return findJavaDocInfo(templatePath, fragmentName).map(doc -> (Object) doc);
+    }
+
+    @Override
     public boolean hasJavaDoc(String templatePath, String fragmentName) {
         return findJavaDocInfo(templatePath, fragmentName).isPresent();
     }

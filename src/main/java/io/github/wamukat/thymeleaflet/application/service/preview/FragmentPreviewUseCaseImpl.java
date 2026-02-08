@@ -3,8 +3,9 @@ package io.github.wamukat.thymeleaflet.application.service.preview;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wamukat.thymeleaflet.application.port.inbound.preview.FragmentPreviewUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.coordination.StoryContentCoordinationUseCase;
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentDependencyPort;
+import io.github.wamukat.thymeleaflet.application.port.outbound.JavaDocLookupPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
-import io.github.wamukat.thymeleaflet.infrastructure.web.service.JavaDocLookupService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +32,13 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
     private StoryContentCoordinationUseCase storyContentCoordinationUseCase;
     
     @Autowired
-    private JavaDocLookupService javaDocLookupService;
+    private JavaDocLookupPort javaDocLookupPort;
     
     @Autowired
     private ObjectMapper objectMapper;
 
     @Autowired
-    private io.github.wamukat.thymeleaflet.infrastructure.web.service.FragmentDependencyService fragmentDependencyService;
+    private FragmentDependencyPort fragmentDependencyPort;
 
     @Override
     public PageSetupResponse setupStoryContentData(PageSetupCommand command) {
@@ -68,7 +69,7 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
         command.getModel().addAttribute("templatePathEncoded", command.getFullTemplatePath().replace("/", "."));
         command.getModel().addAttribute("javadocInfo", result.javadocInfo().orElse(null));
         command.getModel().addAttribute("dependentComponents",
-            fragmentDependencyService.findDependencies(command.getFullTemplatePath(), command.getFragmentName()));
+            fragmentDependencyPort.findDependenciesForView(command.getFullTemplatePath(), command.getFragmentName()));
         command.getModel().addAttribute("defaultStory", result.defaultStory().orElse(null));
         command.getModel().addAttribute("defaultParameters", result.defaultParameters().orElse(Map.of()));
 
@@ -97,7 +98,7 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
 
     @Override
     public JavaDocInfoResponse getJavaDocInfoWithDetailedLogging(JavaDocInfoCommand command) {
-        return new JavaDocInfoResponse(javaDocLookupService.hasJavaDoc(command.templatePath(), command.fragmentName()));
+        return new JavaDocInfoResponse(javaDocLookupPort.hasJavaDoc(command.templatePath(), command.fragmentName()));
     }
 
 }

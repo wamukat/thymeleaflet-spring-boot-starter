@@ -91,4 +91,13 @@ class ArchitectureConstraintArchTest {
             .beAnnotatedWith(Repository.class)
             .orShould()
             .beAnnotatedWith(Controller.class);
+
+    @ArchTest
+    static final com.tngtech.archunit.lang.ArchRule application_services_should_not_depend_on_web_infrastructure =
+        noClasses()
+            .that()
+            .resideInAPackage("..application.service..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAPackage("..infrastructure.web..");
 }
