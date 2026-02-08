@@ -58,11 +58,9 @@ public class StoryParameterDomainService {
             for (String paramName : storyInfo.getFragmentSummary().getParameters()) {
                 Optional<TypeInfo> typeInfo = findTypeInfoByName(typeInfos, paramName);
                 Object parameterValue = generateParameterValue(paramName, typeInfo);
-                
-                if (parameterValue != null) {
-                    parameters.put(paramName, parameterValue);
-                    logger.debug("Generated default parameter: {}={}", paramName, parameterValue);
-                }
+
+                parameters.put(paramName, parameterValue);
+                logger.debug("Generated default parameter: {}={}", paramName, parameterValue);
             }
             
         } catch (Exception e) {

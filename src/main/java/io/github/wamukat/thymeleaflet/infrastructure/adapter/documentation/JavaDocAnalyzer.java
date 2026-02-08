@@ -1,6 +1,5 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation;
 
-import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -8,6 +7,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,10 +50,11 @@ public class JavaDocAnalyzer {
     /**
      * HTMLテンプレートからJavaDocコメントを解析 - Legacy実装移設
      */
-    public List<JavaDocInfo> analyzeJavaDocFromHtml(@Nullable String htmlContent) {
+    public List<JavaDocInfo> analyzeJavaDocFromHtml(String htmlContent) {
+        Objects.requireNonNull(htmlContent, "htmlContent cannot be null");
         List<JavaDocInfo> docInfoList = new ArrayList<>();
-        
-        if (htmlContent == null || htmlContent.trim().isEmpty()) {
+
+        if (htmlContent.trim().isEmpty()) {
             return docInfoList;
         }
         
@@ -270,7 +271,7 @@ public class JavaDocAnalyzer {
             this.parameters = Collections.unmodifiableList(new ArrayList<>(parameters));
             this.models = Collections.unmodifiableList(new ArrayList<>(models));
             this.examples = Collections.unmodifiableList(new ArrayList<>(examples));
-            this.backgroundColor = backgroundColor != null ? backgroundColor : Optional.empty();
+            this.backgroundColor = Objects.requireNonNull(backgroundColor, "backgroundColor cannot be null");
         }
         
         /**
@@ -362,8 +363,8 @@ public class JavaDocAnalyzer {
             this.name = java.util.Objects.requireNonNull(name, "name cannot be null");
             this.type = java.util.Objects.requireNonNull(type, "type cannot be null");
             this.required = required;
-            this.defaultValue = defaultValue != null ? defaultValue : Optional.empty();
-            this.description = description != null ? description : Optional.empty();
+            this.defaultValue = Objects.requireNonNull(defaultValue, "defaultValue cannot be null");
+            this.description = Objects.requireNonNull(description, "description cannot be null");
         }
 
         /**
@@ -453,8 +454,8 @@ public class JavaDocAnalyzer {
             this.name = java.util.Objects.requireNonNull(name, "name cannot be null");
             this.type = java.util.Objects.requireNonNull(type, "type cannot be null");
             this.required = required;
-            this.defaultValue = defaultValue != null ? defaultValue : Optional.empty();
-            this.description = description != null ? description : Optional.empty();
+            this.defaultValue = Objects.requireNonNull(defaultValue, "defaultValue cannot be null");
+            this.description = Objects.requireNonNull(description, "description cannot be null");
             this.allowedValues = Collections.unmodifiableList(new ArrayList<>(allowedValues));
         }
         

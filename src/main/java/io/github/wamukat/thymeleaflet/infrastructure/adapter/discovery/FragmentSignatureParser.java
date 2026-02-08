@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Objects;
 
 @Component
 public class FragmentSignatureParser {
@@ -13,6 +14,7 @@ public class FragmentSignatureParser {
     private static final Method INTERNAL_PARSE_METHOD = loadInternalParseMethod();
 
     public ParseResult parse(String definition) {
+        Objects.requireNonNull(definition, "definition cannot be null");
         String input = definition.trim();
         if (input.isEmpty()) {
             return new ParseError(DiagnosticCode.INVALID_SIGNATURE, "fragment definition is empty");
@@ -50,7 +52,7 @@ public class FragmentSignatureParser {
     }
 
     private static boolean isValidIdentifier(String value) {
-        if (value == null || value.isEmpty()) {
+        if (value.isEmpty()) {
             return false;
         }
         char first = value.charAt(0);
