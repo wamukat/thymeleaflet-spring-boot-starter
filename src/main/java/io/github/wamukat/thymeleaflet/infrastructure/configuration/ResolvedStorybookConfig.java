@@ -40,9 +40,19 @@ public final class ResolvedStorybookConfig {
     public static ResolvedStorybookConfig from(StorybookProperties raw) {
         Objects.requireNonNull(raw, "raw cannot be null");
         String basePath = normalizeOrDefault(raw.getBasePath(), DEFAULT_BASE_PATH);
-        ResourceConfig resources = ResourceConfig.from(raw.getResources());
-        CacheConfig cache = CacheConfig.from(raw.getCache());
-        PreviewConfig preview = PreviewConfig.from(raw.getPreview());
+        StorybookProperties.ResourceConfig rawResources = raw.getResources();
+        StorybookProperties.CacheConfig rawCache = raw.getCache();
+        StorybookProperties.PreviewConfig rawPreview = raw.getPreview();
+
+        ResourceConfig resources = ResourceConfig.from(
+            rawResources != null ? rawResources : new StorybookProperties.ResourceConfig()
+        );
+        CacheConfig cache = CacheConfig.from(
+            rawCache != null ? rawCache : new StorybookProperties.CacheConfig()
+        );
+        PreviewConfig preview = PreviewConfig.from(
+            rawPreview != null ? rawPreview : new StorybookProperties.PreviewConfig()
+        );
         return new ResolvedStorybookConfig(basePath, raw.isDebug(), resources, cache, preview);
     }
 
@@ -84,10 +94,7 @@ public final class ResolvedStorybookConfig {
             this.cacheDurationSeconds = cacheDurationSeconds;
         }
 
-        private static ResourceConfig from(StorybookProperties.ResourceConfig raw) {
-            StorybookProperties.ResourceConfig source =
-                raw != null ? raw : new StorybookProperties.ResourceConfig();
-
+        private static ResourceConfig from(StorybookProperties.ResourceConfig source) {
             List<String> templatePaths = sanitizeNonBlankList(source.getTemplatePaths(), "templatePaths");
             if (templatePaths.isEmpty()) {
                 throw new IllegalArgumentException("At least one template path must be configured");
@@ -140,9 +147,7 @@ public final class ResolvedStorybookConfig {
             this.preload = preload;
         }
 
-        private static CacheConfig from(StorybookProperties.CacheConfig raw) {
-            StorybookProperties.CacheConfig source =
-                raw != null ? raw : new StorybookProperties.CacheConfig();
+        private static CacheConfig from(StorybookProperties.CacheConfig source) {
             return new CacheConfig(source.isEnabled(), source.isPreload());
         }
 
@@ -166,10 +171,7 @@ public final class ResolvedStorybookConfig {
             this.viewports = List.copyOf(viewports);
         }
 
-        private static PreviewConfig from(StorybookProperties.PreviewConfig raw) {
-            StorybookProperties.PreviewConfig source =
-                raw != null ? raw : new StorybookProperties.PreviewConfig();
-
+        private static PreviewConfig from(StorybookProperties.PreviewConfig source) {
             String backgroundLight = normalizeOrDefault(source.getBackgroundLight(), DEFAULT_BACKGROUND_LIGHT);
             String backgroundDark = normalizeOrDefault(source.getBackgroundDark(), DEFAULT_BACKGROUND_DARK);
 
