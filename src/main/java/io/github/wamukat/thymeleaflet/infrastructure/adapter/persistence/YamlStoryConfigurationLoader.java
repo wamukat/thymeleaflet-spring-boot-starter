@@ -61,14 +61,14 @@ public class YamlStoryConfigurationLoader {
 
             try (InputStream inputStream = resource.getInputStream()) {
                 StoryConfiguration config = yamlMapper.readValue(inputStream, StoryConfiguration.class);
-                
-                if (config != null) {
-                    logger.debug("Successfully loaded story configuration from: {}", storyFilePath);
-                    return Optional.of(config);
-                } else {
+
+                Optional<StoryConfiguration> configuration = Optional.ofNullable(config);
+                if (configuration.isEmpty()) {
                     logger.warn("YAML parsing resulted in null configuration: {}", storyFilePath);
-                    return Optional.empty();
+                } else {
+                    logger.debug("Successfully loaded story configuration from: {}", storyFilePath);
                 }
+                return configuration;
             }
 
         } catch (IOException e) {
