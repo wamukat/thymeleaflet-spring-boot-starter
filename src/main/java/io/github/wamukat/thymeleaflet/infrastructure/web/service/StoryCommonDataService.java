@@ -70,7 +70,7 @@ public class StoryCommonDataService {
                                    FragmentStoryInfo storyInfo, Model model) {
         // stories.ymlのmodelを事前にモデルへ注入
         Map<String, Object> storyModel = storyInfo.getModel();
-        if (storyModel != null && !storyModel.isEmpty()) {
+        if (!storyModel.isEmpty()) {
             for (Map.Entry<String, Object> entry : storyModel.entrySet()) {
                 model.addAttribute(entry.getKey(), entry.getValue());
             }
@@ -89,7 +89,7 @@ public class StoryCommonDataService {
         // パラメータをモデルに設定し、表示用パラメータを取得
         Map<String, Object> displayParameters = thymeleafFragmentRenderer.configureModelWithStoryParameters(storyParameters, model);
 
-        Map<String, Object> displayModel = storyModel != null ? storyModel : new HashMap<>();
+        Map<String, Object> displayModel = storyModel;
 
         // defaultストーリーの情報を取得（差異ハイライト用）
         FragmentStoryInfo defaultStory = null;
@@ -149,15 +149,13 @@ public class StoryCommonDataService {
             .map(io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer.JavaDocInfo::getParameters)
             .ifPresent(parameters -> {
                 for (var parameterInfo : parameters) {
-                    if (parameterInfo.getName() != null && !parameterInfo.getName().isBlank()) {
+                    if (!parameterInfo.getName().isBlank()) {
                         ordered.add(parameterInfo.getName());
                     }
                 }
             });
 
-        if (storyInfo.getFragmentSummary() != null && storyInfo.getFragmentSummary().getParameters() != null) {
-            ordered.addAll(storyInfo.getFragmentSummary().getParameters());
-        }
+        ordered.addAll(storyInfo.getFragmentSummary().getParameters());
 
         ordered.addAll(displayParameters.keySet());
 

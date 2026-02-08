@@ -102,9 +102,8 @@ public class UsageExampleService {
             
             // SIMPLEフラグメントの場合、パラメータが空でも正常
             boolean isSimpleFragment = storyInfo.getFragmentSummary().getType() == FragmentDomainService.FragmentType.SIMPLE;
-            boolean hasRequiredParams = storyInfo.getFragmentSummary().getParameters() != null
-                && !storyInfo.getFragmentSummary().getParameters().isEmpty();
-            boolean hasModel = storyModel != null && !storyModel.isEmpty();
+            boolean hasRequiredParams = !storyInfo.getFragmentSummary().getParameters().isEmpty();
+            boolean hasModel = !storyModel.isEmpty();
             boolean shouldShowError = storyParameters.isEmpty() && hasRequiredParams && !hasModel;
             
             // デバッグログ追加
