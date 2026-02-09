@@ -11,6 +11,9 @@
 | `thymeleaflet.base-path` | String | `/thymeleaflet` | UI のベースパス |
 | `thymeleaflet.debug` | boolean | `false` | フラグメント探索のデバッグログ |
 
+`thymeleaflet.base-path` は現在 `/thymeleaflet` のみサポートしています。
+別のパスを設定すると起動時にエラーになります。
+
 ## リソース設定
 
 | プロパティ | 型 | デフォルト | 説明 |
