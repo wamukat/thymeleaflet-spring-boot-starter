@@ -171,15 +171,15 @@
                                     <!-- サーバーサイドでレンダリングされたプレビュー -->
                                     <div th:if="${selectedFragment != null and selectedStory != null}">
                                         
-                                        <!-- PARAMETERIZEDタイプで stories.yml も JavaDoc フォールバックも利用できない場合のエラー表示 -->
+                                        <!-- PARAMETERIZEDタイプで {templatePath}.stories.yml も JavaDoc フォールバックも利用できない場合のエラー表示 -->
                                         <div th:if="${selectedFragment.type.name() == 'PARAMETERIZED' and !selectedStory.hasStoryConfig() and #maps.isEmpty(selectedStory.parameters)}"
                                              class="rounded-lg border border-red-200 bg-red-50 p-4">
                                             <p class="font-bold text-red-700" th:text="#{thymeleaflet.preview.storyRequiredTitle}">
-                                                ⚠️ stories.yml or JavaDoc fallback is required
+                                                ⚠️ {templatePath}.stories.yml or JavaDoc fallback is required
                                             </p>
                                             <p class="text-sm text-gray-600"
                                                th:text="#{thymeleaflet.preview.storyRequiredDetail(${selectedFragment.fragmentName})}">
-                                                To preview this fragment, a stories.yml file or JavaDoc comments with @example are required.
+                                                To preview this fragment, a {templatePath}.stories.yml file or JavaDoc comments with @example are required.
                                             </p>
                                         </div>
                                         
