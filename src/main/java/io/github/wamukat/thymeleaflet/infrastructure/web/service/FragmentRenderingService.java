@@ -10,7 +10,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConve
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
@@ -30,20 +29,29 @@ public class FragmentRenderingService {
     
     private static final Logger logger = LoggerFactory.getLogger(FragmentRenderingService.class);
     
-    @Autowired
-    private ValidationUseCase validationUseCase;
+    private final ValidationUseCase validationUseCase;
     
-    @Autowired
-    private StoryRetrievalUseCase storyRetrievalUseCase;
+    private final StoryRetrievalUseCase storyRetrievalUseCase;
     
-    @Autowired
-    private StoryParameterUseCase storyParameterUseCase;
+    private final StoryParameterUseCase storyParameterUseCase;
     
-    @Autowired
-    private SecurePathConversionService securePathConversionService;
+    private final SecurePathConversionService securePathConversionService;
 
-    @Autowired
-    private ThymeleafFragmentRenderer thymeleafFragmentRenderer;
+    private final ThymeleafFragmentRenderer thymeleafFragmentRenderer;
+
+    public FragmentRenderingService(
+        ValidationUseCase validationUseCase,
+        StoryRetrievalUseCase storyRetrievalUseCase,
+        StoryParameterUseCase storyParameterUseCase,
+        SecurePathConversionService securePathConversionService,
+        ThymeleafFragmentRenderer thymeleafFragmentRenderer
+    ) {
+        this.validationUseCase = validationUseCase;
+        this.storyRetrievalUseCase = storyRetrievalUseCase;
+        this.storyParameterUseCase = storyParameterUseCase;
+        this.securePathConversionService = securePathConversionService;
+        this.thymeleafFragmentRenderer = thymeleafFragmentRenderer;
+    }
     
     /**
      * ストーリー動的レンダリング処理

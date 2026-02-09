@@ -5,7 +5,6 @@ import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
@@ -22,17 +21,25 @@ public class StoryContentService {
     
     private static final Logger logger = LoggerFactory.getLogger(StoryContentService.class);
     
-    @Autowired
-    private StoryContentCoordinationUseCase storyContentCoordinationUseCase;
+    private final StoryContentCoordinationUseCase storyContentCoordinationUseCase;
     
-    @Autowired
-    private StoryCommonDataService storyCommonDataService;
+    private final StoryCommonDataService storyCommonDataService;
     
-    @Autowired
-    private SecurePathConversionService securePathConversionService;
+    private final SecurePathConversionService securePathConversionService;
 
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
+    private final FragmentSummaryMapper fragmentSummaryMapper;
+
+    public StoryContentService(
+        StoryContentCoordinationUseCase storyContentCoordinationUseCase,
+        StoryCommonDataService storyCommonDataService,
+        SecurePathConversionService securePathConversionService,
+        FragmentSummaryMapper fragmentSummaryMapper
+    ) {
+        this.storyContentCoordinationUseCase = storyContentCoordinationUseCase;
+        this.storyCommonDataService = storyCommonDataService;
+        this.securePathConversionService = securePathConversionService;
+        this.fragmentSummaryMapper = fragmentSummaryMapper;
+    }
     
     /**
      * ストーリーコンテンツHTMX処理

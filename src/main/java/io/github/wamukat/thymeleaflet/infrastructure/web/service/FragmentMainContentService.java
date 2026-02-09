@@ -9,7 +9,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSumm
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
@@ -30,26 +29,37 @@ public class FragmentMainContentService {
     
     private static final Logger logger = LoggerFactory.getLogger(FragmentMainContentService.class);
     
-    @Autowired
-    private FragmentDiscoveryService fragmentDiscoveryService;
+    private final FragmentDiscoveryService fragmentDiscoveryService;
     
-    @Autowired
-    private FragmentStatisticsUseCase fragmentStatisticsUseCase;
+    private final FragmentStatisticsUseCase fragmentStatisticsUseCase;
     
-    @Autowired
-    private FragmentHierarchyUseCase fragmentHierarchyUseCase;
+    private final FragmentHierarchyUseCase fragmentHierarchyUseCase;
     
-    @Autowired
-    private FragmentJsonService fragmentJsonService;
+    private final FragmentJsonService fragmentJsonService;
     
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
+    private final FragmentSummaryMapper fragmentSummaryMapper;
 
-    @Autowired
-    private ResolvedStorybookConfig storybookConfig;
+    private final ResolvedStorybookConfig storybookConfig;
 
-    @Autowired
-    private PreviewConfigService previewConfigService;
+    private final PreviewConfigService previewConfigService;
+
+    public FragmentMainContentService(
+        FragmentDiscoveryService fragmentDiscoveryService,
+        FragmentStatisticsUseCase fragmentStatisticsUseCase,
+        FragmentHierarchyUseCase fragmentHierarchyUseCase,
+        FragmentJsonService fragmentJsonService,
+        FragmentSummaryMapper fragmentSummaryMapper,
+        ResolvedStorybookConfig storybookConfig,
+        PreviewConfigService previewConfigService
+    ) {
+        this.fragmentDiscoveryService = fragmentDiscoveryService;
+        this.fragmentStatisticsUseCase = fragmentStatisticsUseCase;
+        this.fragmentHierarchyUseCase = fragmentHierarchyUseCase;
+        this.fragmentJsonService = fragmentJsonService;
+        this.fragmentSummaryMapper = fragmentSummaryMapper;
+        this.storybookConfig = storybookConfig;
+        this.previewConfigService = previewConfigService;
+    }
     
     /**
      * メインコンテンツ遅延読み込み処理

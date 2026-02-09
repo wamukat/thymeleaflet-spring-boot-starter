@@ -7,7 +7,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStory
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
@@ -32,26 +31,37 @@ public class StoryCommonDataService {
     
     private static final Logger logger = LoggerFactory.getLogger(StoryCommonDataService.class);
     
-    @Autowired
-    private StoryParameterUseCase storyParameterUseCase;
+    private final StoryParameterUseCase storyParameterUseCase;
     
-    @Autowired
-    private ThymeleafFragmentRenderer thymeleafFragmentRenderer;
+    private final ThymeleafFragmentRenderer thymeleafFragmentRenderer;
     
-    @Autowired
-    private StoryRetrievalUseCase storyRetrievalUseCase;
+    private final StoryRetrievalUseCase storyRetrievalUseCase;
     
-    @Autowired
-    private JavaDocLookupService javaDocLookupService;
+    private final JavaDocLookupService javaDocLookupService;
 
-    @Autowired
-    private FragmentDependencyService fragmentDependencyService;
+    private final FragmentDependencyService fragmentDependencyService;
 
-    @Autowired
-    private ResolvedStorybookConfig storybookConfig;
+    private final ResolvedStorybookConfig storybookConfig;
 
-    @Autowired
-    private PreviewConfigService previewConfigService;
+    private final PreviewConfigService previewConfigService;
+
+    public StoryCommonDataService(
+        StoryParameterUseCase storyParameterUseCase,
+        ThymeleafFragmentRenderer thymeleafFragmentRenderer,
+        StoryRetrievalUseCase storyRetrievalUseCase,
+        JavaDocLookupService javaDocLookupService,
+        FragmentDependencyService fragmentDependencyService,
+        ResolvedStorybookConfig storybookConfig,
+        PreviewConfigService previewConfigService
+    ) {
+        this.storyParameterUseCase = storyParameterUseCase;
+        this.thymeleafFragmentRenderer = thymeleafFragmentRenderer;
+        this.storyRetrievalUseCase = storyRetrievalUseCase;
+        this.javaDocLookupService = javaDocLookupService;
+        this.fragmentDependencyService = fragmentDependencyService;
+        this.storybookConfig = storybookConfig;
+        this.previewConfigService = previewConfigService;
+    }
     
     /**
      * フラグメント・ストーリー共通データセットアップ

@@ -9,7 +9,6 @@ import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
@@ -28,17 +27,25 @@ public class UsageExampleService {
     
     private static final Logger logger = LoggerFactory.getLogger(UsageExampleService.class);
     
-    @Autowired
-    private ValidationUseCase validationUseCase;
+    private final ValidationUseCase validationUseCase;
     
-    @Autowired
-    private StoryRetrievalUseCase storyRetrievalUseCase;
+    private final StoryRetrievalUseCase storyRetrievalUseCase;
     
-    @Autowired
-    private StoryParameterUseCase storyParameterUseCase;
+    private final StoryParameterUseCase storyParameterUseCase;
     
-    @Autowired
-    private UsageExampleUseCase usageExampleUseCase;
+    private final UsageExampleUseCase usageExampleUseCase;
+
+    public UsageExampleService(
+        ValidationUseCase validationUseCase,
+        StoryRetrievalUseCase storyRetrievalUseCase,
+        StoryParameterUseCase storyParameterUseCase,
+        UsageExampleUseCase usageExampleUseCase
+    ) {
+        this.validationUseCase = validationUseCase;
+        this.storyRetrievalUseCase = storyRetrievalUseCase;
+        this.storyParameterUseCase = storyParameterUseCase;
+        this.usageExampleUseCase = usageExampleUseCase;
+    }
     
     /**
      * 使用例生成処理

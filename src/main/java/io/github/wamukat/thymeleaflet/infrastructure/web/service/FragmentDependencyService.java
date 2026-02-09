@@ -6,7 +6,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathV
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -35,13 +34,19 @@ public class FragmentDependencyService implements FragmentDependencyPort {
         "th:(?:replace|include|insert)\\s*=\\s*"
     );
 
-    @Autowired
-    private ResolvedStorybookConfig storybookConfig;
+    private final ResolvedStorybookConfig storybookConfig;
 
-    @Autowired
-    private ResourcePathValidator resourcePathValidator;
+    private final ResourcePathValidator resourcePathValidator;
 
     private final Map<String, List<DependencyComponent>> dependencyCache = new ConcurrentHashMap<>();
+
+    public FragmentDependencyService(
+        ResolvedStorybookConfig storybookConfig,
+        ResourcePathValidator resourcePathValidator
+    ) {
+        this.storybookConfig = storybookConfig;
+        this.resourcePathValidator = resourcePathValidator;
+    }
 
     public List<DependencyComponent> findDependencies(String templatePath, String fragmentName) {
         if (storybookConfig.getCache().isEnabled()) {
