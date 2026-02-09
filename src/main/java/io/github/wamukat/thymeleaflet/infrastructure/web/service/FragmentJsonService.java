@@ -10,7 +10,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSumm
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
@@ -32,17 +31,25 @@ public class FragmentJsonService {
     
     private static final Logger logger = LoggerFactory.getLogger(FragmentJsonService.class);
     
-    @Autowired
-    private StoryRetrievalUseCase storyRetrievalUseCase;
+    private final StoryRetrievalUseCase storyRetrievalUseCase;
     
-    @Autowired
-    private FragmentPreviewUseCase fragmentPreviewUseCase;
+    private final FragmentPreviewUseCase fragmentPreviewUseCase;
     
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
+    private final FragmentSummaryMapper fragmentSummaryMapper;
 
-    @Autowired
-    private StoryParameterUseCase storyParameterUseCase;
+    private final StoryParameterUseCase storyParameterUseCase;
+
+    public FragmentJsonService(
+        StoryRetrievalUseCase storyRetrievalUseCase,
+        FragmentPreviewUseCase fragmentPreviewUseCase,
+        FragmentSummaryMapper fragmentSummaryMapper,
+        StoryParameterUseCase storyParameterUseCase
+    ) {
+        this.storyRetrievalUseCase = storyRetrievalUseCase;
+        this.fragmentPreviewUseCase = fragmentPreviewUseCase;
+        this.fragmentSummaryMapper = fragmentSummaryMapper;
+        this.storyParameterUseCase = storyParameterUseCase;
+    }
 
     /**
      * フラグメントリストを拡張JSON形式に変換してModel属性に設定

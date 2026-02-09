@@ -13,7 +13,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.StaticMessageSource;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 
@@ -43,22 +42,21 @@ class FragmentMainContentServiceTest {
 
     @Test
     void setupMainContent_setsPreviewResourcesFromProperties() {
-        FragmentMainContentService service = new FragmentMainContentService();
-
         StorybookProperties properties = new StorybookProperties();
         StorybookProperties.ResourceConfig resources = new StorybookProperties.ResourceConfig();
         resources.setStylesheets(List.of("/css/app.css"));
         resources.setScripts(List.of("/js/app.js"));
         properties.setResources(resources);
         PreviewConfigService previewConfigService = buildPreviewConfigService(properties);
-
-        ReflectionTestUtils.setField(service, "storybookConfig", ResolvedStorybookConfig.from(properties));
-        ReflectionTestUtils.setField(service, "fragmentDiscoveryService", fragmentDiscoveryService);
-        ReflectionTestUtils.setField(service, "fragmentStatisticsUseCase", fragmentStatisticsUseCase);
-        ReflectionTestUtils.setField(service, "fragmentHierarchyUseCase", fragmentHierarchyUseCase);
-        ReflectionTestUtils.setField(service, "fragmentJsonService", fragmentJsonService);
-        ReflectionTestUtils.setField(service, "fragmentSummaryMapper", fragmentSummaryMapper);
-        ReflectionTestUtils.setField(service, "previewConfigService", previewConfigService);
+        FragmentMainContentService service = new FragmentMainContentService(
+            fragmentDiscoveryService,
+            fragmentStatisticsUseCase,
+            fragmentHierarchyUseCase,
+            fragmentJsonService,
+            fragmentSummaryMapper,
+            ResolvedStorybookConfig.from(properties),
+            previewConfigService
+        );
 
         FragmentDiscoveryService.FragmentInfo infraFragment = new FragmentDiscoveryService.FragmentInfo(
             "components/button",
@@ -96,10 +94,7 @@ class FragmentMainContentServiceTest {
     }
 
     private PreviewConfigService buildPreviewConfigService(StorybookProperties properties) {
-        PreviewConfigService previewConfigService = new PreviewConfigService();
         StaticMessageSource messageSource = new StaticMessageSource();
-        ReflectionTestUtils.setField(previewConfigService, "storybookConfig", ResolvedStorybookConfig.from(properties));
-        ReflectionTestUtils.setField(previewConfigService, "messageSource", messageSource);
-        return previewConfigService;
+        return new PreviewConfigService(ResolvedStorybookConfig.from(properties), messageSource);
     }
 }

@@ -16,7 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.StaticMessageSource;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.ui.ExtendedModelMap;
 import org.springframework.ui.Model;
 
@@ -49,22 +48,13 @@ class StoryCommonDataServiceTest {
 
     @Test
     void setupCommonStoryData_setsPreviewResourcesFromProperties() {
-        StoryCommonDataService service = new StoryCommonDataService();
-
         StorybookProperties properties = new StorybookProperties();
         StorybookProperties.ResourceConfig resources = new StorybookProperties.ResourceConfig();
         resources.setStylesheets(List.of(" /css/app.css ", "/css/theme.css"));
         resources.setScripts(List.of("/js/app.js", " /js/vendor.js "));
         properties.setResources(resources);
         PreviewConfigService previewConfigService = buildPreviewConfigService(properties);
-
-        ReflectionTestUtils.setField(service, "storybookConfig", ResolvedStorybookConfig.from(properties));
-        ReflectionTestUtils.setField(service, "storyParameterUseCase", storyParameterUseCase);
-        ReflectionTestUtils.setField(service, "thymeleafFragmentRenderer", thymeleafFragmentRenderer);
-        ReflectionTestUtils.setField(service, "storyRetrievalUseCase", storyRetrievalUseCase);
-        ReflectionTestUtils.setField(service, "javaDocLookupService", javaDocLookupService);
-        ReflectionTestUtils.setField(service, "fragmentDependencyService", fragmentDependencyService);
-        ReflectionTestUtils.setField(service, "previewConfigService", previewConfigService);
+        StoryCommonDataService service = buildStoryCommonDataService(properties, previewConfigService);
 
         FragmentSummary summary = FragmentSummary.of(
             "components/button",
@@ -97,18 +87,9 @@ class StoryCommonDataServiceTest {
 
     @Test
     void setupCommonStoryData_ordersParametersByJavaDocThenSignatureThenStoryExtras() {
-        StoryCommonDataService service = new StoryCommonDataService();
-
         StorybookProperties properties = new StorybookProperties();
         PreviewConfigService previewConfigService = buildPreviewConfigService(properties);
-
-        ReflectionTestUtils.setField(service, "storybookConfig", ResolvedStorybookConfig.from(properties));
-        ReflectionTestUtils.setField(service, "storyParameterUseCase", storyParameterUseCase);
-        ReflectionTestUtils.setField(service, "thymeleafFragmentRenderer", thymeleafFragmentRenderer);
-        ReflectionTestUtils.setField(service, "storyRetrievalUseCase", storyRetrievalUseCase);
-        ReflectionTestUtils.setField(service, "javaDocLookupService", javaDocLookupService);
-        ReflectionTestUtils.setField(service, "fragmentDependencyService", fragmentDependencyService);
-        ReflectionTestUtils.setField(service, "previewConfigService", previewConfigService);
+        StoryCommonDataService service = buildStoryCommonDataService(properties, previewConfigService);
 
         FragmentSummary summary = FragmentSummary.of(
             "components/button",
@@ -160,11 +141,23 @@ class StoryCommonDataServiceTest {
         );
     }
 
+    private StoryCommonDataService buildStoryCommonDataService(
+        StorybookProperties properties,
+        PreviewConfigService previewConfigService
+    ) {
+        return new StoryCommonDataService(
+            storyParameterUseCase,
+            thymeleafFragmentRenderer,
+            storyRetrievalUseCase,
+            javaDocLookupService,
+            fragmentDependencyService,
+            ResolvedStorybookConfig.from(properties),
+            previewConfigService
+        );
+    }
+
     private PreviewConfigService buildPreviewConfigService(StorybookProperties properties) {
-        PreviewConfigService previewConfigService = new PreviewConfigService();
         StaticMessageSource messageSource = new StaticMessageSource();
-        ReflectionTestUtils.setField(previewConfigService, "storybookConfig", ResolvedStorybookConfig.from(properties));
-        ReflectionTestUtils.setField(previewConfigService, "messageSource", messageSource);
-        return previewConfigService;
+        return new PreviewConfigService(ResolvedStorybookConfig.from(properties), messageSource);
     }
 }

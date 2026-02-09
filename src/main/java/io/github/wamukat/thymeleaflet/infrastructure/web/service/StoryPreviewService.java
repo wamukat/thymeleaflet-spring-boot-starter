@@ -5,7 +5,6 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrie
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
@@ -25,22 +24,26 @@ public class StoryPreviewService {
     
     private static final Logger logger = LoggerFactory.getLogger(StoryPreviewService.class);
     
-    @Autowired
-    private StoryPageCoordinationUseCase storyPageCoordinationUseCase;
-    
-    
-    @Autowired
-    private StoryRetrievalUseCase storyRetrievalUseCase;
-    
-    @Autowired
-    private FragmentJsonService fragmentJsonService;
-    
-    @Autowired
-    private StoryCommonDataService storyCommonDataService;
-    
-    @Autowired
-    private SecurePathConversionService securePathConversionService;
-    
+    private final StoryPageCoordinationUseCase storyPageCoordinationUseCase;
+    private final StoryRetrievalUseCase storyRetrievalUseCase;
+    private final FragmentJsonService fragmentJsonService;
+    private final StoryCommonDataService storyCommonDataService;
+    private final SecurePathConversionService securePathConversionService;
+
+    public StoryPreviewService(
+        StoryPageCoordinationUseCase storyPageCoordinationUseCase,
+        StoryRetrievalUseCase storyRetrievalUseCase,
+        FragmentJsonService fragmentJsonService,
+        StoryCommonDataService storyCommonDataService,
+        SecurePathConversionService securePathConversionService
+    ) {
+        this.storyPageCoordinationUseCase = storyPageCoordinationUseCase;
+        this.storyRetrievalUseCase = storyRetrievalUseCase;
+        this.fragmentJsonService = fragmentJsonService;
+        this.storyCommonDataService = storyCommonDataService;
+        this.securePathConversionService = securePathConversionService;
+    }
+
     
     /**
      * ストーリープレビューページ処理

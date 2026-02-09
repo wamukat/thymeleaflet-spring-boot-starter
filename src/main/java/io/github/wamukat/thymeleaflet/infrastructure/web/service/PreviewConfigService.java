@@ -1,7 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
@@ -17,11 +16,14 @@ import java.util.Locale;
 @Component
 public class PreviewConfigService {
 
-    @Autowired
-    private ResolvedStorybookConfig storybookConfig;
+    private final ResolvedStorybookConfig storybookConfig;
 
-    @Autowired
-    private MessageSource messageSource;
+    private final MessageSource messageSource;
+
+    public PreviewConfigService(ResolvedStorybookConfig storybookConfig, MessageSource messageSource) {
+        this.storybookConfig = storybookConfig;
+        this.messageSource = messageSource;
+    }
 
     public void applyPreviewConfig(Model model) {
         ResolvedStorybookConfig.PreviewConfig preview = storybookConfig.getPreview();
