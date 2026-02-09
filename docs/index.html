@@ -217,9 +217,10 @@
       </section>
 
       <section class="section">
-        <h2>Story Authoring (stories.yml)</h2>
+        <h2>Story Authoring ({templatePath}.stories.yml)</h2>
         <p>
-          Define UI variations in <code>stories.yml</code> so states stay explicit and reviewable.<br>
+          Define UI variations in <code>{templatePath}.stories.yml</code> so states stay explicit and reviewable.<br>
+          Store files under <code>src/main/resources/META-INF/thymeleaflet/stories/</code>.<br>
           Details: <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/stories.md">stories.md</a>.
         </p>
         <div class="grid-2">
@@ -241,7 +242,7 @@
           title: Returns
           body: Returns are accepted within 14 days of delivery.
           open: true</pre>
-            <div class="caption">Story definitions in the actual stories.yml.</div>
+            <div class="caption">Story definitions in the actual {templatePath}.stories.yml file.</div>
           </div>
           <div class="card">
             <div class="shot">

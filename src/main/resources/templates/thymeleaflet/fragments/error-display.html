@@ -101,8 +101,8 @@
             File to create:
         </div>
         <code th:class="${templateCodeClass}" 
-              th:text="'/src/main/resources/thymeleaflet/stories/' + ${templatePath} + '.stories.yml'">
-            /src/main/resources/thymeleaflet/stories/template/path.stories.yml
+              th:text="'/src/main/resources/META-INF/thymeleaflet/stories/' + ${templatePath} + '.stories.yml'">
+            /src/main/resources/META-INF/thymeleaflet/stories/template/path.stories.yml
         </code>
         <div th:class="${templateNameClass}">
             <span th:text="#{thymeleaflet.error.template.name}">Template file:</span>

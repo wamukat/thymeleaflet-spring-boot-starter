@@ -216,9 +216,10 @@
       </section>
 
       <section class="section">
-        <h2>ストーリー作成 (stories.yml)</h2>
+        <h2>ストーリー作成 ({templatePath}.stories.yml)</h2>
         <p>
-          <code>stories.yml</code> で UI のバリエーションを定義し、状態をわかりやすく管理できます。<br>
+          <code>{templatePath}.stories.yml</code> で UI のバリエーションを定義し、状態をわかりやすく管理できます。<br>
+          保存先は <code>src/main/resources/META-INF/thymeleaflet/stories/</code> 配下です。<br>
           詳細は <a href="https://github.com/wamukat/thymeleaflet-spring-boot-starter/blob/main/docs/stories.ja.md">stories.ja.md</a> を参照してください。
         </p>
         <div class="grid-2">
@@ -240,7 +241,7 @@
           title: Returns
           body: Returns are accepted within 14 days of delivery.
           open: true</pre>
-            <div class="caption">実際の stories.yml での定義例。</div>
+            <div class="caption">実際の {templatePath}.stories.yml での定義例。</div>
           </div>
           <div class="card">
             <div class="shot">
