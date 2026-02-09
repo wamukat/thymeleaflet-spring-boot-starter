@@ -8,6 +8,27 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.6] - 2026-02-09
+
+- Changed
+  - Unified base-path handling across configuration and security integration paths.
+  - Switched core web service wiring to constructor injection for clearer dependency boundaries.
+- Fixed
+  - Added fail-fast validation for `thymeleaflet.base-path`; only `/thymeleaflet` is supported and unsupported values now fail at startup with a clear message.
+- Test
+  - Adapted service tests to constructor injection and added coverage for base-path normalization/rejection behavior.
+- Docs
+  - Aligned story path / naming guidance and Java build requirement notes in README docs.
+  - Clarified fixed base-path limitation (`/thymeleaflet`) in configuration/getting-started docs.
+  - Updated installation version examples in `README.md` / `README.ja.md` to `0.2.6`.
+- Build
+  - Updated Maven project version and sample app dependency to `0.2.6`.
+
+### Issues
+
+- #79 Review fixes for base-path and DI updates
+- #80 Fail fast when thymeleaflet.base-path is not /thymeleaflet
+
 ## [0.2.5] - 2026-02-08
 
 - Fixed
