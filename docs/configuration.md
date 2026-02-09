@@ -34,10 +34,10 @@ Preview iframes allow same-origin so cookies/localStorage and authenticated API 
 |---|---|---|---|
 | `thymeleaflet.preview.background-light` | String | `#f3f4f6` | Light background color for the preview canvas |
 | `thymeleaflet.preview.background-dark` | String | `#1f2937` | Dark background color for the preview canvas |
-| `thymeleaflet.preview.viewports` | List | Built-in presets | Viewport presets (name + width). Height is currently ignored, excluding Fit |
+| `thymeleaflet.preview.viewports` | List | Built-in presets | Viewport presets (name + width, excluding Fit) |
 
-Viewport presets are used by the viewport dropdown. Fit is always available and is not part of this list. Height values are currently ignored by the UI.
-Each item supports `id`, `label`, `width`, and `height`.
+Viewport presets are used by the viewport dropdown. Fit is always available and is not part of this list.
+Each item supports `id`, `label`, and `width`.
 
 ## Cache Configuration
 
@@ -91,11 +91,9 @@ thymeleaflet:
       - id: mobileSmall
         label: Mobile Small
         width: 320
-        height: 568
       - id: tablet
         label: Tablet
         width: 834
-        height: 1112
   cache:
     enabled: true
     preload: false

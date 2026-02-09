@@ -34,10 +34,10 @@ JavaScript を使いたい場合は `resources.scripts` に登録してくださ
 |---|---|---|---|
 | `thymeleaflet.preview.background-light` | String | `#f3f4f6` | プレビューの明るい背景色 |
 | `thymeleaflet.preview.background-dark` | String | `#1f2937` | プレビューの暗い背景色 |
-| `thymeleaflet.preview.viewports` | List | 組み込みプリセット | ビューポート一覧（名前＋幅、Fitは除外）。高さは現在 UI で無視されます |
+| `thymeleaflet.preview.viewports` | List | 組み込みプリセット | ビューポート一覧（名前＋幅、Fitは除外） |
 
-ビューポート一覧はドロップダウンに表示されます。Fit は常に利用可能で、この一覧には含めません。高さの値は現在 UI で無視されます。
-各項目は `id` / `label` / `width` / `height` を持ちます。
+ビューポート一覧はドロップダウンに表示されます。Fit は常に利用可能で、この一覧には含めません。
+各項目は `id` / `label` / `width` を持ちます。
 
 ## キャッシュ設定
 
@@ -90,11 +90,9 @@ thymeleaflet:
       - id: mobileSmall
         label: Mobile Small
         width: 320
-        height: 568
       - id: tablet
         label: Tablet
         width: 834
-        height: 1112
   cache:
     enabled: true
     preload: false
