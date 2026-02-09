@@ -68,4 +68,24 @@ class ResolvedStorybookConfigTest {
         assertThat(resolved.getResources().getStylesheets()).containsExactly("/css/a.css");
         assertThat(resolved.getResources().getScripts()).containsExactly("/js/a.js");
     }
+
+    @Test
+    void from_rejectsNonDefaultBasePath() {
+        StorybookProperties raw = new StorybookProperties();
+        raw.setBasePath("/thymeleaflet2");
+
+        assertThatThrownBy(() -> ResolvedStorybookConfig.from(raw))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Only '/thymeleaflet' is currently supported for thymeleaflet.base-path. Configured value: /thymeleaflet2");
+    }
+
+    @Test
+    void from_normalizesEquivalentBasePathToDefault() {
+        StorybookProperties raw = new StorybookProperties();
+        raw.setBasePath(" thymeleaflet/ ");
+
+        ResolvedStorybookConfig resolved = ResolvedStorybookConfig.from(raw);
+
+        assertThat(resolved.getBasePath()).isEqualTo("/thymeleaflet");
+    }
 }

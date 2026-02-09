@@ -11,6 +11,9 @@ This page covers *only* configuration. Usage details are in
 | `thymeleaflet.base-path` | String | `/thymeleaflet` | Base URL for the UI |
 | `thymeleaflet.debug` | boolean | `false` | Enables debug logging for fragment discovery |
 
+`thymeleaflet.base-path` currently supports only `/thymeleaflet`.
+Using another path fails fast at startup.
+
 ## Resource Configuration
 
 | Property | Type | Default | Description |

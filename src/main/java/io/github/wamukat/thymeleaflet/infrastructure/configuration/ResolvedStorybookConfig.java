@@ -39,7 +39,12 @@ public final class ResolvedStorybookConfig {
 
     public static ResolvedStorybookConfig from(StorybookProperties raw) {
         Objects.requireNonNull(raw, "raw cannot be null");
-        String basePath = normalizeOrDefault(raw.getBasePath(), DEFAULT_BASE_PATH);
+        String basePath = normalizeBasePath(raw.getBasePath());
+        if (!DEFAULT_BASE_PATH.equals(basePath)) {
+            throw new IllegalArgumentException(
+                "Only '/thymeleaflet' is currently supported for thymeleaflet.base-path. Configured value: " + basePath
+            );
+        }
         StorybookProperties.ResourceConfig rawResources = raw.getResources();
         StorybookProperties.CacheConfig rawCache = raw.getCache();
         StorybookProperties.PreviewConfig rawPreview = raw.getPreview();
@@ -270,6 +275,17 @@ public final class ResolvedStorybookConfig {
         }
         String normalized = value.trim();
         return normalized.isEmpty() ? defaultValue : normalized;
+    }
+
+    private static String normalizeBasePath(@Nullable String value) {
+        String normalized = normalizeOrDefault(value, DEFAULT_BASE_PATH);
+        if (!normalized.startsWith("/")) {
+            normalized = "/" + normalized;
+        }
+        if (normalized.endsWith("/") && normalized.length() > 1) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     private static List<String> sanitizeNonBlankList(@Nullable List<String> values, String fieldName) {

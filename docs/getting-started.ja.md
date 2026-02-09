@@ -100,6 +100,9 @@ spring:
 
 本番ビルドから依存関係を外す運用でも問題ありません。
 
+`thymeleaflet.base-path` は現在 `/thymeleaflet` のみサポートしています。
+別のパスを設定すると起動時にエラーになります。
+
 ## 代表的な配置場所
 
 - テンプレート: `src/main/resources/templates/**`

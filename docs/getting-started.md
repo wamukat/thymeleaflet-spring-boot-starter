@@ -100,6 +100,9 @@ spring:
 
 Alternatively, remove the dependency from production builds.
 
+`thymeleaflet.base-path` currently supports only `/thymeleaflet`.
+Using another path fails fast at startup.
+
 ## Project Layout
 
 - Templates: `src/main/resources/templates/**`
