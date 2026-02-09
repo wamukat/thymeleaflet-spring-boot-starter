@@ -25,24 +25,31 @@ import org.springframework.security.web.header.writers.StaticHeadersWriter;
 @EnableWebSecurity
 @ConditionalOnProperty(name = "thymeleaflet.security.enabled", havingValue = "true", matchIfMissing = true)
 public class ThymeleafletSecurityConfig {
-    
+
+    private final String basePath;
+
+    public ThymeleafletSecurityConfig(ResolvedStorybookConfig resolvedStorybookConfig) {
+        this.basePath = sanitizeBasePath(resolvedStorybookConfig.getBasePath());
+    }
+
     /**
      * Thymeleaflet専用セキュリティフィルターチェーン
      */
     @Bean
     public SecurityFilterChain thymeleafletSecurityFilter(HttpSecurity http) throws Exception {
+        String basePathPattern = basePath + "/**";
         http
             // Thymeleafletエンドポイントのみに適用
-            .securityMatcher("/thymeleaflet/**")
+            .securityMatcher(basePathPattern)
             
             // 認可設定
             .authorizeHttpRequests(authz -> authz
                 // 管理者機能は ADMIN ロール必須
-                .requestMatchers("/thymeleaflet/actuator/security/**").hasRole("ADMIN")
-                .requestMatchers("/thymeleaflet/admin/**").hasRole("ADMIN")
+                .requestMatchers(basePath + "/actuator/security/**").hasRole("ADMIN")
+                .requestMatchers(basePath + "/admin/**").hasRole("ADMIN")
                 
                 // 開発環境用プレビューは認証不要（開発時のみ）
-                .requestMatchers("/thymeleaflet/**").permitAll()
+                .requestMatchers(basePathPattern).permitAll()
                 
                 .anyRequest().authenticated()
             )
@@ -57,10 +64,10 @@ public class ThymeleafletSecurityConfig {
                 
                 // 除外対象（API エンドポイントなど）
                 .ignoringRequestMatchers(
-                    "/thymeleaflet/main-content",  // メインコンテンツ遅延読み込み
-                    "/thymeleaflet/**/render",      // HTMX プレビュー
-                    "/thymeleaflet/**/usage",       // 使用例表示
-                    "/thymeleaflet/**/content"      // コンテンツ片取得
+                    basePath + "/main-content",   // メインコンテンツ遅延読み込み
+                    basePath + "/**/render",      // HTMX プレビュー
+                    basePath + "/**/usage",       // 使用例表示
+                    basePath + "/**/content"      // コンテンツ片取得
                 )
             )
             
@@ -91,17 +98,17 @@ public class ThymeleafletSecurityConfig {
             )
             
             // セッション管理
-            .sessionManagement(session -> session
+                .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .sessionFixation().migrateSession()  // セッション固定攻撃防止
-                .invalidSessionUrl("/thymeleaflet")
+                .invalidSessionUrl(basePath)
             )
             
             // 例外ハンドリング
             .exceptionHandling(exceptions -> exceptions
-                .accessDeniedPage("/thymeleaflet/security-error")
+                .accessDeniedPage(basePath + "/security-error")
                 .authenticationEntryPoint((request, response, authException) -> {
-                    response.sendRedirect("/thymeleaflet/login");
+                    response.sendRedirect(basePath + "/login");
                 })
             );
         
@@ -115,5 +122,18 @@ public class ThymeleafletSecurityConfig {
     public SessionRegistry sessionRegistry() {
         return new SessionRegistryImpl();
     }
-    
+
+    private static String sanitizeBasePath(String basePath) {
+        String trimmed = basePath.trim();
+        if (trimmed.isEmpty() || "/".equals(trimmed)) {
+            return "";
+        }
+        if (!trimmed.startsWith("/")) {
+            trimmed = "/" + trimmed;
+        }
+        if (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
+    }
 }

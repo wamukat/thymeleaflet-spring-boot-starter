@@ -120,16 +120,20 @@ public class StorybookAutoConfiguration {
      */
     @Bean
     @Order(0) // 最高優先度
-    public WebMvcConfigurer thymeleafletResourceConfigurer() {
+    public WebMvcConfigurer thymeleafletResourceConfigurer(ResolvedStorybookConfig resolvedStorybookConfig) {
+        String basePath = sanitizeBasePath(resolvedStorybookConfig.getBasePath());
+        String cssPath = basePath + "/css/**";
+        String jsPath = basePath + "/js/**";
+        String imagePath = basePath + "/images/**";
         return new WebMvcConfigurer() {
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
                 // 静的リソース専用パスを限定（コントローラーマッピングと競合を避ける）
-                registry.addResourceHandler("/thymeleaflet/css/**")
+                registry.addResourceHandler(cssPath)
                         .addResourceLocations("classpath:/META-INF/resources/static/css/");
-                registry.addResourceHandler("/thymeleaflet/js/**")
+                registry.addResourceHandler(jsPath)
                         .addResourceLocations("classpath:/META-INF/resources/static/js/");
-                registry.addResourceHandler("/thymeleaflet/images/**")
+                registry.addResourceHandler(imagePath)
                         .addResourceLocations("classpath:/META-INF/resources/static/images/");
                         
                 // CSS専用ハンドラー（fallback）（キャッシュなし）
@@ -191,5 +195,19 @@ public class StorybookAutoConfiguration {
         messageSource.setFallbackToSystemLocale(false);
         messageSource.setDefaultEncoding("UTF-8");
         return messageSource;
+    }
+
+    private static String sanitizeBasePath(String basePath) {
+        String trimmed = basePath.trim();
+        if (trimmed.isEmpty() || "/".equals(trimmed)) {
+            return "";
+        }
+        if (!trimmed.startsWith("/")) {
+            trimmed = "/" + trimmed;
+        }
+        if (trimmed.endsWith("/")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed;
     }
 }

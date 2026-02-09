@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.controller;
 
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
+import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.FragmentMainContentService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.ThymeleafletVersionResolver;
 import org.slf4j.Logger;
@@ -32,6 +33,9 @@ public class FragmentListController {
 
     @Autowired
     private ThymeleafletVersionResolver thymeleafletVersionResolver;
+
+    @Autowired
+    private ResolvedStorybookConfig resolvedStorybookConfig;
     
     /**
      * Storybookメインエントリーポイント - フラグメント一覧ページ (プレースホルダ最適化版)
@@ -44,6 +48,7 @@ public class FragmentListController {
         long startTime = System.currentTimeMillis();
         logger.info("=== Fragment List (Placeholder Optimized) START ===");
         model.addAttribute("thymeleafletVersion", thymeleafletVersionResolver.resolve());
+        model.addAttribute("basePath", resolvedStorybookConfig.getBasePath());
         
         // 初期レンダリング時は重い処理をスキップ - フラグメント発見のみ実行
         List<FragmentDiscoveryService.FragmentInfo> fragments = fragmentDiscoveryService.discoverFragments();
