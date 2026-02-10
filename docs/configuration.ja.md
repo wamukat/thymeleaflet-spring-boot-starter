@@ -49,16 +49,38 @@ JavaScript を使いたい場合は `resources.scripts` に登録してくださ
 | `thymeleaflet.cache.enabled` | boolean | `true` | フラグメント探索・JavaDoc解析・依存解析のメモリキャッシュ |
 | `thymeleaflet.cache.preload` | boolean | `false` | 起動時にキャッシュをウォームアップ |
 
+## セキュリティ補助設定
+
+| プロパティ | 型 | デフォルト | 説明 |
+|---|---|---|---|
+| `thymeleaflet.security.auto-permit` | boolean | `false` | Opt-in: Spring Security 利用時に `/thymeleaflet/**` 許可の最小ルールを自動登録 |
+
 ### CSP 補足（意図的に緩め）
 
 Thymeleaflet はプレビューで外部 JS/CSS を使えるよう、CSP を意図的に緩めています。
 利便性は上がりますが **保護は弱くなります**。必ず認証された環境でのみ利用してください。
 
-## セキュリティ
+## Spring Security 連携
 
-| プロパティ | 型 | デフォルト | 説明 |
-|---|---|---|---|
-| `thymeleaflet.security.enabled` | boolean | `true` | Thymeleaflet 用セキュリティの有効化 |
+デフォルトでは Thymeleaflet は独自の `SecurityFilterChain` を追加しません。
+次のいずれかを選択してください:
+
+- 自動許可を Opt-in:
+
+```yaml
+thymeleaflet:
+  security:
+    auto-permit: true
+```
+
+- 利用側アプリで明示的に設定:
+
+```java
+http.authorizeHttpRequests(auth -> auth
+    .requestMatchers("/thymeleaflet/**").permitAll()
+    .anyRequest().authenticated()
+);
+```
 
 ## 環境ごとの有効/無効
 
@@ -100,5 +122,5 @@ thymeleaflet:
     enabled: true
     preload: false
   security:
-    enabled: true
+    auto-permit: false
 ```

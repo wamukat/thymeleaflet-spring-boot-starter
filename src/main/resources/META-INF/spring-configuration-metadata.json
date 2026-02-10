@@ -41,6 +41,12 @@
       "name": "thymeleaflet.preview.viewports",
       "type": "java.util.List",
       "description": "Viewport presets (name + width + height), excluding Fit"
+    },
+    {
+      "name": "thymeleaflet.security.auto-permit",
+      "type": "java.lang.Boolean",
+      "description": "When true, registers a minimal SecurityFilterChain to permit /thymeleaflet/**",
+      "defaultValue": false
     }
   ]
 }

@@ -42,6 +42,11 @@ public class StorybookProperties {
      */
     private @Nullable PreviewConfig preview = new PreviewConfig();
 
+    /**
+     * セキュリティ補助設定
+     */
+    private @Nullable SecurityConfig security = new SecurityConfig();
+
     // Getters and Setters
     
     public @Nullable String getBasePath() {
@@ -82,6 +87,14 @@ public class StorybookProperties {
 
     public void setPreview(@Nullable PreviewConfig preview) {
         this.preview = preview;
+    }
+
+    public @Nullable SecurityConfig getSecurity() {
+        return security;
+    }
+
+    public void setSecurity(@Nullable SecurityConfig security) {
+        this.security = security;
     }
 
     /**
@@ -232,6 +245,25 @@ public class StorybookProperties {
             presets.add(ViewportPreset.withLabelKey("tablet", "thymeleaflet.preview.viewport.tablet", 834, 1112));
             presets.add(ViewportPreset.withLabelKey("desktop", "thymeleaflet.preview.viewport.desktop", 1024, 1280));
             return presets;
+        }
+    }
+
+    /**
+     * セキュリティ補助設定クラス
+     */
+    public static class SecurityConfig {
+        /**
+         * true のとき `/thymeleaflet/**` を許可する補助チェーンを登録する
+         * デフォルト: false
+         */
+        private boolean autoPermit = false;
+
+        public boolean isAutoPermit() {
+            return autoPermit;
+        }
+
+        public void setAutoPermit(boolean autoPermit) {
+            this.autoPermit = autoPermit;
         }
     }
 

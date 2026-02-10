@@ -89,8 +89,6 @@ Thymeleaflet は開発中の補助ツールとしての利用を想定してい�
 # application-dev.yml
 thymeleaflet:
   base-path: /thymeleaflet
-  security:
-    enabled: false
 
 # application-prod.yml
 spring:
@@ -99,6 +97,11 @@ spring:
 ```
 
 本番ビルドから依存関係を外す運用でも問題ありません。
+
+Spring Security を使う場合は、次のいずれかを選択してください。
+
+- 手早く使う: `thymeleaflet.security.auto-permit=true`
+- 明示管理: 利用側アプリのセキュリティ設定で `/thymeleaflet/**` を許可
 
 `thymeleaflet.base-path` は現在 `/thymeleaflet` のみサポートしています。
 別のパスを設定すると起動時にエラーになります。

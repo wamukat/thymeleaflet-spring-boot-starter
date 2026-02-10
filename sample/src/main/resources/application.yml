@@ -37,5 +37,3 @@ thymeleaflet:
         label: Desktop
         width: 1024
         height: 1280
-  security:
-    enabled: false

@@ -49,17 +49,39 @@ Each item supports `id`, `label`, and `width`.
 | `thymeleaflet.cache.enabled` | boolean | `true` | Enables in-memory caches for fragment discovery, JavaDoc parsing, and dependency analysis |
 | `thymeleaflet.cache.preload` | boolean | `false` | Preload caches at startup (useful for low-CPU demo environments) |
 
+## Security Helper Configuration
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `thymeleaflet.security.auto-permit` | boolean | `false` | Opt-in: register minimal permit rule for `/thymeleaflet/**` when Spring Security is present |
+
 ### CSP note (permissive by design)
 
 Thymeleaflet sets a permissive CSP to allow external JS and CSS inside preview iframes.
 This is convenient for development but **reduces protection**. Keep Thymeleaflet
 behind authentication and use it only in trusted environments.
 
-## Security
+## Spring Security Integration
 
-| Property | Type | Default | Description |
-|---|---|---|---|
-| `thymeleaflet.security.enabled` | boolean | `true` | Enables Thymeleaflet security filter chain |
+By default, Thymeleaflet does not add its own `SecurityFilterChain`.
+Use one of the following options:
+
+- Opt-in auto permit:
+
+```yaml
+thymeleaflet:
+  security:
+    auto-permit: true
+```
+
+- Explicit app-side security rule:
+
+```java
+http.authorizeHttpRequests(auth -> auth
+    .requestMatchers("/thymeleaflet/**").permitAll()
+    .anyRequest().authenticated()
+);
+```
 
 ## Enable/Disable by Environment
 
@@ -101,5 +123,5 @@ thymeleaflet:
     enabled: true
     preload: false
   security:
-    enabled: true
+    auto-permit: false
 ```
