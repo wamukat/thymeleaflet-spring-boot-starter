@@ -8,6 +8,24 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.7] - 2026-02-11
+
+- Changed
+  - Refined Spring Security integration to avoid host-application side effects by default.
+  - Added opt-in quick-start helper `thymeleaflet.security.auto-permit=true` for Spring Security users who want automatic `/thymeleaflet/**` permit setup in development.
+- Removed
+  - Removed built-in Thymeleaflet security filter chain defaults that could unintentionally affect existing application security behavior.
+- Test
+  - Verified configuration binding/resolution for the new `security.auto-permit` option and re-ran E2E regression suite.
+- Docs
+  - Updated English/Japanese security and configuration guides with two integration paths: opt-in auto-permit and explicit app-side security rule.
+- Build
+  - Updated Maven project version and sample app dependency to `0.2.7`.
+
+### Issues
+
+- #84 Avoid unexpected Spring Security impact from starter dependency
+
 ## [0.2.6] - 2026-02-09
 
 - Changed
