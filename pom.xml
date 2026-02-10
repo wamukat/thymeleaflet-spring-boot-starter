@@ -7,7 +7,7 @@
 
     <groupId>io.github.wamukat</groupId>
     <artifactId>thymeleaflet-spring-boot-starter</artifactId>
-    <version>0.2.6</version>
+    <version>0.2.7</version>
     <packaging>jar</packaging>
 
     <name>Thymeleaflet Spring Boot Starter</name>
