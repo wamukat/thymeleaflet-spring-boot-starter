@@ -16,6 +16,7 @@ class StorybookPropertiesTest {
         properties.setResources(null);
         properties.setCache(null);
         properties.setPreview(null);
+        properties.setSecurity(null);
 
         resources.setTemplatePaths(null);
         resources.setStylesheets(null);
@@ -30,6 +31,7 @@ class StorybookPropertiesTest {
         assertThat(properties.getResources()).isNull();
         assertThat(properties.getCache()).isNull();
         assertThat(properties.getPreview()).isNull();
+        assertThat(properties.getSecurity()).isNull();
         assertThat(resources.getTemplatePaths()).isNull();
         assertThat(resources.getStylesheets()).isNull();
         assertThat(resources.getScripts()).isNull();
@@ -37,6 +39,14 @@ class StorybookPropertiesTest {
         assertThat(preview.getBackgroundLight()).isNull();
         assertThat(preview.getBackgroundDark()).isNull();
         assertThat(preview.getViewports()).isNull();
+    }
+
+    @Test
+    void rawSecurityConfig_acceptsBooleanToggle() {
+        StorybookProperties.SecurityConfig security = new StorybookProperties.SecurityConfig();
+        security.setAutoPermit(true);
+
+        assertThat(security.isAutoPermit()).isTrue();
     }
 
     @Test

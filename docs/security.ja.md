@@ -1,29 +1,43 @@
 # セキュリティ
 
-Thymeleaflet は `/thymeleaflet/**` 用のセキュリティフィルターチェーンを内蔵しています。
-デフォルトでは有効です。
+Thymeleaflet は Spring Security のフィルターチェーンを自動登録しません。
 開発用途向けの補助ツールとして利用してください。
 
-## 設定
+## 連携方針
+
+セキュリティ挙動は利用側アプリで管理します。
+Spring Security を使う場合は、Opt-in 自動許可か明示設定を選択できます。
+
+### Option A: Opt-in 自動許可（手早く使う）
 
 ```yaml
 thymeleaflet:
   security:
-    enabled: true
+    auto-permit: true
 ```
 
-## デフォルト挙動
+この設定で `/thymeleaflet/**` のみを許可する最小チェーンを登録します。
 
-- `/thymeleaflet/**` は許可 (開発向け)
-- CSRF は Cookie ベースで有効
-- HTMX プレビュー/コンテンツなどは CSRF 除外
-- セキュリティヘッダー (HSTS/CSP/Referrer-Policy/Permissions-Policy) を付与
+### Option B: 利用側で明示設定
+
+```java
+http.authorizeHttpRequests(auth -> auth
+    .requestMatchers("/thymeleaflet/**").permitAll()
+    .anyRequest().authenticated()
+);
+```
+
+## 挙動
+
+- Thymeleaflet 自体は認可/認証ルールを追加しません。
+- Thymeleaflet 自体は CSRF/ヘッダー/セッション制御を追加しません。
+- 既存アプリのセキュリティ設定がそのまま有効です。
+- `auto-permit=true` の場合のみ、`/thymeleaflet/**` 向けの最小許可チェーンを追加します。
 
 ## 推奨
 
-- 本番では無効化、またはアクセス制限を推奨
+- 本番では `/thymeleaflet/**` へのアクセス制限を推奨
 - 企業内・限定 IP での運用を想定
-- 独自セキュリティを使う場合は無効化して独自チェーンを定義
 
 本番では自動設定を除外する方法がシンプルです:
 

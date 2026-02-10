@@ -22,19 +22,22 @@ public final class ResolvedStorybookConfig {
     private final ResourceConfig resources;
     private final CacheConfig cache;
     private final PreviewConfig preview;
+    private final SecurityConfig security;
 
     private ResolvedStorybookConfig(
         String basePath,
         boolean debug,
         ResourceConfig resources,
         CacheConfig cache,
-        PreviewConfig preview
+        PreviewConfig preview,
+        SecurityConfig security
     ) {
         this.basePath = Objects.requireNonNull(basePath, "basePath cannot be null");
         this.debug = debug;
         this.resources = Objects.requireNonNull(resources, "resources cannot be null");
         this.cache = Objects.requireNonNull(cache, "cache cannot be null");
         this.preview = Objects.requireNonNull(preview, "preview cannot be null");
+        this.security = Objects.requireNonNull(security, "security cannot be null");
     }
 
     public static ResolvedStorybookConfig from(StorybookProperties raw) {
@@ -48,6 +51,7 @@ public final class ResolvedStorybookConfig {
         StorybookProperties.ResourceConfig rawResources = raw.getResources();
         StorybookProperties.CacheConfig rawCache = raw.getCache();
         StorybookProperties.PreviewConfig rawPreview = raw.getPreview();
+        StorybookProperties.SecurityConfig rawSecurity = raw.getSecurity();
 
         ResourceConfig resources = ResourceConfig.from(
             rawResources != null ? rawResources : new StorybookProperties.ResourceConfig()
@@ -58,7 +62,10 @@ public final class ResolvedStorybookConfig {
         PreviewConfig preview = PreviewConfig.from(
             rawPreview != null ? rawPreview : new StorybookProperties.PreviewConfig()
         );
-        return new ResolvedStorybookConfig(basePath, raw.isDebug(), resources, cache, preview);
+        SecurityConfig security = SecurityConfig.from(
+            rawSecurity != null ? rawSecurity : new StorybookProperties.SecurityConfig()
+        );
+        return new ResolvedStorybookConfig(basePath, raw.isDebug(), resources, cache, preview, security);
     }
 
     public String getBasePath() {
@@ -79,6 +86,10 @@ public final class ResolvedStorybookConfig {
 
     public PreviewConfig getPreview() {
         return preview;
+    }
+
+    public SecurityConfig getSecurity() {
+        return security;
     }
 
     public static final class ResourceConfig {
@@ -206,6 +217,22 @@ public final class ResolvedStorybookConfig {
 
         public List<ViewportPreset> getViewports() {
             return viewports;
+        }
+    }
+
+    public static final class SecurityConfig {
+        private final boolean autoPermit;
+
+        private SecurityConfig(boolean autoPermit) {
+            this.autoPermit = autoPermit;
+        }
+
+        private static SecurityConfig from(StorybookProperties.SecurityConfig source) {
+            return new SecurityConfig(source.isAutoPermit());
+        }
+
+        public boolean isAutoPermit() {
+            return autoPermit;
         }
     }
 

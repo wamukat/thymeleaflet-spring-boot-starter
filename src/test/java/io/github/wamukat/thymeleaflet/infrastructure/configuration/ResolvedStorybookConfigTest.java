@@ -16,6 +16,7 @@ class ResolvedStorybookConfigTest {
         raw.setResources(null);
         raw.setCache(null);
         raw.setPreview(null);
+        raw.setSecurity(null);
 
         ResolvedStorybookConfig resolved = ResolvedStorybookConfig.from(raw);
 
@@ -23,6 +24,19 @@ class ResolvedStorybookConfigTest {
         assertThat(resolved.getResources().getTemplatePaths()).containsExactly("/templates/");
         assertThat(resolved.getPreview().getBackgroundLight()).isEqualTo("#f3f4f6");
         assertThat(resolved.getPreview().getBackgroundDark()).isEqualTo("#1f2937");
+        assertThat(resolved.getSecurity().isAutoPermit()).isFalse();
+    }
+
+    @Test
+    void from_resolvesSecurityAutoPermitFlag() {
+        StorybookProperties raw = new StorybookProperties();
+        StorybookProperties.SecurityConfig security = new StorybookProperties.SecurityConfig();
+        security.setAutoPermit(true);
+        raw.setSecurity(security);
+
+        ResolvedStorybookConfig resolved = ResolvedStorybookConfig.from(raw);
+
+        assertThat(resolved.getSecurity().isAutoPermit()).isTrue();
     }
 
     @Test

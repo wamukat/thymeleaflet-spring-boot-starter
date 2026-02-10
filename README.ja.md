@@ -26,8 +26,6 @@ Thymeleaflet は開発中の確認に使う補助ツールです。本番環境�
 # application-dev.yml
 thymeleaflet:
   base-path: /thymeleaflet
-  security:
-    enabled: false
 
 # application-prod.yml
 spring:
@@ -97,8 +95,6 @@ thymeleaflet:
   cache:
     enabled: true
     preload: false
-  security:
-    enabled: true
 ```
 
 ### 補足
@@ -113,7 +109,9 @@ thymeleaflet:
 - `cache.preload` は起動時にキャッシュをウォームアップします（低CPU環境向け）。
 - CSP はプレビューで外部 JS/CSS を使えるよう意図的に緩めています。信頼できる環境でのみ利用してください。
 - プレビュー iframe は same-origin を許可しているため、Cookie / localStorage / 認証付きAPIが動作します。
-- `security.enabled` で `/thymeleaflet/**` のセキュリティ設定を切り替えます。
+- デフォルトでは Thymeleaflet は Spring Security のルールを自動登録しません。
+- Spring Security 利用アプリで設定を簡略化したい場合は `thymeleaflet.security.auto-permit=true` を設定すると、`/thymeleaflet/**` を許可する最小ルールを自動登録します。
+- 明示的に管理したい場合はデフォルトのままにして、利用側アプリの `SecurityFilterChain` で `/thymeleaflet/**` を許可してください。
 
 ## エンドポイント
 

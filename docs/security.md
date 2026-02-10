@@ -1,31 +1,44 @@
 # Security
 
-Thymeleaflet includes a dedicated security filter chain for `/thymeleaflet/**`.
-By default, it is enabled.
+Thymeleaflet does not register a Spring Security filter chain.
 This tool is intended for development use.
 
-## Configuration
+## Integration Policy
+
+Security behavior is owned by the host application.
+If your app uses Spring Security, you can either use opt-in auto-permit or configure the rule yourself.
+
+### Option A: Opt-in auto permit (quick start)
 
 ```yaml
 thymeleaflet:
   security:
-    enabled: true
+    auto-permit: true
 ```
 
-## Behavior (Default)
+This registers a minimal chain for `/thymeleaflet/**` only.
 
-- All `/thymeleaflet/**` endpoints are permitted (for development).
-- CSRF protection is enabled with cookie-based tokens.
-- Several endpoints are excluded from CSRF (HTMX preview/content).
-- Security headers (HSTS, CSP, Referrer-Policy, Permissions-Policy) are set.
+### Option B: App-side explicit rule
+
+```java
+http.authorizeHttpRequests(auth -> auth
+    .requestMatchers("/thymeleaflet/**").permitAll()
+    .anyRequest().authenticated()
+);
+```
+
+## Behavior
+
+- Thymeleaflet adds no authentication/authorization rules.
+- Thymeleaflet adds no CSRF/header/session rules.
+- Existing app security configuration remains authoritative.
+- If `auto-permit=true`, Thymeleaflet adds only a minimal `/thymeleaflet/**` permit chain.
 
 ## Recommendations
 
-- Disable or restrict `/thymeleaflet/**` in production.
-- Use a reverse proxy or IP restriction for internal access.
-- If you need custom security rules, disable and provide your own chain.
-
-To disable in production, exclude the auto-configuration:
+- Restrict `/thymeleaflet/**` in production as needed.
+- Use reverse proxy or IP restrictions for internal environments.
+- Disable Thymeleaflet in production when not needed.
 
 ```yaml
 # application-prod.yml

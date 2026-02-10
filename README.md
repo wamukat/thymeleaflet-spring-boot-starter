@@ -28,8 +28,6 @@ Recommended setup (enable in dev only, disable in prod):
 # application-dev.yml
 thymeleaflet:
   base-path: /thymeleaflet
-  security:
-    enabled: false
 
 # application-prod.yml
 spring:
@@ -99,8 +97,6 @@ thymeleaflet:
   cache:
     enabled: true
     preload: false
-  security:
-    enabled: true
 ```
 
 ### Notes
@@ -116,7 +112,9 @@ thymeleaflet:
 - `cache.preload` warms the caches at application startup (useful for low-CPU demo environments).
 - CSP is intentionally permissive to allow external JS/CSS in previews. Use only in trusted environments.
 - Preview iframes allow same-origin so cookies/localStorage and authenticated API calls work.
-- `security.enabled` toggles the built-in security configuration for `/thymeleaflet/**`.
+- By default, Thymeleaflet does not register Spring Security rules.
+- If your app uses Spring Security and you want zero-config onboarding, set `thymeleaflet.security.auto-permit=true` to auto-register a minimal permit rule for `/thymeleaflet/**`.
+- If you prefer explicit control, keep the default and allow `/thymeleaflet/**` in your app-side `SecurityFilterChain`.
 
 ## Endpoints
 

@@ -89,8 +89,6 @@ Do not expose it in production. Use profiles to enable in dev and disable in pro
 # application-dev.yml
 thymeleaflet:
   base-path: /thymeleaflet
-  security:
-    enabled: false
 
 # application-prod.yml
 spring:
@@ -99,6 +97,11 @@ spring:
 ```
 
 Alternatively, remove the dependency from production builds.
+
+If your app uses Spring Security, either:
+
+- set `thymeleaflet.security.auto-permit=true` for quick onboarding, or
+- permit `/thymeleaflet/**` in your app-side security configuration.
 
 `thymeleaflet.base-path` currently supports only `/thymeleaflet`.
 Using another path fails fast at startup.
