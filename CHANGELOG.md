@@ -8,6 +8,39 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.8] - 2026-02-11
+
+- Added
+  - Added explicit custom-parameter type switching (`string` / `number` / `boolean` / `object` / `array`) in Custom story editing.
+  - Added NULL toggle support for custom parameters with value restoration behavior when toggling back off.
+  - Added custom-parameter reset action to clear session-saved custom values and restore defaults from the first/default story.
+- Changed
+  - Improved fallback inference for collection/map-like parameters in `StoryParameterDomainService` with parameter-name-aware defaults.
+  - Aligned Custom parameter controls and reset icon placement to improve editing flow in the parameter panel.
+  - Updated mobile navigation UX so the sidebar open button is available beside the fragment title without reserving extra header space.
+  - Made mobile sidebar button placement consistent between initial page render and HTMX-swapped main content.
+- Fixed
+  - Isolated Thymeleaflet message bundles from host application `messages*.properties` to prevent i18n key collisions.
+  - Guarded unsafe fragment insertion parameter patterns (`th:replace` / `th:insert` with plain strings) to avoid preview-time template resolution failures.
+  - Restored mobile fragment-list accessibility so users can reliably reopen the sidebar after closing it.
+  - Fixed fallback-story badge handling and source-panel rendering issues (including signature/implementation display refinements).
+- Docs
+  - Expanded EN/JA documentation for safe fragment insertion patterns and story parameter design guidance.
+  - Updated EN/JA stories docs to explain type inference/fallback behavior and boundaries.
+- Test
+  - Added regression tests for fallback inference behavior (`options`/list/map paths).
+  - Added/updated integration coverage for i18n isolation and rendering-exception guard behavior.
+  - Added mobile sidebar open/close E2E regression coverage and re-ran full E2E suite.
+- Build
+  - Updated Maven project version and sample app dependency to `0.2.8`.
+
+### Issues
+
+- #88 Fix message bundle basename collision with consumer apps
+- #90 Guard unsafe fragment insertion parameters and improve guidance
+- #92 Fix collection-like fallback inference for custom story params
+- #95 Bug: mobile view cannot reopen fragment list sidebar
+
 ## [0.2.7] - 2026-02-11
 
 - Changed
