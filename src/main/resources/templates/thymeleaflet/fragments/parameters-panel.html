@@ -43,7 +43,7 @@
                      th:text="#{thymeleaflet.fragment.source.implementation}">
                     Implementation
                 </div>
-                <pre class="text-xs text-slate-700 font-mono whitespace-pre-wrap overflow-auto max-h-64"><code th:text="${fragmentSourceSnippet}">12 | &lt;div th:fragment="button(label)"&gt;</code></pre>
+                <pre class="fragment-source-pre max-h-64 overflow-auto"><code class="fragment-source-code language-xml" th:text="${fragmentSourceSnippet}">12 | &lt;div th:fragment="button(label)"&gt;</code></pre>
             </div>
             <div th:if="${selectedFragment == null or selectedFragment.originalDefinition == null or #strings.isEmpty(selectedFragment.originalDefinition)}"
                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-500"
