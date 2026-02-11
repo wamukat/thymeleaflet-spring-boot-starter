@@ -57,6 +57,7 @@ class StorybookI18nIntegrationTest {
 
         assertFalse(body.contains("???thymeleaflet."), "Thymeleafletのメッセージキーが未解決にならないこと");
         assertTrue(body.contains("Select a fragment"), "Thymeleafletの英語メッセージが表示されること");
+        assertTrue(body.contains("Viewport"), "利用側 messages.properties と競合してもライブラリ側の英語文言が表示されること");
 
         MessageSource messageSource = applicationContext.getBean("messageSource", MessageSource.class);
         assertTrue(messageSource instanceof AbstractMessageSource, "messageSourceはAbstractMessageSourceであること");
