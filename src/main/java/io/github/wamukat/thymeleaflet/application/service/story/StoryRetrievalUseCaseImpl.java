@@ -60,19 +60,11 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
         
         // ストーリーが定義されていない場合はデフォルトストーリーを作成
         if (stories.isEmpty()) {
-            StoryItem defaultStory = new StoryItem(
-                    "default",
-                    "default",
-                    "",
-                Collections.emptyMap(),
-                StoryPreview.empty(),
-                Collections.emptyMap()
-            );
-            stories.add(FragmentStoryInfo.of(
+            // stories.yml が存在しない fallback default は hasStoryConfig=false として扱う
+            stories.add(FragmentStoryInfo.fallback(
                 fragmentSummary,
                 fragmentSummary.getFragmentName(),
-                "default", 
-                defaultStory
+                "default"
             ));
         }
 
