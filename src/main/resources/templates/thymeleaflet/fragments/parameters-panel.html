@@ -31,7 +31,19 @@
             </h4>
             <div th:if="${selectedFragment != null and selectedFragment.originalDefinition != null and !#strings.isEmpty(selectedFragment.originalDefinition)}"
                  class="rounded-lg border border-gray-200 bg-slate-50 p-3">
+                <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-2"
+                     th:text="#{thymeleaflet.fragment.source.signature}">
+                    Signature
+                </div>
                 <pre class="text-xs text-slate-700 font-mono whitespace-pre-wrap overflow-auto"><code th:text="'th:fragment=&quot;' + ${selectedFragment.originalDefinition} + '&quot;'">th:fragment="button(label)"</code></pre>
+            </div>
+            <div th:if="${fragmentSourceSnippet != null and !#strings.isEmpty(fragmentSourceSnippet)}"
+                 class="rounded-lg border border-gray-200 bg-slate-50 p-3 mt-3">
+                <div class="text-[11px] uppercase tracking-wide text-slate-500 mb-2"
+                     th:text="#{thymeleaflet.fragment.source.implementation}">
+                    Implementation
+                </div>
+                <pre class="text-xs text-slate-700 font-mono whitespace-pre-wrap overflow-auto max-h-64"><code th:text="${fragmentSourceSnippet}">12 | &lt;div th:fragment="button(label)"&gt;</code></pre>
             </div>
             <div th:if="${selectedFragment == null or selectedFragment.originalDefinition == null or #strings.isEmpty(selectedFragment.originalDefinition)}"
                  class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs text-gray-500"

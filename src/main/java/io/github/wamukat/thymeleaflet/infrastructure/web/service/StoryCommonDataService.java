@@ -45,6 +45,8 @@ public class StoryCommonDataService {
 
     private final PreviewConfigService previewConfigService;
 
+    private final FragmentSourceSnippetService fragmentSourceSnippetService;
+
     public StoryCommonDataService(
         StoryParameterUseCase storyParameterUseCase,
         ThymeleafFragmentRenderer thymeleafFragmentRenderer,
@@ -52,7 +54,8 @@ public class StoryCommonDataService {
         JavaDocLookupService javaDocLookupService,
         FragmentDependencyService fragmentDependencyService,
         ResolvedStorybookConfig storybookConfig,
-        PreviewConfigService previewConfigService
+        PreviewConfigService previewConfigService,
+        FragmentSourceSnippetService fragmentSourceSnippetService
     ) {
         this.storyParameterUseCase = storyParameterUseCase;
         this.thymeleafFragmentRenderer = thymeleafFragmentRenderer;
@@ -61,6 +64,7 @@ public class StoryCommonDataService {
         this.fragmentDependencyService = fragmentDependencyService;
         this.storybookConfig = storybookConfig;
         this.previewConfigService = previewConfigService;
+        this.fragmentSourceSnippetService = fragmentSourceSnippetService;
     }
     
     /**
@@ -135,6 +139,10 @@ public class StoryCommonDataService {
         model.addAttribute("defaultStory", defaultStory.orElse(null));
         model.addAttribute("defaultParameters", defaultParameters);
         model.addAttribute("javadocInfo", javadocInfo.orElse(null));
+        model.addAttribute(
+            "fragmentSourceSnippet",
+            fragmentSourceSnippetService.resolveSnippet(templatePath, fragmentName).orElse("")
+        );
         model.addAttribute("previewStylesheets", joinResources(storybookConfig.getResources().getStylesheets()));
         model.addAttribute("previewScripts", joinResources(storybookConfig.getResources().getScripts()));
         previewConfigService.applyPreviewConfig(model);
