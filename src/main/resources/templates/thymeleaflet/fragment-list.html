@@ -285,9 +285,11 @@
                                                 <template x-for="(entry, index) in customStoryEntries('parameters')" :key="entry.key || 'custom-param-' + index">
                                                     <div class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
                                                         <div class="flex items-center justify-between gap-3 mb-3">
-                                                            <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
-                                                                 x-text="entry.key"></div>
-                                                            <div class="inline-flex items-center gap-2">
+                                                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200">
+                                                                <span x-text="entry.key"></span>
+                                                                <span x-show="isCustomNullSelected(entry)" class="text-[11px] font-semibold text-orange-700">(null)</span>
+                                                            </div>
+                                                            <div class="inline-flex items-center gap-3">
                                                                 <span class="text-xs text-gray-600" th:text="#{thymeleaflet.custom.type}">Type</span>
                                                                 <select class="text-xs rounded border border-gray-300 bg-white px-2 py-1 text-gray-800"
                                                                         :value="entry.type"
@@ -298,10 +300,14 @@
                                                                     <option value="object">object</option>
                                                                     <option value="array">array</option>
                                                                 </select>
-                                                                <button type="button"
-                                                                        class="text-[11px] rounded border px-2 py-1 font-semibold tracking-wide transition-colors"
-                                                                        :class="isCustomNullSelected(entry) ? 'border-orange-300 bg-orange-100 text-orange-800' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'"
-                                                                        @click="toggleCustomNull(entry.kind, entry.key, !isCustomNullSelected(entry))">NULL</button>
+                                                                <label class="inline-flex items-center cursor-pointer gap-2">
+                                                                    <input type="checkbox"
+                                                                           class="sr-only peer"
+                                                                           :checked="isCustomNullSelected(entry)"
+                                                                           @change="toggleCustomNull(entry.kind, entry.key, $event.target.checked)">
+                                                                    <div class="relative w-9 h-5 bg-gray-200 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-200 peer-checked:bg-orange-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+                                                                    <span class="text-[11px] font-semibold text-gray-700 tracking-wide">NULL</span>
+                                                                </label>
                                                             </div>
                                                         </div>
                                                         <div x-show="entry.type === 'object' || entry.type === 'array'" class="space-y-3">
@@ -349,9 +355,11 @@
                                                 <template x-for="(entry, index) in customStoryEntries('model')" :key="entry.key || 'custom-model-' + index">
                                                     <div class="border border-gray-200 rounded-lg p-4 transition-colors duration-200 hover:bg-gray-50">
                                                         <div class="flex items-center justify-between gap-3 mb-3">
-                                                            <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
-                                                                 x-text="entry.key"></div>
-                                                            <div class="inline-flex items-center gap-2">
+                                                            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200">
+                                                                <span x-text="entry.key"></span>
+                                                                <span x-show="isCustomNullSelected(entry)" class="text-[11px] font-semibold text-orange-700">(null)</span>
+                                                            </div>
+                                                            <div class="inline-flex items-center gap-3">
                                                                 <span class="text-xs text-gray-600" th:text="#{thymeleaflet.custom.type}">Type</span>
                                                                 <select class="text-xs rounded border border-gray-300 bg-white px-2 py-1 text-gray-800"
                                                                         :value="entry.type"
@@ -362,10 +370,14 @@
                                                                     <option value="object">object</option>
                                                                     <option value="array">array</option>
                                                                 </select>
-                                                                <button type="button"
-                                                                        class="text-[11px] rounded border px-2 py-1 font-semibold tracking-wide transition-colors"
-                                                                        :class="isCustomNullSelected(entry) ? 'border-orange-300 bg-orange-100 text-orange-800' : 'border-gray-300 bg-white text-gray-600 hover:bg-gray-50'"
-                                                                        @click="toggleCustomNull(entry.kind, entry.key, !isCustomNullSelected(entry))">NULL</button>
+                                                                <label class="inline-flex items-center cursor-pointer gap-2">
+                                                                    <input type="checkbox"
+                                                                           class="sr-only peer"
+                                                                           :checked="isCustomNullSelected(entry)"
+                                                                           @change="toggleCustomNull(entry.kind, entry.key, $event.target.checked)">
+                                                                    <div class="relative w-9 h-5 bg-gray-200 rounded-full peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-orange-200 peer-checked:bg-orange-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+                                                                    <span class="text-[11px] font-semibold text-gray-700 tracking-wide">NULL</span>
+                                                                </label>
                                                             </div>
                                                         </div>
                                                         <div x-show="entry.type === 'object' || entry.type === 'array'" class="space-y-3">
