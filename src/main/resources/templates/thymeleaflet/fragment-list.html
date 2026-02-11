@@ -72,17 +72,27 @@
                 <div th:unless="${selectedFragment != null and selectedStory != null}" id="main-content-real" style="display: none;">
                     <!-- フラグメント未選択時の表示 -->
                     <div x-show="!selectedFragment" class="text-center py-16">
-                <div class="mx-auto w-32 h-32 flex items-center justify-center mb-4">
-                    <img th:src="@{/thymeleaflet/images/thymeleaflet-logo.png}"
-                         alt="Thymeleaflet"
-                         class="h-28 w-28">
-                </div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-2" th:text="#{thymeleaflet.welcome.title}">
-                    Select a fragment
-                </h2>
-                <p class="text-gray-600 mb-6" th:text="#{thymeleaflet.welcome.description}">
-                    Select a fragment from the sidebar to view details.
-                </p>
+                        <div class="lg:hidden flex justify-start mb-6">
+                            <button id="sidebar-open-button-welcome"
+                                    aria-label="Open sidebar"
+                                    class="p-2 rounded-md text-gray-400 hover:text-gray-600"
+                                    @click="sidebarOpen = true">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="mx-auto w-32 h-32 flex items-center justify-center mb-4">
+                            <img th:src="@{/thymeleaflet/images/thymeleaflet-logo.png}"
+                                 alt="Thymeleaflet"
+                                 class="h-28 w-28">
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-900 mb-2" th:text="#{thymeleaflet.welcome.title}">
+                            Select a fragment
+                        </h2>
+                        <p class="text-gray-600 mb-6" th:text="#{thymeleaflet.welcome.description}">
+                            Select a fragment from the sidebar to view details.
+                        </p>
                 
                 <!-- 統計情報 -->
                 <div class="max-w-2xl mx-auto">
