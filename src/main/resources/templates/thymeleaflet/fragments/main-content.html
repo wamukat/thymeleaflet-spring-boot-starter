@@ -15,9 +15,19 @@
     <!-- メタ情報 -->
     <div class="lg:col-span-1 space-y-6">
         <div>
-            <div class="border-l-4 border-gray-300 pl-3">
-                <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Fragment</p>
-                <h2 class="mt-0.5 text-lg font-semibold text-gray-900 leading-tight" th:text="${selectedFragment.fragmentName}">fragmentName</h2>
+            <div class="flex items-start justify-between gap-3">
+                <div class="border-l-4 border-gray-300 pl-3 min-w-0">
+                    <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-500">Fragment</p>
+                    <h2 class="mt-0.5 text-lg font-semibold text-gray-900 leading-tight break-all" th:text="${selectedFragment.fragmentName}">fragmentName</h2>
+                </div>
+                <button id="sidebar-open-button"
+                        aria-label="Open sidebar"
+                        class="lg:hidden p-2 rounded-md text-gray-400 hover:text-gray-600"
+                        @click="sidebarOpen = true">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
             </div>
             <div th:if="${selectedFragment != null and selectedFragment.hasSignatureDiagnostic()}"
                  class="mt-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-900">

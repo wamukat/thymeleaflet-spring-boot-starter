@@ -22,8 +22,8 @@ test('simpleCard preview matches snapshot', async ({ page }) => {
 });
 
 test('mobile menu button opens fragment sidebar', async ({ page }) => {
+  await openFragment(page, 'simpleCard');
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/thymeleaflet/');
   const sidebar = page.locator('.nav-sidebar');
   await expect(page.locator('#sidebar-open-button')).toBeVisible();
   await expect(sidebar).not.toHaveClass(/mobile-open/);
