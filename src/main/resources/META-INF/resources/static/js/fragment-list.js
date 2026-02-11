@@ -949,6 +949,22 @@ function hierarchicalFragmentList() {
             URL.revokeObjectURL(url);
         },
 
+        resetCustomStoryValues() {
+            if (!this.selectedFragment || !this.isCustomStory(this.selectedStory)) {
+                return;
+            }
+            const storageKey = this.getCustomStorageKey(this.selectedFragment);
+            if (storageKey) {
+                try {
+                    sessionStorage.removeItem(storageKey);
+                } catch (error) {
+                    console.warn('Failed to clear custom story values', error);
+                }
+            }
+            this.ensureCustomStoryValues(this.selectedFragment);
+            this.applyCustomOverrides();
+        },
+
         buildCustomStoryYaml(parameters, model, wrapper) {
             const lines = [
                 '# Paste into storyGroups.<fragmentName>.stories',

@@ -72,15 +72,27 @@
                         <span th:text="#{thymeleaflet.story.values}">Story values</span>
                         <span th:if="${selectedStory}" class="text-gray-500 font-normal" th:text="'- ' + ${selectedStory.displayTitle ?: selectedStory.storyName}">- Default</span>
                     </h3>
-                    <button type="button"
-                            class="text-xs inline-flex items-center gap-1 text-orange-700 hover:text-orange-800"
-                            th:if="${selectedStory != null and selectedStory.storyName == 'custom'}"
-                            @click="downloadCustomStoryYaml()">
-                        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path d="M3 14a2 2 0 002 2h10a2 2 0 002-2v-1h-2v1H5v-1H3v1z"/>
-                            <path d="M9 3h2v7.586l2.293-2.293 1.414 1.414L10 14.414 5.293 9.707l1.414-1.414L9 10.586V3z"/>
-                        </svg>
-                    </button>
+                    <div class="flex flex-col items-end gap-1"
+                         th:if="${selectedStory != null and selectedStory.storyName == 'custom'}">
+                        <button type="button"
+                                class="text-xs inline-flex items-center gap-1 text-orange-700 hover:text-orange-800"
+                                @click="downloadCustomStoryYaml()">
+                            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path d="M3 14a2 2 0 002 2h10a2 2 0 002-2v-1h-2v1H5v-1H3v1z"/>
+                                <path d="M9 3h2v7.586l2.293-2.293 1.414 1.414L10 14.414 5.293 9.707l1.414-1.414L9 10.586V3z"/>
+                            </svg>
+                            <span th:text="#{thymeleaflet.custom.downloadYaml}">Download YAML</span>
+                        </button>
+                        <button type="button"
+                                class="text-xs inline-flex items-center gap-1 text-gray-600 hover:text-gray-800"
+                                @click="resetCustomStoryValues()">
+                            <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M15.312 5.312a7 7 0 11-9.9 9.9A7 7 0 0115.312 5.31zM4 10a6 6 0 101.758-4.242A6 6 0 004 10z" clip-rule="evenodd"/>
+                                <path d="M10 6a.75.75 0 01.75.75v3.19l2.28 1.318a.75.75 0 11-.75 1.299l-2.655-1.534A.75.75 0 019 10.375V6.75A.75.75 0 0110 6z"/>
+                            </svg>
+                            <span th:text="#{thymeleaflet.custom.reset}">Reset</span>
+                        </button>
+                    </div>
                     <button type="button"
                             class="text-xs inline-flex items-center justify-center w-7 h-7 rounded border border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors"
                             th:if="${selectedStory != null and selectedStory.storyName != 'custom'}"
