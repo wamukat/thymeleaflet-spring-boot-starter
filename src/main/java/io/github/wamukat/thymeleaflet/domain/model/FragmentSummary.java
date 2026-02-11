@@ -5,6 +5,7 @@ import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * フラグメント要約情報 - 軽量DTO
@@ -96,6 +97,20 @@ public class FragmentSummary {
      */
     public boolean hasSignatureDiagnostic() {
         return false;
+    }
+
+    /**
+     * 互換表示用のフラグメントシグネチャを返す。
+     * Infrastructure FragmentInfo が無い場面でも th:fragment 相当の表示に使う。
+     */
+    public String getOriginalDefinition() {
+        if (parameters.isEmpty()) {
+            return fragmentName;
+        }
+        String joined = parameters.stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.joining(", "));
+        return fragmentName + "(" + joined + ")";
     }
     
     @Override

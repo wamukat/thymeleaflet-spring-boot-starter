@@ -26,25 +26,17 @@ public class FragmentStoryInfo {
      * ファクトリメソッドのみからのインスタンス化を強制
      * Clean Architecture: 検証済み値による安全なオブジェクト生成
      */
-    private FragmentStoryInfo(FragmentSummary fragmentSummary, 
+    private FragmentStoryInfo(FragmentSummary fragmentSummary,
                            String fragmentGroupName,
-                           String storyName, 
+                           String storyName,
                            StoryItem story,
-                           Map<String, Object> fallbackParameters) {
+                           Map<String, Object> fallbackParameters,
+                           boolean hasStoryConfig) {
         this.fragmentSummary = Objects.requireNonNull(fragmentSummary, "Fragment summary cannot be null");
         this.fragmentGroupName = Objects.requireNonNullElse(fragmentGroupName, "");
         this.storyName = Objects.requireNonNullElse(storyName, "default");
-        this.hasStoryConfig = Objects.nonNull(story);
-        this.story = Objects.nonNull(story)
-            ? story
-            : new StoryItem(
-                this.storyName,
-                this.storyName,
-                "",
-                Collections.emptyMap(),
-                StoryPreview.empty(),
-                Collections.emptyMap()
-            );
+        this.hasStoryConfig = hasStoryConfig;
+        this.story = Objects.requireNonNull(story, "story cannot be null");
         
         // 防御的コピー + 不変化
         this.fallbackParameters = Collections.unmodifiableMap(
@@ -54,12 +46,12 @@ public class FragmentStoryInfo {
     /**
      * プライベートコンストラクタ (基本版)
      */
-    private FragmentStoryInfo(FragmentSummary fragmentSummary, 
+    private FragmentStoryInfo(FragmentSummary fragmentSummary,
                            String fragmentGroupName,
-                           String storyName, 
+                           String storyName,
                            StoryItem story) {
         this(fragmentSummary, fragmentGroupName, storyName, story, 
-             Collections.emptyMap()); // fallbackParameters
+             Collections.emptyMap(), true); // fallbackParameters
     }
     
     /**
@@ -70,7 +62,14 @@ public class FragmentStoryInfo {
                                      String storyName, 
                                      StoryItem story,
                                      Map<String, Object> fallbackParameters) {
-        return new FragmentStoryInfo(fragmentSummary, fragmentGroupName, storyName, story, fallbackParameters);
+        return new FragmentStoryInfo(
+            fragmentSummary,
+            fragmentGroupName,
+            storyName,
+            Objects.requireNonNull(story, "story cannot be null"),
+            fallbackParameters,
+            true
+        );
     }
 
     /**
@@ -80,7 +79,37 @@ public class FragmentStoryInfo {
                                      String fragmentGroupName,
                                      String storyName, 
                                      StoryItem story) {
-        return new FragmentStoryInfo(fragmentSummary, fragmentGroupName, storyName, story);
+        return new FragmentStoryInfo(
+            fragmentSummary,
+            fragmentGroupName,
+            storyName,
+            Objects.requireNonNull(story, "story cannot be null")
+        );
+    }
+
+    /**
+     * Story設定ファイルが存在しない場合のfallbackストーリーを作成
+     */
+    public static FragmentStoryInfo fallback(FragmentSummary fragmentSummary,
+                                             String fragmentGroupName,
+                                             String storyName) {
+        String resolvedStoryName = Objects.requireNonNullElse(storyName, "default");
+        StoryItem implicitStory = new StoryItem(
+            resolvedStoryName,
+            resolvedStoryName,
+            "",
+            Collections.emptyMap(),
+            StoryPreview.empty(),
+            Collections.emptyMap()
+        );
+        return new FragmentStoryInfo(
+            fragmentSummary,
+            fragmentGroupName,
+            resolvedStoryName,
+            implicitStory,
+            Collections.emptyMap(),
+            false
+        );
     }
     
     public FragmentSummary getFragmentSummary() { return fragmentSummary; }

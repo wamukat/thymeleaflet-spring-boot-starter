@@ -4,7 +4,9 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * FragmentSummary境界変換マッパー
@@ -39,13 +41,24 @@ public class FragmentSummaryMapper {
     public FragmentDiscoveryService.FragmentInfo toInfrastructure(FragmentSummary domainFragmentSummary) {
         FragmentSummary fragmentSummary =
             Objects.requireNonNull(domainFragmentSummary, "domainFragmentSummary must not be null");
+        String signature = buildFragmentSignature(fragmentSummary.getFragmentName(), fragmentSummary.getParameters());
         
         return new FragmentDiscoveryService.FragmentInfo(
             fragmentSummary.getTemplatePath(),
             fragmentSummary.getFragmentName(),
             fragmentSummary.getParameters(),
             fragmentSummary.getType(),
-            "" // originalDefinition は空文字列として設定
+            signature
         );
+    }
+
+    private String buildFragmentSignature(String fragmentName, List<String> parameters) {
+        if (parameters == null || parameters.isEmpty()) {
+            return fragmentName;
+        }
+        String joinedParameters = parameters.stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.joining(", "));
+        return fragmentName + "(" + joinedParameters + ")";
     }
 }

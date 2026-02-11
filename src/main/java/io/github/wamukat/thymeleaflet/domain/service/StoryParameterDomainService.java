@@ -84,9 +84,9 @@ public class StoryParameterDomainService {
             case ENUM:
                 return generateEnumValue(resolvedTypeInfo);
             case COLLECTION:
-                return generateCollectionValue();
+                return generateCollectionValue(paramName);
             case OBJECT:
-                return generateObjectValue(paramName);
+                return generateObjectValue(paramName, resolvedTypeInfo);
             default:
                 return generateDefaultValue(paramName);
         }
@@ -101,6 +101,13 @@ public class StoryParameterDomainService {
     private Object generateDefaultValue(String paramName) {
         // パラメータ名に基づくヒューリスティック値生成
         String lowerName = paramName.toLowerCase();
+
+        if (isCollectionLikeName(lowerName)) {
+            return generateCollectionValue(paramName);
+        }
+        if (isMapLikeName(lowerName)) {
+            return new HashMap<String, Object>();
+        }
         
         if (lowerName.contains("name") || lowerName.contains("title")) {
             return "Sample " + capitalizeFirst(paramName);
@@ -133,8 +140,14 @@ public class StoryParameterDomainService {
         return "Sample " + capitalizeFirst(paramName);
     }
     
-    private Object generateCollectionValue() {
+    private Object generateCollectionValue(String paramName) {
+        String lowerName = paramName.toLowerCase();
         List<Object> list = new ArrayList<>();
+        if (lowerName.contains("option")) {
+            list.add(createOptionItem("option-1", "Option 1"));
+            list.add(createOptionItem("option-2", "Option 2"));
+            return list;
+        }
         list.add("Item 1");
         list.add("Item 2");
         return list;
@@ -147,11 +160,36 @@ public class StoryParameterDomainService {
         return PseudoEnum.defaultValue();
     }
     
-    private Object generateObjectValue(String paramName) {
+    private Object generateObjectValue(String paramName, TypeInfo typeInfo) {
+        String lowerTypeName = typeInfo.getJavaTypeName().toLowerCase();
+        if (lowerTypeName.startsWith("map<") || lowerTypeName.equals("map")) {
+            return new HashMap<String, Object>();
+        }
         Map<String, Object> obj = new HashMap<>();
         obj.put("id", "sample-" + paramName);
         obj.put("name", "Sample " + capitalizeFirst(paramName));
         return obj;
+    }
+
+    private Map<String, Object> createOptionItem(String value, String label) {
+        Map<String, Object> option = new HashMap<>();
+        option.put("value", value);
+        option.put("label", label);
+        return option;
+    }
+
+    private boolean isCollectionLikeName(String lowerName) {
+        return lowerName.contains("options")
+            || lowerName.endsWith("list")
+            || lowerName.contains("items")
+            || lowerName.contains("rows");
+    }
+
+    private boolean isMapLikeName(String lowerName) {
+        return lowerName.endsWith("map")
+            || lowerName.contains("config")
+            || lowerName.contains("attrs")
+            || lowerName.contains("props");
     }
     
     private String capitalizeFirst(String str) {

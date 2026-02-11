@@ -46,6 +46,9 @@ class StoryCommonDataServiceTest {
     @Mock
     private FragmentDependencyService fragmentDependencyService;
 
+    @Mock
+    private FragmentSourceSnippetService fragmentSourceSnippetService;
+
     @Test
     void setupCommonStoryData_setsPreviewResourcesFromProperties() {
         StorybookProperties properties = new StorybookProperties();
@@ -76,6 +79,8 @@ class StoryCommonDataServiceTest {
         when(thymeleafFragmentRenderer.configureModelWithStoryParameters(any(), any()))
             .thenReturn(Map.of());
         when(fragmentDependencyService.findDependencies("components/button", "primaryButton")).thenReturn(List.of());
+        when(fragmentSourceSnippetService.resolveSnippet("components/button", "primaryButton"))
+            .thenReturn(java.util.Optional.of("  12 | <div th:fragment=\"primaryButton(label)\">"));
 
         Model model = new ExtendedModelMap();
 
@@ -83,6 +88,8 @@ class StoryCommonDataServiceTest {
 
         assertThat(model.getAttribute("previewStylesheets")).isEqualTo("/css/app.css,/css/theme.css");
         assertThat(model.getAttribute("previewScripts")).isEqualTo("/js/app.js,/js/vendor.js");
+        assertThat(model.getAttribute("fragmentSourceSnippet"))
+            .isEqualTo("  12 | <div th:fragment=\"primaryButton(label)\">");
     }
 
     @Test
@@ -115,6 +122,8 @@ class StoryCommonDataServiceTest {
         when(storyParameterUseCase.getParametersForStory(storyInfo)).thenReturn(storyParameters);
         when(thymeleafFragmentRenderer.configureModelWithStoryParameters(any(), any())).thenReturn(storyParameters);
         when(fragmentDependencyService.findDependencies("components/button", "primaryButton")).thenReturn(List.of());
+        when(fragmentSourceSnippetService.resolveSnippet("components/button", "primaryButton"))
+            .thenReturn(java.util.Optional.empty());
 
         JavaDocAnalyzer.JavaDocInfo javaDocInfo = JavaDocAnalyzer.JavaDocInfo.of(
             "desc",
@@ -152,7 +161,8 @@ class StoryCommonDataServiceTest {
             javaDocLookupService,
             fragmentDependencyService,
             ResolvedStorybookConfig.from(properties),
-            previewConfigService
+            previewConfigService,
+            fragmentSourceSnippetService
         );
     }
 

@@ -113,6 +113,12 @@ Thymeleaflet adds a **Custom** story entry in the UI so you can edit parameters 
 - **Scope**: affects preview rendering only (does not write back to `stories.yml`).
 - **Reserved name**: `custom` is reserved by the UI and should not be defined in stories.yml.
 
+Type inference and fallback (when no story values exist):
+
+- If type information is available, Thymeleaflet prioritizes that type: `List`/arrays are initialized as arrays, and `Map` as objects.
+- If type information is unavailable, initial values are inferred from parameter names (for example, `options`/`items`/`rows` default to arrays).
+- For production use, define explicit values in `stories.yml` for parameters with strict shape requirements, especially array-style inputs such as `options`.
+
 ## URL Behavior
 
 - Story URL: `/thymeleaflet/{templatePath}/{fragmentName}/{storyName}`

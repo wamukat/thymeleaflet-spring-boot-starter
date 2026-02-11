@@ -113,6 +113,12 @@ Thymeleaflet は UI に **Custom** ストーリーを追加し、パラメータ
 - **適用範囲**: プレビュー表示のみ（`stories.yml` には書き戻しません）。
 - **予約名**: `custom` は UI で使用するため、stories.yml には定義しないでください。
 
+型推論とフォールバック（story 未定義時）:
+
+- 型情報が取得できる場合はその型を優先し、`List`/配列は配列、`Map` はオブジェクトとして初期化します。
+- 型情報がない場合はパラメータ名ヒューリスティックで初期値を決定します（例: `options`/`items`/`rows` は配列）。
+- 実運用では、`stories.yml` に期待する型を明示することを推奨します（特に `options` のような配列引数）。
+
 ## URL の挙動
 
 - URL: `/thymeleaflet/{templatePath}/{fragmentName}/{storyName}`

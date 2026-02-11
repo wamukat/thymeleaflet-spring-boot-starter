@@ -55,6 +55,7 @@ class StoryRetrievalUseCaseImplTest {
 
         assertThat(stories).extracting(FragmentStoryInfo::getStoryName)
             .containsExactly("default");
+        assertThat(stories.get(0).hasStoryConfig()).isFalse();
     }
 
     @Test
@@ -72,6 +73,8 @@ class StoryRetrievalUseCaseImplTest {
 
         assertThat(stories).extracting(FragmentStoryInfo::getStoryName)
             .containsExactly("default", "custom");
+        assertThat(stories.get(0).hasStoryConfig()).isFalse();
+        assertThat(stories.get(1).hasStoryConfig()).isTrue();
     }
 
     @Test

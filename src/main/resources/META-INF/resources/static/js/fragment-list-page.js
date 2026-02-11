@@ -4,6 +4,10 @@ function applyHighlighting(container) {
 
     const codeBlocks = container.querySelectorAll('pre code');
     codeBlocks.forEach(function(block) {
+        if (block.classList.contains('fragment-source-code')) {
+            renderFragmentSourceCodeBlock(block);
+            return;
+        }
         // 既にハイライト済みの場合はリセット
         if (block.dataset.highlighted) {
             delete block.dataset.highlighted;
@@ -12,9 +16,45 @@ function applyHighlighting(container) {
     });
 }
 
+function renderFragmentSourceCodeBlock(block) {
+    if (!block) return;
+
+    const raw = block.textContent || '';
+    const lines = raw.split(/\r?\n/);
+    const renderedLines = lines.map((line) => {
+        const matched = line.match(/^\s*(\d+)\s\|\s?(.*)$/);
+        if (matched) {
+            const lineNumber = matched[1];
+            const codePart = matched[2] || '';
+            const highlightedCode = codePart.length > 0
+                ? hljs.highlight(codePart, { language: 'xml' }).value
+                : '&nbsp;';
+            return (
+                `<span class="fragment-source-line">` +
+                `<span class="fragment-source-line-no">${lineNumber}</span>` +
+                `<span class="fragment-source-line-code">${highlightedCode}</span>` +
+                `</span>`
+            );
+        }
+
+        const highlightedCode = line.length > 0
+            ? hljs.highlight(line, { language: 'xml' }).value
+            : '&nbsp;';
+        return (
+            `<span class="fragment-source-line">` +
+            `<span class="fragment-source-line-no"></span>` +
+            `<span class="fragment-source-line-code">${highlightedCode}</span>` +
+            `</span>`
+        );
+    });
+
+    block.innerHTML = renderedLines.join('\n');
+    block.dataset.highlighted = 'yes';
+}
+
 // ページ読み込み時にHighlight.jsを初期化
 document.addEventListener('DOMContentLoaded', function() {
-    hljs.highlightAll();
+    applyHighlighting(document);
 });
 
 // HTMX部分更新後にHighlight.jsを再適用

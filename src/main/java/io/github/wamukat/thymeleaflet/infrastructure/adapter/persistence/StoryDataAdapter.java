@@ -5,7 +5,6 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfiguration;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryGroup;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
-import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.slf4j.Logger;
@@ -14,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -187,22 +185,13 @@ public class StoryDataAdapter implements StoryDataPort {
         }
 
         String resolvedStoryName = storyName.isBlank() ? "default" : storyName;
-        StoryItem defaultStory = new StoryItem(
-            resolvedStoryName,
-            resolvedStoryName,
-            "",
-            Collections.emptyMap(),
-            StoryPreview.empty(),
-            Collections.emptyMap()
-        );
         
         io.github.wamukat.thymeleaflet.domain.model.FragmentSummary domainFragmentSummary = 
             fragmentSummaryMapper.toDomain(fragmentInfo.get());
-        return Optional.of(FragmentStoryInfo.of(
+        return Optional.of(FragmentStoryInfo.fallback(
             domainFragmentSummary,
             fragmentName,
-            resolvedStoryName,
-            defaultStory
+            resolvedStoryName
         ));
     }
 
