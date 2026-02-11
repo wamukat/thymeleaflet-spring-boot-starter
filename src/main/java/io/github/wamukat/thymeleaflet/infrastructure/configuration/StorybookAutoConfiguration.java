@@ -190,7 +190,8 @@ public class StorybookAutoConfiguration {
 
     private static MessageSource createThymeleafletMessageSource() {
         ResourceBundleMessageSource messageSource = new ResourceBundleMessageSource();
-        messageSource.setBasename("messages");
+        // Isolate Thymeleaflet bundles to avoid colliding with app-level "messages*.properties".
+        messageSource.setBasename("thymeleaflet/messages");
         messageSource.setDefaultLocale(Locale.ENGLISH);
         messageSource.setFallbackToSystemLocale(false);
         messageSource.setDefaultEncoding("UTF-8");
