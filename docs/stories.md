@@ -119,6 +119,35 @@ Thymeleaflet adds a **Custom** story entry in the UI so you can edit parameters 
 - If `/default` is requested but no `default` story exists, Thymeleaflet redirects
   to the *first* story in the file.
 
+## Safe Fragment Parameters
+
+When a parameter is used with `th:replace` or `th:insert`, pass a fragment expression (`~{...}`).
+
+Unsafe example:
+
+```html
+<th:block th:replace="${body}"></th:block>
+```
+
+Why this is unsafe:
+
+- A plain string like `body: value` can be treated as a template name and trigger `TemplateInputException`.
+
+Recommended safe branching:
+
+```html
+<th:block th:if="${body != null and #strings.startsWith(body.toString(), '~')}">
+  <th:block th:replace="~{${body}}"></th:block>
+</th:block>
+<p th:if="${body != null and !#strings.startsWith(body.toString(), '~')}" th:text="${body}"></p>
+```
+
+Story parameter design guide:
+
+- For `th:replace`/`th:insert`, require values in `~{template :: fragment(...)}` format.
+- Do not pass generic dummy text values directly into `th:replace`.
+- Use separate names for text vs fragment reference values (for example, `bodyText` and `bodyFragment`).
+
 ## Tips
 
 - Use `model` for fragments that require objects (not simple parameters).

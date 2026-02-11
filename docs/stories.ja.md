@@ -118,6 +118,35 @@ Thymeleaflet は UI に **Custom** ストーリーを追加し、パラメータ
 - URL: `/thymeleaflet/{templatePath}/{fragmentName}/{storyName}`
 - `/default` が指定されたが `default` が存在しない場合、ファイルの**先頭ストーリー**へリダイレクトします。
 
+## フラグメント参照パラメータを安全に扱う
+
+`th:replace` / `th:insert` に渡す値は、`~{...}` のフラグメント式にしてください。
+
+NG 例:
+
+```html
+<th:block th:replace="${body}"></th:block>
+```
+
+なぜ危険か:
+
+- `body: value` のような通常文字列が来ると、Thymeleaf がテンプレート名として解決しにいき、`TemplateInputException` になることがあります。
+
+推奨パターン（安全な分岐）:
+
+```html
+<th:block th:if="${body != null and #strings.startsWith(body.toString(), '~')}">
+  <th:block th:replace="~{${body}}"></th:block>
+</th:block>
+<p th:if="${body != null and !#strings.startsWith(body.toString(), '~')}" th:text="${body}"></p>
+```
+
+Story パラメータ設計ガイド:
+
+- `th:replace` / `th:insert` 用パラメータは `~{template :: fragment(...)}` を必須にする。
+- `value` のような汎用ダミー値を `th:replace` に直接渡さない。
+- 文字列パラメータとフラグメント参照パラメータを命名で分離する（例: `bodyText` / `bodyFragment`）。
+
 ## Tips
 
 - オブジェクトが必要な場合は `model` を使います。
