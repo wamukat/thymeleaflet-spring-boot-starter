@@ -203,7 +203,7 @@
                     <div th:if="${selectedStory != null and selectedStory.storyName == 'custom'}">
                         <template x-if="customStoryEntries('parameters').length > 0">
                             <div>
-                                <div class="flex items-center justify-between">
+                                <div class="inline-flex items-center gap-2">
                                     <div class="inline-flex items-center gap-2 rounded bg-blue-50 px-2 py-1 text-xs font-semibold tracking-wide text-blue-700">
                                         <span th:text="#{thymeleaflet.custom.parameters}">Custom parameters</span>
                                         <span class="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-orange-700">
@@ -216,8 +216,8 @@
                                             class="text-xs inline-flex items-center justify-center w-7 h-7 rounded border border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-colors"
                                             th:attr="title=#{thymeleaflet.custom.reset}"
                                             @click="resetCustomStoryValues()">
-                                        <svg class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                            <path fill-rule="evenodd" d="M4.5 5.5A6.5 6.5 0 1110 16.5a6.47 6.47 0 01-4.58-1.89.75.75 0 111.06-1.06A4.97 4.97 0 0010 15a5 5 0 10-4.77-6.5H6.5a.75.75 0 010 1.5H3a.75.75 0 01-.75-.75v-3.5a.75.75 0 011.5 0v.75h.75z" clip-rule="evenodd"/>
+                                        <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.651 7.65a7.131 7.131 0 0 0-12.68 3.15M18.001 4v4h-4m-7.652 8.35a7.13 7.13 0 0 0 12.68-3.15M6 20v-4h4"/>
                                         </svg>
                                     </button>
                                 </div>
