@@ -347,11 +347,11 @@
 
   /* Fragment source (line-number separated highlight) */
   .fragment-source-pre {
-    @apply m-0 rounded border border-slate-200 bg-white p-0;
+    @apply m-0 rounded border border-gray-700 bg-gray-900 p-2;
   }
 
   .fragment-source-code {
-    @apply block text-xs leading-relaxed text-slate-700;
+    @apply block text-xs leading-relaxed text-gray-100;
     white-space: pre;
     tab-size: 2;
   }
@@ -363,12 +363,12 @@
   }
 
   .fragment-source-line-no {
-    @apply pr-3 text-right text-slate-400 select-none;
-    border-right: 1px solid #e2e8f0;
+    @apply pl-2 pr-3 text-right text-gray-500 select-none;
+    border-right: 1px solid #374151;
   }
 
   .fragment-source-line-code {
-    @apply pl-3;
+    @apply pl-4;
     white-space: pre;
   }
 
