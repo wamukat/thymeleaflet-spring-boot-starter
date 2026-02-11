@@ -47,6 +47,38 @@ git tag vX.Y.Z
 5) Verify that the staging repository is closed and released in Sonatype (auto-release enabled).
 6) Check Maven Central for the published artifacts.
 
+## How To Collect Release Changes (Checklist)
+
+Before editing `CHANGELOG.md`, always collect all merged changes since the last tag.
+
+1) Identify the previous release tag:
+
+```bash
+git tag --sort=version:refname | tail -n 1
+```
+
+2) List commits since the previous tag:
+
+```bash
+git log --oneline <PREVIOUS_TAG>..main
+```
+
+3) List merged PRs since the previous tag date:
+
+```bash
+gh pr list --state merged --base main --search "merged:>=YYYY-MM-DD" --json number,title,mergedAt,headRefName
+```
+
+4) For each candidate PR, open summary/details and map to changelog categories:
+
+```bash
+gh pr view <PR_NUMBER> --json number,title,body,url,mergedAt
+```
+
+5) Update `CHANGELOG.md` categories (`Added` / `Changed` / `Fixed` / `Removed` / `Refactored` / `Docs` / `Build` / `Test`) and include related issue numbers.
+
+This prevents missing important fixes/features in release notes.
+
 ## Snapshot Deploy
 
 ```bash
