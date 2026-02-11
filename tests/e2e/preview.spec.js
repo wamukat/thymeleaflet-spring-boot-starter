@@ -21,6 +21,21 @@ test('simpleCard preview matches snapshot', async ({ page }) => {
   await expect(preview).toHaveScreenshot('simpleCard-preview.png');
 });
 
+test('mobile menu button opens fragment sidebar', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/thymeleaflet/');
+  const sidebar = page.locator('.nav-sidebar');
+  await expect(page.locator('#sidebar-open-button')).toBeVisible();
+  await expect(sidebar).not.toHaveClass(/mobile-open/);
+
+  await page.locator('#sidebar-open-button').click();
+  await expect(sidebar).toHaveClass(/mobile-open/);
+  await expect(page.locator('#sidebar-close-button')).toBeVisible();
+
+  await page.locator('#sidebar-close-button').click();
+  await expect(sidebar).not.toHaveClass(/mobile-open/);
+});
+
 test('selectInput fullscreen matches snapshot', async ({ page }) => {
   await openFragment(page, 'selectInput');
   const fullscreenButton = page.getByRole('button', { name: /fullscreen/i });
