@@ -1,0 +1,13 @@
+meta:
+  title: Unsafe Fragment
+  description: Reproduces invalid th:replace usage
+
+storyGroups:
+  unsafe:
+    title: Unsafe
+    description: Unsafe th:replace parameter case
+    stories:
+      - name: default
+        title: Default
+        parameters:
+          body: value

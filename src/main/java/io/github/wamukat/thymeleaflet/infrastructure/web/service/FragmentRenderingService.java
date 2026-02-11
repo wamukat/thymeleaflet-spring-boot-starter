@@ -10,13 +10,20 @@ import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConve
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 import org.springframework.ui.Model;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /**
  * フラグメント動的レンダリング処理専用サービス
@@ -39,18 +46,26 @@ public class FragmentRenderingService {
 
     private final ThymeleafFragmentRenderer thymeleafFragmentRenderer;
 
+    private final MessageSource messageSource;
+
+    private final ResourceLoader resourceLoader;
+
     public FragmentRenderingService(
         ValidationUseCase validationUseCase,
         StoryRetrievalUseCase storyRetrievalUseCase,
         StoryParameterUseCase storyParameterUseCase,
         SecurePathConversionService securePathConversionService,
-        ThymeleafFragmentRenderer thymeleafFragmentRenderer
+        ThymeleafFragmentRenderer thymeleafFragmentRenderer,
+        MessageSource messageSource,
+        ResourceLoader resourceLoader
     ) {
         this.validationUseCase = validationUseCase;
         this.storyRetrievalUseCase = storyRetrievalUseCase;
         this.storyParameterUseCase = storyParameterUseCase;
         this.securePathConversionService = securePathConversionService;
         this.thymeleafFragmentRenderer = thymeleafFragmentRenderer;
+        this.messageSource = messageSource;
+        this.resourceLoader = resourceLoader;
     }
     
     /**
@@ -148,6 +163,22 @@ public class FragmentRenderingService {
             if (!parameterOverrides.isEmpty()) {
                 mergedParameters.putAll(parameterOverrides);
             }
+
+            Optional<String> unsafeParameter = findUnsafeFragmentInsertionParameter(
+                storyInfo.getFragmentSummary().getTemplatePath(),
+                mergedParameters
+            );
+            if (unsafeParameter.isPresent()) {
+                String errorMessage = messageSource.getMessage(
+                    "thymeleaflet.error.message.invalidFragmentExpression",
+                    new Object[] {unsafeParameter.orElseThrow()},
+                    LocaleContextHolder.getLocale()
+                );
+                model.addAttribute("error", errorMessage);
+                return RenderingResult.error(
+                    "thymeleaflet/fragments/error-display :: error(type='info', title=null, message=null, showActionButton=false, actionText=null, actionScript=null, templatePath=null)"
+                );
+            }
             
             if (mergedParameters.isEmpty() && mergedModel.isEmpty()) {
                 // Stories YAMLファイルもJavaDocも利用できない場合はエラー表示
@@ -224,6 +255,49 @@ public class FragmentRenderingService {
 
     private String classNameOf(@Nullable Object target) {
         return Objects.isNull(target) ? "null" : target.getClass().getSimpleName();
+    }
+
+    private Optional<String> findUnsafeFragmentInsertionParameter(
+        String templatePath,
+        Map<String, Object> mergedParameters
+    ) {
+        String templateSource = readTemplateSource(templatePath);
+        if (templateSource.isEmpty()) {
+            return Optional.empty();
+        }
+
+        for (Map.Entry<String, Object> entry : mergedParameters.entrySet()) {
+            Object value = entry.getValue();
+            if (!(value instanceof String stringValue)) {
+                continue;
+            }
+            String trimmedValue = stringValue.trim();
+            if (trimmedValue.startsWith("~{") && trimmedValue.endsWith("}")) {
+                continue;
+            }
+
+            String parameterName = entry.getKey();
+            Pattern unsafeInsertionPattern = Pattern.compile(
+                "th:(?:replace|insert)\\s*=\\s*['\"]\\$\\{\\s*" + Pattern.quote(parameterName) + "\\s*}['\"]"
+            );
+            if (unsafeInsertionPattern.matcher(templateSource).find()) {
+                return Optional.of(parameterName);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private String readTemplateSource(String templatePath) {
+        Resource resource = resourceLoader.getResource("classpath:templates/" + templatePath + ".html");
+        if (!resource.exists()) {
+            return "";
+        }
+        try (var inputStream = resource.getInputStream()) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException ioException) {
+            logger.debug("Failed to read template source for safety check: {}", templatePath, ioException);
+            return "";
+        }
     }
 
     /**

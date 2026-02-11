@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<th:block th:fragment="unsafe(body)">
+    <th:block th:replace="${body}"></th:block>
+</th:block>
+</body>
+</html>
