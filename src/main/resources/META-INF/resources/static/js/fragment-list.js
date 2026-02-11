@@ -239,6 +239,7 @@ function hierarchicalFragmentList() {
         originalHierarchyTree: originalHierarchyTree,
         selectedFragment: null,
         customStoryState: { parameters: {}, model: {} },
+        customStoryTypes: { parameters: {}, model: {} },
         customPreviewWrapper: '',
         yamlPreviewOpen: false,
         yamlPreviewContent: '',
@@ -371,30 +372,41 @@ function hierarchicalFragmentList() {
         loadCustomStoryValues(fragment) {
             const storageKey = this.getCustomStorageKey(fragment);
             if (!storageKey) {
-                return { parameters: {}, model: {} };
+                return { parameters: {}, model: {}, types: { parameters: {}, model: {} } };
             }
             try {
                 const raw = sessionStorage.getItem(storageKey);
                 if (!raw) {
-                    return { parameters: {}, model: {} };
+                    return { parameters: {}, model: {}, types: { parameters: {}, model: {} } };
                 }
                 const parsed = JSON.parse(raw);
                 if (parsed && typeof parsed === 'object') {
                     if ('parameters' in parsed || 'model' in parsed) {
                         const hasWrapper = Object.prototype.hasOwnProperty.call(parsed, 'wrapper');
+                        const rawTypes = parsed.types && typeof parsed.types === 'object' ? parsed.types : {};
                         return {
                             parameters: parsed.parameters && typeof parsed.parameters === 'object' ? parsed.parameters : {},
                             model: parsed.model && typeof parsed.model === 'object' ? parsed.model : {},
+                            types: {
+                                parameters: rawTypes.parameters && typeof rawTypes.parameters === 'object' ? rawTypes.parameters : {},
+                                model: rawTypes.model && typeof rawTypes.model === 'object' ? rawTypes.model : {}
+                            },
                             wrapper: hasWrapper && typeof parsed.wrapper === 'string' ? parsed.wrapper : null,
                             wrapperDefined: hasWrapper
                         };
                     }
-                    return { parameters: parsed, model: {}, wrapper: null, wrapperDefined: false };
+                    return {
+                        parameters: parsed,
+                        model: {},
+                        types: { parameters: {}, model: {} },
+                        wrapper: null,
+                        wrapperDefined: false
+                    };
                 }
-                return { parameters: {}, model: {}, wrapper: null, wrapperDefined: false };
+                return { parameters: {}, model: {}, types: { parameters: {}, model: {} }, wrapper: null, wrapperDefined: false };
             } catch (error) {
                 console.warn('Failed to load custom story values', error);
-                return { parameters: {}, model: {}, wrapper: null, wrapperDefined: false };
+                return { parameters: {}, model: {}, types: { parameters: {}, model: {} }, wrapper: null, wrapperDefined: false };
             }
         },
 
@@ -427,28 +439,6 @@ function hierarchicalFragmentList() {
                 return;
             }
             const stored = this.loadCustomStoryValues(fragment);
-            if (stored && (
-                Object.keys(stored.parameters || {}).length > 0 ||
-                Object.keys(stored.model || {}).length > 0 ||
-                (typeof stored.wrapper === 'string' && stored.wrapper.length > 0)
-            )) {
-                const baseStory = this.getCustomBaseStory(fragment);
-                const inheritedWrapper = this.getStoryWrapper(baseStory) || this.getPreviewWrapperFromHost();
-                this.customStoryState = stored;
-                this.customPreviewWrapper = stored.wrapperDefined === false || !stored.wrapper || !stored.wrapper.trim()
-                    ? inheritedWrapper
-                    : stored.wrapper;
-                this.customStoryRawValues = this.buildRawValuesFromCustom(stored);
-                this.customStoryJsonErrors = {};
-                this.customModelJson = stringifyObjectLiteral(this.customStoryState.model || {});
-                this.customModelJsonError = false;
-                this.saveCustomStoryValues(fragment, {
-                    ...this.customStoryState,
-                    wrapper: this.customPreviewWrapper
-                });
-                return;
-            }
-
             const baseStory = this.getCustomBaseStory(fragment);
             const baseParams = baseStory && baseStory.parameters && !Array.isArray(baseStory.parameters)
                 ? baseStory.parameters
@@ -456,7 +446,44 @@ function hierarchicalFragmentList() {
             const baseModel = baseStory && baseStory.model && !Array.isArray(baseStory.model)
                 ? baseStory.model
                 : {};
-            this.customStoryState = { parameters: { ...baseParams }, model: { ...baseModel } };
+
+            const normalizedState = this.buildNormalizedCustomState(fragment, {
+                parameters: { ...baseParams, ...(stored.parameters || {}) },
+                model: { ...baseModel, ...(stored.model || {}) }
+            });
+            const normalizedTypes = this.buildNormalizedCustomTypes(
+                normalizedState,
+                stored.types || { parameters: {}, model: {} }
+            );
+
+            if (stored && (
+                Object.keys(stored.parameters || {}).length > 0 ||
+                Object.keys(stored.model || {}).length > 0 ||
+                (typeof stored.wrapper === 'string' && stored.wrapper.length > 0)
+            )) {
+                const inheritedWrapper = this.getStoryWrapper(baseStory) || this.getPreviewWrapperFromHost();
+                this.customStoryState = normalizedState;
+                this.customStoryTypes = normalizedTypes;
+                this.customPreviewWrapper = stored.wrapperDefined === false || !stored.wrapper || !stored.wrapper.trim()
+                    ? inheritedWrapper
+                    : stored.wrapper;
+                this.customStoryRawValues = this.buildRawValuesFromCustom(normalizedState);
+                this.customStoryJsonErrors = {};
+                this.customModelJson = stringifyObjectLiteral(this.customStoryState.model || {});
+                this.customModelJsonError = false;
+                this.saveCustomStoryValues(fragment, {
+                    ...this.customStoryState,
+                    types: this.customStoryTypes,
+                    wrapper: this.customPreviewWrapper
+                });
+                return;
+            }
+
+            this.customStoryState = this.buildNormalizedCustomState(fragment, {
+                parameters: { ...baseParams },
+                model: { ...baseModel }
+            });
+            this.customStoryTypes = this.buildNormalizedCustomTypes(this.customStoryState, { parameters: {}, model: {} });
             this.customPreviewWrapper = this.getStoryWrapper(baseStory) || this.getPreviewWrapperFromHost();
             this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryState);
             this.customStoryJsonErrors = {};
@@ -464,8 +491,39 @@ function hierarchicalFragmentList() {
             this.customModelJsonError = false;
             this.saveCustomStoryValues(fragment, {
                 ...this.customStoryState,
+                types: this.customStoryTypes,
                 wrapper: this.customPreviewWrapper
             });
+        },
+
+        buildNormalizedCustomState(fragment, state) {
+            const params = state?.parameters && typeof state.parameters === 'object' ? { ...state.parameters } : {};
+            const fragmentParameters = Array.isArray(fragment?.parameters)
+                ? fragment.parameters.filter(name => typeof name === 'string' && name.length > 0)
+                : [];
+            fragmentParameters.forEach(parameterName => {
+                if (!Object.prototype.hasOwnProperty.call(params, parameterName)) {
+                    params[parameterName] = '';
+                }
+            });
+            const model = state?.model && typeof state.model === 'object' ? { ...state.model } : {};
+            return { parameters: params, model };
+        },
+
+        buildNormalizedCustomTypes(state, types) {
+            const normalizedTypes = {
+                parameters: { ...(types?.parameters || {}) },
+                model: { ...(types?.model || {}) }
+            };
+            ['parameters', 'model'].forEach(kind => {
+                const bucket = state?.[kind] || {};
+                Object.entries(bucket).forEach(([key, value]) => {
+                    if (!this.isSupportedCustomValueType(normalizedTypes[kind][key])) {
+                        normalizedTypes[kind][key] = this.getCustomValueType(value);
+                    }
+                });
+            });
+            return normalizedTypes;
         },
 
         buildRawValuesFromCustom(state) {
@@ -487,7 +545,7 @@ function hierarchicalFragmentList() {
                 kind,
                 key,
                 value,
-                type: this.getCustomValueType(value),
+                type: this.getCustomEntryType(kind, key, value),
                 rawValue: this.customStoryRawValues?.[`${kind}:${key}`]
             }));
             if (kind !== 'parameters') {
@@ -533,6 +591,18 @@ function hierarchicalFragmentList() {
                 return 'string';
             }
             return typeof value;
+        },
+
+        getCustomEntryType(kind, key, value) {
+            const explicitType = this.customStoryTypes?.[kind]?.[key];
+            if (this.isSupportedCustomValueType(explicitType)) {
+                return explicitType;
+            }
+            return this.getCustomValueType(value);
+        },
+
+        isSupportedCustomValueType(type) {
+            return type === 'string' || type === 'number' || type === 'boolean' || type === 'object' || type === 'array';
         },
 
         getCustomInputValue(entry) {
@@ -582,9 +652,115 @@ function hierarchicalFragmentList() {
             }
             this.saveCustomStoryValues(this.selectedFragment, {
                 ...this.customStoryState,
+                types: this.customStoryTypes,
                 wrapper: this.customPreviewWrapper
             });
             this.applyCustomOverrides();
+        },
+
+        updateCustomValueType(kind, key, nextType) {
+            if (!this.isSupportedCustomValueType(nextType)) {
+                return;
+            }
+            const currentValue = this.customStoryState?.[kind]?.[key];
+            const coercedValue = this.coerceCustomValueByType(currentValue, nextType);
+            const nextState = {
+                parameters: { ...(this.customStoryState?.parameters || {}) },
+                model: { ...(this.customStoryState?.model || {}) }
+            };
+            nextState[kind][key] = coercedValue;
+            this.customStoryState = nextState;
+            this.customStoryTypes = {
+                parameters: { ...(this.customStoryTypes?.parameters || {}) },
+                model: { ...(this.customStoryTypes?.model || {}) }
+            };
+            this.customStoryTypes[kind][key] = nextType;
+            if (nextType === 'object' || nextType === 'array') {
+                this.customStoryRawValues = {
+                    ...(this.customStoryRawValues || {}),
+                    [`${kind}:${key}`]: JSON.stringify(coercedValue, null, 2)
+                };
+            } else {
+                const { [`${kind}:${key}`]: _, ...restRaw } = this.customStoryRawValues || {};
+                this.customStoryRawValues = restRaw;
+            }
+            const { [`${kind}:${key}`]: __, ...restErrors } = this.customStoryJsonErrors || {};
+            this.customStoryJsonErrors = restErrors;
+            if (kind === 'model') {
+                this.customModelJson = stringifyObjectLiteral(nextState.model || {});
+                this.customModelJsonError = false;
+            }
+            this.saveCustomStoryValues(this.selectedFragment, {
+                ...this.customStoryState,
+                types: this.customStoryTypes,
+                wrapper: this.customPreviewWrapper
+            });
+            this.applyCustomOverrides();
+        },
+
+        coerceCustomValueByType(value, targetType) {
+            if (targetType === 'array') {
+                if (Array.isArray(value)) {
+                    return value;
+                }
+                if (typeof value === 'string' && value.trim() !== '') {
+                    try {
+                        const parsed = JSON.parse(value);
+                        return Array.isArray(parsed) ? parsed : [];
+                    } catch (_error) {
+                        return [];
+                    }
+                }
+                return [];
+            }
+            if (targetType === 'object') {
+                if (value && typeof value === 'object' && !Array.isArray(value)) {
+                    return value;
+                }
+                if (typeof value === 'string' && value.trim() !== '') {
+                    try {
+                        const parsed = JSON.parse(value);
+                        return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+                    } catch (_error) {
+                        return {};
+                    }
+                }
+                return {};
+            }
+            if (targetType === 'boolean') {
+                if (typeof value === 'boolean') {
+                    return value;
+                }
+                if (typeof value === 'string') {
+                    const normalized = value.trim().toLowerCase();
+                    if (normalized === 'true') {
+                        return true;
+                    }
+                    if (normalized === 'false') {
+                        return false;
+                    }
+                }
+                return false;
+            }
+            if (targetType === 'number') {
+                if (typeof value === 'number' && Number.isFinite(value)) {
+                    return value;
+                }
+                if (typeof value === 'string' && value.trim() !== '') {
+                    const parsed = Number(value);
+                    if (Number.isFinite(parsed)) {
+                        return parsed;
+                    }
+                }
+                return null;
+            }
+            if (value === null || value === undefined) {
+                return '';
+            }
+            if (typeof value === 'object') {
+                return JSON.stringify(value);
+            }
+            return String(value);
         },
 
         updateCustomModelJson(rawValue) {
@@ -598,6 +774,7 @@ function hierarchicalFragmentList() {
                 this.customModelJsonError = false;
                 this.saveCustomStoryValues(this.selectedFragment, {
                     ...this.customStoryState,
+                    types: this.customStoryTypes,
                     wrapper: this.customPreviewWrapper
                 });
                 this.applyCustomOverrides();
@@ -610,6 +787,7 @@ function hierarchicalFragmentList() {
             this.customPreviewWrapper = rawValue || '';
             this.saveCustomStoryValues(this.selectedFragment, {
                 ...this.customStoryState,
+                types: this.customStoryTypes,
                 wrapper: this.customPreviewWrapper
             });
             this.applyCustomOverrides();
