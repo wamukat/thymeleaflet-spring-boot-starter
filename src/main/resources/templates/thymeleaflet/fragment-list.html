@@ -37,12 +37,26 @@
 
     <!-- メインコンテンツ -->
     <main class="nav-main-content thymeleaflet-main">
-        <div th:replace="~{thymeleaflet/fragments/fragment-list-topbar :: topbar}"></div>
-
         <!-- コンテンツエリア -->
         <div class="p-6 thymeleaflet-main-body">
             <!-- HTMXターゲットエリア -->
             <div id="main-content-area">
+                <div class="lg:hidden mb-3 flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-gray-700 truncate"
+                          th:attr="data-default-label=#{thymeleaflet.title.fragmentList}"
+                          x-text="selectedFragment ? selectedFragment.fragmentName : $el.dataset.defaultLabel">
+                        Fragment List
+                    </span>
+                    <button id="sidebar-open-button"
+                            aria-label="Open sidebar"
+                            class="p-2 rounded-md text-gray-400 hover:text-gray-600"
+                            @click="sidebarOpen = true">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+
                 <!-- 直接URLアクセス時でストーリーが選択されている場合の表示 -->
                 <div th:if="${selectedFragment != null and selectedStory != null}">
                     <div th:replace="~{thymeleaflet/fragments/main-content :: content}"></div>
