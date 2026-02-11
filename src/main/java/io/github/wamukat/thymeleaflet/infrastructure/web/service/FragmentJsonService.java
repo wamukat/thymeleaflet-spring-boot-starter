@@ -104,7 +104,7 @@ public class FragmentJsonService {
                 fragmentData.put("fragmentName", fragment.getFragmentName());
                 fragmentData.put("parameters", fragment.getParameters());
                 fragmentData.put("type", fragment.getType().name());
-                fragmentData.put("originalDefinition", ""); // FragmentSummaryにはoriginalDefinitionなし
+                fragmentData.put("originalDefinition", buildFragmentSignature(fragment.getFragmentName(), fragment.getParameters()));
                 
                 // ストーリー情報を取得
                 List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragment);
@@ -167,6 +167,16 @@ public class FragmentJsonService {
             return sanitized;
         }
         return value.toString();
+    }
+
+    private String buildFragmentSignature(String fragmentName, List<String> parameters) {
+        if (parameters == null || parameters.isEmpty()) {
+            return fragmentName;
+        }
+        String joinedParameters = parameters.stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.joining(", "));
+        return fragmentName + "(" + joinedParameters + ")";
     }
 
     private String classNameOf(@Nullable Object target) {
