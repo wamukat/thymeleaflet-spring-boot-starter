@@ -241,6 +241,7 @@ function hierarchicalFragmentList() {
         customStoryState: { parameters: {}, model: {} },
         customStoryTypes: { parameters: {}, model: {} },
         customStoryNullFlags: { parameters: {}, model: {} },
+        customStoryNullBackups: { parameters: {}, model: {} },
         customPreviewWrapper: '',
         yamlPreviewOpen: false,
         yamlPreviewContent: '',
@@ -736,6 +737,29 @@ function hierarchicalFragmentList() {
             this.customStoryNullFlags[kind][key] = enabled === true;
         },
 
+        setCustomNullBackup(kind, key, value, rawValue) {
+            this.customStoryNullBackups = {
+                parameters: { ...(this.customStoryNullBackups?.parameters || {}) },
+                model: { ...(this.customStoryNullBackups?.model || {}) }
+            };
+            this.customStoryNullBackups[kind][key] = { value, rawValue };
+        },
+
+        getCustomNullBackup(kind, key) {
+            return this.customStoryNullBackups?.[kind]?.[key];
+        },
+
+        clearCustomNullBackup(kind, key) {
+            const nextBackups = {
+                parameters: { ...(this.customStoryNullBackups?.parameters || {}) },
+                model: { ...(this.customStoryNullBackups?.model || {}) }
+            };
+            if (nextBackups[kind] && Object.prototype.hasOwnProperty.call(nextBackups[kind], key)) {
+                delete nextBackups[kind][key];
+            }
+            this.customStoryNullBackups = nextBackups;
+        },
+
         toggleCustomNull(kind, key, enabled) {
             const isNull = enabled === true;
             const nextState = {
@@ -743,6 +767,12 @@ function hierarchicalFragmentList() {
                 model: { ...(this.customStoryState?.model || {}) }
             };
             if (isNull) {
+                this.setCustomNullBackup(
+                    kind,
+                    key,
+                    nextState[kind][key],
+                    this.customStoryRawValues?.[`${kind}:${key}`]
+                );
                 nextState[kind][key] = null;
                 const { [`${kind}:${key}`]: _raw, ...restRaw } = this.customStoryRawValues || {};
                 this.customStoryRawValues = restRaw;
@@ -750,7 +780,19 @@ function hierarchicalFragmentList() {
                 this.customStoryJsonErrors = restErr;
             } else {
                 const entryType = this.getCustomEntryType(kind, key, nextState[kind][key]);
-                nextState[kind][key] = this.coerceCustomValueByType(undefined, entryType);
+                const backup = this.getCustomNullBackup(kind, key);
+                if (backup && Object.prototype.hasOwnProperty.call(backup, 'value')) {
+                    nextState[kind][key] = backup.value;
+                    if ((entryType === 'object' || entryType === 'array') && typeof backup.rawValue === 'string') {
+                        this.customStoryRawValues = {
+                            ...(this.customStoryRawValues || {}),
+                            [`${kind}:${key}`]: backup.rawValue
+                        };
+                    }
+                    this.clearCustomNullBackup(kind, key);
+                } else {
+                    nextState[kind][key] = this.coerceCustomValueByType(undefined, entryType);
+                }
             }
             this.customStoryState = nextState;
             this.setCustomNullFlag(kind, key, isNull);
