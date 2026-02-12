@@ -8,6 +8,20 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.11] - 2026-02-12
+
+- Fixed
+  - Prevented fallback/custom model inference from leaking child fragment model keys into parent fragments when `th:replace`/`th:insert` references pass literal-only arguments.
+  - Kept recursive merge for static references that have no arguments or dynamic/non-literal arguments.
+- Test
+  - Added regression coverage for recursion-flag extraction in template reference analysis and for literal-only child reference merge suppression in model inference service.
+- Build
+  - Updated Maven project version and sample app dependency to `0.2.11`.
+
+### Issues
+
+- #99 Fix fallback model inference and source snippet truncation
+
 ## [0.2.10] - 2026-02-12
 
 - Fixed
