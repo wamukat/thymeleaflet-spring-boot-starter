@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
+import io.github.wamukat.thymeleaflet.domain.model.InferredModel;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -34,6 +36,9 @@ public class FragmentModelInferenceService {
     private static final Pattern TH_EACH_PATTERN = Pattern.compile(
         "th:each\\s*=\\s*\"([^\"]*)\"|th:each\\s*=\\s*'([^']*)'"
     );
+    private static final Pattern TH_REPLACE_OR_INSERT_PATTERN = Pattern.compile(
+        "th:(?:replace|insert)\\s*=\\s*\"([^\"]*)\"|th:(?:replace|insert)\\s*=\\s*'([^']*)'"
+    );
     private static final Set<String> RESERVED_ROOTS = Set.of(
         "true", "false", "null",
         "param", "session", "application", "request", "response"
@@ -46,33 +51,12 @@ public class FragmentModelInferenceService {
     }
 
     public Map<String, Object> inferModel(String templatePath, String fragmentName, List<String> parameterNames) {
-        String html = readTemplateSource(templatePath);
-        if (html.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        Set<String> excludedIdentifiers = new HashSet<>(parameterNames == null ? List.of() : parameterNames);
-        excludedIdentifiers.addAll(extractLocalVariablesFromThWith(html));
-        Map<String, List<String>> loopVariablePaths = extractLoopVariablePaths(html);
-        LinkedHashMap<String, Object> inferred = new LinkedHashMap<>();
-
-        Matcher matcher = EXPRESSION_PATTERN.matcher(html);
-        while (matcher.find()) {
-            String expression = stripStringLiterals(matcher.group(1));
-            for (List<String> path : extractModelPaths(expression, excludedIdentifiers)) {
-                if (path.isEmpty()) {
-                    continue;
-                }
-                String root = path.get(0);
-                if (loopVariablePaths.containsKey(root)) {
-                    putLoopPath(inferred, loopVariablePaths.get(root), path.subList(1, path.size()));
-                    continue;
-                }
-                putPath(inferred, path, inferLeafValue(path.get(path.size() - 1)));
-            }
-        }
-
-        return inferred;
+        InferredModel inferred = inferModelRecursive(
+            templatePath,
+            parameterNames == null ? List.of() : parameterNames,
+            new HashSet<>()
+        );
+        return inferred.toMap();
     }
 
     private List<List<String>> extractModelPaths(String expression, Set<String> excludedIdentifiers) {
@@ -180,6 +164,93 @@ public class FragmentModelInferenceService {
             return Optional.of(inner.substring(1, inner.length() - 1));
         }
         return Optional.empty();
+    }
+
+    private InferredModel inferModelRecursive(
+        String templatePath,
+        List<String> parameterNames,
+        Set<String> visitedTemplatePaths
+    ) {
+        if (!visitedTemplatePaths.add(templatePath)) {
+            return new InferredModel();
+        }
+        String html = readTemplateSource(templatePath);
+        if (html.isEmpty()) {
+            return new InferredModel();
+        }
+
+        InferredModel inferred = inferCurrentTemplateModel(html, parameterNames);
+        for (String referencedTemplatePath : extractReferencedTemplatePaths(html)) {
+            if (referencedTemplatePath.equals(templatePath)) {
+                continue;
+            }
+            InferredModel child = inferModelRecursive(referencedTemplatePath, List.of(), visitedTemplatePaths);
+            inferred.merge(child);
+        }
+        return inferred;
+    }
+
+    private InferredModel inferCurrentTemplateModel(String html, List<String> parameterNames) {
+        Set<String> excludedIdentifiers = new HashSet<>(parameterNames);
+        excludedIdentifiers.addAll(extractLocalVariablesFromThWith(html));
+        Map<String, List<String>> loopVariablePaths = extractLoopVariablePaths(html);
+        InferredModel inferred = new InferredModel();
+
+        Matcher matcher = EXPRESSION_PATTERN.matcher(html);
+        while (matcher.find()) {
+            String expression = stripStringLiterals(matcher.group(1));
+            for (List<String> path : extractModelPaths(expression, excludedIdentifiers)) {
+                if (path.isEmpty()) {
+                    continue;
+                }
+                String root = path.getFirst();
+                Object leafValue = inferLeafValue(path.get(path.size() - 1));
+                if (loopVariablePaths.containsKey(root)) {
+                    inferred.putLoopPath(loopVariablePaths.get(root), path.subList(1, path.size()), leafValue);
+                    continue;
+                }
+                inferred.putPath(path, leafValue);
+            }
+        }
+        return inferred;
+    }
+
+    private Set<String> extractReferencedTemplatePaths(String html) {
+        Set<String> referencedTemplatePaths = new LinkedHashSet<>();
+        Matcher matcher = TH_REPLACE_OR_INSERT_PATTERN.matcher(html);
+        while (matcher.find()) {
+            String raw = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+            if (raw == null || raw.isBlank()) {
+                continue;
+            }
+            String expression = raw.trim();
+            if (expression.contains("${")) {
+                continue;
+            }
+            if (expression.startsWith("~{") && expression.endsWith("}")) {
+                expression = expression.substring(2, expression.length() - 1).trim();
+            }
+            int fragmentSeparator = expression.indexOf("::");
+            if (fragmentSeparator <= 0) {
+                continue;
+            }
+            String candidatePath = expression.substring(0, fragmentSeparator).trim();
+            if (candidatePath.isEmpty() || candidatePath.startsWith("#") || candidatePath.startsWith("this")) {
+                continue;
+            }
+            if (candidatePath.startsWith("'") && candidatePath.endsWith("'") && candidatePath.length() >= 2) {
+                candidatePath = candidatePath.substring(1, candidatePath.length() - 1);
+            } else if (candidatePath.startsWith("\"") && candidatePath.endsWith("\"") && candidatePath.length() >= 2) {
+                candidatePath = candidatePath.substring(1, candidatePath.length() - 1);
+            }
+            if (candidatePath.startsWith("/")) {
+                candidatePath = candidatePath.substring(1);
+            }
+            if (!candidatePath.isEmpty()) {
+                referencedTemplatePaths.add(candidatePath);
+            }
+        }
+        return referencedTemplatePaths;
     }
 
     private Map<String, List<String>> extractLoopVariablePaths(String html) {
@@ -374,132 +445,6 @@ public class FragmentModelInferenceService {
             next++;
         }
         return next < expression.length() && expression.charAt(next) == '(';
-    }
-
-    private void putLoopPath(Map<String, Object> target, List<String> iterablePath, List<String> itemSubPath) {
-        if (iterablePath == null || iterablePath.isEmpty()) {
-            return;
-        }
-        if (iterablePath.size() == 1) {
-            String key = iterablePath.get(0);
-            List<Object> list = ensureListValue(target, key);
-            if (!itemSubPath.isEmpty()) {
-                Map<String, Object> firstItem = ensureFirstListMap(list);
-                putNestedMapPath(firstItem, itemSubPath, inferLeafValue(itemSubPath.get(itemSubPath.size() - 1)));
-            }
-            return;
-        }
-        Map<String, Object> current = target;
-        for (int i = 0; i < iterablePath.size() - 1; i++) {
-            String segment = iterablePath.get(i);
-            Object child = current.get(segment);
-            if (!(child instanceof Map<?, ?> childMap)) {
-                Map<String, Object> created = new LinkedHashMap<>();
-                current.put(segment, created);
-                current = created;
-                continue;
-            }
-            @SuppressWarnings("unchecked")
-            Map<String, Object> casted = (Map<String, Object>) childMap;
-            current = casted;
-        }
-        String listKey = iterablePath.get(iterablePath.size() - 1);
-        List<Object> list = ensureListValue(current, listKey);
-        if (!itemSubPath.isEmpty()) {
-            Map<String, Object> firstItem = ensureFirstListMap(list);
-            putNestedMapPath(firstItem, itemSubPath, inferLeafValue(itemSubPath.get(itemSubPath.size() - 1)));
-        }
-    }
-
-    private List<Object> ensureListValue(Map<String, Object> parent, String key) {
-        Object currentValue = parent.get(key);
-        if (currentValue instanceof List<?> existingList) {
-            @SuppressWarnings("unchecked")
-            List<Object> casted = (List<Object>) existingList;
-            return casted;
-        }
-        List<Object> created = new ArrayList<>();
-        parent.put(key, created);
-        return created;
-    }
-
-    private Map<String, Object> ensureFirstListMap(List<Object> list) {
-        if (list.isEmpty()) {
-            Map<String, Object> created = new LinkedHashMap<>();
-            list.add(created);
-            return created;
-        }
-        Object first = list.get(0);
-        if (first instanceof Map<?, ?> firstMap) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> casted = (Map<String, Object>) firstMap;
-            return casted;
-        }
-        Map<String, Object> created = new LinkedHashMap<>();
-        list.set(0, created);
-        return created;
-    }
-
-    private void putNestedMapPath(Map<String, Object> root, List<String> path, Object leafValue) {
-        if (path.isEmpty()) {
-            return;
-        }
-        if (path.size() == 1) {
-            root.putIfAbsent(path.get(0), leafValue);
-            return;
-        }
-        Map<String, Object> current = root;
-        for (int i = 0; i < path.size() - 1; i++) {
-            String segment = path.get(i);
-            Object child = current.get(segment);
-            if (!(child instanceof Map<?, ?> childMap)) {
-                Map<String, Object> created = new LinkedHashMap<>();
-                current.put(segment, created);
-                current = created;
-                continue;
-            }
-            @SuppressWarnings("unchecked")
-            Map<String, Object> casted = (Map<String, Object>) childMap;
-            current = casted;
-        }
-        current.putIfAbsent(path.get(path.size() - 1), leafValue);
-    }
-
-    private void putPath(Map<String, Object> target, List<String> path, Object leafValue) {
-        if (path.isEmpty()) {
-            return;
-        }
-        if (path.size() == 1) {
-            target.putIfAbsent(path.get(0), leafValue);
-            return;
-        }
-
-        Object rootObject = target.get(path.get(0));
-        Map<String, Object> rootMap;
-        if (rootObject instanceof Map<?, ?> existingMap) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> casted = (Map<String, Object>) existingMap;
-            rootMap = casted;
-        } else {
-            rootMap = new LinkedHashMap<>();
-            target.put(path.get(0), rootMap);
-        }
-
-        Map<String, Object> current = rootMap;
-        for (int i = 1; i < path.size() - 1; i++) {
-            String segment = path.get(i);
-            Object child = current.get(segment);
-            if (child instanceof Map<?, ?> childMap) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> casted = (Map<String, Object>) childMap;
-                current = casted;
-            } else {
-                Map<String, Object> created = new LinkedHashMap<>();
-                current.put(segment, created);
-                current = created;
-            }
-        }
-        current.putIfAbsent(path.get(path.size() - 1), leafValue);
     }
 
     private Object inferLeafValue(String key) {

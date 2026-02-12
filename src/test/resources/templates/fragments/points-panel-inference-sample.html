@@ -2,6 +2,18 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
   <section th:fragment="pointsPanel" th:if="${pointPage != null}">
+    <select>
+      <option th:selected="${pointPage.pageSize == 5}">5</option>
+      <option th:selected="${pointPage.pageSize == 10}">10</option>
+    </select>
+    <p th:text="${pointPage.totalItems}"></p>
+    <p th:text="${selectedFilter}"></p>
+    <p th:text="${currentPage}"></p>
+    <p th:text="${totalPages}"></p>
+    <p th:text="${hasPrev}"></p>
+    <p th:text="${prevPage}"></p>
+    <p th:text="${hasNext}"></p>
+    <p th:text="${nextPage}"></p>
     <article th:each="row : ${pointPage.items}">
       <p th:text="${row.occurredAt}"></p>
       <p th:text="${row.description}"></p>

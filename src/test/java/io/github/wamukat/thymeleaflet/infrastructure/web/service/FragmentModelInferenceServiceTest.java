@@ -69,4 +69,29 @@ class FragmentModelInferenceServiceTest {
         assertThat(row.get("amount")).isEqualTo(0);
         assertThat(row.get("balanceAfter")).isEqualTo(0);
     }
+
+    @Test
+    void shouldMergeModelRequirementsFromStaticThReplaceReference() {
+        Map<String, Object> inferred = service.inferModel(
+            "fragments/points-content-inference-sample",
+            "pointsContent",
+            List.of()
+        );
+
+        assertThat(inferred).containsKey("pointPage");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> pointPage = (Map<String, Object>) Objects.requireNonNull(inferred.get("pointPage"));
+        assertThat(pointPage).containsKeys("totalPoints", "expiringPoints", "pageSize", "totalItems", "items");
+
+        assertThat(inferred).containsKeys(
+            "selectedFilter",
+            "currentPage",
+            "totalPages",
+            "hasPrev",
+            "prevPage",
+            "hasNext",
+            "nextPage"
+        );
+    }
 }
