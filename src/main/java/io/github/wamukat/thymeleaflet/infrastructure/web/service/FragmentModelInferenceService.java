@@ -1,8 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.InferredModel;
-import io.github.wamukat.thymeleaflet.domain.model.TemplateInferenceSnapshot;
-import io.github.wamukat.thymeleaflet.domain.service.ModelValueInferenceService;
+import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
 import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -10,7 +9,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -26,16 +24,13 @@ public class FragmentModelInferenceService {
 
     private final ResourceLoader resourceLoader;
     private final TemplateModelExpressionAnalyzer expressionAnalyzer;
-    private final ModelValueInferenceService valueInferenceService;
 
     public FragmentModelInferenceService(
         ResourceLoader resourceLoader,
-        TemplateModelExpressionAnalyzer expressionAnalyzer,
-        ModelValueInferenceService valueInferenceService
+        TemplateModelExpressionAnalyzer expressionAnalyzer
     ) {
         this.resourceLoader = resourceLoader;
         this.expressionAnalyzer = expressionAnalyzer;
-        this.valueInferenceService = valueInferenceService;
     }
 
     public Map<String, Object> inferModel(String templatePath, String fragmentName, List<String> parameterNames) {
@@ -60,31 +55,14 @@ public class FragmentModelInferenceService {
             return new InferredModel();
         }
 
-        TemplateInferenceSnapshot snapshot = expressionAnalyzer.analyze(html, new HashSet<>(parameterNames));
-        InferredModel inferred = buildInferredModel(snapshot);
-        for (String referencedTemplatePath : snapshot.referencedTemplatePaths()) {
+        TemplateInference inference = expressionAnalyzer.analyze(html, new HashSet<>(parameterNames));
+        InferredModel inferred = inference.toInferredModel();
+        for (String referencedTemplatePath : inference.referencedTemplatePaths()) {
             if (referencedTemplatePath.equals(templatePath)) {
                 continue;
             }
             InferredModel child = inferModelRecursive(referencedTemplatePath, List.of(), visitedTemplatePaths);
             inferred.merge(child);
-        }
-        return inferred;
-    }
-
-    private InferredModel buildInferredModel(TemplateInferenceSnapshot snapshot) {
-        InferredModel inferred = new InferredModel();
-        for (List<String> path : snapshot.modelPaths()) {
-            if (path.isEmpty()) {
-                continue;
-            }
-            String root = path.getFirst();
-            Object leafValue = valueInferenceService.inferLeafValue(path.get(path.size() - 1));
-            if (snapshot.loopVariablePaths().containsKey(root)) {
-                inferred.putLoopPath(snapshot.loopVariablePaths().get(root), path.subList(1, path.size()), leafValue);
-                continue;
-            }
-            inferred.putPath(path, leafValue);
         }
         return inferred;
     }

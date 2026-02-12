@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.domain.service;
 
-import io.github.wamukat.thymeleaflet.domain.model.TemplateInferenceSnapshot;
+import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
+import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -35,21 +36,23 @@ public class TemplateModelExpressionAnalyzer {
         "param", "session", "application", "request", "response"
     );
 
-    public TemplateInferenceSnapshot analyze(String html, Set<String> parameterNames) {
+    public TemplateInference analyze(String html, Set<String> parameterNames) {
         Set<String> excludedIdentifiers = new HashSet<>(parameterNames);
         excludedIdentifiers.addAll(extractLocalVariablesFromThWith(html));
-        Map<String, List<String>> loopVariablePaths = extractLoopVariablePaths(html);
-        List<List<String>> modelPaths = extractModelPathsFromHtml(html, excludedIdentifiers);
+        Map<String, ModelPath> loopVariablePaths = extractLoopVariablePaths(html);
+        List<ModelPath> modelPaths = extractModelPathsFromHtml(html, excludedIdentifiers);
         Set<String> referencedTemplatePaths = extractReferencedTemplatePaths(html);
-        return new TemplateInferenceSnapshot(modelPaths, loopVariablePaths, referencedTemplatePaths);
+        return new TemplateInference(modelPaths, loopVariablePaths, referencedTemplatePaths);
     }
 
-    private List<List<String>> extractModelPathsFromHtml(String html, Set<String> excludedIdentifiers) {
-        List<List<String>> paths = new ArrayList<>();
+    private List<ModelPath> extractModelPathsFromHtml(String html, Set<String> excludedIdentifiers) {
+        List<ModelPath> paths = new ArrayList<>();
         Matcher matcher = EXPRESSION_PATTERN.matcher(html);
         while (matcher.find()) {
             String expression = stripStringLiterals(matcher.group(1));
-            paths.addAll(extractModelPaths(expression, excludedIdentifiers));
+            for (List<String> path : extractModelPaths(expression, excludedIdentifiers)) {
+                paths.add(ModelPath.of(path));
+            }
         }
         return paths;
     }
@@ -128,8 +131,8 @@ public class TemplateModelExpressionAnalyzer {
         return paths;
     }
 
-    private Map<String, List<String>> extractLoopVariablePaths(String html) {
-        Map<String, List<String>> loopVariables = new LinkedHashMap<>();
+    private Map<String, ModelPath> extractLoopVariablePaths(String html) {
+        Map<String, ModelPath> loopVariables = new LinkedHashMap<>();
         Matcher matcher = TH_EACH_PATTERN.matcher(html);
         while (matcher.find()) {
             String raw = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
@@ -160,7 +163,7 @@ public class TemplateModelExpressionAnalyzer {
                 continue;
             }
             for (String alias : aliases) {
-                loopVariables.putIfAbsent(alias, iterablePath);
+                loopVariables.putIfAbsent(alias, ModelPath.of(iterablePath));
             }
         }
         return loopVariables;

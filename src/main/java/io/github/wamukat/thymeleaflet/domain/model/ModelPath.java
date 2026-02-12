@@ -1,17 +1,43 @@
-package io.github.wamukat.thymeleaflet.domain.service;
+package io.github.wamukat.thymeleaflet.domain.model;
 
-import org.springframework.stereotype.Component;
-
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 /**
- * モデルキー名から推奨のサンプル値を推定するドメインサービス。
+ * モデル参照パスを表す値オブジェクト。
  */
-@Component
-public class ModelValueInferenceService {
+public record ModelPath(List<String> segments) {
 
-    public Object inferLeafValue(String key) {
-        String normalized = key.toLowerCase(Locale.ROOT);
+    public ModelPath {
+        segments = List.copyOf(segments);
+    }
+
+    public static ModelPath of(List<String> segments) {
+        return new ModelPath(segments);
+    }
+
+    public boolean isEmpty() {
+        return segments.isEmpty();
+    }
+
+    public String root() {
+        return segments.getFirst();
+    }
+
+    public String leaf() {
+        return segments.getLast();
+    }
+
+    public List<String> subPathWithoutRoot() {
+        if (segments.size() <= 1) {
+            return List.of();
+        }
+        return new ArrayList<>(segments.subList(1, segments.size()));
+    }
+
+    public Object inferSampleValue() {
+        String normalized = leaf().toLowerCase(Locale.ROOT);
         if (normalized.startsWith("is")
             || normalized.startsWith("has")
             || normalized.startsWith("can")
@@ -40,6 +66,6 @@ public class ModelValueInferenceService {
         if (normalized.contains("email")) {
             return "sample@example.com";
         }
-        return "Sample " + key;
+        return "Sample " + leaf();
     }
 }

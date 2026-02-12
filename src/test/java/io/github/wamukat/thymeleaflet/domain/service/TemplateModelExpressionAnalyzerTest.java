@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.domain.service;
 
-import io.github.wamukat.thymeleaflet.domain.model.TemplateInferenceSnapshot;
+import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
+import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,12 +25,12 @@ class TemplateModelExpressionAnalyzerTest {
             </section>
             """;
 
-        TemplateInferenceSnapshot snapshot = analyzer.analyze(html, Set.of());
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
 
-        assertThat(snapshot.modelPaths()).contains(List.of("pointPage", "totalPoints"));
-        assertThat(snapshot.modelPaths()).contains(List.of("row", "amount"));
-        assertThat(snapshot.modelPaths()).doesNotContain(List.of("localText"));
-        assertThat(snapshot.loopVariablePaths()).containsEntry("row", List.of("pointPage", "items"));
+        assertThat(snapshot.modelPaths()).contains(ModelPath.of(List.of("pointPage", "totalPoints")));
+        assertThat(snapshot.modelPaths()).contains(ModelPath.of(List.of("row", "amount")));
+        assertThat(snapshot.modelPaths()).doesNotContain(ModelPath.of(List.of("localText")));
+        assertThat(snapshot.loopVariablePaths()).containsEntry("row", ModelPath.of(List.of("pointPage", "items")));
     }
 
     @Test
@@ -42,7 +43,7 @@ class TemplateModelExpressionAnalyzerTest {
             </div>
             """;
 
-        TemplateInferenceSnapshot snapshot = analyzer.analyze(html, Set.of());
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
 
         assertThat(snapshot.referencedTemplatePaths())
             .contains("fragments/points-panel", "components/ui-alert")

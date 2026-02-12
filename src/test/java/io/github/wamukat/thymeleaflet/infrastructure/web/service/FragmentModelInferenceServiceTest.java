@@ -1,7 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
-import io.github.wamukat.thymeleaflet.domain.service.ModelValueInferenceService;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.DefaultResourceLoader;
 
@@ -17,8 +16,7 @@ class FragmentModelInferenceServiceTest {
     private final FragmentModelInferenceService service =
         new FragmentModelInferenceService(
             new DefaultResourceLoader(),
-            new TemplateModelExpressionAnalyzer(),
-            new ModelValueInferenceService()
+            new TemplateModelExpressionAnalyzer()
         );
 
     @Test
