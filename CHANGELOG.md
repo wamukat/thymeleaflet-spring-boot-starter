@@ -8,6 +8,30 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.9] - 2026-02-12
+
+- Added
+  - Added fallback story model inference support for statically referenced fragments (`th:replace` / `th:insert`) so required model keys can be merged from child fragments.
+- Changed
+  - Improved fallback/custom model defaults around message-like fields by treating `*message*` keys as string samples.
+  - Improved mobile top-page navigation by ensuring the sidebar open (hamburger) button is consistently visible in placeholder/welcome states.
+- Refactored
+  - Refactored model inference into richer domain objects (`ModelPath`, `TemplateInference`, `InferredModel`) and reduced orchestration logic in web service layer.
+  - Extracted/organized template expression analysis responsibilities to improve maintainability and testability.
+- Fixed
+  - Fixed fallback rendering failure for fragments that depend on nested panel fragment requirements (e.g. `pointsContent` including `pointsPanel`).
+  - Fixed source implementation snippet extraction so fragment code blocks are not truncated mid-element.
+- Test
+  - Added regression tests for loop/collection model inference, static fragment reference merging, source-snippet extraction, and message-field sample typing.
+  - Re-ran E2E regression suite for mobile sidebar and preview flows.
+- Build
+  - Updated Maven project version and sample app dependency to `0.2.9`.
+
+### Issues
+
+- #95 Bug: mobile view cannot reopen fragment list sidebar
+- #99 Fix fallback model inference and source snippet truncation
+
 ## [0.2.8] - 2026-02-11
 
 - Added
