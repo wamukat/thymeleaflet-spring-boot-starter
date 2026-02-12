@@ -2,7 +2,6 @@ package io.github.wamukat.thymeleaflet.domain.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
 import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -18,7 +17,6 @@ import java.util.regex.Pattern;
 /**
  * テンプレート式を解析し、モデル推論に必要な情報を抽出する。
  */
-@Component
 public class TemplateModelExpressionAnalyzer {
 
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("\\$\\{([^}]*)}");

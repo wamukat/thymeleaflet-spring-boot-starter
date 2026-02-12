@@ -6,6 +6,7 @@ import io.github.wamukat.thymeleaflet.domain.service.DocumentationAnalysisServic
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.domain.service.StoryDataRepository;
 import io.github.wamukat.thymeleaflet.domain.service.StoryParameterDomainService;
+import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -68,6 +69,12 @@ public class StorybookAutoConfiguration {
         DocumentationAnalysisService documentationAnalysisService
     ) {
         return new StoryParameterDomainService(storyDataRepository, documentationAnalysisService);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public TemplateModelExpressionAnalyzer templateModelExpressionAnalyzer() {
+        return new TemplateModelExpressionAnalyzer();
     }
 
     /**
