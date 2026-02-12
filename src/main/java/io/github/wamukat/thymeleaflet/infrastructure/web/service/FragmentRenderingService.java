@@ -50,6 +50,8 @@ public class FragmentRenderingService {
 
     private final ResourceLoader resourceLoader;
 
+    private final FragmentModelInferenceService fragmentModelInferenceService;
+
     public FragmentRenderingService(
         ValidationUseCase validationUseCase,
         StoryRetrievalUseCase storyRetrievalUseCase,
@@ -57,7 +59,8 @@ public class FragmentRenderingService {
         SecurePathConversionService securePathConversionService,
         ThymeleafFragmentRenderer thymeleafFragmentRenderer,
         MessageSource messageSource,
-        ResourceLoader resourceLoader
+        ResourceLoader resourceLoader,
+        FragmentModelInferenceService fragmentModelInferenceService
     ) {
         this.validationUseCase = validationUseCase;
         this.storyRetrievalUseCase = storyRetrievalUseCase;
@@ -66,6 +69,7 @@ public class FragmentRenderingService {
         this.thymeleafFragmentRenderer = thymeleafFragmentRenderer;
         this.messageSource = messageSource;
         this.resourceLoader = resourceLoader;
+        this.fragmentModelInferenceService = fragmentModelInferenceService;
     }
     
     /**
@@ -121,6 +125,13 @@ public class FragmentRenderingService {
             logger.info("Fragment Type: {}", storyInfo.getFragmentSummary().getType());
 
             Map<String, Object> storyModel = storyInfo.getModel();
+            if (storyModel.isEmpty()) {
+                storyModel = fragmentModelInferenceService.inferModel(
+                    fullTemplatePath,
+                    fragmentName,
+                    storyInfo.getFragmentSummary().getParameters()
+                );
+            }
             Map<String, Object> mergedModel = new HashMap<>();
             if (!storyModel.isEmpty()) {
                 mergedModel.putAll(storyModel);

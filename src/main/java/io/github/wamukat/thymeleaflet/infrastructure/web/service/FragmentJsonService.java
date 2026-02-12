@@ -39,16 +39,20 @@ public class FragmentJsonService {
 
     private final StoryParameterUseCase storyParameterUseCase;
 
+    private final FragmentModelInferenceService fragmentModelInferenceService;
+
     public FragmentJsonService(
         StoryRetrievalUseCase storyRetrievalUseCase,
         FragmentPreviewUseCase fragmentPreviewUseCase,
         FragmentSummaryMapper fragmentSummaryMapper,
-        StoryParameterUseCase storyParameterUseCase
+        StoryParameterUseCase storyParameterUseCase,
+        FragmentModelInferenceService fragmentModelInferenceService
     ) {
         this.storyRetrievalUseCase = storyRetrievalUseCase;
         this.fragmentPreviewUseCase = fragmentPreviewUseCase;
         this.fragmentSummaryMapper = fragmentSummaryMapper;
         this.storyParameterUseCase = storyParameterUseCase;
+        this.fragmentModelInferenceService = fragmentModelInferenceService;
     }
 
     /**
@@ -108,6 +112,7 @@ public class FragmentJsonService {
                 
                 // ストーリー情報を取得
                 List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragment);
+                final Map<String, Object>[] inferredModelHolder = new Map[] { Collections.emptyMap() };
                 fragmentData.put("stories", stories.stream().map(story -> {
                     Map<String, Object> storyData = new HashMap<>();
                     Map<String, Object> storyParameters = story.getParameters();
@@ -128,7 +133,18 @@ public class FragmentJsonService {
                     } else {
                         storyData.put("parameters", storyParameters);
                     }
-                    storyData.put("model", story.getModel());
+                    Map<String, Object> storyModel = story.getModel();
+                    if (storyModel.isEmpty()) {
+                        if (inferredModelHolder[0].isEmpty()) {
+                            inferredModelHolder[0] = fragmentModelInferenceService.inferModel(
+                                fragment.getTemplatePath(),
+                                fragment.getFragmentName(),
+                                fragment.getParameters()
+                            );
+                        }
+                        storyModel = inferredModelHolder[0];
+                    }
+                    storyData.put("model", storyModel);
                     return storyData;
                 }).collect(Collectors.toList()));
                 

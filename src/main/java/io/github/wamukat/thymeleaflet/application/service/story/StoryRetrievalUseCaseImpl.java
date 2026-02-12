@@ -101,13 +101,7 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
     }
 
     private boolean canUseCustomStory(List<FragmentStoryInfo> stories, FragmentSummary fragmentSummary) {
-        boolean hasParameters = !fragmentSummary.getParameters().isEmpty();
-        if (hasParameters) {
-            return true;
-        }
-        return stories.stream()
-            .map(FragmentStoryInfo::getModel)
-            .anyMatch(model -> !model.isEmpty());
+        return true;
     }
 
     @Override

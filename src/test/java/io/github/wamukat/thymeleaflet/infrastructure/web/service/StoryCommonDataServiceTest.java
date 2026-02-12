@@ -49,6 +49,9 @@ class StoryCommonDataServiceTest {
     @Mock
     private FragmentSourceSnippetService fragmentSourceSnippetService;
 
+    @Mock
+    private FragmentModelInferenceService fragmentModelInferenceService;
+
     @Test
     void setupCommonStoryData_setsPreviewResourcesFromProperties() {
         StorybookProperties properties = new StorybookProperties();
@@ -76,6 +79,7 @@ class StoryCommonDataServiceTest {
         FragmentStoryInfo storyInfo = FragmentStoryInfo.of(summary, "components", "default", story);
 
         when(storyParameterUseCase.getParametersForStory(storyInfo)).thenReturn(Map.of());
+        when(fragmentModelInferenceService.inferModel(any(), any(), any())).thenReturn(Map.of());
         when(thymeleafFragmentRenderer.configureModelWithStoryParameters(any(), any()))
             .thenReturn(Map.of());
         when(fragmentDependencyService.findDependencies("components/button", "primaryButton")).thenReturn(List.of());
@@ -120,6 +124,7 @@ class StoryCommonDataServiceTest {
         storyParameters.put("size", "lg");
 
         when(storyParameterUseCase.getParametersForStory(storyInfo)).thenReturn(storyParameters);
+        when(fragmentModelInferenceService.inferModel(any(), any(), any())).thenReturn(Map.of());
         when(thymeleafFragmentRenderer.configureModelWithStoryParameters(any(), any())).thenReturn(storyParameters);
         when(fragmentDependencyService.findDependencies("components/button", "primaryButton")).thenReturn(List.of());
         when(fragmentSourceSnippetService.resolveSnippet("components/button", "primaryButton"))
@@ -162,7 +167,8 @@ class StoryCommonDataServiceTest {
             fragmentDependencyService,
             ResolvedStorybookConfig.from(properties),
             previewConfigService,
-            fragmentSourceSnippetService
+            fragmentSourceSnippetService,
+            fragmentModelInferenceService
         );
     }
 
