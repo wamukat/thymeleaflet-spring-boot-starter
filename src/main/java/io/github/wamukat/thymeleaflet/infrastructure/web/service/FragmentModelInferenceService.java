@@ -57,7 +57,12 @@ public class FragmentModelInferenceService {
 
         TemplateInference inference = expressionAnalyzer.analyze(html, new HashSet<>(parameterNames));
         InferredModel inferred = inference.toInferredModel();
-        for (String referencedTemplatePath : inference.referencedTemplatePaths()) {
+        for (Map.Entry<String, Boolean> entry : inference.referencedTemplatePathsWithRecursionFlags().entrySet()) {
+            String referencedTemplatePath = entry.getKey();
+            boolean requiresRecursion = entry.getValue();
+            if (!requiresRecursion) {
+                continue;
+            }
             if (referencedTemplatePath.equals(templatePath)) {
                 continue;
             }

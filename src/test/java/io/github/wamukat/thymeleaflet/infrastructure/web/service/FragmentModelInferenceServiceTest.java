@@ -98,4 +98,15 @@ class FragmentModelInferenceServiceTest {
             "nextPage"
         );
     }
+
+    @Test
+    void shouldNotMergeChildModelWhenStaticReferenceUsesLiteralArgumentsOnly() {
+        Map<String, Object> inferred = service.inferModel(
+            "fragments/literal-child-reference-inference-sample",
+            "literalChildReferenceInferenceSample",
+            List.of("title")
+        );
+
+        assertThat(inferred).doesNotContainKeys("label", "variant");
+    }
 }
