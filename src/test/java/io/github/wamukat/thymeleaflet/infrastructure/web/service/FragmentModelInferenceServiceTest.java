@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
+import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.io.DefaultResourceLoader;
 
@@ -13,7 +14,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FragmentModelInferenceServiceTest {
 
     private final FragmentModelInferenceService service =
-        new FragmentModelInferenceService(new DefaultResourceLoader());
+        new FragmentModelInferenceService(
+            new DefaultResourceLoader(),
+            new TemplateModelExpressionAnalyzer()
+        );
 
     @Test
     void shouldInferModelFromTemplateExpressions() {
