@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.InferredModel;
 import io.github.wamukat.thymeleaflet.domain.model.TemplateInferenceSnapshot;
+import io.github.wamukat.thymeleaflet.domain.service.ModelValueInferenceService;
 import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -12,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,13 +26,16 @@ public class FragmentModelInferenceService {
 
     private final ResourceLoader resourceLoader;
     private final TemplateModelExpressionAnalyzer expressionAnalyzer;
+    private final ModelValueInferenceService valueInferenceService;
 
     public FragmentModelInferenceService(
         ResourceLoader resourceLoader,
-        TemplateModelExpressionAnalyzer expressionAnalyzer
+        TemplateModelExpressionAnalyzer expressionAnalyzer,
+        ModelValueInferenceService valueInferenceService
     ) {
         this.resourceLoader = resourceLoader;
         this.expressionAnalyzer = expressionAnalyzer;
+        this.valueInferenceService = valueInferenceService;
     }
 
     public Map<String, Object> inferModel(String templatePath, String fragmentName, List<String> parameterNames) {
@@ -76,7 +79,7 @@ public class FragmentModelInferenceService {
                 continue;
             }
             String root = path.getFirst();
-            Object leafValue = inferLeafValue(path.get(path.size() - 1));
+            Object leafValue = valueInferenceService.inferLeafValue(path.get(path.size() - 1));
             if (snapshot.loopVariablePaths().containsKey(root)) {
                 inferred.putLoopPath(snapshot.loopVariablePaths().get(root), path.subList(1, path.size()), leafValue);
                 continue;
@@ -84,39 +87,6 @@ public class FragmentModelInferenceService {
             inferred.putPath(path, leafValue);
         }
         return inferred;
-    }
-
-    private Object inferLeafValue(String key) {
-        String normalized = key.toLowerCase(Locale.ROOT);
-        if (normalized.startsWith("is")
-            || normalized.startsWith("has")
-            || normalized.startsWith("can")
-            || normalized.startsWith("should")
-            || normalized.startsWith("enabled")
-            || normalized.startsWith("active")) {
-            return false;
-        }
-        if (normalized.contains("count")
-            || normalized.contains("total")
-            || normalized.contains("amount")
-            || normalized.contains("price")
-            || normalized.contains("point")
-            || normalized.contains("score")
-            || normalized.contains("num")
-            || normalized.contains("size")
-            || normalized.contains("balance")
-            || normalized.contains("age")
-            || normalized.contains("rate")
-            || normalized.contains("percent")) {
-            return 0;
-        }
-        if (normalized.contains("date") || normalized.contains("time")) {
-            return "2026-01-01";
-        }
-        if (normalized.contains("email")) {
-            return "sample@example.com";
-        }
-        return "Sample " + key;
     }
 
     private String readTemplateSource(String templatePath) {
