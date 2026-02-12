@@ -246,8 +246,7 @@ public class StoryParameterDomainService {
         @Override
         public boolean equals(Object obj) {
             if (this == obj) return true;
-            if (obj == null || getClass() != obj.getClass()) return false;
-            PseudoEnum that = (PseudoEnum) obj;
+            if (!(obj instanceof PseudoEnum that)) return false;
             return Objects.equals(value, that.value);
         }
         

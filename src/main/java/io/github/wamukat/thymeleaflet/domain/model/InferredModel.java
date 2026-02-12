@@ -50,7 +50,7 @@ public final class InferredModel {
     }
 
     public void putLoopPath(List<String> iterablePath, List<String> itemSubPath, Object leafValue) {
-        if (iterablePath == null || iterablePath.isEmpty()) {
+        if (iterablePath.isEmpty()) {
             return;
         }
         if (iterablePath.size() == 1) {

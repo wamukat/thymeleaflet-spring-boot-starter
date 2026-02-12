@@ -36,7 +36,7 @@ public class FragmentModelInferenceService {
     public Map<String, Object> inferModel(String templatePath, String fragmentName, List<String> parameterNames) {
         InferredModel inferred = inferModelRecursive(
             templatePath,
-            parameterNames == null ? List.of() : parameterNames,
+            parameterNames,
             new HashSet<>()
         );
         return inferred.toMap();

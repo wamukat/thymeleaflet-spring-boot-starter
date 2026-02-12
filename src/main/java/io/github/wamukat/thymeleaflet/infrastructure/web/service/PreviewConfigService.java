@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * プレビュー設定を画面向けに整形するサービス
@@ -52,7 +53,7 @@ public class PreviewConfigService {
         String labelKey = preset.getLabelKey().trim();
         if (label.isEmpty() && !labelKey.isEmpty()) {
             String key = labelKey;
-            return messageSource.getMessage(key, null, key, locale);
+            return Objects.requireNonNullElse(messageSource.getMessage(key, null, key, locale), key);
         }
         if (label.isEmpty()) {
             return preset.getId();
