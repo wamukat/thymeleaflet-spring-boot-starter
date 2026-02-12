@@ -965,6 +965,60 @@ function hierarchicalFragmentList() {
             this.applyCustomOverrides();
         },
 
+        resetCustomModelValues() {
+            if (!this.selectedFragment || !this.isCustomStory(this.selectedStory)) {
+                return;
+            }
+            const baseStory = this.getCustomBaseStory(this.selectedFragment);
+            const baseModel = baseStory && baseStory.model && !Array.isArray(baseStory.model)
+                ? baseStory.model
+                : {};
+            const nextState = {
+                parameters: { ...(this.customStoryState?.parameters || {}) },
+                model: { ...baseModel }
+            };
+            const nextTypes = this.buildNormalizedCustomTypes(nextState, {
+                parameters: { ...(this.customStoryTypes?.parameters || {}) },
+                model: {}
+            });
+            const nextNullFlags = this.buildNormalizedCustomNullFlags(nextState, {
+                parameters: { ...(this.customStoryNullFlags?.parameters || {}) },
+                model: {}
+            }, true);
+            const nextNullBackups = {
+                parameters: { ...(this.customStoryNullBackups?.parameters || {}) },
+                model: {}
+            };
+            const nextRawValues = {};
+            Object.entries(this.customStoryRawValues || {}).forEach(([rawKey, rawValue]) => {
+                if (!rawKey.startsWith('model:')) {
+                    nextRawValues[rawKey] = rawValue;
+                }
+            });
+            Object.entries(baseModel).forEach(([key, value]) => {
+                if (value !== null && typeof value === 'object') {
+                    nextRawValues[`model:${key}`] = JSON.stringify(value, null, 2);
+                }
+            });
+            const nextJsonErrors = {};
+            Object.entries(this.customStoryJsonErrors || {}).forEach(([errorKey, hasError]) => {
+                if (!errorKey.startsWith('model:')) {
+                    nextJsonErrors[errorKey] = hasError;
+                }
+            });
+
+            this.customStoryState = nextState;
+            this.customStoryTypes = nextTypes;
+            this.customStoryNullFlags = nextNullFlags;
+            this.customStoryNullBackups = nextNullBackups;
+            this.customStoryRawValues = nextRawValues;
+            this.customStoryJsonErrors = nextJsonErrors;
+            this.customModelJson = stringifyObjectLiteral(nextState.model || {});
+            this.customModelJsonError = false;
+            this.saveCustomStoryValues(this.selectedFragment, this.buildCustomStoryPayload());
+            this.applyCustomOverrides();
+        },
+
         buildCustomStoryYaml(parameters, model, wrapper) {
             const lines = [
                 '# Paste into storyGroups.<fragmentName>.stories',

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <th:block th:fragment="submitButton(label, styleType)"
+    th:with="
+      resolvedStyleType=${styleType != null ? #strings.toUpperCase(styleType.toString()) : 'PRIMARY'},
+      styleClass=${resolvedStyleType == 'PRIMARY'
+        ? 'border border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
+        : resolvedStyleType == 'SECONDARY'
+          ? 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+          : resolvedStyleType == 'DANGER'
+            ? 'border border-rose-700 bg-rose-700 text-white hover:bg-rose-800'
+          : 'border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'}">
+    <button th:classappend="${styleClass}">
+      <span th:text="${label}"></span>
+    </button>
+  </th:block>
+</body>
+</html>

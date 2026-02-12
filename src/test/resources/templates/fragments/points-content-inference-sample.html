@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <section id="pointsContent" th:fragment="pointsContent">
+    <p th:text="${#numbers.formatInteger(pointPage.totalPoints, 1, 'COMMA')}"></p>
+    <p th:text="${#numbers.formatInteger(pointPage.expiringPoints, 1, 'COMMA')}"></p>
+    <th:block th:replace="~{fragments/points-panel-inference-sample :: pointsPanel}"></th:block>
+  </section>
+</body>
+</html>

@@ -47,6 +47,8 @@ public class StoryCommonDataService {
 
     private final FragmentSourceSnippetService fragmentSourceSnippetService;
 
+    private final FragmentModelInferenceService fragmentModelInferenceService;
+
     public StoryCommonDataService(
         StoryParameterUseCase storyParameterUseCase,
         ThymeleafFragmentRenderer thymeleafFragmentRenderer,
@@ -55,7 +57,8 @@ public class StoryCommonDataService {
         FragmentDependencyService fragmentDependencyService,
         ResolvedStorybookConfig storybookConfig,
         PreviewConfigService previewConfigService,
-        FragmentSourceSnippetService fragmentSourceSnippetService
+        FragmentSourceSnippetService fragmentSourceSnippetService,
+        FragmentModelInferenceService fragmentModelInferenceService
     ) {
         this.storyParameterUseCase = storyParameterUseCase;
         this.thymeleafFragmentRenderer = thymeleafFragmentRenderer;
@@ -65,6 +68,7 @@ public class StoryCommonDataService {
         this.storybookConfig = storybookConfig;
         this.previewConfigService = previewConfigService;
         this.fragmentSourceSnippetService = fragmentSourceSnippetService;
+        this.fragmentModelInferenceService = fragmentModelInferenceService;
     }
     
     /**
@@ -85,6 +89,13 @@ public class StoryCommonDataService {
                                    FragmentStoryInfo storyInfo, Model model) {
         // stories.ymlのmodelを事前にモデルへ注入
         Map<String, Object> storyModel = storyInfo.getModel();
+        if (storyModel.isEmpty()) {
+            storyModel = fragmentModelInferenceService.inferModel(
+                templatePath,
+                fragmentName,
+                storyInfo.getFragmentSummary().getParameters()
+            );
+        }
         if (!storyModel.isEmpty()) {
             for (Map.Entry<String, Object> entry : storyModel.entrySet()) {
                 model.addAttribute(entry.getKey(), entry.getValue());

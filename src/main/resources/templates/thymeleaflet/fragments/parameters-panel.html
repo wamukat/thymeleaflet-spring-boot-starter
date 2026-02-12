@@ -11,8 +11,7 @@
  * @example <div th:replace="~{thymeleaflet/fragments/parameters-panel :: panel()}"></div>
  */
 -->
-<div th:fragment="panel" class="card-thymeleaflet"
-     th:if="${javadocInfo != null or (selectedFragment.parameters != null and !#lists.isEmpty(selectedFragment.parameters))}">
+<div th:fragment="panel" class="card-thymeleaflet">
     <div class="card-thymeleaflet-header">
         <h3 class="text-lg font-semibold text-gray-900" th:text="#{thymeleaflet.fragment.details}">
             Fragment details

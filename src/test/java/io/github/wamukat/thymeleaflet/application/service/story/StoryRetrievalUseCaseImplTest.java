@@ -41,7 +41,7 @@ class StoryRetrievalUseCaseImplTest {
     private StoryRetrievalUseCaseImpl useCase;
 
     @Test
-    void shouldNotAppendCustomStoryWhenFragmentHasNoParametersAndNoModel() {
+    void shouldAppendCustomStoryWhenFragmentHasNoParametersAndNoModel() {
         FragmentSummary fragmentSummary = FragmentSummary.of(
             "components/icon",
             "simpleIcon",
@@ -54,8 +54,9 @@ class StoryRetrievalUseCaseImplTest {
         List<FragmentStoryInfo> stories = useCase.getStoriesForFragment(fragmentSummary);
 
         assertThat(stories).extracting(FragmentStoryInfo::getStoryName)
-            .containsExactly("default");
+            .containsExactly("default", "custom");
         assertThat(stories.get(0).hasStoryConfig()).isFalse();
+        assertThat(stories.get(1).hasStoryConfig()).isTrue();
     }
 
     @Test
