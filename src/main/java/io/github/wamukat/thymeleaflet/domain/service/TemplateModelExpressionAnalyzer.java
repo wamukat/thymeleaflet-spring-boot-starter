@@ -6,7 +6,6 @@ import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +38,7 @@ public class TemplateModelExpressionAnalyzer {
         excludedIdentifiers.addAll(extractLocalVariablesFromThWith(html));
         Map<String, ModelPath> loopVariablePaths = extractLoopVariablePaths(html);
         List<ModelPath> modelPaths = extractModelPathsFromHtml(html, excludedIdentifiers);
-        Set<String> referencedTemplatePaths = extractReferencedTemplatePaths(html);
+        Map<String, Boolean> referencedTemplatePaths = extractReferencedTemplatePaths(html);
         return new TemplateInference(modelPaths, loopVariablePaths, referencedTemplatePaths);
     }
 
@@ -167,8 +166,8 @@ public class TemplateModelExpressionAnalyzer {
         return loopVariables;
     }
 
-    private Set<String> extractReferencedTemplatePaths(String html) {
-        Set<String> referencedTemplatePaths = new LinkedHashSet<>();
+    private Map<String, Boolean> extractReferencedTemplatePaths(String html) {
+        Map<String, Boolean> referencedTemplatePaths = new LinkedHashMap<>();
         Matcher matcher = TH_REPLACE_OR_INSERT_PATTERN.matcher(html);
         while (matcher.find()) {
             String raw = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
@@ -176,7 +175,7 @@ public class TemplateModelExpressionAnalyzer {
                 continue;
             }
             String expression = raw.trim();
-            if (expression.contains("${")) {
+            if (expression.startsWith("${") || expression.startsWith("*{") || expression.startsWith("#{")) {
                 continue;
             }
             if (expression.startsWith("~{") && expression.endsWith("}")) {
@@ -199,10 +198,60 @@ public class TemplateModelExpressionAnalyzer {
                 candidatePath = candidatePath.substring(1);
             }
             if (!candidatePath.isEmpty()) {
-                referencedTemplatePaths.add(candidatePath);
+                boolean requiresRecursion = requiresChildModelRecursion(expression, fragmentSeparator);
+                referencedTemplatePaths.merge(candidatePath, requiresRecursion, (left, right) -> left || right);
             }
         }
         return referencedTemplatePaths;
+    }
+
+    private boolean requiresChildModelRecursion(String expression, int fragmentSeparator) {
+        int openParen = expression.indexOf('(', fragmentSeparator);
+        if (openParen < 0) {
+            return true;
+        }
+        int closeParen = expression.lastIndexOf(')');
+        if (closeParen < openParen) {
+            return true;
+        }
+        String argumentsText = expression.substring(openParen + 1, closeParen).trim();
+        if (argumentsText.isEmpty()) {
+            return false;
+        }
+        for (String argument : splitTopLevel(argumentsText, ',')) {
+            if (argument.isBlank()) {
+                continue;
+            }
+            String value = argument;
+            int assignIndex = argument.indexOf('=');
+            if (assignIndex >= 0 && assignIndex < argument.length() - 1) {
+                value = argument.substring(assignIndex + 1).trim();
+            }
+            if (!isLiteralExpression(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isLiteralExpression(String value) {
+        String normalized = value.trim();
+        if (normalized.isEmpty()) {
+            return true;
+        }
+        if (normalized.startsWith("'") && normalized.endsWith("'") && normalized.length() >= 2) {
+            return true;
+        }
+        if (normalized.startsWith("\"") && normalized.endsWith("\"") && normalized.length() >= 2) {
+            return true;
+        }
+        if (normalized.equals("true") || normalized.equals("false") || normalized.equals("null")) {
+            return true;
+        }
+        if (normalized.matches("[-+]?\\d+(\\.\\d+)?")) {
+            return true;
+        }
+        return false;
     }
 
     private Set<String> extractLocalVariablesFromThWith(String html) {

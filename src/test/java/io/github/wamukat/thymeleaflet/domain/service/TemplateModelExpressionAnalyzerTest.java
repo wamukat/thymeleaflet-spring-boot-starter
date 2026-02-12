@@ -39,6 +39,7 @@ class TemplateModelExpressionAnalyzerTest {
             <div>
               <th:block th:replace="~{fragments/points-panel :: pointsPanel}"></th:block>
               <th:block th:insert="~{components/ui-alert :: error('x')}"></th:block>
+              <th:block th:replace="~{components/button :: primaryButton(label=${ctaLabel}, variant='primary')}"></th:block>
               <th:block th:replace="${dynamicRef}"></th:block>
             </div>
             """;
@@ -48,5 +49,10 @@ class TemplateModelExpressionAnalyzerTest {
         assertThat(snapshot.referencedTemplatePaths())
             .contains("fragments/points-panel", "components/ui-alert")
             .doesNotContain("dynamicRef");
+
+        assertThat(snapshot.referencedTemplatePathsWithRecursionFlags())
+            .containsEntry("fragments/points-panel", true)
+            .containsEntry("components/ui-alert", false)
+            .containsEntry("components/button", true);
     }
 }

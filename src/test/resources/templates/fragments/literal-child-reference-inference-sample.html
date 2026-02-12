@@ -1,0 +1,9 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+  <section th:fragment="literalChildReferenceInferenceSample(title)">
+    <h2 th:text="${title}"></h2>
+    <th:block th:replace="~{components/child-model-required-inference-sample :: child(label='fixed', variant='primary')}"></th:block>
+  </section>
+</body>
+</html>
