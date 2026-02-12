@@ -185,9 +185,10 @@
                         </path>
                     </annotationProcessorPaths>
                     <compilerArgs>
+                        <arg>-XDaddTypeAnnotationsToSymbol=true</arg>
                         <arg>-XDcompilePolicy=simple</arg>
                         <arg>--should-stop=ifError=FLOW</arg>
-                        <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:ERROR -XepOpt:NullAway:AnnotatedPackages=io.github.wamukat.thymeleaflet</arg>
+                        <arg>-Xplugin:ErrorProne -XepDisableAllChecks -Xep:NullAway:ERROR -Xep:RedundantNullCheck:ERROR -Xep:ImpossibleNullComparison:ERROR -XepOpt:NullAway:AnnotatedPackages=io.github.wamukat.thymeleaflet -XepOpt:NullAway:JSpecifyMode=true</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>

@@ -116,8 +116,7 @@ public class FragmentSummary {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        FragmentSummary that = (FragmentSummary) obj;
+        if (!(obj instanceof FragmentSummary that)) return false;
         return Objects.equals(templatePath, that.templatePath) &&
                Objects.equals(fragmentName, that.fragmentName) &&
                Objects.equals(parameters, that.parameters) &&
