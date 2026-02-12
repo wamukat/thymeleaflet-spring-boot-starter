@@ -46,6 +46,9 @@ public record ModelPath(List<String> segments) {
             || normalized.startsWith("active")) {
             return false;
         }
+        if (normalized.contains("message")) {
+            return "Sample " + leaf();
+        }
         if (normalized.contains("count")
             || normalized.contains("total")
             || normalized.contains("amount")
