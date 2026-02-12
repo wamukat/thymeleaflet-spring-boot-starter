@@ -8,6 +8,21 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.10] - 2026-02-12
+
+- Fixed
+  - Fixed architecture rule violation by removing Spring stereotype annotation from `TemplateModelExpressionAnalyzer` in the `domain` package and wiring it from auto-configuration.
+  - Fixed mobile top-page welcome view after HTMX/main-content replacement by restoring the sidebar open (hamburger) button in the welcome block.
+- Test
+  - Re-ran targeted mobile sidebar E2E regression to confirm open-button visibility and sidebar reopening behavior.
+- Build
+  - Updated Maven project version and sample app dependency to `0.2.10`.
+
+### Issues
+
+- #103 Fix architecture test failure for domain analyzer bean
+- #105 Fix missing mobile hamburger button in welcome main-content
+
 ## [0.2.9] - 2026-02-12
 
 - Added
