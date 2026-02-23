@@ -8,6 +8,19 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.12] - 2026-02-23
+
+- Fixed
+  - Eliminated startup WARN from `PostProcessorRegistrationDelegate$BeanPostProcessorChecker` by declaring `thymeleafletMessageSourcePostProcessor` as a static `@Bean` factory method in `StorybookAutoConfiguration`.
+- Test
+  - Added regression coverage to ensure `thymeleafletMessageSourcePostProcessor` remains a static bean factory method.
+- Build
+  - Updated Maven project version and sample app dependency to `0.2.12`.
+
+### Issues
+
+- #112 Fix BeanPostProcessorChecker WARN on startup
+
 ## [0.2.11] - 2026-02-12
 
 - Fixed
