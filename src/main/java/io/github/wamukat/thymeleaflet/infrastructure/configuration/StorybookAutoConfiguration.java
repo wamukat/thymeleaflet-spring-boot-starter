@@ -170,7 +170,7 @@ public class StorybookAutoConfiguration {
     }
 
     @Bean
-    public BeanPostProcessor thymeleafletMessageSourcePostProcessor() {
+    public static BeanPostProcessor thymeleafletMessageSourcePostProcessor() {
         return new BeanPostProcessor() {
             private final MessageSource thymeleafletMessageSource = createThymeleafletMessageSource();
 
