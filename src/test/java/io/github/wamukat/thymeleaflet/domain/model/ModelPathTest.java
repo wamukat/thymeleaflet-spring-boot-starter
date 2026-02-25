@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.domain.model;
 
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,10 +14,17 @@ class ModelPathTest {
         assertThat(ModelPath.of(List.of("root", "hasNext")).inferSampleValue()).isEqualTo(false);
         assertThat(ModelPath.of(List.of("root", "totalPoints")).inferSampleValue()).isEqualTo(0);
         assertThat(ModelPath.of(List.of("root", "createdDate")).inferSampleValue()).isEqualTo("2026-01-01");
+        assertThat(ModelPath.of(List.of("root", "publishedAt")).inferSampleValue())
+            .isEqualTo(LocalDateTime.of(2026, 1, 1, 0, 0));
+        assertThat(ModelPath.of(List.of("root", "published_at")).inferSampleValue())
+            .isEqualTo(LocalDateTime.of(2026, 1, 1, 0, 0));
+        assertThat(ModelPath.of(List.of("root", "published-at")).inferSampleValue())
+            .isEqualTo(LocalDateTime.of(2026, 1, 1, 0, 0));
         assertThat(ModelPath.of(List.of("root", "email")).inferSampleValue()).isEqualTo("sample@example.com");
         assertThat(ModelPath.of(List.of("root", "errorMessage")).inferSampleValue()).isEqualTo("Sample errorMessage");
         assertThat(ModelPath.of(List.of("root", "successMessage")).inferSampleValue()).isEqualTo("Sample successMessage");
         assertThat(ModelPath.of(List.of("root", "displayName")).inferSampleValue()).isEqualTo("Sample displayName");
+        assertThat(ModelPath.of(List.of("root", "read")).inferSampleValue()).isEqualTo(false);
     }
 
     @Test
