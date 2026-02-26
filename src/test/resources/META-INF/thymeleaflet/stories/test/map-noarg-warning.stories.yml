@@ -1,0 +1,11 @@
+storyGroups:
+  methodWarning:
+    title: methodWarning
+    stories:
+      - name: default
+        title: default
+        model:
+          view:
+            pointPage:
+              page: 1
+              totalPages: 3

@@ -74,7 +74,7 @@ class StoryParameterDomainServiceTest {
             "selectField",
             List.of("options")
         );
-        StoryItem storyItem = new StoryItem("default", "Default", "", Map.of(), StoryPreview.empty(), Map.of());
+        StoryItem storyItem = new StoryItem("default", "Default", "", Map.of(), StoryPreview.empty(), Map.of(), Map.of());
         FragmentStoryInfo storyInfo = FragmentStoryInfo.of(fragmentSummary, "selectField", "default", storyItem);
 
         Map<String, Object> parameters = service.generateStoryParameters(storyInfo);

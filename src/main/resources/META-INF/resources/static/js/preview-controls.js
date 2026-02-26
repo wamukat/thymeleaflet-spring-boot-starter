@@ -610,11 +610,86 @@
         iframeControls.renderFrame(host, html);
     }
 
+    function decodeWarningsHeader(headerValue) {
+        if (!headerValue) {
+            return [];
+        }
+        try {
+            const normalized = headerValue
+                .replace(/-/g, '+')
+                .replace(/_/g, '/');
+            const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
+            const binary = atob(padded);
+            const bytes = Uint8Array.from(binary, ch => ch.charCodeAt(0));
+            const decoded = new TextDecoder('utf-8').decode(bytes);
+            return decoded
+                .split('\n')
+                .map(value => value.trim())
+                .filter(Boolean);
+        } catch (error) {
+            return [];
+        }
+    }
+
+    function renderPreviewWarnings(warnings) {
+        const banner = document.getElementById('preview-warning-banner');
+        const list = document.getElementById('preview-warning-list');
+        if (!banner || !list) {
+            return;
+        }
+        list.innerHTML = '';
+        if (!warnings || warnings.length === 0) {
+            banner.classList.add('hidden');
+            return;
+        }
+        warnings.forEach(warning => {
+            const item = document.createElement('li');
+            item.textContent = warning;
+            list.appendChild(item);
+        });
+        banner.classList.remove('hidden');
+    }
+
+    function isPlainObject(value) {
+        return !!value && typeof value === 'object' && !Array.isArray(value);
+    }
+
+    function normalizeMethodReturnsPayload(rawValue) {
+        if (!isPlainObject(rawValue)) {
+            return {};
+        }
+        const normalized = {};
+        Object.entries(rawValue).forEach(([rawPath, entryValue]) => {
+            if (typeof rawPath !== 'string' || rawPath.trim() === '') {
+                return;
+            }
+            if (!rawPath.includes('.')) {
+                normalized[rawPath] = entryValue;
+                return;
+            }
+            const segments = rawPath.split('.').filter(Boolean);
+            if (segments.length === 0) {
+                return;
+            }
+            let cursor = normalized;
+            for (let i = 0; i < segments.length - 1; i++) {
+                const segment = segments[i];
+                if (!isPlainObject(cursor[segment])) {
+                    cursor[segment] = {};
+                }
+                cursor = cursor[segment];
+            }
+            cursor[segments[segments.length - 1]] = entryValue;
+        });
+        return normalized;
+    }
+
     async function loadPreview(host) {
         const targetHost = host || dom.previewHost();
         if (!targetHost) return;
 
         iframeControls.ensureMessageListener();
+        renderPreviewWarnings([]);
         resetPreviewHeight();
         previewState.lastRenderAt = Date.now();
 
@@ -630,9 +705,13 @@
                 : {};
             const requestPayload = {
                 parameters: overrides.parameters && typeof overrides.parameters === 'object' ? overrides.parameters : {},
-                model: overrides.model && typeof overrides.model === 'object' ? overrides.model : {}
+                model: overrides.model && typeof overrides.model === 'object' ? overrides.model : {},
+                methodReturns: normalizeMethodReturnsPayload(overrides.methodReturns)
             };
-            const hasOverrides = Object.keys(requestPayload.parameters).length > 0 || Object.keys(requestPayload.model).length > 0;
+            const hasOverrides =
+                Object.keys(requestPayload.parameters).length > 0
+                || Object.keys(requestPayload.model).length > 0
+                || Object.keys(requestPayload.methodReturns).length > 0;
             const response = await fetch(previewUrl, {
                 method: hasOverrides ? 'POST' : 'GET',
                 headers: {
@@ -645,15 +724,20 @@
                 throw new Error(`Preview response status ${response.status}`);
             }
             const html = await response.text();
+            const warnings = decodeWarningsHeader(
+                response.headers.get('X-Thymeleaflet-Preview-Warnings')
+            );
             if (html.includes('システムエラー') || html.includes('System Error')) {
                 throw new Error('Preview error page detected');
             }
             iframeControls.renderFrame(targetHost, html);
+            renderPreviewWarnings(warnings);
             await waitForFontsOnce();
         } catch (error) {
             const baseMessage = document.body.dataset.previewLoadFailed || 'Failed to load preview.';
             const message = `${baseMessage}${error?.message ? ` (${error.message})` : ''}`;
             renderPreviewError(targetHost, message);
+            renderPreviewWarnings([]);
         }
     }
 

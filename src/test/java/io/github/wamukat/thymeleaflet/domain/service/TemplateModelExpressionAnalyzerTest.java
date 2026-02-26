@@ -55,4 +55,28 @@ class TemplateModelExpressionAnalyzerTest {
             .containsEntry("components/ui-alert", false)
             .containsEntry("components/button", true);
     }
+
+    @Test
+    void shouldExtractNoArgMethodCallsSeparatelyFromModelPaths() {
+        String html = """
+            <section>
+              <span th:if="${view.pointPage.hasPrev()}">Prev</span>
+              <span th:text="${view.pointPage.nextPage()}"></span>
+              <span th:text="${view.pointPage.format('yyyy-MM-dd')}"></span>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "pointPage")))
+            .doesNotContain(ModelPath.of(List.of("view", "pointPage", "hasPrev")))
+            .doesNotContain(ModelPath.of(List.of("view", "pointPage", "nextPage")))
+            .doesNotContain(ModelPath.of(List.of("view", "pointPage", "format")));
+
+        assertThat(snapshot.noArgMethodPaths())
+            .contains(ModelPath.of(List.of("view", "pointPage", "hasPrev")))
+            .contains(ModelPath.of(List.of("view", "pointPage", "nextPage")))
+            .doesNotContain(ModelPath.of(List.of("view", "pointPage", "format")));
+    }
 }

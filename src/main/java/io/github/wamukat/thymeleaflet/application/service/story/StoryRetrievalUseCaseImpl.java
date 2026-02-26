@@ -90,6 +90,7 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
             "",
             Collections.emptyMap(),
             StoryPreview.empty(),
+            Collections.emptyMap(),
             Collections.emptyMap()
         );
         stories.add(FragmentStoryInfo.of(

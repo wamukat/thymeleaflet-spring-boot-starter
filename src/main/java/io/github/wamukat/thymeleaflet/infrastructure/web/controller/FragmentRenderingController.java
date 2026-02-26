@@ -59,11 +59,26 @@ public class FragmentRenderingController {
         Map<String, Object> modelOverrides = Optional.ofNullable(request)
             .map(RenderOverridesRequest::model)
             .orElse(Map.of());
+        Map<String, Object> methodReturnsOverrides = Optional.ofNullable(request)
+            .map(RenderOverridesRequest::methodReturns)
+            .orElse(Map.of());
         FragmentRenderingService.RenderingResult result =
-            fragmentRenderingService.renderStory(templatePath, fragmentName, storyName, model, parameters, modelOverrides);
+            fragmentRenderingService.renderStory(
+                templatePath,
+                fragmentName,
+                storyName,
+                model,
+                parameters,
+                modelOverrides,
+                methodReturnsOverrides
+            );
         return result.templateReference()
             .orElse("thymeleaflet/fragments/error-display :: error(type='danger')");
     }
 
-    public record RenderOverridesRequest(@Nullable Map<String, Object> parameters, @Nullable Map<String, Object> model) {}
+    public record RenderOverridesRequest(
+        @Nullable Map<String, Object> parameters,
+        @Nullable Map<String, Object> model,
+        @Nullable Map<String, Object> methodReturns
+    ) {}
 }

@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.InferredModel;
+import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
 import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
 import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
 import org.springframework.core.io.Resource;
@@ -42,6 +43,19 @@ public class FragmentModelInferenceService {
         return inferred.toMap();
     }
 
+    public Map<String, Object> inferMethodReturnCandidates(
+        String templatePath,
+        String fragmentName,
+        List<String> parameterNames
+    ) {
+        InferredModel inferred = inferMethodReturnCandidatesRecursive(
+            templatePath,
+            parameterNames == null ? List.of() : parameterNames,
+            new HashSet<>()
+        );
+        return inferred.toMap();
+    }
+
     private InferredModel inferModelRecursive(
         String templatePath,
         List<String> parameterNames,
@@ -69,6 +83,49 @@ public class FragmentModelInferenceService {
             InferredModel child = inferModelRecursive(referencedTemplatePath, List.of(), visitedTemplatePaths);
             inferred.merge(child);
         }
+        return inferred;
+    }
+
+    private InferredModel inferMethodReturnCandidatesRecursive(
+        String templatePath,
+        List<String> parameterNames,
+        Set<String> visitedTemplatePaths
+    ) {
+        if (!visitedTemplatePaths.add(templatePath)) {
+            return new InferredModel();
+        }
+        String html = readTemplateSource(templatePath);
+        if (html.isEmpty()) {
+            return new InferredModel();
+        }
+
+        TemplateInference inference = expressionAnalyzer.analyze(html, new HashSet<>(parameterNames));
+        InferredModel inferred = new InferredModel();
+        for (ModelPath methodPath : inference.noArgMethodPaths()) {
+            if (methodPath.isEmpty()) {
+                continue;
+            }
+            ModelPath loopPath = inference.loopVariablePaths().get(methodPath.root());
+            if (loopPath != null) {
+                inferred.putLoopPath(loopPath.segments(), methodPath.subPathWithoutRoot(), methodPath.inferSampleValue());
+                continue;
+            }
+            inferred.putPath(methodPath.segments(), methodPath.inferSampleValue());
+        }
+
+        for (Map.Entry<String, Boolean> entry : inference.referencedTemplatePathsWithRecursionFlags().entrySet()) {
+            String referencedTemplatePath = entry.getKey();
+            boolean requiresRecursion = entry.getValue();
+            if (!requiresRecursion) {
+                continue;
+            }
+            if (referencedTemplatePath.equals(templatePath)) {
+                continue;
+            }
+            InferredModel child = inferMethodReturnCandidatesRecursive(referencedTemplatePath, List.of(), visitedTemplatePaths);
+            inferred.merge(child);
+        }
+
         return inferred;
     }
 

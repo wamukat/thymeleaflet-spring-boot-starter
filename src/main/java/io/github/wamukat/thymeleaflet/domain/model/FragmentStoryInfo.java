@@ -100,6 +100,7 @@ public class FragmentStoryInfo {
             "",
             Collections.emptyMap(),
             StoryPreview.empty(),
+            Collections.emptyMap(),
             Collections.emptyMap()
         );
         return new FragmentStoryInfo(
@@ -150,6 +151,20 @@ public class FragmentStoryInfo {
      */
     public Map<String, Object> model() {
         return getModel();
+    }
+
+    /**
+     * ストーリーのメソッド戻り値設定を取得
+     */
+    public Map<String, Object> getMethodReturns() {
+        return story.methodReturns();
+    }
+
+    /**
+     * ストーリーのメソッド戻り値設定を取得（短縮版）
+     */
+    public Map<String, Object> methodReturns() {
+        return getMethodReturns();
     }
     
     /**

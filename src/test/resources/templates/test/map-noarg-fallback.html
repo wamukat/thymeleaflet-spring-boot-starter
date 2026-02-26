@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<section th:fragment="fallbackMethodWarning">
+    <p th:if="${!view.pointPage.hasPrev()}">no-prev</p>
+    <p th:if="${view.pointPage.hasPrev()}">prev</p>
+    <p th:text="${view.pointPage.nextPage()}">next</p>
+</section>
+</body>
+</html>

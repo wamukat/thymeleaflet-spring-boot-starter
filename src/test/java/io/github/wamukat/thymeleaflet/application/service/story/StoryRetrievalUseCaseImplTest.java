@@ -92,6 +92,7 @@ class StoryRetrievalUseCaseImplTest {
             "",
             Collections.emptyMap(),
             StoryPreview.empty(),
+            Collections.emptyMap(),
             Map.of("profile", Map.of("name", "Sample"))
         );
         StoryGroup storyGroup = new StoryGroup("summary", "", List.of(defaultStory));

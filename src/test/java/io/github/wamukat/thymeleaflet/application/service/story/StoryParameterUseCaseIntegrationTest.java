@@ -38,6 +38,7 @@ class StoryParameterUseCaseIntegrationTest {
             "",
             Map.of("value", "pro"),
             StoryPreview.empty(),
+            Map.of(),
             Map.of()
         );
 

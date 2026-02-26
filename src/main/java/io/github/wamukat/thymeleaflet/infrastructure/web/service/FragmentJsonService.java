@@ -113,6 +113,7 @@ public class FragmentJsonService {
                 // ストーリー情報を取得
                 List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragment);
                 final Map<String, Object>[] inferredModelHolder = new Map[] { Collections.emptyMap() };
+                final Map<String, Object>[] inferredMethodReturnsHolder = new Map[] { Collections.emptyMap() };
                 fragmentData.put("stories", stories.stream().map(story -> {
                     Map<String, Object> storyData = new HashMap<>();
                     Map<String, Object> storyParameters = story.getParameters();
@@ -145,8 +146,28 @@ public class FragmentJsonService {
                         storyModel = inferredModelHolder[0];
                     }
                     storyData.put("model", storyModel);
+
+                    Map<String, Object> storyMethodReturns = story.getMethodReturns();
+                    if (!storyMethodReturns.isEmpty()) {
+                        Map<String, Object> sanitizedMethodReturns = new HashMap<>();
+                        storyMethodReturns.forEach(
+                            (key, value) -> sanitizedMethodReturns.put(key, sanitizeParameterValue(value))
+                        );
+                        storyData.put("methodReturns", sanitizedMethodReturns);
+                    } else {
+                        storyData.put("methodReturns", storyMethodReturns);
+                    }
                     return storyData;
                 }).collect(Collectors.toList()));
+
+                if (inferredMethodReturnsHolder[0].isEmpty()) {
+                    inferredMethodReturnsHolder[0] = fragmentModelInferenceService.inferMethodReturnCandidates(
+                        fragment.getTemplatePath(),
+                        fragment.getFragmentName(),
+                        fragment.getParameters()
+                    );
+                }
+                fragmentData.put("methodReturnCandidates", inferredMethodReturnsHolder[0]);
                 
                 return fragmentData;
             }).collect(Collectors.toList());

@@ -47,6 +47,7 @@ storyGroups:
 - `description`: optional description
 - `parameters`: fragment parameters
 - `model`: model values to inject
+- `methodReturns`: no-arg method return values for preview
 - `preview.wrapper`: optional HTML wrapper for preview
 
 ## Model
@@ -87,6 +88,44 @@ stories:
 - `model` and `parameters` can be combined in the same story.
 - If a model key is missing, Thymeleaf expressions may evaluate to `null`.
 
+## methodReturns (No-arg)
+
+Use `methodReturns` to control no-arg method calls in preview rendering.
+
+```yaml
+stories:
+  - name: default
+    title: Default
+    methodReturns:
+      view:
+        pointPage:
+          hasPrev: false
+          nextPage: 2
+```
+
+- `methodReturns` uses the same nested-map shape as `model`.
+- Target scope is preview `/render` only.
+- If `model` and `methodReturns` define the same path, Thymeleaflet records a warning and keeps the `model` value.
+
+### No-arg Method Compatibility (Preview `/render` only)
+
+Preview rendering supports a compatibility layer for **no-arg** method calls on map-like story models.
+
+- Supported pattern examples:
+  - `view.pointPage.hasPrev()`
+  - `view.pointPage.isActive()`
+  - `view.pointPage.nextPage()`
+- Resolution rule:
+  - Tries map keys in order: method name itself, then derived key (`hasPrev()` -> `hasPrev`, `prev`-style suffix key: `prev` forms become `prev...` lower-camel).
+  - If unresolved, preview continues with `null` and records a warning.
+- Scope:
+  - Applied only to Thymeleaflet preview `/render`.
+  - Does **not** change normal Spring MVC page rendering behavior.
+- Out of scope:
+  - Methods with arguments (for example `format('yyyy')`)
+  - Arbitrary business logic execution
+  - External dependency calls
+
 ## Preview Wrapper
 
 Use `preview.wrapper` to align the preview with your app's layout, theme, or fonts.
@@ -109,7 +148,7 @@ Thymeleaflet adds a **Custom** story entry in the UI so you can edit parameters 
 
 - **Initial values**: copied from the `default` story if it exists, otherwise from the first story.
 - **Persistence**: stored in `sessionStorage` per fragment.
-- **Editable fields**: both `parameters` and `model`.
+- **Editable fields**: `parameters`, `model`, and `methodReturns`.
 - **Scope**: affects preview rendering only (does not write back to `stories.yml`).
 - **Reserved name**: `custom` is reserved by the UI and should not be defined in stories.yml.
 

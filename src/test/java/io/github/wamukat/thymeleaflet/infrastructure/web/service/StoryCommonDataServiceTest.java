@@ -74,6 +74,7 @@ class StoryCommonDataServiceTest {
             "",
             Map.of(),
             StoryPreview.empty(),
+            Map.of(),
             Map.of()
         );
         FragmentStoryInfo storyInfo = FragmentStoryInfo.of(summary, "components", "default", story);
@@ -114,6 +115,7 @@ class StoryCommonDataServiceTest {
             "",
             Map.of(),
             StoryPreview.empty(),
+            Map.of(),
             Map.of()
         );
         FragmentStoryInfo storyInfo = FragmentStoryInfo.of(summary, "components", "default", story);
@@ -153,6 +155,40 @@ class StoryCommonDataServiceTest {
             entry("text", "Click me"),
             entry("size", "lg")
         );
+    }
+
+    @Test
+    void setupCommonStoryData_infersMethodReturnsForFallbackStory() {
+        StorybookProperties properties = new StorybookProperties();
+        PreviewConfigService previewConfigService = buildPreviewConfigService(properties);
+        StoryCommonDataService service = buildStoryCommonDataService(properties, previewConfigService);
+
+        FragmentSummary summary = FragmentSummary.of(
+            "test/map-noarg-fallback",
+            "fallbackMethodWarning",
+            List.of(),
+            FragmentDomainService.FragmentType.SIMPLE
+        );
+        FragmentStoryInfo storyInfo = FragmentStoryInfo.fallback(summary, "test", "default");
+
+        Map<String, Object> inferredModel = Map.of("view", Map.of("pointPage", Map.of("totalItems", 0)));
+        Map<String, Object> inferredMethodReturns = Map.of("view", Map.of("pointPage", Map.of("hasPrev", false)));
+
+        when(storyParameterUseCase.getParametersForStory(storyInfo)).thenReturn(Map.of());
+        when(fragmentModelInferenceService.inferModel("test/map-noarg-fallback", "fallbackMethodWarning", List.of()))
+            .thenReturn(inferredModel);
+        when(fragmentModelInferenceService.inferMethodReturnCandidates("test/map-noarg-fallback", "fallbackMethodWarning", List.of()))
+            .thenReturn(inferredMethodReturns);
+        when(thymeleafFragmentRenderer.configureModelWithStoryParameters(any(), any())).thenReturn(Map.of());
+        when(fragmentDependencyService.findDependencies("test/map-noarg-fallback", "fallbackMethodWarning"))
+            .thenReturn(List.of());
+        when(fragmentSourceSnippetService.resolveSnippet("test/map-noarg-fallback", "fallbackMethodWarning"))
+            .thenReturn(java.util.Optional.empty());
+
+        Model model = new ExtendedModelMap();
+        service.setupCommonStoryData("test/map-noarg-fallback", "fallbackMethodWarning", "default", storyInfo, model);
+
+        assertThat(model.getAttribute("displayMethodReturns")).isEqualTo(inferredMethodReturns);
     }
 
     private StoryCommonDataService buildStoryCommonDataService(

@@ -23,7 +23,8 @@ public record StoryItem(
     @JsonProperty("description") String description,
     @JsonProperty("parameters") Map<String, Object> parameters,
     @JsonProperty("preview") StoryPreview preview,
-    @JsonProperty("model") Map<String, Object> model
+    @JsonProperty("model") Map<String, Object> model,
+    @JsonProperty("methodReturns") Map<String, Object> methodReturns
 ) {
     // Expert推奨: Compact constructor for validation and immutability
     public StoryItem {
@@ -35,6 +36,8 @@ public record StoryItem(
         preview = Objects.requireNonNullElse(preview, StoryPreview.empty());
         model = Collections.unmodifiableMap(
             Objects.requireNonNullElse(model, Collections.emptyMap()));
+        methodReturns = Collections.unmodifiableMap(
+            Objects.requireNonNullElse(methodReturns, Collections.emptyMap()));
     }
 
     /**
@@ -49,6 +52,13 @@ public record StoryItem(
      */
     public boolean hasModel() {
         return !model.isEmpty();
+    }
+
+    /**
+     * ドメインメソッド: メソッド戻り値設定の存在確認
+     */
+    public boolean hasMethodReturns() {
+        return !methodReturns.isEmpty();
     }
 
     /**

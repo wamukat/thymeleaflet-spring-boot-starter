@@ -116,6 +116,150 @@ function stringifyObjectLiteral(value, indent = 0) {
     return String(value);
 }
 
+function isPlainObject(value) {
+    return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
+function flattenMethodReturnsMap(value, prefix = '', target = {}) {
+    if (!isPlainObject(value)) {
+        return target;
+    }
+    Object.entries(value).forEach(([key, entryValue]) => {
+        if (typeof key !== 'string' || key.trim() === '') {
+            return;
+        }
+        const path = prefix ? `${prefix}.${key}` : key;
+        if (isPlainObject(entryValue) && Object.keys(entryValue).length > 0) {
+            flattenMethodReturnsMap(entryValue, path, target);
+            return;
+        }
+        target[path] = entryValue;
+    });
+    return target;
+}
+
+function toNestedMethodReturnsMap(flatValues) {
+    const result = {};
+    if (!isPlainObject(flatValues)) {
+        return result;
+    }
+    Object.entries(flatValues).forEach(([path, entryValue]) => {
+        if (typeof path !== 'string' || path.trim() === '') {
+            return;
+        }
+        const segments = path.split('.').filter(Boolean);
+        if (segments.length === 0) {
+            return;
+        }
+        let cursor = result;
+        for (let i = 0; i < segments.length - 1; i++) {
+            const segment = segments[i];
+            if (!isPlainObject(cursor[segment])) {
+                cursor[segment] = {};
+            }
+            cursor = cursor[segment];
+        }
+        const leaf = segments[segments.length - 1];
+        cursor[leaf] = entryValue;
+    });
+    return result;
+}
+
+function deepCopyCustomValue(value) {
+    if (Array.isArray(value)) {
+        return value.map(item => deepCopyCustomValue(item));
+    }
+    if (!isPlainObject(value)) {
+        return value;
+    }
+    const copied = {};
+    Object.entries(value).forEach(([key, entryValue]) => {
+        copied[key] = deepCopyCustomValue(entryValue);
+    });
+    return copied;
+}
+
+function hasPathValue(source, pathSegments) {
+    if (!isPlainObject(source) || !Array.isArray(pathSegments) || pathSegments.length === 0) {
+        return { found: false, value: undefined };
+    }
+    let cursor = source;
+    for (let i = 0; i < pathSegments.length; i++) {
+        const segment = pathSegments[i];
+        if (!isPlainObject(cursor) || !Object.prototype.hasOwnProperty.call(cursor, segment)) {
+            return { found: false, value: undefined };
+        }
+        cursor = cursor[segment];
+    }
+    return { found: true, value: cursor };
+}
+
+function deletePathValue(target, pathSegments) {
+    if (!isPlainObject(target) || !Array.isArray(pathSegments) || pathSegments.length === 0) {
+        return false;
+    }
+    const stack = [target];
+    let cursor = target;
+    for (let i = 0; i < pathSegments.length - 1; i++) {
+        const segment = pathSegments[i];
+        if (!isPlainObject(cursor) || !Object.prototype.hasOwnProperty.call(cursor, segment)) {
+            return false;
+        }
+        cursor = cursor[segment];
+        stack.push(cursor);
+    }
+    const leaf = pathSegments[pathSegments.length - 1];
+    if (!isPlainObject(cursor) || !Object.prototype.hasOwnProperty.call(cursor, leaf)) {
+        return false;
+    }
+    delete cursor[leaf];
+
+    for (let i = pathSegments.length - 2; i >= 0; i--) {
+        const parent = stack[i];
+        const key = pathSegments[i];
+        const child = parent[key];
+        if (isPlainObject(child) && Object.keys(child).length === 0) {
+            delete parent[key];
+            continue;
+        }
+        break;
+    }
+    return true;
+}
+
+function splitPathSegments(path) {
+    if (typeof path !== 'string' || path.trim() === '') {
+        return [];
+    }
+    return path.split('.').filter(Boolean);
+}
+
+function normalizeModelAndMethodReturns(modelValue, methodReturnsValue) {
+    const normalizedModel = isPlainObject(modelValue) ? deepCopyCustomValue(modelValue) : {};
+    const normalizedMethodReturns = isPlainObject(methodReturnsValue)
+        ? { ...methodReturnsValue }
+        : {};
+
+    Object.keys(normalizedMethodReturns).forEach(path => {
+        const segments = splitPathSegments(path);
+        if (segments.length === 0) {
+            return;
+        }
+        const modelEntry = hasPathValue(normalizedModel, segments);
+        if (!modelEntry.found) {
+            return;
+        }
+        // Prior custom model values should migrate to methodReturns when paths overlap.
+        normalizedMethodReturns[path] = deepCopyCustomValue(modelEntry.value);
+        deletePathValue(normalizedModel, segments);
+    });
+
+    return {
+        model: normalizedModel,
+        methodReturns: normalizedMethodReturns
+    };
+}
+
 function indentYaml(yaml, indentSize) {
     const pad = ' '.repeat(indentSize);
     return yaml
@@ -238,10 +382,10 @@ function hierarchicalFragmentList() {
         hierarchyTree: hierarchicalData || {},
         originalHierarchyTree: originalHierarchyTree,
         selectedFragment: null,
-        customStoryState: { parameters: {}, model: {} },
-        customStoryTypes: { parameters: {}, model: {} },
-        customStoryNullFlags: { parameters: {}, model: {} },
-        customStoryNullBackups: { parameters: {}, model: {} },
+        customStoryState: { parameters: {}, model: {}, methodReturns: {} },
+        customStoryTypes: { parameters: {}, model: {}, methodReturns: {} },
+        customStoryNullFlags: { parameters: {}, model: {}, methodReturns: {} },
+        customStoryNullBackups: { parameters: {}, model: {}, methodReturns: {} },
         customPreviewWrapper: '',
         yamlPreviewOpen: false,
         yamlPreviewContent: '',
@@ -346,7 +490,9 @@ function hierarchicalFragmentList() {
             if (!this.selectedStory || !this.isCustomStory(this.selectedStory)) {
                 return this.storyParameters(this.selectedStory).length > 0;
             }
-            return this.customStoryEntries('parameters').length > 0 || this.customStoryEntries('model').length > 0;
+            return this.customStoryEntries('parameters').length > 0
+                || this.customStoryEntries('model').length > 0
+                || this.customStoryEntries('methodReturns').length > 0;
         },
         isObjectStoryValue(storyParameter) {
             return !!(storyParameter && typeof storyParameter.value === 'object' && storyParameter.value !== null);
@@ -361,7 +507,8 @@ function hierarchicalFragmentList() {
             }
             return noFragmentParams &&
                 this.customStoryEntries('parameters').length === 0 &&
-                this.customStoryEntries('model').length === 0;
+                this.customStoryEntries('model').length === 0 &&
+                this.customStoryEntries('methodReturns').length === 0;
         },
 
         getCustomStorageKey(fragment) {
@@ -374,16 +521,30 @@ function hierarchicalFragmentList() {
         loadCustomStoryValues(fragment) {
             const storageKey = this.getCustomStorageKey(fragment);
             if (!storageKey) {
-                return { parameters: {}, model: {}, types: { parameters: {}, model: {} }, nullFlags: { parameters: {}, model: {} }, nullFlagsDefined: false };
+                return {
+                    parameters: {},
+                    model: {},
+                    methodReturns: {},
+                    types: { parameters: {}, model: {}, methodReturns: {} },
+                    nullFlags: { parameters: {}, model: {}, methodReturns: {} },
+                    nullFlagsDefined: false
+                };
             }
             try {
                 const raw = sessionStorage.getItem(storageKey);
                 if (!raw) {
-                    return { parameters: {}, model: {}, types: { parameters: {}, model: {} }, nullFlags: { parameters: {}, model: {} }, nullFlagsDefined: false };
+                    return {
+                        parameters: {},
+                        model: {},
+                        methodReturns: {},
+                        types: { parameters: {}, model: {}, methodReturns: {} },
+                        nullFlags: { parameters: {}, model: {}, methodReturns: {} },
+                        nullFlagsDefined: false
+                    };
                 }
                 const parsed = JSON.parse(raw);
                 if (parsed && typeof parsed === 'object') {
-                    if ('parameters' in parsed || 'model' in parsed) {
+                    if ('parameters' in parsed || 'model' in parsed || 'methodReturns' in parsed) {
                         const hasWrapper = Object.prototype.hasOwnProperty.call(parsed, 'wrapper');
                         const rawTypes = parsed.types && typeof parsed.types === 'object' ? parsed.types : {};
                         const hasNullFlags = Object.prototype.hasOwnProperty.call(parsed, 'nullFlags');
@@ -391,13 +552,24 @@ function hierarchicalFragmentList() {
                         return {
                             parameters: parsed.parameters && typeof parsed.parameters === 'object' ? parsed.parameters : {},
                             model: parsed.model && typeof parsed.model === 'object' ? parsed.model : {},
+                            methodReturns: flattenMethodReturnsMap(
+                                parsed.methodReturns && typeof parsed.methodReturns === 'object'
+                                    ? parsed.methodReturns
+                                    : {}
+                            ),
                             types: {
                                 parameters: rawTypes.parameters && typeof rawTypes.parameters === 'object' ? rawTypes.parameters : {},
-                                model: rawTypes.model && typeof rawTypes.model === 'object' ? rawTypes.model : {}
+                                model: rawTypes.model && typeof rawTypes.model === 'object' ? rawTypes.model : {},
+                                methodReturns: rawTypes.methodReturns && typeof rawTypes.methodReturns === 'object'
+                                    ? rawTypes.methodReturns
+                                    : {}
                             },
                             nullFlags: {
                                 parameters: rawNullFlags.parameters && typeof rawNullFlags.parameters === 'object' ? rawNullFlags.parameters : {},
-                                model: rawNullFlags.model && typeof rawNullFlags.model === 'object' ? rawNullFlags.model : {}
+                                model: rawNullFlags.model && typeof rawNullFlags.model === 'object' ? rawNullFlags.model : {},
+                                methodReturns: rawNullFlags.methodReturns && typeof rawNullFlags.methodReturns === 'object'
+                                    ? rawNullFlags.methodReturns
+                                    : {}
                             },
                             nullFlagsDefined: hasNullFlags,
                             wrapper: hasWrapper && typeof parsed.wrapper === 'string' ? parsed.wrapper : null,
@@ -407,17 +579,36 @@ function hierarchicalFragmentList() {
                     return {
                         parameters: parsed,
                         model: {},
-                        types: { parameters: {}, model: {} },
-                        nullFlags: { parameters: {}, model: {} },
+                        methodReturns: {},
+                        types: { parameters: {}, model: {}, methodReturns: {} },
+                        nullFlags: { parameters: {}, model: {}, methodReturns: {} },
                         nullFlagsDefined: false,
                         wrapper: null,
                         wrapperDefined: false
                     };
                 }
-                return { parameters: {}, model: {}, types: { parameters: {}, model: {} }, nullFlags: { parameters: {}, model: {} }, nullFlagsDefined: false, wrapper: null, wrapperDefined: false };
+                return {
+                    parameters: {},
+                    model: {},
+                    methodReturns: {},
+                    types: { parameters: {}, model: {}, methodReturns: {} },
+                    nullFlags: { parameters: {}, model: {}, methodReturns: {} },
+                    nullFlagsDefined: false,
+                    wrapper: null,
+                    wrapperDefined: false
+                };
             } catch (error) {
                 console.warn('Failed to load custom story values', error);
-                return { parameters: {}, model: {}, types: { parameters: {}, model: {} }, nullFlags: { parameters: {}, model: {} }, nullFlagsDefined: false, wrapper: null, wrapperDefined: false };
+                return {
+                    parameters: {},
+                    model: {},
+                    methodReturns: {},
+                    types: { parameters: {}, model: {}, methodReturns: {} },
+                    nullFlags: { parameters: {}, model: {}, methodReturns: {} },
+                    nullFlagsDefined: false,
+                    wrapper: null,
+                    wrapperDefined: false
+                };
             }
         },
 
@@ -427,7 +618,9 @@ function hierarchicalFragmentList() {
                 return;
             }
             try {
-                const payload = values && typeof values === 'object' ? values : { parameters: {}, model: {} };
+                const payload = values && typeof values === 'object'
+                    ? values
+                    : { parameters: {}, model: {}, methodReturns: {} };
                 sessionStorage.setItem(storageKey, JSON.stringify(payload));
             } catch (error) {
                 console.warn('Failed to save custom story values', error);
@@ -457,24 +650,32 @@ function hierarchicalFragmentList() {
             const baseModel = baseStory && baseStory.model && !Array.isArray(baseStory.model)
                 ? baseStory.model
                 : {};
+            const baseMethodReturns = baseStory && baseStory.methodReturns && !Array.isArray(baseStory.methodReturns)
+                ? flattenMethodReturnsMap(baseStory.methodReturns)
+                : {};
+            const candidateMethodReturns = fragment && fragment.methodReturnCandidates && !Array.isArray(fragment.methodReturnCandidates)
+                ? flattenMethodReturnsMap(fragment.methodReturnCandidates)
+                : {};
 
             const normalizedState = this.buildNormalizedCustomState(fragment, {
                 parameters: { ...baseParams, ...(stored.parameters || {}) },
-                model: { ...baseModel, ...(stored.model || {}) }
+                model: { ...baseModel, ...(stored.model || {}) },
+                methodReturns: { ...candidateMethodReturns, ...baseMethodReturns, ...(stored.methodReturns || {}) }
             });
             const normalizedTypes = this.buildNormalizedCustomTypes(
                 normalizedState,
-                stored.types || { parameters: {}, model: {} }
+                stored.types || { parameters: {}, model: {}, methodReturns: {} }
             );
             const normalizedNullFlags = this.buildNormalizedCustomNullFlags(
                 normalizedState,
-                stored.nullFlags || { parameters: {}, model: {} },
+                stored.nullFlags || { parameters: {}, model: {}, methodReturns: {} },
                 stored.nullFlagsDefined !== true
             );
 
             if (stored && (
                 Object.keys(stored.parameters || {}).length > 0 ||
                 Object.keys(stored.model || {}).length > 0 ||
+                Object.keys(stored.methodReturns || {}).length > 0 ||
                 (typeof stored.wrapper === 'string' && stored.wrapper.length > 0)
             )) {
                 const inheritedWrapper = this.getStoryWrapper(baseStory) || this.getPreviewWrapperFromHost();
@@ -494,10 +695,18 @@ function hierarchicalFragmentList() {
 
             this.customStoryState = this.buildNormalizedCustomState(fragment, {
                 parameters: { ...baseParams },
-                model: { ...baseModel }
+                model: { ...baseModel },
+                methodReturns: { ...candidateMethodReturns, ...baseMethodReturns }
             });
-            this.customStoryTypes = this.buildNormalizedCustomTypes(this.customStoryState, { parameters: {}, model: {} });
-            this.customStoryNullFlags = this.buildNormalizedCustomNullFlags(this.customStoryState, { parameters: {}, model: {} }, true);
+            this.customStoryTypes = this.buildNormalizedCustomTypes(
+                this.customStoryState,
+                { parameters: {}, model: {}, methodReturns: {} }
+            );
+            this.customStoryNullFlags = this.buildNormalizedCustomNullFlags(
+                this.customStoryState,
+                { parameters: {}, model: {}, methodReturns: {} },
+                true
+            );
             this.customPreviewWrapper = this.getStoryWrapper(baseStory) || this.getPreviewWrapperFromHost();
             this.customStoryRawValues = this.buildRawValuesFromCustom(this.customStoryState);
             this.customStoryJsonErrors = {};
@@ -516,16 +725,27 @@ function hierarchicalFragmentList() {
                     params[parameterName] = '';
                 }
             });
-            const model = state?.model && typeof state.model === 'object' ? { ...state.model } : {};
-            return { parameters: params, model };
+            const model = state?.model && typeof state.model === 'object'
+                ? deepCopyCustomValue(state.model)
+                : {};
+            const methodReturns = state?.methodReturns && typeof state.methodReturns === 'object'
+                ? flattenMethodReturnsMap(state.methodReturns)
+                : {};
+            const normalized = normalizeModelAndMethodReturns(model, methodReturns);
+            return {
+                parameters: params,
+                model: normalized.model,
+                methodReturns: normalized.methodReturns
+            };
         },
 
         buildNormalizedCustomTypes(state, types) {
             const normalizedTypes = {
                 parameters: { ...(types?.parameters || {}) },
-                model: { ...(types?.model || {}) }
+                model: { ...(types?.model || {}) },
+                methodReturns: { ...(types?.methodReturns || {}) }
             };
-            ['parameters', 'model'].forEach(kind => {
+            ['parameters', 'model', 'methodReturns'].forEach(kind => {
                 const bucket = state?.[kind] || {};
                 Object.entries(bucket).forEach(([key, value]) => {
                     if (!this.isSupportedCustomValueType(normalizedTypes[kind][key])) {
@@ -539,9 +759,10 @@ function hierarchicalFragmentList() {
         buildNormalizedCustomNullFlags(state, nullFlags, fallbackToNullValues) {
             const normalizedFlags = {
                 parameters: { ...(nullFlags?.parameters || {}) },
-                model: { ...(nullFlags?.model || {}) }
+                model: { ...(nullFlags?.model || {}) },
+                methodReturns: { ...(nullFlags?.methodReturns || {}) }
             };
-            ['parameters', 'model'].forEach(kind => {
+            ['parameters', 'model', 'methodReturns'].forEach(kind => {
                 const bucket = state?.[kind] || {};
                 Object.entries(bucket).forEach(([key, value]) => {
                     if (typeof normalizedFlags[kind][key] !== 'boolean') {
@@ -554,7 +775,7 @@ function hierarchicalFragmentList() {
 
         buildRawValuesFromCustom(state) {
             const rawValues = {};
-            ['parameters', 'model'].forEach(kind => {
+            ['parameters', 'model', 'methodReturns'].forEach(kind => {
                 const bucket = state?.[kind] || {};
                 Object.entries(bucket).forEach(([key, value]) => {
                     if (value !== null && typeof value === 'object') {
@@ -575,10 +796,47 @@ function hierarchicalFragmentList() {
                 rawValue: this.customStoryRawValues?.[`${kind}:${key}`],
                 isNull: this.customStoryNullFlags?.[kind]?.[key] === true
             }));
+            if (kind === 'methodReturns') {
+                return entries.map(entry => ({
+                    ...entry,
+                    methodReturnDisplayKey: this.getMethodReturnDisplayKey(entry.key),
+                    methodReturnFullKey: this.getMethodReturnFullKey(entry.key)
+                }));
+            }
             if (kind !== 'parameters') {
                 return entries;
             }
             return this.sortStoryParameterEntries(entries, this.getParameterSpecOrder());
+        },
+
+        getMethodReturnDisplayKey(path) {
+            const normalized = this.normalizeMethodReturnPath(path);
+            if (!normalized) {
+                return '()';
+            }
+            const segments = normalized.split('.').filter(Boolean);
+            const leaf = segments.length > 0 ? segments[segments.length - 1] : normalized;
+            return leaf.endsWith('()') ? leaf : `${leaf}()`;
+        },
+
+        getMethodReturnFullKey(path) {
+            const normalized = this.normalizeMethodReturnPath(path);
+            if (!normalized) {
+                return '()';
+            }
+            return normalized.endsWith('()') ? normalized : `${normalized}()`;
+        },
+
+        normalizeMethodReturnPath(path) {
+            if (typeof path !== 'string') {
+                return '';
+            }
+            const normalized = path
+                .split('.')
+                .map(segment => segment.trim())
+                .filter(Boolean)
+                .join('.');
+            return normalized;
         },
 
         getParameterSpecOrder() {
@@ -668,7 +926,8 @@ function hierarchicalFragmentList() {
 
             const nextState = {
                 parameters: { ...(this.customStoryState?.parameters || {}) },
-                model: { ...(this.customStoryState?.model || {}) }
+                model: { ...(this.customStoryState?.model || {}) },
+                methodReturns: { ...(this.customStoryState?.methodReturns || {}) }
             };
             nextState[kind][key] = nextValue;
             this.customStoryState = nextState;
@@ -694,13 +953,15 @@ function hierarchicalFragmentList() {
             const coercedValue = isNullSelected ? null : this.coerceCustomValueByType(currentValue, nextType);
             const nextState = {
                 parameters: { ...(this.customStoryState?.parameters || {}) },
-                model: { ...(this.customStoryState?.model || {}) }
+                model: { ...(this.customStoryState?.model || {}) },
+                methodReturns: { ...(this.customStoryState?.methodReturns || {}) }
             };
             nextState[kind][key] = coercedValue;
             this.customStoryState = nextState;
             this.customStoryTypes = {
                 parameters: { ...(this.customStoryTypes?.parameters || {}) },
-                model: { ...(this.customStoryTypes?.model || {}) }
+                model: { ...(this.customStoryTypes?.model || {}) },
+                methodReturns: { ...(this.customStoryTypes?.methodReturns || {}) }
             };
             this.customStoryTypes[kind][key] = nextType;
             if (!isNullSelected && (nextType === 'object' || nextType === 'array')) {
@@ -732,7 +993,8 @@ function hierarchicalFragmentList() {
         setCustomNullFlag(kind, key, enabled) {
             this.customStoryNullFlags = {
                 parameters: { ...(this.customStoryNullFlags?.parameters || {}) },
-                model: { ...(this.customStoryNullFlags?.model || {}) }
+                model: { ...(this.customStoryNullFlags?.model || {}) },
+                methodReturns: { ...(this.customStoryNullFlags?.methodReturns || {}) }
             };
             this.customStoryNullFlags[kind][key] = enabled === true;
         },
@@ -740,7 +1002,8 @@ function hierarchicalFragmentList() {
         setCustomNullBackup(kind, key, value, rawValue) {
             this.customStoryNullBackups = {
                 parameters: { ...(this.customStoryNullBackups?.parameters || {}) },
-                model: { ...(this.customStoryNullBackups?.model || {}) }
+                model: { ...(this.customStoryNullBackups?.model || {}) },
+                methodReturns: { ...(this.customStoryNullBackups?.methodReturns || {}) }
             };
             this.customStoryNullBackups[kind][key] = { value, rawValue };
         },
@@ -752,7 +1015,8 @@ function hierarchicalFragmentList() {
         clearCustomNullBackup(kind, key) {
             const nextBackups = {
                 parameters: { ...(this.customStoryNullBackups?.parameters || {}) },
-                model: { ...(this.customStoryNullBackups?.model || {}) }
+                model: { ...(this.customStoryNullBackups?.model || {}) },
+                methodReturns: { ...(this.customStoryNullBackups?.methodReturns || {}) }
             };
             if (nextBackups[kind] && Object.prototype.hasOwnProperty.call(nextBackups[kind], key)) {
                 delete nextBackups[kind][key];
@@ -764,7 +1028,8 @@ function hierarchicalFragmentList() {
             const isNull = enabled === true;
             const nextState = {
                 parameters: { ...(this.customStoryState?.parameters || {}) },
-                model: { ...(this.customStoryState?.model || {}) }
+                model: { ...(this.customStoryState?.model || {}) },
+                methodReturns: { ...(this.customStoryState?.methodReturns || {}) }
             };
             if (isNull) {
                 this.setCustomNullBackup(
@@ -875,7 +1140,8 @@ function hierarchicalFragmentList() {
             if (parsed && typeof parsed === 'object') {
                 this.customStoryState = {
                     parameters: { ...(this.customStoryState?.parameters || {}) },
-                    model: parsed
+                    model: parsed,
+                    methodReturns: { ...(this.customStoryState?.methodReturns || {}) }
                 };
                 this.customModelJsonError = false;
                 this.saveCustomStoryValues(this.selectedFragment, {
@@ -916,15 +1182,20 @@ function hierarchicalFragmentList() {
             if (!this.isCustomStory(this.selectedStory)) {
                 return;
             }
+            const previewOverrides = {
+                parameters: { ...(this.customStoryState?.parameters || {}) },
+                model: { ...(this.customStoryState?.model || {}) },
+                methodReturns: toNestedMethodReturnsMap(this.customStoryState?.methodReturns || {})
+            };
             if (window.__thymeleafletPreview?.setWrapperOverride) {
                 window.__thymeleafletPreview.setWrapperOverride(this.customPreviewWrapper);
             }
             if (window.__thymeleafletPreview?.setStoryOverrides) {
-                window.__thymeleafletPreview.setStoryOverrides(this.customStoryState);
+                window.__thymeleafletPreview.setStoryOverrides(previewOverrides);
                 window.__thymeleafletPreview.render();
                 return;
             }
-            window.__thymeleafletPendingOverrides = { ...this.customStoryState };
+            window.__thymeleafletPendingOverrides = previewOverrides;
             window.__thymeleafletPendingWrapperOverride = this.customPreviewWrapper;
         },
 
@@ -934,7 +1205,8 @@ function hierarchicalFragmentList() {
             }
             const parameters = { ...(this.customStoryState?.parameters || {}) };
             const model = { ...(this.customStoryState?.model || {}) };
-            const yaml = this.buildCustomStoryYaml(parameters, model, this.customPreviewWrapper);
+            const methodReturns = { ...(this.customStoryState?.methodReturns || {}) };
+            const yaml = this.buildCustomStoryYaml(parameters, model, methodReturns, this.customPreviewWrapper);
             const templatePart = sanitizeFilePart(this.selectedFragment.templatePath);
             const fragmentPart = sanitizeFilePart(this.selectedFragment.fragmentName);
             const fileName = `${templatePart}__${fragmentPart}__custom.yaml`;
@@ -975,19 +1247,23 @@ function hierarchicalFragmentList() {
                 : {};
             const nextState = {
                 parameters: { ...(this.customStoryState?.parameters || {}) },
-                model: { ...baseModel }
+                model: { ...baseModel },
+                methodReturns: { ...(this.customStoryState?.methodReturns || {}) }
             };
             const nextTypes = this.buildNormalizedCustomTypes(nextState, {
                 parameters: { ...(this.customStoryTypes?.parameters || {}) },
-                model: {}
+                model: {},
+                methodReturns: { ...(this.customStoryTypes?.methodReturns || {}) }
             });
             const nextNullFlags = this.buildNormalizedCustomNullFlags(nextState, {
                 parameters: { ...(this.customStoryNullFlags?.parameters || {}) },
-                model: {}
+                model: {},
+                methodReturns: { ...(this.customStoryNullFlags?.methodReturns || {}) }
             }, true);
             const nextNullBackups = {
                 parameters: { ...(this.customStoryNullBackups?.parameters || {}) },
-                model: {}
+                model: {},
+                methodReturns: { ...(this.customStoryNullBackups?.methodReturns || {}) }
             };
             const nextRawValues = {};
             Object.entries(this.customStoryRawValues || {}).forEach(([rawKey, rawValue]) => {
@@ -1019,7 +1295,68 @@ function hierarchicalFragmentList() {
             this.applyCustomOverrides();
         },
 
-        buildCustomStoryYaml(parameters, model, wrapper) {
+        resetCustomMethodReturnsValues() {
+            if (!this.selectedFragment || !this.isCustomStory(this.selectedStory)) {
+                return;
+            }
+            const baseStory = this.getCustomBaseStory(this.selectedFragment);
+            const baseMethodReturns = baseStory && baseStory.methodReturns && !Array.isArray(baseStory.methodReturns)
+                ? flattenMethodReturnsMap(baseStory.methodReturns)
+                : {};
+            const candidateMethodReturns = this.selectedFragment.methodReturnCandidates
+                && !Array.isArray(this.selectedFragment.methodReturnCandidates)
+                ? flattenMethodReturnsMap(this.selectedFragment.methodReturnCandidates)
+                : {};
+            const nextState = {
+                parameters: { ...(this.customStoryState?.parameters || {}) },
+                model: { ...(this.customStoryState?.model || {}) },
+                methodReturns: { ...candidateMethodReturns, ...baseMethodReturns }
+            };
+            const nextTypes = this.buildNormalizedCustomTypes(nextState, {
+                parameters: { ...(this.customStoryTypes?.parameters || {}) },
+                model: { ...(this.customStoryTypes?.model || {}) },
+                methodReturns: {}
+            });
+            const nextNullFlags = this.buildNormalizedCustomNullFlags(nextState, {
+                parameters: { ...(this.customStoryNullFlags?.parameters || {}) },
+                model: { ...(this.customStoryNullFlags?.model || {}) },
+                methodReturns: {}
+            }, true);
+            const nextNullBackups = {
+                parameters: { ...(this.customStoryNullBackups?.parameters || {}) },
+                model: { ...(this.customStoryNullBackups?.model || {}) },
+                methodReturns: {}
+            };
+            const nextRawValues = {};
+            Object.entries(this.customStoryRawValues || {}).forEach(([rawKey, rawValue]) => {
+                if (!rawKey.startsWith('methodReturns:')) {
+                    nextRawValues[rawKey] = rawValue;
+                }
+            });
+            Object.entries(nextState.methodReturns || {}).forEach(([key, value]) => {
+                if (value !== null && typeof value === 'object') {
+                    nextRawValues[`methodReturns:${key}`] = JSON.stringify(value, null, 2);
+                }
+            });
+            const nextJsonErrors = {};
+            Object.entries(this.customStoryJsonErrors || {}).forEach(([errorKey, hasError]) => {
+                if (!errorKey.startsWith('methodReturns:')) {
+                    nextJsonErrors[errorKey] = hasError;
+                }
+            });
+
+            this.customStoryState = nextState;
+            this.customStoryTypes = nextTypes;
+            this.customStoryNullFlags = nextNullFlags;
+            this.customStoryNullBackups = nextNullBackups;
+            this.customStoryRawValues = nextRawValues;
+            this.customStoryJsonErrors = nextJsonErrors;
+            this.saveCustomStoryValues(this.selectedFragment, this.buildCustomStoryPayload());
+            this.applyCustomOverrides();
+        },
+
+        buildCustomStoryYaml(parameters, model, methodReturns, wrapper) {
+            const normalizedMethodReturns = toNestedMethodReturnsMap(methodReturns || {});
             const lines = [
                 '# Paste into storyGroups.<fragmentName>.stories',
                 '# Rename "custom" before saving',
@@ -1033,6 +1370,10 @@ function hierarchicalFragmentList() {
             if (model && Object.keys(model).length > 0) {
                 lines.push('  model:');
                 lines.push(indentYaml(toYaml(model, 1), 2));
+            }
+            if (normalizedMethodReturns && Object.keys(normalizedMethodReturns).length > 0) {
+                lines.push('  methodReturns:');
+                lines.push(indentYaml(toYaml(normalizedMethodReturns, 1), 2));
             }
             if (wrapper && wrapper.trim() !== '') {
                 lines.push('  preview:');
@@ -1054,6 +1395,9 @@ function hierarchicalFragmentList() {
             const rawModel = this.selectedStory.model && !Array.isArray(this.selectedStory.model)
                 ? this.selectedStory.model
                 : {};
+            const rawMethodReturns = this.selectedStory.methodReturns && !Array.isArray(this.selectedStory.methodReturns)
+                ? this.selectedStory.methodReturns
+                : {};
             const wrapper = this.getStoryWrapper(this.selectedStory) || this.getPreviewWrapperFromHost();
             const lines = [
                 `- name: ${storyName}`,
@@ -1066,6 +1410,10 @@ function hierarchicalFragmentList() {
             if (rawModel && Object.keys(rawModel).length > 0) {
                 lines.push('  model:');
                 lines.push(indentYaml(toYaml(rawModel, 1), 2));
+            }
+            if (rawMethodReturns && Object.keys(rawMethodReturns).length > 0) {
+                lines.push('  methodReturns:');
+                lines.push(indentYaml(toYaml(rawMethodReturns, 1), 2));
             }
             if (wrapper && wrapper.trim() !== '') {
                 lines.push('  preview:');
