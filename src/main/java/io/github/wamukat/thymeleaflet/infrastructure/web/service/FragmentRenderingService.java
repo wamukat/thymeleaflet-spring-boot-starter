@@ -5,6 +5,7 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParame
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
+import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.PreviewWarningRecorder;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
 import org.jspecify.annotations.Nullable;
@@ -19,7 +20,9 @@ import org.springframework.ui.Model;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -84,7 +87,7 @@ public class FragmentRenderingService {
      * @return レンダリング結果
      */
     public RenderingResult renderStory(String templatePath, String fragmentName, String storyName, Model model) {
-        return renderStory(templatePath, fragmentName, storyName, model, Map.of(), Map.of());
+        return renderStory(templatePath, fragmentName, storyName, model, Map.of(), Map.of(), Map.of());
     }
 
     public RenderingResult renderStory(String templatePath,
@@ -92,11 +95,14 @@ public class FragmentRenderingService {
                                        String storyName,
                                        Model model,
                                        Map<String, Object> parameterOverrides,
-                                       Map<String, Object> modelOverrides) {
+                                       Map<String, Object> modelOverrides,
+                                       Map<String, Object> methodReturnsOverrides) {
         try {
             logger.info("=== RENDER STORY START ===");
             logger.info("Request params: templatePath={}, fragmentName={}, storyName={}", 
                        templatePath, fragmentName, storyName);
+
+            PreviewWarningRecorder.clear();
             
             // セキュアパス変換を使用してテンプレートパスを復元
             SecurePathConversionService.SecurityConversionResult conversionResult = 
@@ -134,11 +140,40 @@ public class FragmentRenderingService {
             }
             Map<String, Object> mergedModel = new HashMap<>();
             if (!storyModel.isEmpty()) {
-                mergedModel.putAll(storyModel);
+                deepMergeWithOverride(mergedModel, storyModel);
             }
             if (!modelOverrides.isEmpty()) {
-                mergedModel.putAll(modelOverrides);
+                deepMergeWithOverride(mergedModel, modelOverrides);
             }
+
+            Map<String, Object> mergedMethodReturns = new HashMap<>();
+            if (!storyInfo.getMethodReturns().isEmpty()) {
+                deepMergeWithOverride(mergedMethodReturns, storyInfo.getMethodReturns());
+            }
+            if (!methodReturnsOverrides.isEmpty()) {
+                deepMergeWithOverride(mergedMethodReturns, methodReturnsOverrides);
+            }
+            if (mergedMethodReturns.isEmpty() && !storyInfo.hasStoryConfig()) {
+                Map<String, Object> inferredMethodReturns = fragmentModelInferenceService.inferMethodReturnCandidates(
+                    fullTemplatePath,
+                    fragmentName,
+                    storyInfo.getFragmentSummary().getParameters()
+                );
+                if (!inferredMethodReturns.isEmpty()) {
+                    deepMergeWithOverride(mergedMethodReturns, inferredMethodReturns);
+                    logger.info("Applied inferred methodReturns values: {}", mergedMethodReturns.keySet());
+                }
+            }
+
+            if (!mergedMethodReturns.isEmpty()) {
+                List<String> conflictPaths = new ArrayList<>();
+                mergeMethodReturnsWithoutOverride(mergedModel, mergedMethodReturns, "", conflictPaths);
+                for (String path : conflictPaths) {
+                    recordMethodReturnConflictWarning(path);
+                }
+                logger.info("Applied methodReturns values: {}", mergedMethodReturns.keySet());
+            }
+
             if (!mergedModel.isEmpty()) {
                 for (Map.Entry<String, Object> entry : mergedModel.entrySet()) {
                     model.addAttribute(entry.getKey(), thymeleafFragmentRenderer.resolveTemplateValue(entry.getValue()));
@@ -266,6 +301,85 @@ public class FragmentRenderingService {
 
     private String classNameOf(@Nullable Object target) {
         return Objects.isNull(target) ? "null" : target.getClass().getSimpleName();
+    }
+
+    private void deepMergeWithOverride(Map<String, Object> target, Map<String, Object> source) {
+        source.forEach((key, sourceValue) -> {
+            Object targetValue = target.get(key);
+            if (sourceValue instanceof Map<?, ?> sourceMap && targetValue instanceof Map<?, ?> targetMap) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> castedTarget = (Map<String, Object>) targetMap;
+                deepMergeWithOverride(castedTarget, toStringKeyMap(sourceMap));
+                return;
+            }
+            target.put(key, deepCopyValue(sourceValue));
+        });
+    }
+
+    private void mergeMethodReturnsWithoutOverride(
+        Map<String, Object> target,
+        Map<String, Object> methodReturns,
+        String parentPath,
+        List<String> conflictPaths
+    ) {
+        methodReturns.forEach((key, sourceValue) -> {
+            String currentPath = parentPath.isEmpty() ? key : parentPath + "." + key;
+            Object targetValue = target.get(key);
+
+            if (sourceValue instanceof Map<?, ?> sourceMap) {
+                if (!target.containsKey(key)) {
+                    target.put(key, deepCopyValue(sourceValue));
+                    return;
+                }
+                if (targetValue instanceof Map<?, ?> targetMap) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> castedTarget = (Map<String, Object>) targetMap;
+                    mergeMethodReturnsWithoutOverride(
+                        castedTarget,
+                        toStringKeyMap(sourceMap),
+                        currentPath,
+                        conflictPaths
+                    );
+                    return;
+                }
+                conflictPaths.add(currentPath);
+                return;
+            }
+
+            if (target.containsKey(key)) {
+                conflictPaths.add(currentPath);
+                return;
+            }
+            target.put(key, deepCopyValue(sourceValue));
+        });
+    }
+
+    private void recordMethodReturnConflictWarning(String path) {
+        String warning = messageSource.getMessage(
+            "thymeleaflet.preview.warning.methodReturnConflict",
+            new Object[] {path},
+            "Skipped methodReturns path due to model conflict: " + path,
+            LocaleContextHolder.getLocale()
+        );
+        PreviewWarningRecorder.record(warning);
+    }
+
+    private Map<String, Object> toStringKeyMap(Map<?, ?> rawMap) {
+        Map<String, Object> converted = new HashMap<>();
+        rawMap.forEach((key, value) -> converted.put(String.valueOf(key), deepCopyValue(value)));
+        return converted;
+    }
+
+    private @Nullable Object deepCopyValue(@Nullable Object value) {
+        if (value instanceof Map<?, ?> mapValue) {
+            return toStringKeyMap(mapValue);
+        }
+        if (value instanceof List<?> listValue) {
+            List<Object> copied = new ArrayList<>(listValue.size());
+            listValue.forEach(item -> copied.add(deepCopyValue(item)));
+            return copied;
+        }
+        return value;
     }
 
     private Optional<String> findUnsafeFragmentInsertionParameter(

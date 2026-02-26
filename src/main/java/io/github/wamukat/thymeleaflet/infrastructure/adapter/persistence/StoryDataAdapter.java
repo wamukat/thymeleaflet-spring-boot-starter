@@ -12,7 +12,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -122,14 +124,7 @@ public class StoryDataAdapter implements StoryDataPort {
                     return Optional.empty();
                 }
 
-                StoryItem customStory = new StoryItem(
-                    "custom",
-                    "Custom",
-                    "",
-                    baseStory.get().parameters(),
-                    baseStory.get().preview(),
-                    baseStory.get().model()
-                );
+                StoryItem customStory = createCustomStoryFromBase(baseStory.get());
 
                 io.github.wamukat.thymeleaflet.domain.model.FragmentSummary domainFragmentSummary =
                     fragmentSummaryMapper.toDomain(fragmentInfo.get());
@@ -211,5 +206,99 @@ public class StoryDataAdapter implements StoryDataPort {
             .stream()
             .filter(f -> f.getTemplatePath().equals(templatePath) && f.getFragmentName().equals(fragmentName))
             .findFirst();
+    }
+
+    private StoryItem createCustomStoryFromBase(StoryItem baseStory) {
+        Map<String, Object> normalizedModel = removeMethodReturnPathsFromModel(
+            baseStory.model(),
+            baseStory.methodReturns()
+        );
+        return new StoryItem(
+            "custom",
+            "Custom",
+            "",
+            baseStory.parameters(),
+            baseStory.preview(),
+            normalizedModel,
+            baseStory.methodReturns()
+        );
+    }
+
+    private Map<String, Object> removeMethodReturnPathsFromModel(
+        Map<String, Object> model,
+        Map<String, Object> methodReturns
+    ) {
+        Map<String, Object> normalizedModel = toStringKeyMap(model);
+        if (normalizedModel.isEmpty() || methodReturns.isEmpty()) {
+            return normalizedModel;
+        }
+
+        List<List<String>> methodReturnPaths = new ArrayList<>();
+        collectLeafPaths(methodReturns, new ArrayList<>(), methodReturnPaths);
+        for (List<String> path : methodReturnPaths) {
+            removePath(normalizedModel, path, 0);
+        }
+        return normalizedModel;
+    }
+
+    private void collectLeafPaths(
+        Map<?, ?> source,
+        List<String> parentSegments,
+        List<List<String>> collectedPaths
+    ) {
+        source.forEach((rawKey, rawValue) -> {
+            String key = String.valueOf(rawKey);
+            List<String> nextSegments = new ArrayList<>(parentSegments);
+            nextSegments.add(key);
+            if (rawValue instanceof Map<?, ?> nestedMap && !nestedMap.isEmpty()) {
+                collectLeafPaths(nestedMap, nextSegments, collectedPaths);
+                return;
+            }
+            collectedPaths.add(nextSegments);
+        });
+    }
+
+    private boolean removePath(Map<String, Object> target, List<String> segments, int index) {
+        if (segments.isEmpty() || index >= segments.size()) {
+            return target.isEmpty();
+        }
+        String current = segments.get(index);
+        if (!target.containsKey(current)) {
+            return target.isEmpty();
+        }
+        if (index == segments.size() - 1) {
+            target.remove(current);
+            return target.isEmpty();
+        }
+
+        Object child = target.get(current);
+        if (!(child instanceof Map<?, ?> childMap)) {
+            return target.isEmpty();
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> castedChild = (Map<String, Object>) childMap;
+        boolean childEmpty = removePath(castedChild, segments, index + 1);
+        if (childEmpty) {
+            target.remove(current);
+        }
+        return target.isEmpty();
+    }
+
+    private Map<String, Object> toStringKeyMap(Map<?, ?> rawMap) {
+        Map<String, Object> converted = new HashMap<>();
+        rawMap.forEach((key, value) -> converted.put(String.valueOf(key), deepCopyValue(value)));
+        return converted;
+    }
+
+    private Object deepCopyValue(Object value) {
+        if (value instanceof Map<?, ?> mapValue) {
+            return toStringKeyMap(mapValue);
+        }
+        if (value instanceof List<?> listValue) {
+            List<Object> copied = new ArrayList<>(listValue.size());
+            listValue.forEach(item -> copied.add(deepCopyValue(item)));
+            return copied;
+        }
+        return value;
     }
 }

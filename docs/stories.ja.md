@@ -47,6 +47,7 @@ storyGroups:
 - `description`: 任意
 - `parameters`: フラグメント引数
 - `model`: モデル値
+- `methodReturns`: no-arg メソッド呼び出しの戻り値（プレビュー用）
 - `preview.wrapper`: プレビューのラッパー
 
 ## Model（モデル）
@@ -87,6 +88,25 @@ stories:
 - `model` と `parameters` は同一ストーリーで併用できます。
 - キーが不足すると、Thymeleaf の式は `null` になる可能性があります。
 
+## methodReturns（no-arg）
+
+`methodReturns` を使うと、プレビュー時の no-arg メソッド呼び出し結果を制御できます。
+
+```yaml
+stories:
+  - name: default
+    title: Default
+    methodReturns:
+      view:
+        pointPage:
+          hasPrev: false
+          nextPage: 2
+```
+
+- `methodReturns` は `model` と同じネストMap形式です。
+- 適用範囲はプレビュー `/render` のみです。
+- `model` と `methodReturns` が同じパスを定義した場合、警告を表示して `model` 側を優先します。
+
 ## プレビューラッパー
 
 `preview.wrapper` でアプリ本体のレイアウトやテーマを再現できます。
@@ -109,7 +129,7 @@ Thymeleaflet は UI に **Custom** ストーリーを追加し、パラメータ
 
 - **初期値**: `default` があればその値、なければ先頭ストーリーの値をコピー。
 - **保持先**: `sessionStorage` にフラグメント単位で保存。
-- **編集対象**: `parameters` と `model` の両方。
+- **編集対象**: `parameters` / `model` / `methodReturns`。
 - **適用範囲**: プレビュー表示のみ（`stories.yml` には書き戻しません）。
 - **予約名**: `custom` は UI で使用するため、stories.yml には定義しないでください。
 

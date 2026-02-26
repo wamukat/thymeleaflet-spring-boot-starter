@@ -13,15 +13,18 @@ public final class TemplateInference {
     private final List<ModelPath> modelPaths;
     private final Map<String, ModelPath> loopVariablePaths;
     private final Map<String, Boolean> referencedTemplatePaths;
+    private final List<ModelPath> noArgMethodPaths;
 
     public TemplateInference(
         List<ModelPath> modelPaths,
         Map<String, ModelPath> loopVariablePaths,
-        Map<String, Boolean> referencedTemplatePaths
+        Map<String, Boolean> referencedTemplatePaths,
+        List<ModelPath> noArgMethodPaths
     ) {
         this.modelPaths = List.copyOf(modelPaths);
         this.loopVariablePaths = Map.copyOf(new LinkedHashMap<>(loopVariablePaths));
         this.referencedTemplatePaths = Map.copyOf(new LinkedHashMap<>(referencedTemplatePaths));
+        this.noArgMethodPaths = List.copyOf(noArgMethodPaths);
     }
 
     public List<ModelPath> modelPaths() {
@@ -38,6 +41,10 @@ public final class TemplateInference {
 
     public Map<String, Boolean> referencedTemplatePathsWithRecursionFlags() {
         return referencedTemplatePaths;
+    }
+
+    public List<ModelPath> noArgMethodPaths() {
+        return noArgMethodPaths;
     }
 
     public InferredModel toInferredModel() {

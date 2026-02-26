@@ -67,6 +67,11 @@
     </th:block>
     <div th:replace="~{thymeleaflet/fragments/preview-panel :: header(${selectedStory} != null ? ~{::panel-subtitle} : null)}"></div>
     <div class="card-thymeleaflet-content">
+        <div id="preview-warning-banner"
+             class="mb-4 hidden rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p class="font-semibold" th:text="#{thymeleaflet.preview.warning.title}">Preview warning</p>
+            <ul id="preview-warning-list" class="mt-2 list-disc space-y-1 pl-5 text-xs"></ul>
+        </div>
         <!--
         /**
          * プレビュー表示用の内部フラグメント

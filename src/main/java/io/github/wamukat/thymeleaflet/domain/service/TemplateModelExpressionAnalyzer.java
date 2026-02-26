@@ -2,9 +2,11 @@ package io.github.wamukat.thymeleaflet.domain.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
 import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +40,9 @@ public class TemplateModelExpressionAnalyzer {
         excludedIdentifiers.addAll(extractLocalVariablesFromThWith(html));
         Map<String, ModelPath> loopVariablePaths = extractLoopVariablePaths(html);
         List<ModelPath> modelPaths = extractModelPathsFromHtml(html, excludedIdentifiers);
+        List<ModelPath> noArgMethodPaths = extractNoArgMethodPathsFromHtml(html, excludedIdentifiers);
         Map<String, Boolean> referencedTemplatePaths = extractReferencedTemplatePaths(html);
-        return new TemplateInference(modelPaths, loopVariablePaths, referencedTemplatePaths);
+        return new TemplateInference(modelPaths, loopVariablePaths, referencedTemplatePaths, noArgMethodPaths);
     }
 
     private List<ModelPath> extractModelPathsFromHtml(String html, Set<String> excludedIdentifiers) {
@@ -54,7 +57,29 @@ public class TemplateModelExpressionAnalyzer {
         return paths;
     }
 
+    private List<ModelPath> extractNoArgMethodPathsFromHtml(String html, Set<String> excludedIdentifiers) {
+        LinkedHashSet<ModelPath> methodPaths = new LinkedHashSet<>();
+        Matcher matcher = EXPRESSION_PATTERN.matcher(html);
+        while (matcher.find()) {
+            String expression = stripStringLiterals(matcher.group(1));
+            List<List<String>> extracted = new ArrayList<>();
+            extractModelPaths(expression, excludedIdentifiers, extracted);
+            for (List<String> path : extracted) {
+                methodPaths.add(ModelPath.of(path));
+            }
+        }
+        return new ArrayList<>(methodPaths);
+    }
+
     private List<List<String>> extractModelPaths(String expression, Set<String> excludedIdentifiers) {
+        return extractModelPaths(expression, excludedIdentifiers, null);
+    }
+
+    private List<List<String>> extractModelPaths(
+        String expression,
+        Set<String> excludedIdentifiers,
+        @Nullable List<List<String>> noArgMethodPaths
+    ) {
         List<List<String>> paths = new ArrayList<>();
         int length = expression.length();
         int i = 0;
@@ -86,6 +111,7 @@ public class TemplateModelExpressionAnalyzer {
             List<String> segments = new ArrayList<>();
             segments.add(root);
 
+            boolean endedWithNoArgMethodCall = false;
             while (i < length) {
                 if (expression.startsWith("?.", i)) {
                     i += 2;
@@ -115,13 +141,24 @@ public class TemplateModelExpressionAnalyzer {
                 while (i < length && isIdentifierPart(expression.charAt(i))) {
                     i++;
                 }
+                String propertyName = expression.substring(propStart, i);
                 if (isFunctionCall(expression, i)) {
+                    int closeParen = consumeFunctionCall(expression, i);
+                    if (closeParen > i && isNoArgFunctionCall(expression, i, closeParen)) {
+                        List<String> methodPath = new ArrayList<>(segments);
+                        methodPath.add(propertyName);
+                        if (noArgMethodPaths != null) {
+                            noArgMethodPaths.add(List.copyOf(methodPath));
+                        }
+                        endedWithNoArgMethodCall = true;
+                        i = closeParen + 1;
+                    }
                     break;
                 }
-                segments.add(expression.substring(propStart, i));
+                segments.add(propertyName);
             }
 
-            if (!segments.isEmpty()) {
+            if (!segments.isEmpty() && !endedWithNoArgMethodCall) {
                 paths.add(segments);
             }
         }
@@ -409,7 +446,7 @@ public class TemplateModelExpressionAnalyzer {
                 sanitized.append(' ');
                 continue;
             }
-            sanitized.append((inSingleQuote || inDoubleQuote) ? ' ' : c);
+            sanitized.append((inSingleQuote || inDoubleQuote) ? '@' : c);
         }
         return sanitized.toString();
     }
@@ -440,6 +477,52 @@ public class TemplateModelExpressionAnalyzer {
             next++;
         }
         return next < expression.length() && expression.charAt(next) == '(';
+    }
+
+    private int consumeFunctionCall(String expression, int identifierEnd) {
+        int openParen = identifierEnd;
+        while (openParen < expression.length() && Character.isWhitespace(expression.charAt(openParen))) {
+            openParen++;
+        }
+        if (openParen >= expression.length() || expression.charAt(openParen) != '(') {
+            return -1;
+        }
+        int depth = 0;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        for (int i = openParen; i < expression.length(); i++) {
+            char c = expression.charAt(i);
+            char previous = i > 0 ? expression.charAt(i - 1) : '\0';
+            if (c == '\'' && !inDoubleQuote && previous != '\\') {
+                inSingleQuote = !inSingleQuote;
+            } else if (c == '"' && !inSingleQuote && previous != '\\') {
+                inDoubleQuote = !inDoubleQuote;
+            }
+            if (inSingleQuote || inDoubleQuote) {
+                continue;
+            }
+            if (c == '(') {
+                depth++;
+            } else if (c == ')') {
+                depth--;
+                if (depth == 0) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    private boolean isNoArgFunctionCall(String expression, int identifierEnd, int closeParenIndex) {
+        int openParen = identifierEnd;
+        while (openParen < expression.length() && Character.isWhitespace(expression.charAt(openParen))) {
+            openParen++;
+        }
+        if (openParen < 0 || closeParenIndex <= openParen) {
+            return false;
+        }
+        String args = expression.substring(openParen + 1, closeParenIndex).trim();
+        return args.isEmpty();
     }
 
     private boolean isIdentifierStart(char c) {

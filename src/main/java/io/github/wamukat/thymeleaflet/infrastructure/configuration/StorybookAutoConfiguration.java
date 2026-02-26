@@ -7,6 +7,7 @@ import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.domain.service.StoryDataRepository;
 import io.github.wamukat.thymeleaflet.domain.service.StoryParameterDomainService;
 import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
+import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafletAwareThymeleafView;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -31,6 +32,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.thymeleaf.spring6.view.ThymeleafViewResolver;
 
 /**
  * Storybook機能の自動設定クラス
@@ -190,6 +192,19 @@ public class StorybookAutoConfiguration {
                     }
                 }
 
+                return bean;
+            }
+        };
+    }
+
+    @Bean
+    public static BeanPostProcessor thymeleafletViewResolverPostProcessor() {
+        return new BeanPostProcessor() {
+            @Override
+            public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+                if (bean instanceof ThymeleafViewResolver resolver) {
+                    resolver.setViewClass(ThymeleafletAwareThymeleafView.class);
+                }
                 return bean;
             }
         };

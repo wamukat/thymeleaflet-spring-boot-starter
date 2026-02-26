@@ -6,14 +6,19 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureWebMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(
@@ -54,5 +59,131 @@ class ThymeleafletRenderingExceptionHandlerIntegrationTest {
             "原因ヒント付きメッセージが表示されること");
         assertFalse(body.contains("Whitelabel Error Page"),
             "ホストアプリのデフォルトエラーページに遷移しないこと");
+    }
+
+    @Test
+    @DisplayName("Map no-arg メソッドが未解決でも /render は継続し警告ヘッダーを返す")
+    void shouldRenderWithWarningsForUnresolvedMapNoArgMethods() throws Exception {
+        var mvcResult = mockMvc.perform(get("/thymeleaflet/test.map-noarg-warning/methodWarning/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String body = mvcResult.getResponse().getContentAsString();
+        String warningsHeader = mvcResult.getResponse().getHeader("X-Thymeleaflet-Preview-Warnings");
+
+        assertTrue(warningsHeader != null && !warningsHeader.isBlank(),
+            "未解決 no-arg メソッド時は警告ヘッダーが設定されること");
+
+        String decodedWarnings = new String(
+            Base64.getUrlDecoder().decode(warningsHeader),
+            StandardCharsets.UTF_8
+        );
+        assertTrue(
+            decodedWarnings.contains("hasPrev()") || decodedWarnings.contains("nextPage()"),
+            "警告内容に未解決メソッド名が含まれること"
+        );
+        assertTrue(body.contains("no-prev"),
+            "未解決の boolean no-arg メソッドは false フォールバックで評価できること");
+        assertFalse(body.contains("Whitelabel Error Page"),
+            "未解決 no-arg メソッドでもホストアプリのデフォルトエラーページに遷移しないこと");
+    }
+
+    @Test
+    @DisplayName("fallback ストーリーでは推論 methodReturns を適用して no-arg 警告を抑制する")
+    void shouldRenderWithoutWarningsWhenFallbackStoryUsesNoArgMethods() throws Exception {
+        var mvcResult = mockMvc.perform(get("/thymeleaflet/test.map-noarg-fallback/fallbackMethodWarning/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String body = mvcResult.getResponse().getContentAsString();
+        String warningsHeader = mvcResult.getResponse().getHeader("X-Thymeleaflet-Preview-Warnings");
+
+        assertTrue(body.contains("no-prev"),
+            "推論 methodReturns の hasPrev=false が適用されること");
+        assertTrue(body.contains("0"),
+            "推論 methodReturns の nextPage=0 が適用されること");
+        assertTrue(warningsHeader == null || warningsHeader.isBlank(),
+            "fallback 推論で解決できる no-arg メソッドは警告を出さないこと");
+    }
+
+    @Test
+    @DisplayName("methodReturns override で no-arg メソッド戻り値を制御できる")
+    void shouldRenderUsingMethodReturnsOverrides() throws Exception {
+        String requestBody = """
+            {
+              "methodReturns": {
+                "view": {
+                  "pointPage": {
+                    "hasPrev": true,
+                    "nextPage": 7
+                  }
+                }
+              }
+            }
+            """;
+
+        var mvcResult = mockMvc.perform(post("/thymeleaflet/test.map-noarg-warning/methodWarning/default/render")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String body = mvcResult.getResponse().getContentAsString();
+        String warningsHeader = mvcResult.getResponse().getHeader("X-Thymeleaflet-Preview-Warnings");
+
+        assertTrue(body.contains("prev"), "hasPrev=true により Prev 表示が有効になること");
+        assertTrue(body.contains("7"), "nextPage=7 が描画されること");
+        assertTrue(warningsHeader == null || warningsHeader.isBlank(),
+            "衝突・未解決がなければ警告ヘッダーが空であること");
+    }
+
+    @Test
+    @DisplayName("model と methodReturns の衝突時は model を優先し警告を返す")
+    void shouldWarnAndKeepModelValueOnMethodReturnConflict() throws Exception {
+        String requestBody = """
+            {
+              "model": {
+                "view": {
+                  "pointPage": {
+                    "hasPrev": true
+                  }
+                }
+              },
+              "methodReturns": {
+                "view": {
+                  "pointPage": {
+                    "hasPrev": false,
+                    "nextPage": 8
+                  }
+                }
+              }
+            }
+            """;
+
+        var mvcResult = mockMvc.perform(post("/thymeleaflet/test.map-noarg-warning/methodWarning/default/render")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(requestBody)
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn();
+
+        String body = mvcResult.getResponse().getContentAsString();
+        String warningsHeader = mvcResult.getResponse().getHeader("X-Thymeleaflet-Preview-Warnings");
+
+        assertTrue(warningsHeader != null && !warningsHeader.isBlank(),
+            "衝突時は警告ヘッダーが設定されること");
+        String decodedWarnings = new String(
+            Base64.getUrlDecoder().decode(warningsHeader),
+            StandardCharsets.UTF_8
+        );
+        assertTrue(decodedWarnings.contains("hasPrev"),
+            "衝突した methodReturns パスが警告に含まれること");
+        assertTrue(body.contains("prev"),
+            "model 側 hasPrev=true が優先されること");
+        assertTrue(body.contains("8"),
+            "衝突していない nextPage は methodReturns から適用されること");
     }
 }

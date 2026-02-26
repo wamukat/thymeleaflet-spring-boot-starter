@@ -116,6 +116,14 @@ public class StoryCommonDataService {
         Map<String, Object> displayParameters = thymeleafFragmentRenderer.configureModelWithStoryParameters(storyParameters, model);
 
         Map<String, Object> displayModel = storyModel;
+        Map<String, Object> displayMethodReturns = storyInfo.getMethodReturns();
+        if (displayMethodReturns.isEmpty() && !storyInfo.hasStoryConfig()) {
+            displayMethodReturns = fragmentModelInferenceService.inferMethodReturnCandidates(
+                templatePath,
+                fragmentName,
+                storyInfo.getFragmentSummary().getParameters()
+            );
+        }
 
         // defaultストーリーの情報を取得（差異ハイライト用）
         Optional<FragmentStoryInfo> defaultStory = Optional.empty();
@@ -145,6 +153,7 @@ public class StoryCommonDataService {
         model.addAttribute("displayParameters", orderedDisplayParameters);
         model.addAttribute("orderedParameterNames", orderedParameterNames);
         model.addAttribute("displayModel", displayModel);
+        model.addAttribute("displayMethodReturns", displayMethodReturns);
         model.addAttribute("dependentComponents",
             fragmentDependencyService.findDependencies(templatePath, fragmentName));
         model.addAttribute("defaultStory", defaultStory.orElse(null));

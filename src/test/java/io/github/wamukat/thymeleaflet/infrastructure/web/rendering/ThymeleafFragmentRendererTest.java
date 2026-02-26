@@ -179,6 +179,7 @@ class ThymeleafFragmentRendererTest {
                 "",
                 Map.of(),
                 io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview.empty(),
+                Map.of(),
                 Map.of()
             );
         return io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo.of(
