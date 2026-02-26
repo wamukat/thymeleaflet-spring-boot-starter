@@ -8,6 +8,28 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.13] - 2026-02-26
+
+- Added
+  - Added no-arg method-return candidate extraction (`a.b.c()`) so stories can configure method-style values separately from plain model paths.
+  - Added preview-time fallback components to resolve no-arg method calls from map-backed model values and record warnings.
+- Changed
+  - Split method returns and model values in the story editor UI (including standard stories), and updated panel layout/placement for custom story editing.
+  - Improved sample value inference heuristics for datetime-like key suffixes (`*At`, `*_at`, `*-at`, `*datetime*`, `*timestamp*`).
+- Fixed
+  - Fixed preview rendering failures for map-backed no-arg method expressions (for example `view.pointPage.hasPrev()` / `hasNext()`).
+  - Fixed preview rendering failures caused by string-inferred datetime/boolean fields (for example `publishedAt` with `#temporals.format(...)` and `read` ternary conditions).
+- Test
+  - Added regression tests for analyzer/path separation, story persistence, rendering fallback/warning behavior, and datetime/boolean sample inference.
+- Docs
+  - Updated EN/JA stories documentation to reflect method-return handling and configuration behavior.
+- Build
+  - Updated Maven project version and sample app dependency to `0.2.13`.
+
+### Issues
+
+- #115 Fix sample inference for datetime-like keys in preview
+
 ## [0.2.12] - 2026-02-23
 
 - Fixed
