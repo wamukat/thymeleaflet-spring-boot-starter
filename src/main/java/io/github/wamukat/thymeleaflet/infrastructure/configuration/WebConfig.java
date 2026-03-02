@@ -1,5 +1,8 @@
 package io.github.wamukat.thymeleaflet.infrastructure.configuration;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -16,12 +19,19 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void configurePathMatch(PathMatchConfigurer configurer) {
-        // パスパラメータでドット(.)が切り捨てられないようにする
-        configurer.setUseSuffixPatternMatch(false);
-        configurer.setUseTrailingSlashMatch(false);
-        
-        // パス変数内のスラッシュも含めてマッチングさせる
-        // これにより shared/atoms/button-action のような複雑なパス構造に対応
-        configurer.setUseRegisteredSuffixPatternMatch(false);
+        invokeIfPresent(configurer, "setUseSuffixPatternMatch", false);
+        invokeIfPresent(configurer, "setUseTrailingSlashMatch", false);
+        invokeIfPresent(configurer, "setUseRegisteredSuffixPatternMatch", false);
+    }
+
+    private static void invokeIfPresent(PathMatchConfigurer configurer, String methodName, boolean value) {
+        try {
+            Method method = PathMatchConfigurer.class.getMethod(methodName, Boolean.class);
+            method.invoke(configurer, value);
+        } catch (NoSuchMethodException ignored) {
+            // Spring Framework 7 (Boot 4) removed these legacy setters.
+        } catch (InvocationTargetException | IllegalAccessException e) {
+            throw new IllegalStateException("Failed to configure PathMatchConfigurer via " + methodName, e);
+        }
     }
 }
