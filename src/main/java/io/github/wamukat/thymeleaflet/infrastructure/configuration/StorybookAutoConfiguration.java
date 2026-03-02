@@ -1,7 +1,9 @@
 package io.github.wamukat.thymeleaflet.infrastructure.configuration;
 
 import java.util.Locale;
+import java.time.Duration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.wamukat.thymeleaflet.domain.service.DocumentationAnalysisService;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.domain.service.StoryDataRepository;
@@ -11,7 +13,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafletA
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
-import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -40,7 +41,10 @@ import org.thymeleaf.spring6.view.ThymeleafViewResolver;
  * Thymeleafフラグメントのストーリーブック機能を提供します。
  * thymeleaflet.enabledプロパティで機能の有効/無効を制御可能です。
  */
-@AutoConfiguration(after = WebMvcAutoConfiguration.class)
+@AutoConfiguration(afterName = {
+    "org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguration",
+    "org.springframework.boot.webmvc.autoconfigure.WebMvcAutoConfiguration"
+})
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 @ComponentScan(basePackages = "io.github.wamukat.thymeleaflet")
 @EnableConfigurationProperties(StorybookProperties.class)
@@ -56,6 +60,12 @@ public class StorybookAutoConfiguration {
     @Bean
     public ResolvedStorybookConfig resolvedStorybookConfig(StorybookProperties storybookProperties) {
         return ResolvedStorybookConfig.from(storybookProperties);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(ObjectMapper.class)
+    public ObjectMapper thymeleafletObjectMapper() {
+        return new ObjectMapper();
     }
 
     @Bean
@@ -88,12 +98,7 @@ public class StorybookAutoConfiguration {
             @Override
             public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) throws BeansException {
                 if (!registry.containsBeanDefinition("localeResolver")) {
-                    RootBeanDefinition resolver = new RootBeanDefinition(CookieLocaleResolver.class);
-                    resolver.getPropertyValues().add("defaultLocale", Locale.ENGLISH);
-                    resolver.getPropertyValues().add("cookieName", "thymeleaflet.lang");
-                    resolver.getPropertyValues().add("cookieMaxAge", 60 * 60 * 24 * 365);
-                    resolver.getPropertyValues().add("cookiePath", "/");
-                    registry.registerBeanDefinition("localeResolver", resolver);
+                    registry.registerBeanDefinition("localeResolver", createCookieLocaleResolverBeanDefinition());
                     return;
                 }
 
@@ -109,12 +114,7 @@ public class StorybookAutoConfiguration {
                 }
 
                 registry.removeBeanDefinition("localeResolver");
-                RootBeanDefinition resolver = new RootBeanDefinition(CookieLocaleResolver.class);
-                resolver.getPropertyValues().add("defaultLocale", Locale.ENGLISH);
-                resolver.getPropertyValues().add("cookieName", "thymeleaflet.lang");
-                resolver.getPropertyValues().add("cookieMaxAge", 60 * 60 * 24 * 365);
-                resolver.getPropertyValues().add("cookiePath", "/");
-                registry.registerBeanDefinition("localeResolver", resolver);
+                registry.registerBeanDefinition("localeResolver", createCookieLocaleResolverBeanDefinition());
             }
 
             @Override
@@ -218,6 +218,20 @@ public class StorybookAutoConfiguration {
         messageSource.setFallbackToSystemLocale(false);
         messageSource.setDefaultEncoding("UTF-8");
         return messageSource;
+    }
+
+    private static RootBeanDefinition createCookieLocaleResolverBeanDefinition() {
+        RootBeanDefinition resolverDefinition = new RootBeanDefinition(CookieLocaleResolver.class);
+        resolverDefinition.setInstanceSupplier(StorybookAutoConfiguration::createCookieLocaleResolver);
+        return resolverDefinition;
+    }
+
+    private static CookieLocaleResolver createCookieLocaleResolver() {
+        CookieLocaleResolver resolver = new CookieLocaleResolver("thymeleaflet.lang");
+        resolver.setDefaultLocale(Locale.ENGLISH);
+        resolver.setCookieMaxAge(Duration.ofDays(365));
+        resolver.setCookiePath("/");
+        return resolver;
     }
 
     private static String sanitizeBasePath(String basePath) {

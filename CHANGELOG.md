@@ -5,8 +5,13 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 
 ## [Unreleased]
 
-- Added
-  - TBD
+- Fixed
+  - Replaced direct `WebMvcAutoConfiguration` type reference in `StorybookAutoConfiguration` with class-name based ordering so startup works on both Spring Boot 3 and 4.
+  - Added a conditional fallback `ObjectMapper` bean in auto-configuration so Boot 4 startup does not fail when no `com.fasterxml.jackson.databind.ObjectMapper` is auto-registered.
+  - Updated `WebConfig` path-matching setup to skip removed `PathMatchConfigurer` legacy setters on Spring Framework 7 (Boot 4), preventing startup `NoSuchMethodError`.
+  - Updated `CookieLocaleResolver` registration to use constructor-based cookie name and `Duration` max-age so locale resolver wiring works on both Spring Framework 6 and 7.
+- Docs
+  - Updated requirements docs to indicate Spring Boot `3.1+ / 4.x` support.
 
 ## [0.2.13] - 2026-02-26
 

@@ -39,7 +39,7 @@ spring:
 
 - Java 17 以上（実行・ライブラリ利用時）
 - Java 21 以上（このリポジトリをソースからビルドする場合）
-- Spring Boot 3.1 以上
+- Spring Boot 3.1 以上 / 4.x
 - Maven または Gradle
 
 ## 導入
