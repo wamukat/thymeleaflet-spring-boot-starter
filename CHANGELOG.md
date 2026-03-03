@@ -8,6 +8,20 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.15] - 2026-03-03
+
+- Fixed
+  - Added explicit Java Time support for the starter default `ObjectMapper` by registering `JavaTimeModule`, preventing serialization issues for `LocalDateTime` and related `java.time` types.
+  - Switched default date/time JSON serialization from timestamp form to ISO-8601 text output for predictable preview/model JSON behavior.
+- Test
+  - Added regression coverage to ensure the starter default `ObjectMapper` serializes `LocalDateTime` as ISO-8601 text.
+- Build
+  - Added `jackson-datatype-jsr310` dependency and updated Maven project/sample app versions to `0.2.15`.
+
+### Issues
+
+- #124 Fix default ObjectMapper Java Time support
+
 ## [0.2.14] - 2026-03-02
 
 - Fixed
