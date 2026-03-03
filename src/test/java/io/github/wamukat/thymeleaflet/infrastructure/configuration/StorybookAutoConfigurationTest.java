@@ -1,11 +1,13 @@
 package io.github.wamukat.thymeleaflet.infrastructure.configuration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 
 import java.lang.reflect.Method;
+import java.time.LocalDateTime;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 
@@ -55,5 +57,16 @@ class StorybookAutoConfigurationTest {
             Arrays.asList(annotation.value()).contains(ObjectMapper.class),
             "thymeleafletObjectMapper should be conditional on ObjectMapper.class"
         );
+    }
+
+    @Test
+    @DisplayName("thymeleafletObjectMapper should serialize LocalDateTime without timestamp")
+    void thymeleafletObjectMapperBean_shouldSupportJavaTime() throws Exception {
+        StorybookAutoConfiguration configuration = new StorybookAutoConfiguration();
+        ObjectMapper objectMapper = configuration.thymeleafletObjectMapper();
+
+        String json = objectMapper.writeValueAsString(LocalDateTime.of(2026, 1, 1, 0, 0));
+
+        assertEquals("\"2026-01-01T00:00:00\"", json);
     }
 }
