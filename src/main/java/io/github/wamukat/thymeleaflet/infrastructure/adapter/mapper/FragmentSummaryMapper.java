@@ -53,11 +53,10 @@ public class FragmentSummaryMapper {
     }
 
     private String buildFragmentSignature(String fragmentName, List<String> parameters) {
-        if (parameters == null || parameters.isEmpty()) {
+        if (parameters.isEmpty()) {
             return fragmentName;
         }
         String joinedParameters = parameters.stream()
-            .filter(Objects::nonNull)
             .collect(Collectors.joining(", "));
         return fragmentName + "(" + joinedParameters + ")";
     }

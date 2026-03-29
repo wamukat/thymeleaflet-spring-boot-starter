@@ -195,8 +195,7 @@ public class TypeInfo {
     @Override
     public boolean equals(Object obj) {
         if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        TypeInfo typeInfo = (TypeInfo) obj;
+        if (!(obj instanceof TypeInfo typeInfo)) return false;
         return Objects.equals(parameterName, typeInfo.parameterName) &&
                Objects.equals(javaTypeName, typeInfo.javaTypeName);
     }

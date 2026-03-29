@@ -222,8 +222,7 @@ public class Story {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Story story = (Story) o;
+        if (!(o instanceof Story story)) return false;
         return Objects.equals(name, story.name) &&
                Objects.equals(parentFragment, story.parentFragment);
     }
