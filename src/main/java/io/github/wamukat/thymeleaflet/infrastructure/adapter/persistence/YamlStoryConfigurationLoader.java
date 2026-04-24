@@ -45,9 +45,16 @@ public class YamlStoryConfigurationLoader {
      * Infrastructure技術的責任: ファイル読み込み・YAML解析のみ
      */
     public Optional<StoryConfiguration> loadStoryConfiguration(String templatePath) {
+        return loadStoryConfigurationWithDiagnostics(templatePath).configuration();
+    }
+
+    /**
+     * Story設定を読み込み、未定義fallbackと読み込み/解析失敗を区別できる結果を返す。
+     */
+    public StoryConfigurationLoadResult loadStoryConfigurationWithDiagnostics(String templatePath) {
         if (templatePath.isBlank()) {
             logger.debug("Template path is empty");
-            return Optional.empty();
+            return StoryConfigurationLoadResult.missing("");
         }
 
         String storyFilePath = STORY_BASE_PATH + templatePath + ".stories.yml";
@@ -56,7 +63,7 @@ public class YamlStoryConfigurationLoader {
             Resource resource = resourceLoader.getResource(storyFilePath);
             if (!resource.exists()) {
                 logger.debug("Story file not found: {}", storyFilePath);
-                return Optional.empty();
+                return StoryConfigurationLoadResult.missing(storyFilePath);
             }
 
             try (InputStream inputStream = resource.getInputStream()) {
@@ -65,18 +72,21 @@ public class YamlStoryConfigurationLoader {
                 Optional<StoryConfiguration> configuration = Optional.ofNullable(config);
                 if (configuration.isEmpty()) {
                     logger.warn("YAML parsing resulted in null configuration: {}", storyFilePath);
+                    return StoryConfigurationLoadResult.failure(StoryConfigurationDiagnostic.nullConfiguration(storyFilePath));
                 } else {
                     logger.debug("Successfully loaded story configuration from: {}", storyFilePath);
                 }
-                return configuration;
+                return StoryConfigurationLoadResult.loaded(configuration.orElseThrow());
             }
 
         } catch (IOException e) {
-            logger.warn("Failed to load story file {}: {}", storyFilePath, e.getMessage(), e);
-            return Optional.empty();
+            StoryConfigurationDiagnostic diagnostic = StoryConfigurationDiagnostic.loadFailed(storyFilePath, e);
+            logger.warn("{}: {}", diagnostic.userSafeMessage(), diagnostic.developerMessage());
+            return StoryConfigurationLoadResult.failure(diagnostic);
         } catch (Exception e) {
-            logger.error("Unexpected error loading story file {}: {}", storyFilePath, e.getMessage(), e);
-            return Optional.empty();
+            StoryConfigurationDiagnostic diagnostic = StoryConfigurationDiagnostic.unexpectedFailure(storyFilePath, e);
+            logger.error("{}: {}", diagnostic.userSafeMessage(), diagnostic.developerMessage(), e);
+            return StoryConfigurationLoadResult.failure(diagnostic);
         }
     }
 
@@ -123,6 +133,76 @@ public class YamlStoryConfigurationLoader {
         } catch (Exception e) {
             logger.debug("Error getting last modified time for {}: {}", storyFilePath, e.getMessage());
             return Optional.empty();
+        }
+    }
+
+    public enum StoryConfigurationLoadStatus {
+        LOADED,
+        MISSING,
+        FAILED
+    }
+
+    public record StoryConfigurationDiagnostic(
+        String code,
+        String storyFilePath,
+        String userSafeMessage,
+        String developerMessage
+    ) {
+        private static StoryConfigurationDiagnostic nullConfiguration(String storyFilePath) {
+            return new StoryConfigurationDiagnostic(
+                "STORY_YAML_NULL_CONFIGURATION",
+                storyFilePath,
+                "Story YAML was found but did not produce a valid configuration.",
+                "YAML parser returned null configuration for " + storyFilePath
+            );
+        }
+
+        private static StoryConfigurationDiagnostic loadFailed(String storyFilePath, IOException exception) {
+            return new StoryConfigurationDiagnostic(
+                "STORY_YAML_LOAD_FAILED",
+                storyFilePath,
+                "Story YAML was found but could not be loaded or parsed.",
+                exception.getClass().getSimpleName() + ": " + exception.getMessage()
+            );
+        }
+
+        private static StoryConfigurationDiagnostic unexpectedFailure(String storyFilePath, Exception exception) {
+            return new StoryConfigurationDiagnostic(
+                "STORY_YAML_UNEXPECTED_FAILURE",
+                storyFilePath,
+                "Story YAML was found but an unexpected error occurred while loading it.",
+                exception.getClass().getSimpleName() + ": " + exception.getMessage()
+            );
+        }
+    }
+
+    public record StoryConfigurationLoadResult(
+        StoryConfigurationLoadStatus status,
+        Optional<StoryConfiguration> configuration,
+        Optional<StoryConfigurationDiagnostic> diagnostic
+    ) {
+        private static StoryConfigurationLoadResult loaded(StoryConfiguration configuration) {
+            return new StoryConfigurationLoadResult(
+                StoryConfigurationLoadStatus.LOADED,
+                Optional.of(configuration),
+                Optional.empty()
+            );
+        }
+
+        private static StoryConfigurationLoadResult missing(String storyFilePath) {
+            return new StoryConfigurationLoadResult(
+                StoryConfigurationLoadStatus.MISSING,
+                Optional.empty(),
+                Optional.empty()
+            );
+        }
+
+        private static StoryConfigurationLoadResult failure(StoryConfigurationDiagnostic diagnostic) {
+            return new StoryConfigurationLoadResult(
+                StoryConfigurationLoadStatus.FAILED,
+                Optional.empty(),
+                Optional.of(diagnostic)
+            );
         }
     }
 }
