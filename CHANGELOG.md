@@ -8,6 +8,30 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.16] - 2026-04-25
+
+- Added
+  - Added Story YAML load diagnostics so malformed story files can be distinguished from missing story configuration.
+  - Surfaced story configuration diagnostics in the fragment main content and story preview UI with user-safe messages.
+- Changed
+  - Converted controller and service wiring to constructor injection for clearer dependencies and easier testing.
+- Docs
+  - Updated README dependency examples to the current release version.
+  - Documented the local E2E verification flow.
+- Test
+  - Added README dependency version consistency coverage.
+- Build
+  - Added a local E2E helper command that installs the starter, starts the sample app, runs Playwright, and stops the sample process.
+  - Updated Maven project and sample app versions to `0.2.16`.
+
+### Issues
+
+- #188 Fragment/story 診断を UI に表示する
+- #189 Service 層を constructor injection に統一する
+- #190 ローカル E2E を 1 コマンドで再現できるようにする
+- #191 README の依存バージョンを自動検査する
+- #192 Story YAML の読み込み失敗を診断情報として扱う
+
 ## [0.2.15] - 2026-03-03
 
 - Fixed
