@@ -6,7 +6,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConve
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.StoryPreviewService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.StoryContentService;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.ThymeleafletVersionResolver;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -26,23 +25,27 @@ import java.util.Optional;
 @Controller
 public class StoryPreviewController {
     
-    @Autowired
-    private StoryPreviewService storyPreviewService;
-    
-    @Autowired
-    private StoryContentService storyContentService;
+    private final StoryPreviewService storyPreviewService;
+    private final StoryContentService storyContentService;
+    private final StoryRetrievalUseCase storyRetrievalUseCase;
+    private final SecurePathConversionService securePathConversionService;
+    private final ThymeleafletVersionResolver thymeleafletVersionResolver;
+    private final String basePath;
 
-    @Autowired
-    private StoryRetrievalUseCase storyRetrievalUseCase;
-
-    @Autowired
-    private SecurePathConversionService securePathConversionService;
-
-    @Autowired
-    private ThymeleafletVersionResolver thymeleafletVersionResolver;
-
-    @Value("${thymeleaflet.base-path:/thymeleaflet}")
-    private String basePath = "/thymeleaflet";
+    public StoryPreviewController(
+            StoryPreviewService storyPreviewService,
+            StoryContentService storyContentService,
+            StoryRetrievalUseCase storyRetrievalUseCase,
+            SecurePathConversionService securePathConversionService,
+            ThymeleafletVersionResolver thymeleafletVersionResolver,
+            @Value("${thymeleaflet.base-path:/thymeleaflet}") String basePath) {
+        this.storyPreviewService = storyPreviewService;
+        this.storyContentService = storyContentService;
+        this.storyRetrievalUseCase = storyRetrievalUseCase;
+        this.securePathConversionService = securePathConversionService;
+        this.thymeleafletVersionResolver = thymeleafletVersionResolver;
+        this.basePath = basePath;
+    }
     
     /**
      * 個別ストーリープレビューページ（統一テンプレート構造を使用）
