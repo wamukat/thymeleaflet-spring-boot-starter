@@ -88,6 +88,8 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             
             // 3. ストーリー一覧取得
             List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentSummary);
+            storyRetrievalUseCase.getStoryConfigurationDiagnostic(request.fullTemplatePath())
+                .ifPresent(diagnostic -> request.model().addAttribute("storyConfigurationDiagnostic", diagnostic));
             
             // 4. 共通データセットアップ
             Map<String, Object> storyParameters = storyParameterUseCase.getParametersForStory(storyInfo);

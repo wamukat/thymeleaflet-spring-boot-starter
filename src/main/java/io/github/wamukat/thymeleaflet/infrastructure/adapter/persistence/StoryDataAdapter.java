@@ -52,6 +52,18 @@ public class StoryDataAdapter implements StoryDataPort {
             return Optional.empty();
         }
     }
+
+    @Override
+    public Optional<StoryConfigurationDiagnostic> getStoryConfigurationDiagnostic(String templatePath) {
+        YamlStoryConfigurationLoader.StoryConfigurationLoadResult result =
+            yamlStoryConfigurationLoader.loadStoryConfigurationWithDiagnostics(templatePath);
+        return result.diagnostic()
+            .map(diagnostic -> new StoryConfigurationDiagnostic(
+                diagnostic.code(),
+                diagnostic.userSafeMessage(),
+                diagnostic.developerMessage()
+            ));
+    }
     
     @Override
     public Map<String, Object> loadStoryParameters(FragmentStoryInfo storyInfo) {

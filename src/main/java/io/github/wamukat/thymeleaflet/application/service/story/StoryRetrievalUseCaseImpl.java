@@ -117,4 +117,14 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
             .orElseGet(StoryListResponse::failure);
     }
 
+    @Override
+    public Optional<StoryConfigurationDiagnostic> getStoryConfigurationDiagnostic(String templatePath) {
+        return storyDataPort.getStoryConfigurationDiagnostic(templatePath)
+            .map(diagnostic -> new StoryConfigurationDiagnostic(
+                diagnostic.code(),
+                diagnostic.userSafeMessage(),
+                diagnostic.developerMessage()
+            ));
+    }
+
 }

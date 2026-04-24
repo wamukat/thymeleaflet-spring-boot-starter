@@ -111,6 +111,8 @@ public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUs
                     request.storyName()
                 );
             }
+            storyRetrievalUseCase.getStoryConfigurationDiagnostic(request.fullTemplatePath())
+                .ifPresent(diagnostic -> request.model().addAttribute("storyConfigurationDiagnostic", diagnostic));
             
             // 3. Modelに統合結果を設定 (Domain形式のFragmentSummaryを設定)
             request.model().addAttribute("allFragments", allFragments); // Domain形式のFragmentSummary

@@ -18,6 +18,13 @@ public interface StoryDataPort {
      * ストーリー設定を読み込む
      */
     Optional<StoryConfiguration> loadStoryConfiguration(String templatePath);
+
+    /**
+     * ストーリー設定読み込み時の診断情報を取得する。
+     */
+    default Optional<StoryConfigurationDiagnostic> getStoryConfigurationDiagnostic(String templatePath) {
+        return Optional.empty();
+    }
     
     /**
      * ストーリー固有のパラメータを読み込む
@@ -28,4 +35,10 @@ public interface StoryDataPort {
      * 指定されたストーリー情報を取得
      */
     Optional<FragmentStoryInfo> getStory(String templatePath, String fragmentName, String storyName);
+
+    record StoryConfigurationDiagnostic(
+        String code,
+        String userSafeMessage,
+        String developerMessage
+    ) {}
 }
