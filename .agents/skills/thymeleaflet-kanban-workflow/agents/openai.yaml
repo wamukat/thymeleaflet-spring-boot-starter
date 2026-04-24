@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thymeleaflet Kanban Workflow"
+  short_description: "Review-gated Kanban workflow."
+  default_prompt: "Use the Thymeleaflet Kanban workflow for this project task."

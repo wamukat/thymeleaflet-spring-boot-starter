@@ -1,0 +1,4 @@
+interface:
+  display_name: "Thymeleaflet Test Execution"
+  short_description: "Run unit and E2E tests with preflight checks to avoid stalls."
+  default_prompt: "Use this skill to run Thymeleaflet tests quickly with preflight checks, deterministic order, and clear recovery steps when tests stall."
