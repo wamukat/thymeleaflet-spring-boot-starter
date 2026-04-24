@@ -29,6 +29,8 @@ public interface StoryRetrievalUseCase {
      */
     StoryListResponse getStoriesForFragment(String templatePath, String fragmentName);
 
+    Optional<StoryConfigurationDiagnostic> getStoryConfigurationDiagnostic(String templatePath);
+
     /**
      * ストーリー一覧レスポンス
      */
@@ -60,4 +62,10 @@ public interface StoryRetrievalUseCase {
         public Optional<FragmentSummary> getFragment() { return fragment; }
         public List<FragmentStoryInfo> getStories() { return stories; }
     }
+
+    record StoryConfigurationDiagnostic(
+        String code,
+        String userSafeMessage,
+        String developerMessage
+    ) {}
 }

@@ -50,7 +50,7 @@ Maven:
 <dependency>
   <groupId>io.github.wamukat</groupId>
   <artifactId>thymeleaflet-spring-boot-starter</artifactId>
-  <version>0.2.6</version>
+  <version>0.2.16</version>
 </dependency>
 ```
 
@@ -58,7 +58,7 @@ Gradle:
 
 ```kotlin
 dependencies {
-    implementation("io.github.wamukat:thymeleaflet-spring-boot-starter:0.2.6")
+    implementation("io.github.wamukat:thymeleaflet-spring-boot-starter:0.2.16")
 }
 ```
 
@@ -162,6 +162,32 @@ thymeleaflet:
 npm install
 npm run build
 ```
+
+## ローカル E2E 検証
+
+starter を変更した後は、ローカル E2E ヘルパーを実行します。このコマンドは
+starter の install、サンプルアプリの起動待ち、Playwright 実行、終了時の
+サンプルプロセス停止まで行います:
+
+```bash
+npm install
+npm run test:e2e:local
+```
+
+手動で分けて実行する場合:
+
+```bash
+npm run verify:starter
+npm run sample:start
+```
+
+別ターミナルで E2E を実行します:
+
+```bash
+npm run test:e2e
+```
+
+サンプルアプリは `http://localhost:6006/thymeleaflet` で Thymeleaflet を提供します。
 
 ## ドキュメント
 

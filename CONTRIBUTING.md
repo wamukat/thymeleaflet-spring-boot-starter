@@ -17,6 +17,31 @@ npm install
 npm run build
 ```
 
+## Local Verification
+
+For starter changes that affect the sample app or browser behavior, reinstall the
+starter locally and run E2E with the local helper:
+
+```bash
+npm run test:e2e:local
+```
+
+The helper starts the sample app on port `6006`, waits for it, runs Playwright,
+and stops the sample process when the command finishes.
+
+To run the steps manually:
+
+```bash
+npm run verify:starter
+npm run sample:start
+```
+
+Then run E2E from another terminal:
+
+```bash
+npm run test:e2e
+```
+
 ## Code Style
 
 - Prefer small, readable changes.

@@ -11,7 +11,6 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,24 +32,34 @@ import java.util.stream.Collectors;
 public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordinationUseCase {
     
     private static final Logger logger = LoggerFactory.getLogger(StoryContentCoordinationUseCaseImpl.class);
-    
-    @Autowired
-    private StoryValidationUseCase storyValidationUseCase;
-    
-    @Autowired
-    private FragmentCatalogPort fragmentCatalogPort;
-    
-    @Autowired
-    private StoryPresentationPort storyPresentationPort;
-    
-    @Autowired
-    private StoryRetrievalUseCase storyRetrievalUseCase;
-    
-    @Autowired
-    private StoryParameterUseCase storyParameterUseCase;
-    
-    @Autowired
-    private JavaDocLookupPort javaDocLookupPort;
+
+    private final StoryValidationUseCase storyValidationUseCase;
+
+    private final FragmentCatalogPort fragmentCatalogPort;
+
+    private final StoryPresentationPort storyPresentationPort;
+
+    private final StoryRetrievalUseCase storyRetrievalUseCase;
+
+    private final StoryParameterUseCase storyParameterUseCase;
+
+    private final JavaDocLookupPort javaDocLookupPort;
+
+    public StoryContentCoordinationUseCaseImpl(
+        StoryValidationUseCase storyValidationUseCase,
+        FragmentCatalogPort fragmentCatalogPort,
+        StoryPresentationPort storyPresentationPort,
+        StoryRetrievalUseCase storyRetrievalUseCase,
+        StoryParameterUseCase storyParameterUseCase,
+        JavaDocLookupPort javaDocLookupPort
+    ) {
+        this.storyValidationUseCase = storyValidationUseCase;
+        this.fragmentCatalogPort = fragmentCatalogPort;
+        this.storyPresentationPort = storyPresentationPort;
+        this.storyRetrievalUseCase = storyRetrievalUseCase;
+        this.storyParameterUseCase = storyParameterUseCase;
+        this.javaDocLookupPort = javaDocLookupPort;
+    }
 
     @Override
     public StoryContentResult coordinateStoryContentSetup(StoryContentRequest request) {
@@ -79,6 +88,8 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
             
             // 3. ストーリー一覧取得
             List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentSummary);
+            storyRetrievalUseCase.getStoryConfigurationDiagnostic(request.fullTemplatePath())
+                .ifPresent(diagnostic -> request.model().addAttribute("storyConfigurationDiagnostic", diagnostic));
             
             // 4. 共通データセットアップ
             Map<String, Object> storyParameters = storyParameterUseCase.getParametersForStory(storyInfo);

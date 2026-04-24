@@ -2,7 +2,6 @@ package io.github.wamukat.thymeleaflet.application.service.story;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryValidationUseCase;
 import io.github.wamukat.thymeleaflet.application.port.outbound.StoryDataPort;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,9 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Transactional(readOnly = true)
 public class StoryValidationUseCaseImpl implements StoryValidationUseCase {
-    
-    @Autowired
-    private StoryDataPort storyDataPort;
+
+    private final StoryDataPort storyDataPort;
+
+    public StoryValidationUseCaseImpl(StoryDataPort storyDataPort) {
+        this.storyDataPort = storyDataPort;
+    }
 
     @Override
     public StoryValidationResult validateStory(StoryValidationCommand command) {

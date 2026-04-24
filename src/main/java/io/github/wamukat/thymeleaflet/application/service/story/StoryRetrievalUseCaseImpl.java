@@ -9,7 +9,6 @@ import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfigurat
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryGroup;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,9 +28,15 @@ import java.util.Optional;
 public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
 
     private static final String CUSTOM_STORY_NAME = "custom";
-    
-    @Autowired
-    private StoryDataPort storyDataPort;
+
+    private final StoryDataPort storyDataPort;
+
+    private final FragmentCatalogPort fragmentCatalogPort;
+
+    public StoryRetrievalUseCaseImpl(StoryDataPort storyDataPort, FragmentCatalogPort fragmentCatalogPort) {
+        this.storyDataPort = storyDataPort;
+        this.fragmentCatalogPort = fragmentCatalogPort;
+    }
 
     @Override
     public Optional<FragmentStoryInfo> getStory(String templatePath, String fragmentName, String storyName) {
@@ -112,7 +117,14 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
             .orElseGet(StoryListResponse::failure);
     }
 
-    @Autowired
-    private FragmentCatalogPort fragmentCatalogPort;
-    
+    @Override
+    public Optional<StoryConfigurationDiagnostic> getStoryConfigurationDiagnostic(String templatePath) {
+        return storyDataPort.getStoryConfigurationDiagnostic(templatePath)
+            .map(diagnostic -> new StoryConfigurationDiagnostic(
+                diagnostic.code(),
+                diagnostic.userSafeMessage(),
+                diagnostic.developerMessage()
+            ));
+    }
+
 }

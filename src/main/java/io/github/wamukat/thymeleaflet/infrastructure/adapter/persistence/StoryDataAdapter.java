@@ -9,7 +9,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentD
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -29,15 +28,19 @@ public class StoryDataAdapter implements StoryDataPort {
     private static final Logger logger = LoggerFactory.getLogger(StoryDataAdapter.class);
 
     private final YamlStoryConfigurationLoader yamlStoryConfigurationLoader;
-    
-    @Autowired
-    private FragmentDiscoveryService fragmentDiscoveryService;
-    
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
-    
-    public StoryDataAdapter(YamlStoryConfigurationLoader yamlStoryConfigurationLoader) {
+
+    private final FragmentDiscoveryService fragmentDiscoveryService;
+
+    private final FragmentSummaryMapper fragmentSummaryMapper;
+
+    public StoryDataAdapter(
+        YamlStoryConfigurationLoader yamlStoryConfigurationLoader,
+        FragmentDiscoveryService fragmentDiscoveryService,
+        FragmentSummaryMapper fragmentSummaryMapper
+    ) {
         this.yamlStoryConfigurationLoader = yamlStoryConfigurationLoader;
+        this.fragmentDiscoveryService = fragmentDiscoveryService;
+        this.fragmentSummaryMapper = fragmentSummaryMapper;
     }
     
     @Override
@@ -48,6 +51,18 @@ public class StoryDataAdapter implements StoryDataPort {
             logger.error("Failed to load story configuration for {}: {}", templatePath, e.getMessage());
             return Optional.empty();
         }
+    }
+
+    @Override
+    public Optional<StoryConfigurationDiagnostic> getStoryConfigurationDiagnostic(String templatePath) {
+        YamlStoryConfigurationLoader.StoryConfigurationLoadResult result =
+            yamlStoryConfigurationLoader.loadStoryConfigurationWithDiagnostics(templatePath);
+        return result.diagnostic()
+            .map(diagnostic -> new StoryConfigurationDiagnostic(
+                diagnostic.code(),
+                diagnostic.userSafeMessage(),
+                diagnostic.developerMessage()
+            ));
     }
     
     @Override

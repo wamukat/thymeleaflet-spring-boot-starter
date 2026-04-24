@@ -109,6 +109,50 @@ class YamlStoryConfigurationLoaderTest {
     }
 
     @Test
+    @DisplayName("存在しないYAMLはmissing診断として扱う")
+    void shouldReturnMissingResultForNonexistentFile() throws IOException {
+        // Given
+        String templatePath = "templates/nonexistent/component";
+
+        when(mockResourceLoader.getResource(any(String.class))).thenReturn(mockResource);
+        when(mockResource.exists()).thenReturn(false);
+
+        // When
+        YamlStoryConfigurationLoader.StoryConfigurationLoadResult result =
+            loader.loadStoryConfigurationWithDiagnostics(templatePath);
+
+        // Then
+        assertThat(result.status()).isEqualTo(YamlStoryConfigurationLoader.StoryConfigurationLoadStatus.MISSING);
+        assertThat(result.configuration()).isEmpty();
+        assertThat(result.diagnostic()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("存在するYAMLの読み込み失敗は診断情報として保持する")
+    void shouldReturnDiagnosticForExistingYamlLoadFailure() throws IOException {
+        // Given
+        String templatePath = "templates/broken/component";
+
+        when(mockResourceLoader.getResource(any(String.class))).thenReturn(mockResource);
+        when(mockResource.exists()).thenReturn(true);
+        when(mockResource.getInputStream()).thenThrow(new IOException("broken yaml stream"));
+
+        // When
+        YamlStoryConfigurationLoader.StoryConfigurationLoadResult result =
+            loader.loadStoryConfigurationWithDiagnostics(templatePath);
+
+        // Then
+        assertThat(result.status()).isEqualTo(YamlStoryConfigurationLoader.StoryConfigurationLoadStatus.FAILED);
+        assertThat(result.configuration()).isEmpty();
+        assertThat(result.diagnostic()).isPresent();
+        YamlStoryConfigurationLoader.StoryConfigurationDiagnostic diagnostic = result.diagnostic().orElseThrow();
+        assertThat(diagnostic.code()).isEqualTo("STORY_YAML_LOAD_FAILED");
+        assertThat(diagnostic.storyFilePath()).contains(templatePath + ".stories.yml");
+        assertThat(diagnostic.userSafeMessage()).contains("could not be loaded or parsed");
+        assertThat(diagnostic.developerMessage()).contains("broken yaml stream");
+    }
+
+    @Test
     @DisplayName("nullのtemplatePathの場合はNullPointerExceptionを送出する")
     @SuppressWarnings("NullAway")
     void shouldHandleNullTemplatePath() {

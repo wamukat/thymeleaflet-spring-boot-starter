@@ -13,7 +13,6 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,28 +32,39 @@ import java.util.stream.Collectors;
 public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUseCase {
     
     private static final Logger logger = LoggerFactory.getLogger(StoryPageCoordinationUseCaseImpl.class);
-    
-    @Autowired
-    private FragmentDiscoveryUseCase fragmentDiscoveryUseCase;
-    
-    @Autowired
-    private FragmentStatisticsUseCase fragmentStatisticsUseCase;
-    
-    @Autowired
-    private FragmentHierarchyUseCase fragmentHierarchyUseCase;
-    
-    @Autowired
-    private MetricsUseCase metricsUseCase;
-    
-    @Autowired
-    private StoryRetrievalUseCase storyRetrievalUseCase;
-    
-    @Autowired
-    private FragmentPreviewUseCase fragmentPreviewUseCase;
-    
-    @Autowired
-    private FragmentCatalogPort fragmentCatalogPort;
-    
+
+    private final FragmentDiscoveryUseCase fragmentDiscoveryUseCase;
+
+    private final FragmentStatisticsUseCase fragmentStatisticsUseCase;
+
+    private final FragmentHierarchyUseCase fragmentHierarchyUseCase;
+
+    private final MetricsUseCase metricsUseCase;
+
+    private final StoryRetrievalUseCase storyRetrievalUseCase;
+
+    private final FragmentPreviewUseCase fragmentPreviewUseCase;
+
+    private final FragmentCatalogPort fragmentCatalogPort;
+
+    public StoryPageCoordinationUseCaseImpl(
+        FragmentDiscoveryUseCase fragmentDiscoveryUseCase,
+        FragmentStatisticsUseCase fragmentStatisticsUseCase,
+        FragmentHierarchyUseCase fragmentHierarchyUseCase,
+        MetricsUseCase metricsUseCase,
+        StoryRetrievalUseCase storyRetrievalUseCase,
+        FragmentPreviewUseCase fragmentPreviewUseCase,
+        FragmentCatalogPort fragmentCatalogPort
+    ) {
+        this.fragmentDiscoveryUseCase = fragmentDiscoveryUseCase;
+        this.fragmentStatisticsUseCase = fragmentStatisticsUseCase;
+        this.fragmentHierarchyUseCase = fragmentHierarchyUseCase;
+        this.metricsUseCase = metricsUseCase;
+        this.storyRetrievalUseCase = storyRetrievalUseCase;
+        this.fragmentPreviewUseCase = fragmentPreviewUseCase;
+        this.fragmentCatalogPort = fragmentCatalogPort;
+    }
+
     @Override
     public StoryPageResult coordinateStoryPageSetup(StoryPageRequest request) {
         logger.info("=== StoryPageCoordination START ===");
@@ -101,6 +111,8 @@ public class StoryPageCoordinationUseCaseImpl implements StoryPageCoordinationUs
                     request.storyName()
                 );
             }
+            storyRetrievalUseCase.getStoryConfigurationDiagnostic(request.fullTemplatePath())
+                .ifPresent(diagnostic -> request.model().addAttribute("storyConfigurationDiagnostic", diagnostic));
             
             // 3. Modelに統合結果を設定 (Domain形式のFragmentSummaryを設定)
             request.model().addAttribute("allFragments", allFragments); // Domain形式のFragmentSummary

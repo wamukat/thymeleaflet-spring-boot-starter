@@ -6,7 +6,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.web.service.FragmentMainCon
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.ThymeleafletVersionResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,17 +24,21 @@ public class FragmentListController {
     
     private static final Logger logger = LoggerFactory.getLogger(FragmentListController.class);
 
-    @Autowired
-    private FragmentDiscoveryService fragmentDiscoveryService;
-    
-    @Autowired
-    private FragmentMainContentService fragmentMainContentService;
+    private final FragmentDiscoveryService fragmentDiscoveryService;
+    private final FragmentMainContentService fragmentMainContentService;
+    private final ThymeleafletVersionResolver thymeleafletVersionResolver;
+    private final ResolvedStorybookConfig resolvedStorybookConfig;
 
-    @Autowired
-    private ThymeleafletVersionResolver thymeleafletVersionResolver;
-
-    @Autowired
-    private ResolvedStorybookConfig resolvedStorybookConfig;
+    public FragmentListController(
+            FragmentDiscoveryService fragmentDiscoveryService,
+            FragmentMainContentService fragmentMainContentService,
+            ThymeleafletVersionResolver thymeleafletVersionResolver,
+            ResolvedStorybookConfig resolvedStorybookConfig) {
+        this.fragmentDiscoveryService = fragmentDiscoveryService;
+        this.fragmentMainContentService = fragmentMainContentService;
+        this.thymeleafletVersionResolver = thymeleafletVersionResolver;
+        this.resolvedStorybookConfig = resolvedStorybookConfig;
+    }
     
     /**
      * Storybookメインエントリーポイント - フラグメント一覧ページ (プレースホルダ最適化版)
