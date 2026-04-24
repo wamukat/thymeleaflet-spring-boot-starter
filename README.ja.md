@@ -163,6 +163,25 @@ npm install
 npm run build
 ```
 
+## ローカル E2E 検証
+
+starter を変更した後は、ローカルに install してからサンプルアプリを再起動し、
+Playwright テストを実行します:
+
+```bash
+npm install
+npm run verify:starter
+npm run sample:start
+```
+
+別ターミナルで E2E を実行します:
+
+```bash
+npm run test:e2e
+```
+
+サンプルアプリは `http://localhost:6006/thymeleaflet` で Thymeleaflet を提供します。
+
 ## ドキュメント
 
 以下を参照してください。

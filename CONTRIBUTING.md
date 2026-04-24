@@ -17,6 +17,24 @@ npm install
 npm run build
 ```
 
+## Local Verification
+
+For starter changes that affect the sample app or browser behavior, reinstall the
+starter locally and restart the sample before running E2E:
+
+```bash
+npm run verify:starter
+npm run sample:start
+```
+
+In another terminal:
+
+```bash
+npm run test:e2e
+```
+
+`npm run sample:start` runs the sample app on port `6006`.
+
 ## Code Style
 
 - Prefer small, readable changes.

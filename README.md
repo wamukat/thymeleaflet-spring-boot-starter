@@ -168,6 +168,25 @@ npm install
 npm run build
 ```
 
+## Local E2E Verification
+
+After changing the starter, install it locally and restart the sample app before
+running Playwright tests:
+
+```bash
+npm install
+npm run verify:starter
+npm run sample:start
+```
+
+Then run E2E from another terminal:
+
+```bash
+npm run test:e2e
+```
+
+The sample app serves Thymeleaflet on `http://localhost:6006/thymeleaflet`.
+
 ## Documentation
 
 See:
