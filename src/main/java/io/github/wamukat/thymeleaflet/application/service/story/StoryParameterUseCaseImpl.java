@@ -5,7 +5,6 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.service.StoryParameterDomainService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,9 +23,12 @@ import java.util.Map;
 public class StoryParameterUseCaseImpl implements StoryParameterUseCase {
     
     private static final Logger logger = LoggerFactory.getLogger(StoryParameterUseCaseImpl.class);
-    
-    @Autowired
-    private StoryParameterDomainService storyParameterDomainService;
+
+    private final StoryParameterDomainService storyParameterDomainService;
+
+    public StoryParameterUseCaseImpl(StoryParameterDomainService storyParameterDomainService) {
+        this.storyParameterDomainService = storyParameterDomainService;
+    }
 
     @Override
     public Map<String, Object> getParametersForStory(FragmentStoryInfo storyInfo) {

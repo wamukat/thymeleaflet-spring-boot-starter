@@ -8,7 +8,6 @@ import io.github.wamukat.thymeleaflet.application.port.outbound.JavaDocLookupPor
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -27,18 +26,26 @@ import java.util.Map;
 public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
     
     private static final Logger logger = LoggerFactory.getLogger(FragmentPreviewUseCaseImpl.class);
-    
-    @Autowired
-    private StoryContentCoordinationUseCase storyContentCoordinationUseCase;
-    
-    @Autowired
-    private JavaDocLookupPort javaDocLookupPort;
-    
-    @Autowired
-    private ObjectMapper objectMapper;
 
-    @Autowired
-    private FragmentDependencyPort fragmentDependencyPort;
+    private final StoryContentCoordinationUseCase storyContentCoordinationUseCase;
+
+    private final JavaDocLookupPort javaDocLookupPort;
+
+    private final ObjectMapper objectMapper;
+
+    private final FragmentDependencyPort fragmentDependencyPort;
+
+    public FragmentPreviewUseCaseImpl(
+        StoryContentCoordinationUseCase storyContentCoordinationUseCase,
+        JavaDocLookupPort javaDocLookupPort,
+        ObjectMapper objectMapper,
+        FragmentDependencyPort fragmentDependencyPort
+    ) {
+        this.storyContentCoordinationUseCase = storyContentCoordinationUseCase;
+        this.javaDocLookupPort = javaDocLookupPort;
+        this.objectMapper = objectMapper;
+        this.fragmentDependencyPort = fragmentDependencyPort;
+    }
 
     @Override
     public PageSetupResponse setupStoryContentData(PageSetupCommand command) {

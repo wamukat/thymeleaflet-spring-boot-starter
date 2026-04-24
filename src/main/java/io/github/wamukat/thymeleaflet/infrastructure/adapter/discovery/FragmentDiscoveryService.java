@@ -4,7 +4,6 @@ import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
@@ -35,15 +34,22 @@ public class FragmentDiscoveryService {
 
     private volatile boolean cacheInitialized;
     private volatile List<FragmentInfo> cachedFragments = List.of();
-    
-    @Autowired
-    private FragmentDomainService fragmentDomainService;
-    
-    @Autowired
-    private ResolvedStorybookConfig storybookConfig;
 
-    @Autowired
-    private FragmentSignatureParser fragmentSignatureParser;
+    private final FragmentDomainService fragmentDomainService;
+
+    private final ResolvedStorybookConfig storybookConfig;
+
+    private final FragmentSignatureParser fragmentSignatureParser;
+
+    public FragmentDiscoveryService(
+        FragmentDomainService fragmentDomainService,
+        ResolvedStorybookConfig storybookConfig,
+        FragmentSignatureParser fragmentSignatureParser
+    ) {
+        this.fragmentDomainService = fragmentDomainService;
+        this.storybookConfig = storybookConfig;
+        this.fragmentSignatureParser = fragmentSignatureParser;
+    }
     
     /**
      * テンプレートディレクトリから全フラグメントを発見

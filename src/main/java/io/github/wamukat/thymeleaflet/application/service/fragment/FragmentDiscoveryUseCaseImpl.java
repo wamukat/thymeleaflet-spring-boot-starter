@@ -2,7 +2,6 @@ package io.github.wamukat.thymeleaflet.application.service.fragment;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.fragment.FragmentDiscoveryUseCase;
 import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,9 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @Transactional(readOnly = true)
 public class FragmentDiscoveryUseCaseImpl implements FragmentDiscoveryUseCase {
-    
-    @Autowired
-    private FragmentCatalogPort fragmentCatalogPort;
+
+    private final FragmentCatalogPort fragmentCatalogPort;
+
+    public FragmentDiscoveryUseCaseImpl(FragmentCatalogPort fragmentCatalogPort) {
+        this.fragmentCatalogPort = fragmentCatalogPort;
+    }
 
     @Override
     public FragmentDetailResponse discoverFragment(String templatePath, String fragmentName) {

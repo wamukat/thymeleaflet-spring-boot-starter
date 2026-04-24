@@ -9,7 +9,6 @@ import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentD
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -29,15 +28,19 @@ public class StoryDataAdapter implements StoryDataPort {
     private static final Logger logger = LoggerFactory.getLogger(StoryDataAdapter.class);
 
     private final YamlStoryConfigurationLoader yamlStoryConfigurationLoader;
-    
-    @Autowired
-    private FragmentDiscoveryService fragmentDiscoveryService;
-    
-    @Autowired
-    private FragmentSummaryMapper fragmentSummaryMapper;
-    
-    public StoryDataAdapter(YamlStoryConfigurationLoader yamlStoryConfigurationLoader) {
+
+    private final FragmentDiscoveryService fragmentDiscoveryService;
+
+    private final FragmentSummaryMapper fragmentSummaryMapper;
+
+    public StoryDataAdapter(
+        YamlStoryConfigurationLoader yamlStoryConfigurationLoader,
+        FragmentDiscoveryService fragmentDiscoveryService,
+        FragmentSummaryMapper fragmentSummaryMapper
+    ) {
         this.yamlStoryConfigurationLoader = yamlStoryConfigurationLoader;
+        this.fragmentDiscoveryService = fragmentDiscoveryService;
+        this.fragmentSummaryMapper = fragmentSummaryMapper;
     }
     
     @Override
