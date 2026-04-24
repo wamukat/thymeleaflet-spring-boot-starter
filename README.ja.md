@@ -165,11 +165,18 @@ npm run build
 
 ## ローカル E2E 検証
 
-starter を変更した後は、ローカルに install してからサンプルアプリを再起動し、
-Playwright テストを実行します:
+starter を変更した後は、ローカル E2E ヘルパーを実行します。このコマンドは
+starter の install、サンプルアプリの起動待ち、Playwright 実行、終了時の
+サンプルプロセス停止まで行います:
 
 ```bash
 npm install
+npm run test:e2e:local
+```
+
+手動で分けて実行する場合:
+
+```bash
 npm run verify:starter
 npm run sample:start
 ```

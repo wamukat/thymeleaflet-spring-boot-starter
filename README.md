@@ -170,11 +170,18 @@ npm run build
 
 ## Local E2E Verification
 
-After changing the starter, install it locally and restart the sample app before
-running Playwright tests:
+After changing the starter, run the local E2E helper. It installs the starter,
+starts the sample app, waits for it to become available, runs Playwright, and
+stops the sample process when the command finishes:
 
 ```bash
 npm install
+npm run test:e2e:local
+```
+
+To run the steps manually:
+
+```bash
 npm run verify:starter
 npm run sample:start
 ```
