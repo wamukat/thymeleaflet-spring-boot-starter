@@ -8,6 +8,21 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.17] - 2026-05-01
+
+- Fixed
+  - Added a high-priority `ClassLoaderTemplateResolver` for `thymeleaflet/**` templates so Thymeleaflet views packaged in the starter JAR resolve correctly when Spring Boot DevTools splits application and dependency class loaders. (#129)
+- Docs
+  - Added the repository release workflow skill documentation used by agents working on this project.
+- Test
+  - Added regression coverage for the Thymeleaflet class loader template resolver configuration.
+- Build
+  - Updated Maven project and sample app versions to `0.2.17`.
+
+### Issues
+
+- #129 Spring Boot DevTools 環境で JAR 内テンプレートが解決できない
+
 ## [0.2.16] - 2026-04-25
 
 - Added
