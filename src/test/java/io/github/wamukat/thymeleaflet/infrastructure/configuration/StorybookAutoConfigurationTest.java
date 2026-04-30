@@ -5,13 +5,17 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.templateresolver.ITemplateResolver;
 
 import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -57,6 +61,25 @@ class StorybookAutoConfigurationTest {
             Arrays.asList(annotation.value()).contains(ObjectMapper.class),
             "thymeleafletObjectMapper should be conditional on ObjectMapper.class"
         );
+    }
+
+    @Test
+    void thymeleafletClassLoaderTemplateResolverBean_shouldTargetOnlyThymeleafletTemplates() {
+        StorybookAutoConfiguration configuration = new StorybookAutoConfiguration();
+
+        ITemplateResolver templateResolver = configuration.thymeleafletClassLoaderTemplateResolver();
+
+        assertTrue(
+            templateResolver instanceof ClassLoaderTemplateResolver,
+            "Thymeleaflet templates should be resolved from the starter JAR class loader"
+        );
+        ClassLoaderTemplateResolver resolver = (ClassLoaderTemplateResolver) templateResolver;
+        assertEquals("templates/", resolver.getPrefix());
+        assertEquals(".html", resolver.getSuffix());
+        assertEquals("UTF-8", resolver.getCharacterEncoding());
+        assertEquals(Set.of("thymeleaflet/**"), resolver.getResolvablePatterns());
+        assertEquals(Integer.valueOf(0), resolver.getOrder());
+        assertFalse(resolver.getCheckExistence(), "Resolver should open the classpath resource directly");
     }
 
     @Test

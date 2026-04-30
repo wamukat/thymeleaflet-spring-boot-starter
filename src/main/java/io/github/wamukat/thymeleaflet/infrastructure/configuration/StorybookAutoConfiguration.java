@@ -1,7 +1,8 @@
 package io.github.wamukat.thymeleaflet.infrastructure.configuration;
 
-import java.util.Locale;
 import java.time.Duration;
+import java.util.Locale;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -36,6 +37,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
 import org.thymeleaf.spring6.view.ThymeleafViewResolver;
+import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
+import org.thymeleaf.templateresolver.ITemplateResolver;
 
 /**
  * Storybook機能の自動設定クラス
@@ -91,6 +94,19 @@ public class StorybookAutoConfiguration {
     @ConditionalOnMissingBean
     public TemplateModelExpressionAnalyzer templateModelExpressionAnalyzer() {
         return new TemplateModelExpressionAnalyzer();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = "thymeleafletClassLoaderTemplateResolver")
+    public ITemplateResolver thymeleafletClassLoaderTemplateResolver() {
+        ClassLoaderTemplateResolver resolver = new ClassLoaderTemplateResolver();
+        resolver.setPrefix("templates/");
+        resolver.setSuffix(".html");
+        resolver.setCharacterEncoding("UTF-8");
+        resolver.setResolvablePatterns(Set.of("thymeleaflet/**"));
+        resolver.setOrder(0);
+        resolver.setCheckExistence(false);
+        return resolver;
     }
 
     /**
