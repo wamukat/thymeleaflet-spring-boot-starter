@@ -8,6 +8,39 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.19] - 2026-05-01
+
+- Added
+  - Added GitHub Actions verification for pull requests and pushes to `main`, including Maven tests and local E2E coverage. (Kanbalone #462)
+- Changed
+  - Reduced normal Thymeleaflet runtime success-path logging from INFO to DEBUG while keeping warning/error diagnostics visible. (Kanbalone #455)
+  - Centralized runtime-derived cache handling for templates, JavaDoc, type information, fragment discovery, and dependencies behind a shared cache manager. (Kanbalone #456)
+  - Split template scanning and fragment definition parsing into focused components while preserving existing fragment discovery behavior. (Kanbalone #458)
+- Fixed
+  - Made `thymeleaflet.enabled=false` effective for auto-configuration and added production-profile diagnostics for active Thymeleaflet exposure. (Kanbalone #459)
+  - Applied `thymeleaflet.resources.cache-duration-seconds` to Thymeleaflet static resource handlers so configuration metadata matches runtime behavior. (Kanbalone #460)
+  - Cleaned up local E2E helper shutdown output so expected sample-app termination no longer appears as a Maven build failure. (Kanbalone #461)
+  - Converted Story YAML ISO string values to Java time types when JavaDoc declares matching `@param` or nested `@model` paths, including list wildcard paths such as `view.items[].publishedAt`. (#137)
+- Docs
+  - Expanded configuration metadata documentation and production exposure guidance.
+  - Documented supported Java time Story YAML values in English and Japanese story docs.
+- Build
+  - Updated Maven project, sample app, and README dependency examples to `0.2.19`.
+- Test
+  - Added regression coverage for cache management, classloader template resolution, scanner/parser separation, production exposure diagnostics, configuration metadata, local E2E helper shutdown handling, GitHub Actions workflow shape, and Java time story rendering.
+
+### Issues
+
+- #137 `story` の `model` / `parameters` で `java.time` 型フィールドが `String` として渡され `#temporals.format` がエラーになる
+- Kanbalone #455 Thymeleaflet runtime log noise
+- Kanbalone #456 Centralize Thymeleaflet cache management
+- Kanbalone #457 Add classloader template resolver integration coverage
+- Kanbalone #458 Separate template scanning and fragment parsing
+- Kanbalone #459 Harden Thymeleaflet production exposure controls
+- Kanbalone #460 Expand Spring configuration metadata
+- Kanbalone #461 Clean up local E2E shutdown output
+- Kanbalone #462 Add GitHub Actions verification workflow
+
 ## [0.2.18] - 2026-05-01
 
 - Added
