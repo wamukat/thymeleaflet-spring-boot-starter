@@ -57,7 +57,7 @@ public class TypeInformationExtractor {
                 logger.debug("Extracted {} type infos from JavaDoc: {}", extractedTypes.size(), javadocInfo.getDescription());
             }
             
-            logger.info("Successfully extracted {} type infos from HTML content", typeInfos.size());
+            logger.debug("Successfully extracted {} type infos from HTML content", typeInfos.size());
             
         } catch (Exception e) {
             logger.error("Failed to extract type information from HTML: {}", e.getMessage(), e);

@@ -151,7 +151,7 @@ public final class SecureTemplatePath {
         // 8. セキュア変換実行 ("." → "/")
         String converted = normalized.replace(".", "/");
         
-        logger.info("Secure path conversion completed: {} -> {}", rawPath, converted);
+        logger.debug("Secure path conversion completed: {} -> {}", rawPath, converted);
         return converted;
     }
     

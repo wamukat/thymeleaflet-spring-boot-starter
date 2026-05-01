@@ -30,10 +30,10 @@ public class SecurePathConversionService {
      */
     public SecurityConversionResult convertSecurePath(String templatePath, Model model) {
         try {
-            logger.info("[PATH_CONVERSION] Before conversion: {}", templatePath);
+            logger.debug("[PATH_CONVERSION] Before conversion: {}", templatePath);
             SecureTemplatePath secureTemplatePath = SecureTemplatePath.of(templatePath);
             String fullTemplatePath = secureTemplatePath.forFilePath();
-            logger.info("[PATH_CONVERSION] After conversion: {}", fullTemplatePath);
+            logger.debug("[PATH_CONVERSION] After conversion: {}", fullTemplatePath);
             return SecurityConversionResult.success(fullTemplatePath);
         } catch (SecurityException e) {
             logger.error("Security violation in template path conversion: {}", e.getMessage());

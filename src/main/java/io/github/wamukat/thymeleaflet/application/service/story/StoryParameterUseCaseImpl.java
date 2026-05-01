@@ -51,7 +51,7 @@ public class StoryParameterUseCaseImpl implements StoryParameterUseCase {
             if (command.getAllModelData().containsKey(paramName)) {
                 Object value = command.getAllModelData().get(paramName);
                 relevantParams.put(paramName, value);
-                logger.info("Extracted parameter: {} = {}", paramName, value);
+                logger.debug("Extracted parameter: {} = {}", paramName, value);
                 extractedCount++;
             } else {
                 logger.warn("Required parameter '{}' not found in model data", paramName);

@@ -58,8 +58,8 @@ public class StoryPreviewService {
      */
     public StoryPreviewResult processStoryPreview(String templatePath, String fragmentName, 
                                                  String storyName, Model model) {
-        logger.info("=== StoryPreviewService.processStoryPreview START ===");
-        logger.info("RAW Parameters: templatePath={}, fragmentName={}, storyName={}", templatePath, fragmentName, storyName);
+        logger.debug("=== StoryPreviewService.processStoryPreview START ===");
+        logger.debug("RAW Parameters: templatePath={}, fragmentName={}, storyName={}", templatePath, fragmentName, storyName);
         
         // セキュアパス変換
         SecurePathConversionService.SecurityConversionResult conversionResult = securePathConversionService.convertSecurePath(templatePath, model);
@@ -77,7 +77,7 @@ public class StoryPreviewService {
         model.addAttribute("storyName", storyName); // 契約テスト必須属性
         
         // 対象ストーリーを取得
-        logger.info("Calling storyManagementUseCase.getStory with: templatePath={}, fragmentName={}, storyName={}", fullTemplatePath, fragmentName, storyName);
+        logger.debug("Calling storyManagementUseCase.getStory with: templatePath={}, fragmentName={}, storyName={}", fullTemplatePath, fragmentName, storyName);
         Optional<FragmentStoryInfo> storyInfoOptional = storyRetrievalUseCase
             .getStory(fullTemplatePath, fragmentName, storyName);
 

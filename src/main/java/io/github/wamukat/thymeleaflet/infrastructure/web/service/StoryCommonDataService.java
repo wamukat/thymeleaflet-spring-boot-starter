@@ -100,7 +100,7 @@ public class StoryCommonDataService {
             for (Map.Entry<String, Object> entry : storyModel.entrySet()) {
                 model.addAttribute(entry.getKey(), entry.getValue());
             }
-            logger.info("Applied story model values: {}", storyModel.keySet());
+            logger.debug("Applied story model values: {}", storyModel.keySet());
         }
 
         // パラメータを取得
@@ -109,7 +109,7 @@ public class StoryCommonDataService {
         // フォールバックパラメータをstoryInfoオブジェクトに設定
         if (!storyInfo.hasStoryConfig() && !storyParameters.isEmpty()) {
             storyInfo = storyInfo.withFallbackParameters(storyParameters);
-            logger.info("Set fallback parameters to storyInfo: {}", storyParameters.keySet());
+            logger.debug("Set fallback parameters to storyInfo: {}", storyParameters.keySet());
         }
         
         // パラメータをモデルに設定し、表示用パラメータを取得

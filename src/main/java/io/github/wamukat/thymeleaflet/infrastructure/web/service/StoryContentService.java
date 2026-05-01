@@ -54,8 +54,8 @@ public class StoryContentService {
      */
     public StoryContentResult processStoryContent(String templatePath, String fragmentName, 
                                                  String storyName, Model model) {
-        logger.info("=== StoryContentService.processStoryContent START ===");
-        logger.info("RAW Parameters: templatePath={}, fragmentName={}, storyName={}", templatePath, fragmentName, storyName);
+        logger.debug("=== StoryContentService.processStoryContent START ===");
+        logger.debug("RAW Parameters: templatePath={}, fragmentName={}, storyName={}", templatePath, fragmentName, storyName);
         
         // セキュアパス変換
         SecurePathConversionService.SecurityConversionResult conversionResult = securePathConversionService.convertSecurePath(templatePath, model);

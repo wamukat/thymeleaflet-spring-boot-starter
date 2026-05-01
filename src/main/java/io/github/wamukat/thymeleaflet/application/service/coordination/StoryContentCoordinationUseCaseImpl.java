@@ -23,14 +23,14 @@ import java.util.stream.Collectors;
 
 /**
  * ストーリーコンテンツ協調ユースケース実装
- * 
+ *
  * HTMXコンテンツフラグメント表示の複雑な協調処理をApplication層で実施
  * StoryPreviewController.storyContentFragment()肥大化問題の解決を目的とする
  */
 @Component
 @Transactional(readOnly = true)
 public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordinationUseCase {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(StoryContentCoordinationUseCaseImpl.class);
 
     private final StoryValidationUseCase storyValidationUseCase;
@@ -63,50 +63,50 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
 
     @Override
     public StoryContentResult coordinateStoryContentSetup(StoryContentRequest request) {
-        logger.info("=== StoryContentCoordination START ===");
-        logger.info("Coordinating content setup for: {}::{}::{}", 
+        logger.debug("=== StoryContentCoordination START ===");
+        logger.debug("Coordinating content setup for: {}::{}::{}",
                    request.fullTemplatePath(), request.fragmentName(), request.storyName());
-        
+
         try {
             // 1. ストーリー検証
-            StoryValidationUseCase.StoryValidationCommand validationCommand = 
+            StoryValidationUseCase.StoryValidationCommand validationCommand =
                 new StoryValidationUseCase.StoryValidationCommand(request.fullTemplatePath(), request.fragmentName(), request.storyName());
-            StoryValidationUseCase.StoryValidationResult validationResult = 
+            StoryValidationUseCase.StoryValidationResult validationResult =
                 storyValidationUseCase.validateStory(validationCommand);
             if (!validationResult.isSuccess()) {
                 return StoryContentResult.failure("Story not found");
             }
             FragmentStoryInfo storyInfo = validationResult.getStory().orElseThrow();
-            
+
             // 2. フラグメント情報取得
             var selectedFragment = fragmentCatalogPort.findFragment(request.fullTemplatePath(), request.fragmentName());
-            
+
             if (selectedFragment.isEmpty()) {
                 return StoryContentResult.failure("Fragment not found: " + request.fullTemplatePath() + "::" + request.fragmentName());
             }
             FragmentSummary fragmentSummary = selectedFragment.orElseThrow();
-            
+
             // 3. ストーリー一覧取得
             List<FragmentStoryInfo> stories = storyRetrievalUseCase.getStoriesForFragment(fragmentSummary);
             storyRetrievalUseCase.getStoryConfigurationDiagnostic(request.fullTemplatePath())
                 .ifPresent(diagnostic -> request.model().addAttribute("storyConfigurationDiagnostic", diagnostic));
-            
+
             // 4. 共通データセットアップ
             Map<String, Object> storyParameters = storyParameterUseCase.getParametersForStory(storyInfo);
-            
+
             // フォールバックパラメータをstoryInfoオブジェクトに設定
             if (!storyInfo.hasStoryConfig() && !storyParameters.isEmpty()) {
                 storyInfo = storyInfo.withFallbackParameters(storyParameters);
-                logger.info("Set fallback parameters to storyInfo: {}", storyParameters.keySet());
+                logger.debug("Set fallback parameters to storyInfo: {}", storyParameters.keySet());
             }
-            
+
             // パラメータをモデルに設定し、表示用パラメータを取得
             Map<String, Object> displayParameters = storyPresentationPort.configureModelWithStoryParameters(storyParameters, request.model());
-            
+
             // defaultストーリーの情報取得（差異ハイライト用）
             Optional<FragmentStoryInfo> defaultStory = Optional.of(storyInfo);
             Map<String, Object> defaultParameters = new HashMap<>();
-            
+
             if (!request.storyName().equals("default")) {
                 var defaultStoryOptional = storyRetrievalUseCase
                     .getStory(request.fullTemplatePath(), request.fragmentName(), "default");
@@ -120,14 +120,14 @@ public class StoryContentCoordinationUseCaseImpl implements StoryContentCoordina
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 }
             }
-            
+
             // JavaDoc情報取得
             var javadocInfo = javaDocLookupPort.findJavaDocInfoForView(request.fullTemplatePath(), request.fragmentName());
-            
-            logger.info("=== StoryContentCoordination COMPLETED ===");
+
+            logger.debug("=== StoryContentCoordination COMPLETED ===");
             return StoryContentResult.success(storyInfo, fragmentSummary, stories,
                 displayParameters, defaultStory.orElseThrow(), defaultParameters, javadocInfo);
-            
+
         } catch (Exception e) {
             logger.error("Story content coordination failed", e);
             return StoryContentResult.failure("コンテンツセットアップに失敗しました: " + e.getMessage());
