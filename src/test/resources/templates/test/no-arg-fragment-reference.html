@@ -1,0 +1,11 @@
+<!--
+/**
+ * Shell fragment that references a no-arg fragment from another template.
+ *
+ * @fragment shell
+ */
+-->
+<section th:fragment="shell">
+  <div th:replace="~{test/no-arg-fragment-target :: topbar()}"></div>
+  <main>No-arg reference shell</main>
+</section>

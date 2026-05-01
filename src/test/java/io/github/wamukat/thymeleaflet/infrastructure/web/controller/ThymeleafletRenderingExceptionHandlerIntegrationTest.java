@@ -98,6 +98,22 @@ class ThymeleafletRenderingExceptionHandlerIntegrationTest {
     }
 
     @Test
+    @DisplayName("パラメータなしフラグメント参照の name() 形式をプレビューで解決できる")
+    void shouldRenderNoArgFragmentReferenceWithEmptyParentheses() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/test.no-arg-fragment-reference/shell/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Topbar OK"),
+            "別テンプレートの no-arg fragment を name() 形式で参照しても描画できること");
+        assertFalse(body.contains("Preview error"),
+            "no-arg fragment 参照によりプレビューエラーにならないこと");
+    }
+
+    @Test
     @DisplayName("Map no-arg メソッドが未解決でも /render は継続し警告ヘッダーを返す")
     void shouldRenderWithWarningsForUnresolvedMapNoArgMethods() throws Exception {
         var mvcResult = mockMvc.perform(get("/thymeleaflet/test.map-noarg-warning/methodWarning/default/render")
