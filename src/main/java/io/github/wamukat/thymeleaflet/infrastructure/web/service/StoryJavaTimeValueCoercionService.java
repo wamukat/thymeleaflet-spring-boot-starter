@@ -40,17 +40,45 @@ public class StoryJavaTimeValueCoercionService {
     ) {
         Map<String, Object> coerced = deepCopyMap(model);
         for (JavaDocAnalyzer.ModelInfo modelInfo : javaDocInfo.getModels()) {
-            applyModelPath(coerced, modelInfo.getName(), modelInfo.getType());
+            boolean applied = applyModelPath(coerced, modelInfo.getName(), modelInfo.getType());
+            if (!applied && !modelInfo.getName().startsWith("view.")) {
+                applyModelPath(coerced, "view." + modelInfo.getName(), modelInfo.getType());
+            }
         }
         return coerced;
     }
 
-    private void applyModelPath(Map<String, Object> root, String path, String targetType) {
+    private boolean applyModelPath(Map<String, Object> root, String path, String targetType) {
         if (path.isBlank()) {
-            return;
+            return false;
         }
         String[] segments = path.split("\\.");
+        if (!containsPath(root, segments, 0)) {
+            return false;
+        }
         applyPathSegment(root, segments, 0, path, targetType);
+        return true;
+    }
+
+    private boolean containsPath(@Nullable Object current, String[] segments, int index) {
+        if (current instanceof Map<?, ?> currentMap) {
+            String segment = segments[index];
+            boolean arrayWildcard = segment.endsWith("[]");
+            String key = arrayWildcard ? segment.substring(0, segment.length() - 2) : segment;
+            if (!currentMap.containsKey(key)) {
+                return false;
+            }
+            if (index == segments.length - 1) {
+                return true;
+            }
+            return containsPath(currentMap.get(key), segments, index + 1);
+        }
+
+        if (current instanceof List<?> currentList) {
+            return currentList.stream().anyMatch(item -> containsPath(item, segments, index));
+        }
+
+        return false;
     }
 
     private @Nullable Object applyPathSegment(

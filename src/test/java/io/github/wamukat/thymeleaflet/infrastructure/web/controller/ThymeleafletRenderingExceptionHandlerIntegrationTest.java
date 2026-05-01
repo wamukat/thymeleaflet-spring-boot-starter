@@ -98,6 +98,44 @@ class ThymeleafletRenderingExceptionHandlerIntegrationTest {
     }
 
     @Test
+    @DisplayName("JavaDoc @model の相対 [] パスに基づいて view 配下の java.time 値を変換して描画する")
+    void shouldRenderJavaTimeModelListValuesUnderViewFromRelativeJavaDocPath() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/test.java-time-story/unreadNoticeList/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Unread 1"), "model の通常フィールドはそのまま描画されること");
+        assertTrue(body.contains("2024-07-01 08:15"),
+            "相対 [] パスの LocalDateTime フィールドを #temporals.format で描画できること");
+        assertTrue(body.contains("2024-07-02 09:45"),
+            "相対 [] パスが list の全要素に適用されること");
+        assertFalse(body.contains("Preview error"),
+            "java.time 変換によりプレビューエラーにならないこと");
+    }
+
+    @Test
+    @DisplayName("JavaDoc @model の相対ネスト [] パスに基づいて view 配下の java.time 値を変換して描画する")
+    void shouldRenderJavaTimeNestedModelListValuesUnderViewFromRelativeJavaDocPath() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/test.java-time-story/contentList/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Content 1"), "model の通常フィールドはそのまま描画されること");
+        assertTrue(body.contains("2024-05-15 09:00"),
+            "相対ネスト [] パスの LocalDateTime フィールドを #temporals.format で描画できること");
+        assertTrue(body.contains("2024-05-16 10:30"),
+            "相対ネスト [] パスが list の全要素に適用されること");
+        assertFalse(body.contains("Preview error"),
+            "java.time 変換によりプレビューエラーにならないこと");
+    }
+
+    @Test
     @DisplayName("パラメータなしフラグメント参照の name() 形式をプレビューで解決できる")
     void shouldRenderNoArgFragmentReferenceWithEmptyParentheses() throws Exception {
         String body = mockMvc.perform(get("/thymeleaflet/test.no-arg-fragment-reference/shell/default/render")

@@ -80,6 +80,141 @@ class StoryJavaTimeValueCoercionServiceTest {
     }
 
     @Test
+    @DisplayName("@model の相対 [] パスに合わせて view 配下の list 内フィールドを変換する")
+    void shouldCoerceViewListModelValuesFromRelativeJavaDocModelPath() {
+        JavaDocAnalyzer.JavaDocInfo javaDocInfo = JavaDocAnalyzer.JavaDocInfo.of(
+            "List",
+            List.of(),
+            List.of(JavaDocAnalyzer.ModelInfo.required(
+                "unreadNotices[].publishedAt",
+                "LocalDateTime",
+                "公開日時"
+            )),
+            List.of(),
+            Optional.empty()
+        );
+        Map<String, Object> model = Map.of(
+            "view",
+            Map.of(
+                "unreadNotices",
+                List.of(
+                    Map.of("title", "Unread 1", "publishedAt", "2024-07-01T08:15:00"),
+                    Map.of("title", "Unread 2", "publishedAt", "2024-07-02T09:45:00")
+                )
+            )
+        );
+
+        Map<String, Object> result = service.coerceModel(model, javaDocInfo);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> view = (Map<String, Object>) Objects.requireNonNull(result.get("view"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> unreadNotices =
+            (List<Map<String, Object>>) Objects.requireNonNull(view.get("unreadNotices"));
+        assertThat(unreadNotices)
+            .extracting(item -> item.get("publishedAt"))
+            .containsExactly(
+                LocalDateTime.of(2024, 7, 1, 8, 15),
+                LocalDateTime.of(2024, 7, 2, 9, 45)
+            );
+    }
+
+    @Test
+    @DisplayName("@model の相対ネスト [] パスに合わせて view 配下の list 内フィールドを変換する")
+    void shouldCoerceViewNestedListModelValuesFromRelativeJavaDocModelPath() {
+        JavaDocAnalyzer.JavaDocInfo javaDocInfo = JavaDocAnalyzer.JavaDocInfo.of(
+            "Nested list",
+            List.of(),
+            List.of(JavaDocAnalyzer.ModelInfo.required(
+                "contentList.items[].publishedAt",
+                "java.time.LocalDateTime",
+                "公開日時"
+            )),
+            List.of(),
+            Optional.empty()
+        );
+        Map<String, Object> model = Map.of(
+            "view",
+            Map.of(
+                "contentList",
+                Map.of(
+                    "items",
+                    List.of(
+                        Map.of("title", "Content 1", "publishedAt", "2024-05-15T09:00:00"),
+                        Map.of("title", "Content 2", "publishedAt", "2024-05-16T10:30:00")
+                    )
+                )
+            )
+        );
+
+        Map<String, Object> result = service.coerceModel(model, javaDocInfo);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> view = (Map<String, Object>) Objects.requireNonNull(result.get("view"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> contentList = (Map<String, Object>) Objects.requireNonNull(view.get("contentList"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> items = (List<Map<String, Object>>) Objects.requireNonNull(contentList.get("items"));
+        assertThat(items)
+            .extracting(item -> item.get("publishedAt"))
+            .containsExactly(
+                LocalDateTime.of(2024, 5, 15, 9, 0),
+                LocalDateTime.of(2024, 5, 16, 10, 30)
+            );
+    }
+
+    @Test
+    @DisplayName("@model の literal パスが存在する場合は view fallback を適用しない")
+    void shouldPreferLiteralModelPathOverViewFallbackWhenBothExist() {
+        JavaDocAnalyzer.JavaDocInfo javaDocInfo = JavaDocAnalyzer.JavaDocInfo.of(
+            "Nested list",
+            List.of(),
+            List.of(JavaDocAnalyzer.ModelInfo.required(
+                "contentList.items[].publishedAt",
+                "java.time.LocalDateTime",
+                "公開日時"
+            )),
+            List.of(),
+            Optional.empty()
+        );
+        Map<String, Object> model = Map.of(
+            "contentList",
+            Map.of(
+                "items",
+                List.of(Map.of("title", "Top-level", "publishedAt", "2024-08-01T12:00:00"))
+            ),
+            "view",
+            Map.of(
+                "contentList",
+                Map.of(
+                    "items",
+                    List.of(Map.of("title", "View", "publishedAt", "not-a-date"))
+                )
+            )
+        );
+
+        Map<String, Object> result = service.coerceModel(model, javaDocInfo);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> contentList = (Map<String, Object>) Objects.requireNonNull(result.get("contentList"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> topLevelItems =
+            (List<Map<String, Object>>) Objects.requireNonNull(contentList.get("items"));
+        assertThat(topLevelItems)
+            .extracting(item -> item.get("publishedAt"))
+            .containsExactly(LocalDateTime.of(2024, 8, 1, 12, 0));
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> view = (Map<String, Object>) Objects.requireNonNull(result.get("view"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> viewContentList = (Map<String, Object>) Objects.requireNonNull(view.get("contentList"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> viewItems =
+            (List<Map<String, Object>>) Objects.requireNonNull(viewContentList.get("items"));
+        assertThat(viewItems).extracting(item -> item.get("publishedAt")).containsExactly("not-a-date");
+    }
+
+    @Test
     @DisplayName("java.time 以外の型は既存値を変更しない")
     void shouldLeaveUnsupportedTypesUnchanged() {
         JavaDocAnalyzer.JavaDocInfo javaDocInfo = JavaDocAnalyzer.JavaDocInfo.of(
