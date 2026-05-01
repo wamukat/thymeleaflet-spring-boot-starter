@@ -8,6 +8,22 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.20] - 2026-05-02
+
+- Fixed
+  - Normalized no-argument fragment references such as `topbar()` to `topbar` during Thymeleaflet preview rendering, allowing templates that use Spring MVC-compatible no-arg fragment call syntax to render without preview-only fragment resolution failures. (#149)
+  - Preserved Story YAML Java time model conversion regression coverage for `@model` list paths such as `view.items[].publishedAt`, confirming YAML ISO strings continue to render through `#temporals.format`. (#148)
+- Test
+  - Added preview regression coverage for no-arg fragment references declared without parameters and referenced with `name()`.
+  - Added unit coverage for quoted no-arg selectors and for leaving positional/named parameterized fragment references unchanged.
+- Build
+  - Updated Maven project, sample app, and README dependency examples to `0.2.20`.
+
+### Issues
+
+- #148 ストーリーデータが String 型の場合、#temporals.format() が EL1004E で失敗する
+- #149 パラメータなしフラグメントを topbar() 形式で参照するとプレビューで解決失敗する
+
 ## [0.2.19] - 2026-05-01
 
 - Added
