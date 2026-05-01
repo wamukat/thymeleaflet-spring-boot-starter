@@ -1,0 +1,17 @@
+storyGroups:
+  dataThList:
+    stories:
+      - name: default
+        title: data-th list
+        model:
+          view:
+            items:
+              - label: Data TH 1
+              - label: Data TH 2
+  quotedSelectorShell:
+    stories:
+      - name: default
+        title: quoted selector
+        model:
+          view:
+            label: Quoted Label

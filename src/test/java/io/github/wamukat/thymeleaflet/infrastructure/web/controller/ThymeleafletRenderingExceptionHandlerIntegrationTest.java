@@ -152,6 +152,38 @@ class ThymeleafletRenderingExceptionHandlerIntegrationTest {
     }
 
     @Test
+    @DisplayName("data-th-* 属性を含む fixture を描画できる")
+    void shouldRenderDataThAttributeRegressionFixture() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/regression.parser-corpus/dataThList/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Data TH 1"), "data-th-each/data-th-text で1件目を描画できること");
+        assertTrue(body.contains("Data TH 2"), "data-th-each/data-th-text で2件目を描画できること");
+        assertFalse(body.contains("Preview error"),
+            "data-th fixture がプレビューエラーにならないこと");
+    }
+
+    @Test
+    @DisplayName("quote 付き fragment selector を含む fixture を描画できる")
+    void shouldRenderQuotedFragmentSelectorRegressionFixture() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/regression.parser-corpus/quotedSelectorShell/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Quoted Label"),
+            "quote 付き template path の th:replace で子 fragment を描画できること");
+        assertFalse(body.contains("Preview error"),
+            "quoted selector fixture がプレビューエラーにならないこと");
+    }
+
+    @Test
     @DisplayName("Map no-arg メソッドが未解決でも /render は継続し警告ヘッダーを返す")
     void shouldRenderWithWarningsForUnresolvedMapNoArgMethods() throws Exception {
         var mvcResult = mockMvc.perform(get("/thymeleaflet/test.map-noarg-warning/methodWarning/default/render")
