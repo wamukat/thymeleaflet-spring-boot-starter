@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation;
 
+import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
@@ -69,10 +70,12 @@ class JavaDocContentServiceTest {
         cache.setEnabled(cacheEnabled);
         properties.setCache(cache);
 
+        ResolvedStorybookConfig resolved = ResolvedStorybookConfig.from(properties);
         return new JavaDocContentService(
             new JavaDocAnalyzer(),
-            ResolvedStorybookConfig.from(properties),
-            new ResourcePathValidator()
+            resolved,
+            new ResourcePathValidator(),
+            new ThymeleafletCacheManager(resolved)
         );
     }
 

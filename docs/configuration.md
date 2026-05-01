@@ -49,6 +49,10 @@ Each item supports `id`, `label`, and `width`.
 | `thymeleaflet.cache.enabled` | boolean | `true` | Enables in-memory caches for fragment discovery, JavaDoc parsing, and dependency analysis |
 | `thymeleaflet.cache.preload` | boolean | `false` | Preload caches at startup (useful for low-CPU demo environments) |
 
+When `spring.thymeleaf.cache=false` and `thymeleaflet.cache.enabled` is not set explicitly, Thymeleaflet disables its
+internal caches as well. This keeps DevTools-style template reloads predictable because fragment discovery, JavaDoc
+parsing, type extraction, and dependency analysis reread source resources instead of returning stale cache entries.
+
 ## Security Helper Configuration
 
 | Property | Type | Default | Description |

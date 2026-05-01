@@ -4,16 +4,14 @@ import io.github.wamukat.thymeleaflet.application.port.outbound.DocumentationAna
 import io.github.wamukat.thymeleaflet.domain.model.TypeInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocContentService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.TypeInformationExtractor;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
+import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * ドキュメント解析アダプタ
@@ -27,24 +25,21 @@ public class DocumentationAnalysisAdapter implements DocumentationAnalysisPort {
     
     private final TypeInformationExtractor typeInformationExtractor;
     private final JavaDocContentService javaDocContentService;
-    private final ResolvedStorybookConfig storybookConfig;
-    private final Map<String, List<TypeInfo>> typeInfoCache = new ConcurrentHashMap<>();
+    private final ThymeleafletCacheManager cacheManager;
     
     public DocumentationAnalysisAdapter(TypeInformationExtractor typeInformationExtractor,
                                         JavaDocContentService javaDocContentService,
-                                        ResolvedStorybookConfig storybookConfig) {
+                                        ThymeleafletCacheManager cacheManager) {
         this.typeInformationExtractor = typeInformationExtractor;
         this.javaDocContentService = javaDocContentService;
-        this.storybookConfig = storybookConfig;
+        this.cacheManager = cacheManager;
     }
     
     @Override
     public List<TypeInfo> extractTypeInformation(String templatePath) {
-        if (storybookConfig.getCache().isEnabled()) {
-            Optional<List<TypeInfo>> cached = Optional.ofNullable(typeInfoCache.get(templatePath));
-            if (cached.isPresent()) {
-                return cached.orElseThrow();
-            }
+        Optional<List<TypeInfo>> cached = cacheManager.get("type-info", templatePath);
+        if (cached.isPresent()) {
+            return cached.orElseThrow();
         }
         try {
             var htmlContent = javaDocContentService.loadTemplateContent(templatePath);
@@ -52,9 +47,7 @@ public class DocumentationAnalysisAdapter implements DocumentationAnalysisPort {
                 return new ArrayList<>();
             }
             List<TypeInfo> result = typeInformationExtractor.extractTypeInformationFromHtml(htmlContent.get());
-            if (storybookConfig.getCache().isEnabled()) {
-                typeInfoCache.put(templatePath, result);
-            }
+            cacheManager.put("type-info", templatePath, result);
             return result;
             
         } catch (Exception e) {

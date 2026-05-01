@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocContentService;
+import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookProperties;
@@ -55,12 +56,21 @@ class JavaDocLookupServiceTest {
         private final List<JavaDocAnalyzer.JavaDocInfo> docs;
 
         private StubJavaDocContentService(List<JavaDocAnalyzer.JavaDocInfo> docs) {
+            this(docs, config());
+        }
+
+        private StubJavaDocContentService(List<JavaDocAnalyzer.JavaDocInfo> docs, ResolvedStorybookConfig config) {
             super(
                 new JavaDocAnalyzer(),
-                ResolvedStorybookConfig.from(new StorybookProperties()),
-                new ResourcePathValidator()
+                config,
+                new ResourcePathValidator(),
+                new ThymeleafletCacheManager(config)
             );
             this.docs = docs;
+        }
+
+        private static ResolvedStorybookConfig config() {
+            return ResolvedStorybookConfig.from(new StorybookProperties());
         }
 
         @Override
