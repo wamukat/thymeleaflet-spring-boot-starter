@@ -1,0 +1,19 @@
+storyGroups:
+  detailHeader:
+    stories:
+      - name: default
+        title: Default
+        parameters:
+          title: Campaign
+          publishedAt: "2026-04-01T10:00:00"
+  noticeList:
+    stories:
+      - name: default
+        title: Default
+        model:
+          view:
+            items:
+              - title: Notice 1
+                publishedAt: "2024-06-01T10:00:00"
+              - title: Notice 2
+                publishedAt: "2024-06-02T11:30:00"

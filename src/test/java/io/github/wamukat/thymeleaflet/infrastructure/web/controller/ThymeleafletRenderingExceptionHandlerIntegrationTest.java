@@ -62,6 +62,42 @@ class ThymeleafletRenderingExceptionHandlerIntegrationTest {
     }
 
     @Test
+    @DisplayName("JavaDoc @param の java.time 型に基づいて story parameters を変換して描画する")
+    void shouldRenderJavaTimeParameterValuesFromStoryYaml() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/test.java-time-story/detailHeader/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Campaign"), "通常の String パラメータはそのまま描画されること");
+        assertTrue(body.contains("2026-04-01 10:00"),
+            "LocalDateTime パラメータを #temporals.format で描画できること");
+        assertFalse(body.contains("Preview error"),
+            "java.time 変換によりプレビューエラーにならないこと");
+    }
+
+    @Test
+    @DisplayName("JavaDoc @model の [] パスに基づいて story model 内の java.time 値を変換して描画する")
+    void shouldRenderJavaTimeModelListValuesFromStoryYaml() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/test.java-time-story/noticeList/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Notice 1"), "model の通常フィールドはそのまま描画されること");
+        assertTrue(body.contains("2024-06-01 10:00"),
+            "list 内の LocalDateTime フィールドを #temporals.format で描画できること");
+        assertTrue(body.contains("2024-06-02 11:30"),
+            "[] パスが list の全要素に適用されること");
+        assertFalse(body.contains("Preview error"),
+            "java.time 変換によりプレビューエラーにならないこと");
+    }
+
+    @Test
     @DisplayName("Map no-arg メソッドが未解決でも /render は継続し警告ヘッダーを返す")
     void shouldRenderWithWarningsForUnresolvedMapNoArgMethods() throws Exception {
         var mvcResult = mockMvc.perform(get("/thymeleaflet/test.map-noarg-warning/methodWarning/default/render")

@@ -301,6 +301,34 @@ class JavaDocAnalyzerTest {
     }
 
     @Test
+    @DisplayName("@modelタグでドットと配列ワイルドカードを含むパスを解析できる")
+    void shouldParseModelPathWithDotsAndArrayWildcard() {
+        // Given
+        String htmlContent = """
+            <!--
+            /**
+             * お知らせ一覧
+             *
+             * @fragment noticeList
+             * @model view.items[].publishedAt {@code java.time.LocalDateTime} [required] 公開日時
+             */
+            -->
+            <section th:fragment="noticeList">List</section>
+            """;
+
+        // When
+        List<JavaDocAnalyzer.JavaDocInfo> result = analyzer.analyzeJavaDocFromHtml(htmlContent);
+
+        // Then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getModels()).singleElement()
+            .satisfies(model -> {
+                assertThat(model.getName()).isEqualTo("view.items[].publishedAt");
+                assertThat(model.getType()).isEqualTo("java.time.LocalDateTime");
+            });
+    }
+
+    @Test
     @DisplayName("@exampleタグでth:blockと引数なしフラグメントを解析できる")
     void shouldParseThBlockAndNoArgumentExamples() {
         // Given

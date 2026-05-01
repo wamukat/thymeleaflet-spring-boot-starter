@@ -1,0 +1,28 @@
+<!--
+/**
+ * Detail header with Java time parameter.
+ *
+ * @fragment detailHeader
+ * @param title {@code String} [required] Title
+ * @param publishedAt {@code java.time.LocalDateTime} [required] Published date
+ */
+-->
+<th:block th:fragment="detailHeader(title, publishedAt)">
+  <h2 th:text="${title}">Title</h2>
+  <p th:text="${#temporals.format(publishedAt, 'yyyy-MM-dd HH:mm')}">Date</p>
+</th:block>
+
+<!--
+/**
+ * Notice list with Java time model values.
+ *
+ * @fragment noticeList
+ * @model view.items[].publishedAt {@code java.time.LocalDateTime} [required] Published date
+ */
+-->
+<section th:fragment="noticeList()">
+  <article th:each="item : ${view.items}">
+    <h3 th:text="${item.title}">Notice</h3>
+    <time th:text="${#temporals.format(item.publishedAt, 'yyyy-MM-dd HH:mm')}">Date</time>
+  </article>
+</section>

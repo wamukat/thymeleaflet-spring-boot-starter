@@ -33,7 +33,7 @@ public class JavaDocAnalyzer {
     );
 
     private static final Pattern MODEL_PATTERN = Pattern.compile(
-        "@model\\s+(\\w+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@model|\\s*@fragment|\\s*@example|\\s*@background|\\s*\\*/|$)",
+        "@model\\s+([\\w.\\[\\]]+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@model|\\s*@fragment|\\s*@example|\\s*@background|\\s*\\*/|$)",
         Pattern.MULTILINE | Pattern.DOTALL
     );
 

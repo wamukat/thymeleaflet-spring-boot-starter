@@ -88,6 +88,50 @@ stories:
 - `model` と `parameters` は同一ストーリーで併用できます。
 - キーが不足すると、Thymeleaf の式は `null` になる可能性があります。
 
+## Java Time 値
+
+Story YAML の値はまず YAML のスカラーとして読み込まれます。JavaDoc で
+パラメータまたはモデルパスに `java.time` 型を宣言している場合、
+Thymeleaflet はレンダリング前に ISO 文字列を対象型へ変換します。
+
+対応型:
+
+- `LocalDate`
+- `LocalDateTime`
+- `LocalTime`
+- `OffsetDateTime`
+- `ZonedDateTime`
+- `Instant`
+
+パラメータ例:
+
+```html
+/**
+ * @param publishedAt {@code java.time.LocalDateTime} [required] 公開日時
+ */
+```
+
+```yaml
+parameters:
+  publishedAt: "2026-04-01T10:00:00"
+```
+
+ネストしたモデルリストの例:
+
+```html
+/**
+ * @model view.items[].publishedAt {@code java.time.LocalDateTime} [required] 公開日時
+ */
+```
+
+```yaml
+model:
+  view:
+    items:
+      - title: お知らせ1
+        publishedAt: "2024-06-01T10:00:00"
+```
+
 ## methodReturns（no-arg）
 
 `methodReturns` を使うと、プレビュー時の no-arg メソッド呼び出し結果を制御できます。
