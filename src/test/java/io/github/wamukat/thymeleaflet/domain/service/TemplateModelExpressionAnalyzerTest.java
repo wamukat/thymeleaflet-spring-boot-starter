@@ -122,4 +122,48 @@ class TemplateModelExpressionAnalyzerTest {
             .contains(ModelPath.of(List.of("view", "pointPage", "nextPage")))
             .doesNotContain(ModelPath.of(List.of("view", "pointPage", "format")));
     }
+
+    @Test
+    void shouldIgnoreThymeleafAttributesInsideComments() {
+        String html = """
+            <section>
+              <!-- <span th:text="${commented.out}"></span> -->
+              <span th:text="${visible.value}"></span>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("visible", "value")))
+            .doesNotContain(ModelPath.of(List.of("commented", "out")));
+    }
+
+    @Test
+    void shouldHandleStructuredAttributesWithMultilineValuesAndQuotedSeparators() {
+        String html = """
+            <section
+                th:with="localText='a > b',
+                         otherText='still local'"
+                th:each='item : ${view.items}'>
+              <span th:text="${item.label + ' > ' + view.title}"></span>
+              <th:block
+                  data-th-replace="~{'components/complex-card' :: card(label=${view.title}, flag=true)}">
+              </th:block>
+              <span th:text="${localText + otherText}"></span>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "items")))
+            .contains(ModelPath.of(List.of("item", "label")))
+            .contains(ModelPath.of(List.of("view", "title")))
+            .doesNotContain(ModelPath.of(List.of("localText")))
+            .doesNotContain(ModelPath.of(List.of("otherText")));
+        assertThat(snapshot.loopVariablePaths()).containsEntry("item", ModelPath.of(List.of("view", "items")));
+        assertThat(snapshot.referencedTemplatePathsWithRecursionFlags())
+            .containsEntry("components/complex-card", true);
+    }
 }

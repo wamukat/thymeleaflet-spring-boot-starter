@@ -1,4 +1,4 @@
-package io.github.wamukat.thymeleaflet.infrastructure.adapter.template;
+package io.github.wamukat.thymeleaflet.domain.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -83,5 +83,26 @@ class StructuredTemplateParserTest {
             .hasValue("${view.query}");
         assertThat(parsed.elements().get(2).attributeValue("th:each"))
             .hasValue("item : ${view.items}");
+    }
+
+    @Test
+    void parse_shouldExposeTextNodesWithoutTreatingCommentsAsText() {
+        String html = """
+            <section>
+              <!-- ${commented.out} -->
+              Hello ${view.title}
+            </section>
+            """;
+
+        StructuredTemplateParser.ParsedTemplate parsed = parser.parse(html);
+
+        assertThat(parsed.textNodes())
+            .extracting(StructuredTemplateParser.TemplateText::content)
+            .anySatisfy(text -> assertThat(text).contains("Hello ${view.title}"))
+            .noneSatisfy(text -> assertThat(text).contains("commented.out"));
+        assertThat(parsed.comments()).singleElement()
+            .extracting(StructuredTemplateParser.TemplateComment::content)
+            .asString()
+            .contains("commented.out");
     }
 }

@@ -21,52 +21,57 @@ import java.util.regex.Pattern;
 public class TemplateModelExpressionAnalyzer {
 
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("\\$\\{([^}]*)}");
-    private static final Pattern TH_WITH_PATTERN = Pattern.compile(
-        "(?:th:with|data-th-with)\\s*=\\s*\"([^\"]*)\"|(?:th:with|data-th-with)\\s*=\\s*'([^']*)'"
-    );
-    private static final Pattern TH_EACH_PATTERN = Pattern.compile(
-        "(?:th:each|data-th-each)\\s*=\\s*\"([^\"]*)\"|(?:th:each|data-th-each)\\s*=\\s*'([^']*)'"
-    );
-    private static final Pattern TH_REPLACE_OR_INSERT_PATTERN = Pattern.compile(
-        "(?:th:(?:replace|insert)|data-th-(?:replace|insert))\\s*=\\s*\"([^\"]*)\""
-            + "|(?:th:(?:replace|insert)|data-th-(?:replace|insert))\\s*=\\s*'([^']*)'"
-    );
     private static final Set<String> RESERVED_ROOTS = Set.of(
         "true", "false", "null",
         "param", "session", "application", "request", "response"
     );
+    private final StructuredTemplateParser templateParser;
+
+    public TemplateModelExpressionAnalyzer() {
+        this(new StructuredTemplateParser());
+    }
+
+    TemplateModelExpressionAnalyzer(StructuredTemplateParser templateParser) {
+        this.templateParser = templateParser;
+    }
 
     public TemplateInference analyze(String html, Set<String> parameterNames) {
+        StructuredTemplateParser.ParsedTemplate template = templateParser.parse(html);
         Set<String> excludedIdentifiers = new HashSet<>(parameterNames);
-        excludedIdentifiers.addAll(extractLocalVariablesFromThWith(html));
-        Map<String, ModelPath> loopVariablePaths = extractLoopVariablePaths(html);
-        List<ModelPath> modelPaths = extractModelPathsFromHtml(html, excludedIdentifiers);
-        List<ModelPath> noArgMethodPaths = extractNoArgMethodPathsFromHtml(html, excludedIdentifiers);
-        Map<String, Boolean> referencedTemplatePaths = extractReferencedTemplatePaths(html);
+        excludedIdentifiers.addAll(extractLocalVariablesFromThWith(template));
+        Map<String, ModelPath> loopVariablePaths = extractLoopVariablePaths(template);
+        List<String> expressionSources = expressionSources(template);
+        List<ModelPath> modelPaths = extractModelPathsFromSources(expressionSources, excludedIdentifiers);
+        List<ModelPath> noArgMethodPaths = extractNoArgMethodPathsFromSources(expressionSources, excludedIdentifiers);
+        Map<String, Boolean> referencedTemplatePaths = extractReferencedTemplatePaths(template);
         return new TemplateInference(modelPaths, loopVariablePaths, referencedTemplatePaths, noArgMethodPaths);
     }
 
-    private List<ModelPath> extractModelPathsFromHtml(String html, Set<String> excludedIdentifiers) {
+    private List<ModelPath> extractModelPathsFromSources(List<String> sources, Set<String> excludedIdentifiers) {
         List<ModelPath> paths = new ArrayList<>();
-        Matcher matcher = EXPRESSION_PATTERN.matcher(html);
-        while (matcher.find()) {
-            String expression = stripStringLiterals(matcher.group(1));
-            for (List<String> path : extractModelPaths(expression, excludedIdentifiers)) {
-                paths.add(ModelPath.of(path));
+        for (String source : sources) {
+            Matcher matcher = EXPRESSION_PATTERN.matcher(source);
+            while (matcher.find()) {
+                String expression = stripStringLiterals(matcher.group(1));
+                for (List<String> path : extractModelPaths(expression, excludedIdentifiers)) {
+                    paths.add(ModelPath.of(path));
+                }
             }
         }
         return paths;
     }
 
-    private List<ModelPath> extractNoArgMethodPathsFromHtml(String html, Set<String> excludedIdentifiers) {
+    private List<ModelPath> extractNoArgMethodPathsFromSources(List<String> sources, Set<String> excludedIdentifiers) {
         LinkedHashSet<ModelPath> methodPaths = new LinkedHashSet<>();
-        Matcher matcher = EXPRESSION_PATTERN.matcher(html);
-        while (matcher.find()) {
-            String expression = stripStringLiterals(matcher.group(1));
-            List<List<String>> extracted = new ArrayList<>();
-            extractModelPaths(expression, excludedIdentifiers, extracted);
-            for (List<String> path : extracted) {
-                methodPaths.add(ModelPath.of(path));
+        for (String source : sources) {
+            Matcher matcher = EXPRESSION_PATTERN.matcher(source);
+            while (matcher.find()) {
+                String expression = stripStringLiterals(matcher.group(1));
+                List<List<String>> extracted = new ArrayList<>();
+                extractModelPaths(expression, excludedIdentifiers, extracted);
+                for (List<String> path : extracted) {
+                    methodPaths.add(ModelPath.of(path));
+                }
             }
         }
         return new ArrayList<>(methodPaths);
@@ -166,11 +171,9 @@ public class TemplateModelExpressionAnalyzer {
         return paths;
     }
 
-    private Map<String, ModelPath> extractLoopVariablePaths(String html) {
+    private Map<String, ModelPath> extractLoopVariablePaths(StructuredTemplateParser.ParsedTemplate template) {
         Map<String, ModelPath> loopVariables = new LinkedHashMap<>();
-        Matcher matcher = TH_EACH_PATTERN.matcher(html);
-        while (matcher.find()) {
-            String raw = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+        for (String raw : thymeleafAttributeValues(template, Set.of("th:each", "data-th-each"))) {
             if (raw == null || raw.isBlank()) {
                 continue;
             }
@@ -204,11 +207,11 @@ public class TemplateModelExpressionAnalyzer {
         return loopVariables;
     }
 
-    private Map<String, Boolean> extractReferencedTemplatePaths(String html) {
+    private Map<String, Boolean> extractReferencedTemplatePaths(StructuredTemplateParser.ParsedTemplate template) {
         Map<String, Boolean> referencedTemplatePaths = new LinkedHashMap<>();
-        Matcher matcher = TH_REPLACE_OR_INSERT_PATTERN.matcher(html);
-        while (matcher.find()) {
-            String raw = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+        for (String raw : thymeleafAttributeValues(template, Set.of(
+            "th:replace", "th:insert", "data-th-replace", "data-th-insert"
+        ))) {
             if (raw == null || raw.isBlank()) {
                 continue;
             }
@@ -292,11 +295,9 @@ public class TemplateModelExpressionAnalyzer {
         return false;
     }
 
-    private Set<String> extractLocalVariablesFromThWith(String html) {
+    private Set<String> extractLocalVariablesFromThWith(StructuredTemplateParser.ParsedTemplate template) {
         Set<String> localVariables = new HashSet<>();
-        Matcher matcher = TH_WITH_PATTERN.matcher(html);
-        while (matcher.find()) {
-            String raw = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+        for (String raw : thymeleafAttributeValues(template, Set.of("th:with", "data-th-with"))) {
             if (raw == null || raw.isBlank()) {
                 continue;
             }
@@ -312,6 +313,42 @@ public class TemplateModelExpressionAnalyzer {
             }
         }
         return localVariables;
+    }
+
+    private List<String> expressionSources(StructuredTemplateParser.ParsedTemplate template) {
+        List<String> sources = new ArrayList<>();
+        for (StructuredTemplateParser.TemplateElement element : template.elements()) {
+            for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                if (attribute.hasValue()) {
+                    sources.add(attribute.value());
+                }
+            }
+        }
+        for (StructuredTemplateParser.TemplateText text : template.textNodes()) {
+            if (!text.content().isBlank()) {
+                sources.add(text.content());
+            }
+        }
+        return sources;
+    }
+
+    private List<String> thymeleafAttributeValues(
+        StructuredTemplateParser.ParsedTemplate template,
+        Set<String> attributeNames
+    ) {
+        List<String> values = new ArrayList<>();
+        for (StructuredTemplateParser.TemplateElement element : template.elements()) {
+            for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                if (!attribute.hasValue()) {
+                    continue;
+                }
+                String normalizedName = attribute.name().toLowerCase(java.util.Locale.ROOT);
+                if (attributeNames.contains(normalizedName)) {
+                    values.add(attribute.value());
+                }
+            }
+        }
+        return values;
     }
 
     private List<String> extractLoopAliases(String variablePart) {

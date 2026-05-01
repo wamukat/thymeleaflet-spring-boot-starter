@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation;
 
+import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,15 +44,21 @@ public class JavaDocAnalyzer {
         Pattern.MULTILINE
     );
     
-    private static final Pattern EXAMPLE_PATTERN = Pattern.compile(
-        "@example\\s+.*?<(?:div|span|th:block)[^>]*th:replace=\"~\\{([^}]+?)\\s*::\\s*([^\\(\\}]+?)\\s*(?:\\(([^)]*)\\))?\\s*\\}\"[^>]*></(?:div|span|th:block)>",
-        Pattern.MULTILINE | Pattern.DOTALL
-    );
-    
     private static final Pattern BACKGROUND_PATTERN = Pattern.compile(
         "@background\\s+(\\S+)",
         Pattern.MULTILINE
     );
+    private static final Set<String> EXAMPLE_REPLACE_ATTRIBUTES = Set.of("th:replace", "data-th-replace");
+
+    private final StructuredTemplateParser templateParser;
+
+    public JavaDocAnalyzer() {
+        this(new StructuredTemplateParser());
+    }
+
+    JavaDocAnalyzer(StructuredTemplateParser templateParser) {
+        this.templateParser = templateParser;
+    }
 
     /**
      * HTMLテンプレートからJavaDocコメントを解析 - Legacy実装移設
@@ -189,17 +197,126 @@ public class JavaDocAnalyzer {
      */
     private List<ExampleInfo> parseExamples(String javadocContent) {
         List<ExampleInfo> examples = new ArrayList<>();
-        
-        Matcher exampleMatcher = EXAMPLE_PATTERN.matcher(javadocContent);
-        while (exampleMatcher.find()) {
-            String templatePath = exampleMatcher.group(1).trim();
-            String fragmentName = exampleMatcher.group(2).trim();
-            String argumentsStr = Optional.ofNullable(exampleMatcher.group(3)).orElse("");
-            
-            List<String> arguments = parseArguments(argumentsStr);
-            examples.add(ExampleInfo.of(templatePath, fragmentName, arguments));
+
+        for (String exampleMarkup : extractExampleMarkup(javadocContent)) {
+            StructuredTemplateParser.ParsedTemplate parsedTemplate = parseExampleMarkup(exampleMarkup);
+            for (StructuredTemplateParser.TemplateElement element : parsedTemplate.elements()) {
+                for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                    String normalizedName = attribute.name().toLowerCase(java.util.Locale.ROOT);
+                    if (!attribute.hasValue() || !EXAMPLE_REPLACE_ATTRIBUTES.contains(normalizedName)) {
+                        continue;
+                    }
+                    parseExampleReference(attribute.value()).ifPresent(examples::add);
+                }
+            }
         }
         return examples;
+    }
+
+    private List<String> extractExampleMarkup(String javadocContent) {
+        List<String> examples = new ArrayList<>();
+        StringBuilder currentExample = new StringBuilder();
+        boolean collectingExample = false;
+        String[] lines = javadocContent.split("\n");
+        for (String rawLine : lines) {
+            String line = rawLine.trim();
+            if (line.startsWith("*")) {
+                line = line.substring(1).trim();
+            }
+
+            if (line.startsWith("@example")) {
+                addExampleIfPresent(examples, currentExample);
+                currentExample.setLength(0);
+                collectingExample = true;
+                String exampleBody = line.substring("@example".length()).trim();
+                appendMarkupLine(currentExample, exampleBody);
+                continue;
+            }
+
+            if (!collectingExample) {
+                continue;
+            }
+            if (line.startsWith("@")) {
+                addExampleIfPresent(examples, currentExample);
+                currentExample.setLength(0);
+                collectingExample = false;
+                continue;
+            }
+            appendMarkupLine(currentExample, line);
+        }
+        addExampleIfPresent(examples, currentExample);
+        return examples;
+    }
+
+    private void appendMarkupLine(StringBuilder exampleMarkup, String line) {
+        if (line.isBlank()) {
+            return;
+        }
+        if (exampleMarkup.isEmpty()) {
+            int markupStart = line.indexOf('<');
+            if (markupStart < 0) {
+                return;
+            }
+            exampleMarkup.append(line.substring(markupStart));
+            return;
+        }
+        exampleMarkup.append('\n').append(line);
+    }
+
+    private void addExampleIfPresent(List<String> examples, StringBuilder exampleMarkup) {
+        if (!exampleMarkup.isEmpty()) {
+            examples.add(exampleMarkup.toString());
+        }
+    }
+
+    private StructuredTemplateParser.ParsedTemplate parseExampleMarkup(String exampleMarkup) {
+        try {
+            return templateParser.parse(exampleMarkup);
+        } catch (IllegalArgumentException parseFailure) {
+            logger.debug("Failed to parse @example markup: {}", exampleMarkup, parseFailure);
+            return new StructuredTemplateParser.ParsedTemplate(List.of(), List.of(), List.of());
+        }
+    }
+
+    private Optional<ExampleInfo> parseExampleReference(String rawReference) {
+        String expression = rawReference.trim();
+        if (expression.startsWith("~{") && expression.endsWith("}")) {
+            expression = expression.substring(2, expression.length() - 1).trim();
+        }
+        int fragmentSeparator = expression.indexOf("::");
+        if (fragmentSeparator <= 0) {
+            return Optional.empty();
+        }
+        String templatePath = unquote(expression.substring(0, fragmentSeparator).trim());
+        String fragmentExpression = expression.substring(fragmentSeparator + 2).trim();
+        if (templatePath.isBlank() || fragmentExpression.isBlank()) {
+            return Optional.empty();
+        }
+        String fragmentName = fragmentExpression;
+        String argumentsStr = "";
+        int openParen = fragmentExpression.indexOf('(');
+        if (openParen >= 0) {
+            int closeParen = fragmentExpression.lastIndexOf(')');
+            if (closeParen < openParen) {
+                return Optional.empty();
+            }
+            fragmentName = fragmentExpression.substring(0, openParen).trim();
+            argumentsStr = fragmentExpression.substring(openParen + 1, closeParen).trim();
+        }
+        if (fragmentName.isBlank()) {
+            return Optional.empty();
+        }
+        return Optional.of(ExampleInfo.of(templatePath, fragmentName, parseArguments(argumentsStr)));
+    }
+
+    private String unquote(String value) {
+        String trimmed = value.trim();
+        if (trimmed.length() >= 2
+            && ((trimmed.startsWith("'") && trimmed.endsWith("'"))
+            || (trimmed.startsWith("\"") && trimmed.endsWith("\"")))) {
+            return trimmed.substring(1, trimmed.length() - 1);
+        }
+        return trimmed;
     }
     
     /**
