@@ -8,6 +8,27 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.18] - 2026-05-01
+
+- Added
+  - Added explicit `@fragment <name>` JavaDoc binding so localized descriptions can be matched to fragments without requiring the fragment name to appear in the text. (#131)
+- Changed
+  - When `spring.thymeleaf.cache=false` and `thymeleaflet.cache.enabled` is not explicitly set, Thymeleaflet now disables its internal JavaDoc/template caches during development so template-only edits are reflected on reload. (#132)
+- Fixed
+  - Expanded `@example` parsing to support `<th:block th:replace="...">` and no-argument fragment references without parentheses. (#130)
+- Docs
+  - Documented the new `@fragment` JavaDoc tag and development cache behavior in both English and Japanese README files.
+- Test
+  - Added regression coverage for `@fragment` lookup, localized JavaDoc descriptions, `th:block` examples, no-argument examples, and disabled JavaDoc template caching.
+- Build
+  - Updated Maven project and sample app versions to `0.2.18`.
+
+### Issues
+
+- #130 `@example` が `<th:block>` や引数なしフラグメントで解析されない
+- #131 日本語（非ASCII）の JavaDoc 説明文では matchesDescription が機能しない
+- #132 Spring Boot DevTools 環境でテンプレート変更後に JavaDoc キャッシュが更新されない
+
 ## [0.2.17] - 2026-05-01
 
 - Fixed
