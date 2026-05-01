@@ -270,4 +270,37 @@ class JavaDocAnalyzerTest {
         assertThat(examples.get(1).getFragmentName()).isEqualTo("primary-button");
         assertThat(examples.get(1).getArguments()).contains("'Cancel'", "'secondary'");
     }
+
+    @Test
+    @DisplayName("@exampleタグでth:blockと引数なしフラグメントを解析できる")
+    void shouldParseThBlockAndNoArgumentExamples() {
+        // Given
+        String htmlContent = """
+            <!--
+            /**
+             * Examples using Thymeleaf block and no-argument fragment syntax
+             * @example <th:block th:replace="~{components/status :: statusBadge(label='Ready')}"></th:block>
+             * @example <div th:replace="~{components/header :: responsiveHeader}"></div>
+             */
+            -->
+            <div th:fragment="responsiveHeader">Header</div>
+            """;
+
+        // When
+        List<JavaDocAnalyzer.JavaDocInfo> result = analyzer.analyzeJavaDocFromHtml(htmlContent);
+
+        // Then
+        assertThat(result).hasSize(1);
+
+        List<JavaDocAnalyzer.ExampleInfo> examples = result.get(0).getExamples();
+        assertThat(examples).hasSize(2);
+
+        assertThat(examples.get(0).getTemplatePath()).isEqualTo("components/status");
+        assertThat(examples.get(0).getFragmentName()).isEqualTo("statusBadge");
+        assertThat(examples.get(0).getArguments()).containsExactly("label='Ready'");
+
+        assertThat(examples.get(1).getTemplatePath()).isEqualTo("components/header");
+        assertThat(examples.get(1).getFragmentName()).isEqualTo("responsiveHeader");
+        assertThat(examples.get(1).getArguments()).isEmpty();
+    }
 }

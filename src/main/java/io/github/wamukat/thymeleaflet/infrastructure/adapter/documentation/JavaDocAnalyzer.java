@@ -38,7 +38,7 @@ public class JavaDocAnalyzer {
     );
     
     private static final Pattern EXAMPLE_PATTERN = Pattern.compile(
-        "@example\\s+.*?<(div|span)[^>]*th:replace=\"~\\{([^}]+?)\\s*::\\s*([^\\(\\}]+?)\\(([^)]*)\\)\\}\"[^>]*></(div|span)>",
+        "@example\\s+.*?<(?:div|span|th:block)[^>]*th:replace=\"~\\{([^}]+?)\\s*::\\s*([^\\(\\}]+?)\\s*(?:\\(([^)]*)\\))?\\s*\\}\"[^>]*></(?:div|span|th:block)>",
         Pattern.MULTILINE | Pattern.DOTALL
     );
     
@@ -175,9 +175,9 @@ public class JavaDocAnalyzer {
         
         Matcher exampleMatcher = EXAMPLE_PATTERN.matcher(javadocContent);
         while (exampleMatcher.find()) {
-            String templatePath = exampleMatcher.group(2).trim();
-            String fragmentName = exampleMatcher.group(3).trim();
-            String argumentsStr = exampleMatcher.group(4);
+            String templatePath = exampleMatcher.group(1).trim();
+            String fragmentName = exampleMatcher.group(2).trim();
+            String argumentsStr = Optional.ofNullable(exampleMatcher.group(3)).orElse("");
             
             List<String> arguments = parseArguments(argumentsStr);
             examples.add(ExampleInfo.of(templatePath, fragmentName, arguments));
