@@ -5,6 +5,7 @@ import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParame
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
+import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.PreviewWarningRecorder;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
@@ -55,6 +56,10 @@ public class FragmentRenderingService {
 
     private final FragmentModelInferenceService fragmentModelInferenceService;
 
+    private final JavaDocLookupService javaDocLookupService;
+
+    private final StoryJavaTimeValueCoercionService storyJavaTimeValueCoercionService;
+
     public FragmentRenderingService(
         ValidationUseCase validationUseCase,
         StoryRetrievalUseCase storyRetrievalUseCase,
@@ -63,7 +68,9 @@ public class FragmentRenderingService {
         ThymeleafFragmentRenderer thymeleafFragmentRenderer,
         MessageSource messageSource,
         ResourceLoader resourceLoader,
-        FragmentModelInferenceService fragmentModelInferenceService
+        FragmentModelInferenceService fragmentModelInferenceService,
+        JavaDocLookupService javaDocLookupService,
+        StoryJavaTimeValueCoercionService storyJavaTimeValueCoercionService
     ) {
         this.validationUseCase = validationUseCase;
         this.storyRetrievalUseCase = storyRetrievalUseCase;
@@ -73,6 +80,8 @@ public class FragmentRenderingService {
         this.messageSource = messageSource;
         this.resourceLoader = resourceLoader;
         this.fragmentModelInferenceService = fragmentModelInferenceService;
+        this.javaDocLookupService = javaDocLookupService;
+        this.storyJavaTimeValueCoercionService = storyJavaTimeValueCoercionService;
     }
 
     /**
@@ -130,6 +139,9 @@ public class FragmentRenderingService {
             logger.debug("Has Story Config: {}", storyInfo.hasStoryConfig());
             logger.debug("Fragment Type: {}", storyInfo.getFragmentSummary().getType());
 
+            Optional<JavaDocAnalyzer.JavaDocInfo> javaDocInfo =
+                javaDocLookupService.findJavaDocInfo(fullTemplatePath, fragmentName);
+
             Map<String, Object> storyModel = storyInfo.getModel();
             if (storyModel.isEmpty()) {
                 storyModel = fragmentModelInferenceService.inferModel(
@@ -174,6 +186,13 @@ public class FragmentRenderingService {
                 logger.debug("Applied methodReturns values: {}", mergedMethodReturns.keySet());
             }
 
+            if (javaDocInfo.isPresent()) {
+                mergedModel = storyJavaTimeValueCoercionService.coerceModel(
+                    mergedModel,
+                    javaDocInfo.orElseThrow()
+                );
+            }
+
             if (!mergedModel.isEmpty()) {
                 for (Map.Entry<String, Object> entry : mergedModel.entrySet()) {
                     model.addAttribute(entry.getKey(), thymeleafFragmentRenderer.resolveTemplateValue(entry.getValue()));
@@ -208,6 +227,12 @@ public class FragmentRenderingService {
             Map<String, Object> mergedParameters = new HashMap<>(parameters);
             if (!parameterOverrides.isEmpty()) {
                 mergedParameters.putAll(parameterOverrides);
+            }
+            if (javaDocInfo.isPresent()) {
+                mergedParameters = storyJavaTimeValueCoercionService.coerceParameters(
+                    mergedParameters,
+                    javaDocInfo.orElseThrow()
+                );
             }
 
             Optional<String> unsafeParameter = findUnsafeFragmentInsertionParameter(

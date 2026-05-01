@@ -88,6 +88,50 @@ stories:
 - `model` and `parameters` can be combined in the same story.
 - If a model key is missing, Thymeleaf expressions may evaluate to `null`.
 
+## Java Time Values
+
+Story YAML values are parsed as YAML scalars first. When JavaDoc declares a
+`java.time` type for a parameter or model path, Thymeleaflet converts ISO string
+values before rendering.
+
+Supported targets:
+
+- `LocalDate`
+- `LocalDateTime`
+- `LocalTime`
+- `OffsetDateTime`
+- `ZonedDateTime`
+- `Instant`
+
+Parameter example:
+
+```html
+/**
+ * @param publishedAt {@code java.time.LocalDateTime} [required] Published date
+ */
+```
+
+```yaml
+parameters:
+  publishedAt: "2026-04-01T10:00:00"
+```
+
+Nested model list example:
+
+```html
+/**
+ * @model view.items[].publishedAt {@code java.time.LocalDateTime} [required] Published date
+ */
+```
+
+```yaml
+model:
+  view:
+    items:
+      - title: Notice 1
+        publishedAt: "2024-06-01T10:00:00"
+```
+
 ## methodReturns (No-arg)
 
 Use `methodReturns` to control no-arg method calls in preview rendering.
