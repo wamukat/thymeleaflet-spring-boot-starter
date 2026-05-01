@@ -5,6 +5,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 実行時に利用する非null前提の設定オブジェクト。
@@ -41,7 +42,16 @@ public final class ResolvedStorybookConfig {
     }
 
     public static ResolvedStorybookConfig from(StorybookProperties raw) {
+        return from(raw, Optional.empty());
+    }
+
+    public static ResolvedStorybookConfig from(StorybookProperties raw, boolean cacheEnabled) {
+        return from(raw, Optional.of(cacheEnabled));
+    }
+
+    private static ResolvedStorybookConfig from(StorybookProperties raw, Optional<Boolean> cacheEnabledOverride) {
         Objects.requireNonNull(raw, "raw cannot be null");
+        Objects.requireNonNull(cacheEnabledOverride, "cacheEnabledOverride cannot be null");
         String basePath = normalizeBasePath(raw.getBasePath());
         if (!DEFAULT_BASE_PATH.equals(basePath)) {
             throw new IllegalArgumentException(
@@ -57,7 +67,8 @@ public final class ResolvedStorybookConfig {
             rawResources != null ? rawResources : new StorybookProperties.ResourceConfig()
         );
         CacheConfig cache = CacheConfig.from(
-            rawCache != null ? rawCache : new StorybookProperties.CacheConfig()
+            rawCache != null ? rawCache : new StorybookProperties.CacheConfig(),
+            cacheEnabledOverride
         );
         PreviewConfig preview = PreviewConfig.from(
             rawPreview != null ? rawPreview : new StorybookProperties.PreviewConfig()
@@ -163,8 +174,8 @@ public final class ResolvedStorybookConfig {
             this.preload = preload;
         }
 
-        private static CacheConfig from(StorybookProperties.CacheConfig source) {
-            return new CacheConfig(source.isEnabled(), source.isPreload());
+        private static CacheConfig from(StorybookProperties.CacheConfig source, Optional<Boolean> enabledOverride) {
+            return new CacheConfig(enabledOverride.orElse(source.isEnabled()), source.isPreload());
         }
 
         public boolean isEnabled() {

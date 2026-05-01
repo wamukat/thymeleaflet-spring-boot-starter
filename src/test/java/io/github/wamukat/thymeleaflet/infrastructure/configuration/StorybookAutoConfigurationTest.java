@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.mock.env.MockEnvironment;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
 
@@ -80,6 +81,29 @@ class StorybookAutoConfigurationTest {
         assertEquals(Set.of("thymeleaflet/**"), resolver.getResolvablePatterns());
         assertEquals(Integer.valueOf(0), resolver.getOrder());
         assertFalse(resolver.getCheckExistence(), "Resolver should open the classpath resource directly");
+    }
+
+    @Test
+    void resolvedStorybookConfig_shouldDisableThymeleafletCacheWhenThymeleafCacheIsDisabledByDevelopmentConfig() {
+        StorybookAutoConfiguration configuration = new StorybookAutoConfiguration();
+        MockEnvironment environment = new MockEnvironment()
+            .withProperty("spring.thymeleaf.cache", "false");
+
+        ResolvedStorybookConfig resolved = configuration.resolvedStorybookConfig(new StorybookProperties(), environment);
+
+        assertFalse(resolved.getCache().isEnabled());
+    }
+
+    @Test
+    void resolvedStorybookConfig_shouldRespectExplicitThymeleafletCacheSetting() {
+        StorybookAutoConfiguration configuration = new StorybookAutoConfiguration();
+        MockEnvironment environment = new MockEnvironment()
+            .withProperty("spring.thymeleaf.cache", "false")
+            .withProperty("thymeleaflet.cache.enabled", "true");
+
+        ResolvedStorybookConfig resolved = configuration.resolvedStorybookConfig(new StorybookProperties(), environment);
+
+        assertTrue(resolved.getCache().isEnabled());
     }
 
     @Test

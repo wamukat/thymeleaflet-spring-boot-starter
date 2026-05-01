@@ -109,6 +109,8 @@ thymeleaflet:
   so the preview matches app behavior.
   Example: `<div data-theme="light">{{content}}</div>`
 - `cache.enabled` enables in-memory caching for fragment discovery, JavaDoc parsing, and dependency analysis.
+- When `spring.thymeleaf.cache=false` and `thymeleaflet.cache.enabled` is not set, Thymeleaflet also disables its
+  internal caches so template-only edits are reflected during development.
 - `cache.preload` warms the caches at application startup (useful for low-CPU demo environments).
 - CSP is intentionally permissive to allow external JS/CSS in previews. Use only in trusted environments.
 - Preview iframes allow same-origin so cookies/localStorage and authenticated API calls work.

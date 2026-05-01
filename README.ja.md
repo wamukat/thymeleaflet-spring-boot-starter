@@ -106,6 +106,8 @@ thymeleaflet:
 - JS を使う場合は `resources.scripts` に登録し、`preview.wrapper` で必要なDOM構造を整えてください。
   - 例: `<div data-theme=\"light\">{{content}}</div>`
 - `cache.enabled` はフラグメント探索・JavaDoc解析・依存解析のメモリキャッシュを有効化します。
+- `spring.thymeleaf.cache=false` かつ `thymeleaflet.cache.enabled` が未指定の場合、開発中のテンプレート変更が
+  反映されるよう Thymeleaflet の内部キャッシュも自動的に無効化します。
 - `cache.preload` は起動時にキャッシュをウォームアップします（低CPU環境向け）。
 - CSP はプレビューで外部 JS/CSS を使えるよう意図的に緩めています。信頼できる環境でのみ利用してください。
 - プレビュー iframe は same-origin を許可しているため、Cookie / localStorage / 認証付きAPIが動作します。
