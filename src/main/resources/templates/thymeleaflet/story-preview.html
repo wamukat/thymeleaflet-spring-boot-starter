@@ -114,12 +114,7 @@
                                 </div>
                             </div>
                             <div th:if="${storyConfigurationDiagnostic != null}"
-                                 class="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-900">
-                                <div class="font-semibold" th:text="${storyConfigurationDiagnostic.code}">STORY_YAML_LOAD_FAILED</div>
-                                <div th:text="${storyConfigurationDiagnostic.userSafeMessage}">
-                                    Story YAML was found but could not be loaded.
-                                </div>
-                            </div>
+                                 th:replace="~{thymeleaflet/fragments/story-configuration-diagnostic :: alert(${storyConfigurationDiagnostic})}"></div>
                         </div>
                     </div>
                 </div>
