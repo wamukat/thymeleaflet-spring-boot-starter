@@ -1,0 +1,5 @@
+storyGroups:
+  shell:
+    stories:
+      - name: default
+        title: Default

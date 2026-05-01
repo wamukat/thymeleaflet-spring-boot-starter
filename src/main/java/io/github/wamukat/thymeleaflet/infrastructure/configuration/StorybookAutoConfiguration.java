@@ -13,6 +13,7 @@ import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.domain.service.StoryDataRepository;
 import io.github.wamukat.thymeleaflet.domain.service.StoryParameterDomainService;
 import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
+import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.NoArgFragmentReferencePreProcessorDialect;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafletAwareThymeleafView;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
@@ -39,6 +40,7 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import org.springframework.web.servlet.i18n.CookieLocaleResolver;
 import org.springframework.web.servlet.i18n.LocaleChangeInterceptor;
+import org.thymeleaf.dialect.IDialect;
 import org.thymeleaf.spring6.view.ThymeleafViewResolver;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import org.thymeleaf.templateresolver.ITemplateResolver;
@@ -125,6 +127,12 @@ public class StorybookAutoConfiguration {
         resolver.setOrder(0);
         resolver.setCheckExistence(false);
         return resolver;
+    }
+
+    @Bean
+    @ConditionalOnMissingBean(name = "thymeleafletNoArgFragmentReferenceDialect")
+    public IDialect thymeleafletNoArgFragmentReferenceDialect() {
+        return new NoArgFragmentReferencePreProcessorDialect();
     }
 
     /**
