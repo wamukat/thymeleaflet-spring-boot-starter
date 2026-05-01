@@ -205,6 +205,7 @@ npm run test:e2e
 - [docs/javadoc.ja.md](docs/javadoc.ja.md)
 - [docs/stories.ja.md](docs/stories.ja.md)
 - [docs/security.ja.md](docs/security.ja.md)
+- [docs/template-parsing.ja.md](docs/template-parsing.ja.md)
 - [docs/parser-spec.ja.md](docs/parser-spec.ja.md)
 - [docs/parser-model.ja.md](docs/parser-model.ja.md)
 

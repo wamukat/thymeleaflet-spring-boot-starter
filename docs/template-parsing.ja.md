@@ -1,0 +1,132 @@
+# テンプレート解析アーキテクチャ
+
+この文書は、Thymeleaflet がプレビュー描画、モデル推論、JavaDoc example のためにテンプレートをどう解析するかを説明します。ここでは実装済みの実行時挙動を扱い、[parser-spec.ja.md](parser-spec.ja.md) と [parser-model.ja.md](parser-model.ja.md) はフラグメント宣言解析の目標仕様と出力モデルを扱います。
+
+## レイヤ
+
+テンプレート解析は、小さなレイヤに分けて実装しています。
+
+1. `StructuredTemplateParser`
+   - Attoparser を Thymeleaf 互換の HTML 設定で使います。
+   - 要素、属性、テキストノード、コメントを位置情報付きで抽出します。
+   - quote 付きの `>`、複数行属性、コメント、`data-th-*` 属性を安定して扱うため、テンプレートレベルの抽出を正規表現に寄せません。
+2. `TemplateModelExpressionAnalyzer`
+   - `StructuredTemplateParser` から得た属性とテキストノードを読みます。
+   - テンプレート内容から `${...}` 式を集めます。
+   - モデルパス、loop alias、`th:with` local alias、参照先子テンプレート、引数なしメソッドパスを推論します。
+3. Thymeleaf expression tokenizer
+   - 識別子、文字列、dot、safe-navigation dot、括弧、bracket、utility prefix、operator を token 化します。
+   - プレビューのモデル推論に必要な式のサブセットからモデルパスを抽出します。
+   - `#temporals` などの utility 名、`T(java.time.LocalDate)` などの static class 参照、パラメータ、local alias、Thymeleaf の予約語はモデルパスにしません。
+   - `view.map[key]` のような未対応 bracket 式は fail closed にします。安定した prefix は残しますが、dynamic key はモデルパスとして推論しません。
+4. `JavaDocAnalyzer`
+   - HTML コメント内の JavaDoc 形式から `@param`、`@model`、`@fragment`、`@example`、`@background` を解析します。
+   - `@example` markup には `StructuredTemplateParser` を使い、`th:replace` と `data-th-replace` の例をテンプレート本体と同じ属性解析ルールで扱います。
+
+## サポートするテンプレート構文
+
+モデル推論レイヤは、以下の属性で `th:*` と `data-th-*` の両方をサポートします。
+
+### `th:each`
+
+`th:each` は loop alias を iterable のモデルパスへ紐づけます。iterable 式の最初の推論パスが各 alias の source path になります。
+
+```html
+<article th:each="item : ${view.items}">
+  <span th:text="${item.label}"></span>
+</article>
+```
+
+この例では `item -> view.items` を記録し、`item.label` を後続の推論対象として保持します。
+
+各 alias が識別子であれば、tuple 形式も受け付けます。
+
+```html
+<div th:each="(label, value) : ${view.options}"></div>
+```
+
+### `th:with`
+
+`th:with` の local variable 名は required model path から除外されます。
+
+```html
+<section th:with="current=${view.currentUser}">
+  <span th:if="${current.active()}"></span>
+</section>
+```
+
+代入式から `view.currentUser` は推論されますが、`current` は local alias として扱われます。
+
+### `th:replace` / `th:insert`
+
+literal fragment expression は、参照先子テンプレートパスの推論に使われます。
+
+```html
+<th:block th:replace="~{components/card :: card(title=${view.title})}"></th:block>
+<th:block th:insert="~{'components/list' :: list(items=${view.items})}"></th:block>
+```
+
+`${body}` のような expression-based reference は、静的に参照先を確定できないため dependency inference では無視します。
+
+fragment call が空引数、または全引数が literal の場合は、子モデルの再帰推論をスキップします。
+
+```html
+<div th:replace="~{components/topbar :: topbar()}"></div>
+<div th:replace="~{components/badge :: badge(label='Ready')}"></div>
+```
+
+引数のどれかが model expression に依存する場合、その子テンプレートは再帰推論対象のままにします。
+
+## サポートする式のサブセット
+
+モデルパス推論は意図的に保守的です。次のような例をサポートします。
+
+```html
+<span th:text="${view.profile.name}"></span>
+<time th:text="${#temporals.format(item.publishedAt, 'yyyy-MM-dd')}"></time>
+<span th:if="${T(java.time.LocalDate).now().isAfter(view.cutoffDate)}"></span>
+<span th:text="${view['display-name']}"></span>
+```
+
+推論されるパスは `view.profile.name`、`item.publishedAt`、`view.cutoffDate`、`view.display-name` です。
+
+Analyzer は Thymeleaf や Spring EL を完全評価しません。未対応構文は、推測で壊れたパスを作らず、無視するか安定した prefix に縮退します。
+
+## JavaDoc `@model`
+
+`@model` は story や preview が必要とする model value を記述します。ネストした list path を含む型考慮の story value coercion にも使われます。
+
+```html
+<!--
+/**
+ * Member card.
+ *
+ * @model view.member.name {@code String} [required] Member name
+ * @model view.items[].publishedAt {@code java.time.LocalDateTime} [required] Published date
+ * @example <div th:replace="~{components/member-card :: card()}"></div>
+ */
+-->
+<article th:fragment="card">
+  <h2 th:text="${view.member.name}"></h2>
+</article>
+```
+
+list 内の値を記述する場合は `@model` path に `[]` を使います。story data が default の `view` root 配下にある場合、literal path が存在しなければ relative list path も coercion 時に照合されます。
+
+## 回帰テスト追加ガイド
+
+テンプレート属性、JavaDoc example、モデル推論、子 fragment 参照に関わる不具合では parser regression を追加してください。
+
+- 挙動の責務を持つ parser/analyzer の近くに focused unit test を追加します。
+- HTML fixture として保持すべき挙動は `src/test/resources/templates/regression/parser-corpus.html` を追加または更新します。
+- preview rendering に影響する場合は `src/test/resources/META-INF/thymeleaflet/stories/regression/` に story を追加します。
+- rendering regression は `ThymeleafletRenderingExceptionHandlerIntegrationTest` に integration test を追加します。
+- focused test、full Maven test、E2E の順で実行します。
+
+```bash
+./mvnw -q -Dtest=TemplateModelExpressionAnalyzerTest,StructuredTemplateParserTest,JavaDocAnalyzerTest test
+./mvnw test -q
+./mvnw -DskipTests install -q && npm run test:e2e:local
+```
+
+構文サポートを追加する場合は、広い E2E assertion より parser-owned test を優先してください。E2E はユーザー向け preview が描画できることを確認し、unit/integration test で解析契約を定義します。

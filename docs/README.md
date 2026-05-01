@@ -16,5 +16,6 @@ Use this guide when integrating Thymeleaf fragments into a Storybook-style workf
 - [stories.md](stories.md) — story file format, preview wrapper, URL behavior
 - [javadoc.md](javadoc.md) — JavaDoc-style annotations in HTML templates
 - [security.md](security.md) — security defaults and production guidance
+- [template-parsing.md](template-parsing.md) — template parsing layers, supported syntax, and regression guidance
 - [parser-spec.md](parser-spec.md) — fragment parser support matrix and rules
 - [parser-model.md](parser-model.md) — parser output model and merge strategy
