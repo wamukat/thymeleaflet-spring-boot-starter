@@ -17,6 +17,8 @@ thymeleaflet:
 ```
 
 この設定で `/thymeleaflet/**` のみを許可する最小チェーンを登録します。
+ローカル開発または信頼できる内部環境向けの quick start として扱ってください。
+`prod` または `production` profile で `auto-permit=true` が有効な場合、起動時に WARN を出します。
 
 ### Option B: 利用側で明示設定
 
@@ -40,6 +42,12 @@ http.authorizeHttpRequests(auth -> auth
 - 企業内・限定 IP での運用を想定
 
 本番では自動設定を除外する方法がシンプルです:
+
+```yaml
+# application-prod.yml
+thymeleaflet:
+  enabled: false
+```
 
 ```yaml
 # application-prod.yml

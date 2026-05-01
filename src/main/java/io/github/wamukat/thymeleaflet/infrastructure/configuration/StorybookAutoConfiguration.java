@@ -16,6 +16,7 @@ import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnal
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafletAwareThymeleafView;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -53,6 +54,7 @@ import org.thymeleaf.templateresolver.ITemplateResolver;
     "org.springframework.boot.webmvc.autoconfigure.WebMvcAutoConfiguration"
 })
 @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+@ConditionalOnProperty(name = "thymeleaflet.enabled", havingValue = "true", matchIfMissing = true)
 @ComponentScan(basePackages = "io.github.wamukat.thymeleaflet")
 @EnableConfigurationProperties(StorybookProperties.class)
 public class StorybookAutoConfiguration {

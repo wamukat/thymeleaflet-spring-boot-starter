@@ -17,6 +17,9 @@ thymeleaflet:
 ```
 
 This registers a minimal chain for `/thymeleaflet/**` only.
+Use this only for local development or trusted internal environments. If a
+`prod` or `production` profile is active, Thymeleaflet logs a warning when
+`auto-permit=true` is enabled.
 
 ### Option B: App-side explicit rule
 
@@ -39,6 +42,12 @@ http.authorizeHttpRequests(auth -> auth
 - Restrict `/thymeleaflet/**` in production as needed.
 - Use reverse proxy or IP restrictions for internal environments.
 - Disable Thymeleaflet in production when not needed.
+
+```yaml
+# application-prod.yml
+thymeleaflet:
+  enabled: false
+```
 
 ```yaml
 # application-prod.yml

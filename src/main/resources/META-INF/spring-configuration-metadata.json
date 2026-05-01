@@ -10,7 +10,7 @@
     {
       "name": "thymeleaflet.enabled",
       "type": "java.lang.Boolean",
-      "description": "Enable or disable Thymeleaflet feature",
+      "description": "Enable or disable Thymeleaflet. Set false in production profiles to prevent exposing the development UI.",
       "defaultValue": true
     },
     {
@@ -45,7 +45,7 @@
     {
       "name": "thymeleaflet.security.auto-permit",
       "type": "java.lang.Boolean",
-      "description": "When true, registers a minimal SecurityFilterChain to permit /thymeleaflet/**",
+      "description": "When true, registers a minimal SecurityFilterChain to permit /thymeleaflet/**. Intended for development quick starts; avoid in production.",
       "defaultValue": false
     }
   ]

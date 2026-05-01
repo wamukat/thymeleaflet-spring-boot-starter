@@ -8,6 +8,7 @@ This page covers *only* configuration. Usage details are in
 
 | Property | Type | Default | Description |
 |---|---|---|---|
+| `thymeleaflet.enabled` | boolean | `true` | Enables the Thymeleaflet auto-configuration. Set `false` in production profiles to prevent exposing the development UI |
 | `thymeleaflet.base-path` | String | `/thymeleaflet` | Base URL for the UI |
 | `thymeleaflet.debug` | boolean | `false` | Enables debug logging for fragment discovery |
 
@@ -57,7 +58,12 @@ parsing, type extraction, and dependency analysis reread source resources instea
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `thymeleaflet.security.auto-permit` | boolean | `false` | Opt-in: register minimal permit rule for `/thymeleaflet/**` when Spring Security is present |
+| `thymeleaflet.security.auto-permit` | boolean | `false` | Opt-in: register minimal permit rule for `/thymeleaflet/**` when Spring Security is present. Use only for development quick starts |
+
+When a `prod` or `production` profile is active, Thymeleaflet logs a warning if
+the UI is still enabled. It logs an additional warning when
+`thymeleaflet.security.auto-permit=true` is also active because that setting
+permits the UI path.
 
 ### CSP note (permissive by design)
 
@@ -90,7 +96,14 @@ http.authorizeHttpRequests(auth -> auth
 ## Enable/Disable by Environment
 
 Thymeleaflet is intended for development use. In production, disable it by
-excluding the auto-configuration (or remove the dependency from prod builds).
+setting `thymeleaflet.enabled=false`, excluding the auto-configuration, or
+removing the dependency from prod builds.
+
+```yaml
+# application-prod.yml
+thymeleaflet:
+  enabled: false
+```
 
 ```yaml
 # application-prod.yml

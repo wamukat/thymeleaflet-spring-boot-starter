@@ -91,12 +91,22 @@ thymeleaflet:
   base-path: /thymeleaflet
 
 # application-prod.yml
+thymeleaflet:
+  enabled: false
+```
+
+auto-configuration を除外する方法も使えます:
+
+```yaml
+# application-prod.yml
 spring:
   autoconfigure:
     exclude: io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookAutoConfiguration
 ```
 
 本番ビルドから依存関係を外す運用でも問題ありません。
+`prod` または `production` profile で Thymeleaflet が有効な場合、起動時に WARN を出します。
+`thymeleaflet.security.auto-permit=true` の場合は UI パスを許可するため、追加の WARN を出します。
 
 Spring Security を使う場合は、次のいずれかを選択してください。
 
