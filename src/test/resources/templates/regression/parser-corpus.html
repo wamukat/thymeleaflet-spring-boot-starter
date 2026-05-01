@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+ /**
+  * Parser regression corpus for Thymeleaf attribute extraction.
+  * @fragment dataThList
+  * @model view.items[].label {@code String} [required] Item labels
+  */
+-->
+<section th:fragment="dataThList">
+  <ul>
+    <li data-th-each="item : ${view.items}" data-th-text="${item.label}">Item</li>
+  </ul>
+</section>
+
+<!--
+ /**
+  * Parser regression corpus for quoted fragment selectors.
+  * @fragment quotedSelectorShell
+  * @model view.label {@code String} [required] Label
+  */
+-->
+<section th:fragment="quotedSelectorShell">
+  <th:block th:replace="~{'regression/parser-corpus' :: quotedTarget(label=${view.label})}"></th:block>
+</section>
+
+<span th:fragment="quotedTarget(label)" th:text="${label}">Label</span>
+</body>
+</html>

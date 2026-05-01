@@ -57,6 +57,49 @@ class TemplateModelExpressionAnalyzerTest {
     }
 
     @Test
+    void shouldExtractQuotedStaticReferencedTemplatePaths() {
+        String html = """
+            <div>
+              <th:block th:replace="~{'fragments/quoted-panel' :: panel(label=${ctaLabel})}"></th:block>
+              <th:block th:insert='~{"components/double-quoted" :: content}'></th:block>
+            </div>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.referencedTemplatePaths())
+            .contains("fragments/quoted-panel", "components/double-quoted");
+        assertThat(snapshot.referencedTemplatePathsWithRecursionFlags())
+            .containsEntry("fragments/quoted-panel", true)
+            .containsEntry("components/double-quoted", true);
+    }
+
+    @Test
+    void shouldExtractModelPathsAndReferencesFromDataThAttributes() {
+        String html = """
+            <section data-th-with="localText='hello'">
+              <article data-th-each="item : ${view.items}">
+                <span data-th-text="${item.label}">Label</span>
+              </article>
+              <th:block data-th-replace="~{components/data-card :: card(label=${view.title})}"></th:block>
+              <th:block data-th-insert='~{"components/static-card" :: card}'></th:block>
+              <span data-th-text="${localText}">Local</span>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "items")))
+            .contains(ModelPath.of(List.of("item", "label")))
+            .contains(ModelPath.of(List.of("view", "title")))
+            .doesNotContain(ModelPath.of(List.of("localText")));
+        assertThat(snapshot.loopVariablePaths()).containsEntry("item", ModelPath.of(List.of("view", "items")));
+        assertThat(snapshot.referencedTemplatePaths())
+            .contains("components/data-card", "components/static-card");
+    }
+
+    @Test
     void shouldExtractNoArgMethodCallsSeparatelyFromModelPaths() {
         String html = """
             <section>

@@ -22,13 +22,14 @@ public class TemplateModelExpressionAnalyzer {
 
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("\\$\\{([^}]*)}");
     private static final Pattern TH_WITH_PATTERN = Pattern.compile(
-        "th:with\\s*=\\s*\"([^\"]*)\"|th:with\\s*=\\s*'([^']*)'"
+        "(?:th:with|data-th-with)\\s*=\\s*\"([^\"]*)\"|(?:th:with|data-th-with)\\s*=\\s*'([^']*)'"
     );
     private static final Pattern TH_EACH_PATTERN = Pattern.compile(
-        "th:each\\s*=\\s*\"([^\"]*)\"|th:each\\s*=\\s*'([^']*)'"
+        "(?:th:each|data-th-each)\\s*=\\s*\"([^\"]*)\"|(?:th:each|data-th-each)\\s*=\\s*'([^']*)'"
     );
     private static final Pattern TH_REPLACE_OR_INSERT_PATTERN = Pattern.compile(
-        "th:(?:replace|insert)\\s*=\\s*\"([^\"]*)\"|th:(?:replace|insert)\\s*=\\s*'([^']*)'"
+        "(?:th:(?:replace|insert)|data-th-(?:replace|insert))\\s*=\\s*\"([^\"]*)\""
+            + "|(?:th:(?:replace|insert)|data-th-(?:replace|insert))\\s*=\\s*'([^']*)'"
     );
     private static final Set<String> RESERVED_ROOTS = Set.of(
         "true", "false", "null",
