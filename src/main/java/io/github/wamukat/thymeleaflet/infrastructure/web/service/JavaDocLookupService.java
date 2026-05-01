@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -34,17 +35,29 @@ public class JavaDocLookupService implements JavaDocLookupPort {
 
         try {
             return javadocInfos.stream()
-                .filter(doc -> {
-                    boolean matchesDescription = doc.getDescription().toLowerCase().contains(fragmentName.toLowerCase());
-                    boolean matchesExample = doc.getExamples().stream()
-                        .anyMatch(ex -> ex.getFragmentName().equals(fragmentName));
-                    return matchesDescription || matchesExample;
-                })
+                .filter(doc -> matchesFragmentTag(doc, fragmentName)
+                    || matchesExample(doc, fragmentName)
+                    || matchesDescription(doc, fragmentName))
                 .findFirst();
         } catch (Exception e) {
             logger.warn("Failed to read JavaDoc info for {}::{}: {}", templatePath, fragmentName, e.getMessage());
             return Optional.empty();
         }
+    }
+
+    private boolean matchesFragmentTag(JavaDocAnalyzer.JavaDocInfo doc, String fragmentName) {
+        return doc.getFragmentNameOptional()
+            .filter(fragmentName::equals)
+            .isPresent();
+    }
+
+    private boolean matchesExample(JavaDocAnalyzer.JavaDocInfo doc, String fragmentName) {
+        return doc.getExamples().stream()
+            .anyMatch(ex -> ex.getFragmentName().equals(fragmentName));
+    }
+
+    private boolean matchesDescription(JavaDocAnalyzer.JavaDocInfo doc, String fragmentName) {
+        return doc.getDescription().toLowerCase(Locale.ROOT).contains(fragmentName.toLowerCase(Locale.ROOT));
     }
 
     @Override
