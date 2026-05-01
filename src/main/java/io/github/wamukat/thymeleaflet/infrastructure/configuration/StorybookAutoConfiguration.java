@@ -172,16 +172,20 @@ public class StorybookAutoConfiguration {
         String cssPath = basePath + "/css/**";
         String jsPath = basePath + "/js/**";
         String imagePath = basePath + "/images/**";
+        int cachePeriod = resolvedStorybookConfig.getResources().getCacheDurationSeconds();
         return new WebMvcConfigurer() {
             @Override
             public void addResourceHandlers(ResourceHandlerRegistry registry) {
                 // 静的リソース専用パスを限定（コントローラーマッピングと競合を避ける）
                 registry.addResourceHandler(cssPath)
-                        .addResourceLocations("classpath:/META-INF/resources/static/css/");
+                        .addResourceLocations("classpath:/META-INF/resources/static/css/")
+                        .setCachePeriod(cachePeriod);
                 registry.addResourceHandler(jsPath)
-                        .addResourceLocations("classpath:/META-INF/resources/static/js/");
+                        .addResourceLocations("classpath:/META-INF/resources/static/js/")
+                        .setCachePeriod(cachePeriod);
                 registry.addResourceHandler(imagePath)
-                        .addResourceLocations("classpath:/META-INF/resources/static/images/");
+                        .addResourceLocations("classpath:/META-INF/resources/static/images/")
+                        .setCachePeriod(cachePeriod);
                         
                 // CSS専用ハンドラー（fallback）（キャッシュなし）
                 registry.addResourceHandler("/css/thymeleaflet.css")

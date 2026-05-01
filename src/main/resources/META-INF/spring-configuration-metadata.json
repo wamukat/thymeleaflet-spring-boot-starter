@@ -26,6 +26,44 @@
       "defaultValue": false
     },
     {
+      "name": "thymeleaflet.resources.template-paths",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Classpath template roots scanned for application fragments. Keep this to trusted application template locations.",
+      "defaultValue": [
+        "/templates/"
+      ]
+    },
+    {
+      "name": "thymeleaflet.resources.stylesheets",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Stylesheet URLs injected into preview iframes so rendered fragments match the host application.",
+      "defaultValue": []
+    },
+    {
+      "name": "thymeleaflet.resources.scripts",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Script URLs injected into preview iframes for interactive fragment previews.",
+      "defaultValue": []
+    },
+    {
+      "name": "thymeleaflet.resources.cache-duration-seconds",
+      "type": "java.lang.Integer",
+      "description": "Cache duration in seconds for static Thymeleaflet resources.",
+      "defaultValue": 3600
+    },
+    {
+      "name": "thymeleaflet.cache.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Enable Thymeleaflet in-memory caches for fragment discovery, JavaDoc parsing, type extraction, and dependency analysis.",
+      "defaultValue": true
+    },
+    {
+      "name": "thymeleaflet.cache.preload",
+      "type": "java.lang.Boolean",
+      "description": "Warm Thymeleaflet caches at startup when caching is enabled.",
+      "defaultValue": false
+    },
+    {
       "name": "thymeleaflet.preview.background-light",
       "type": "java.lang.String",
       "description": "Light background color for the preview canvas",
@@ -41,6 +79,31 @@
       "name": "thymeleaflet.preview.viewports",
       "type": "java.util.List",
       "description": "Viewport presets (name + width + height), excluding Fit"
+    },
+    {
+      "name": "thymeleaflet.preview.viewports[].id",
+      "type": "java.lang.String",
+      "description": "Stable viewport preset identifier used by the preview control."
+    },
+    {
+      "name": "thymeleaflet.preview.viewports[].label",
+      "type": "java.lang.String",
+      "description": "Human-readable viewport preset label shown in the preview control."
+    },
+    {
+      "name": "thymeleaflet.preview.viewports[].label-key",
+      "type": "java.lang.String",
+      "description": "Message key for localized viewport preset labels."
+    },
+    {
+      "name": "thymeleaflet.preview.viewports[].width",
+      "type": "java.lang.Integer",
+      "description": "Viewport preset width in pixels."
+    },
+    {
+      "name": "thymeleaflet.preview.viewports[].height",
+      "type": "java.lang.Integer",
+      "description": "Viewport preset height in pixels."
     },
     {
       "name": "thymeleaflet.security.auto-permit",
