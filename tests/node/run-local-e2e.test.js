@@ -2,9 +2,15 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 
 const {
+  resolveE2EScript,
   shouldForwardSampleOutput,
   isSuccessfulSampleStop,
 } = require('../../scripts/run-local-e2e');
+
+test('resolveE2EScript defaults to full local E2E script', () => {
+  assert.equal(resolveE2EScript({}), 'test:e2e');
+  assert.equal(resolveE2EScript({ THYMELEAFLET_E2E_SCRIPT: 'test:e2e:ci' }), 'test:e2e:ci');
+});
 
 test('shouldForwardSampleOutput suppresses sample output after expected shutdown starts', () => {
   assert.equal(shouldForwardSampleOutput(false), true);

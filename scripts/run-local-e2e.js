@@ -35,7 +35,7 @@ async function main() {
   });
 
   await waitForSample(healthUrl, 90_000);
-  await runCommand(npmCommand, ['run', 'test:e2e']);
+  await runCommand(npmCommand, ['run', resolveE2EScript(process.env)]);
   console.log('\nLocal E2E completed successfully. Stopping sample app...');
 }
 
@@ -99,6 +99,10 @@ function shouldForwardSampleOutput(isStopping) {
   return !isStopping;
 }
 
+function resolveE2EScript(env) {
+  return env.THYMELEAFLET_E2E_SCRIPT || 'test:e2e';
+}
+
 function isSuccessfulSampleStop({ stopping: isStopping, shutdownMethod: method, code, signal }) {
   if (!isStopping) {
     return false;
@@ -149,5 +153,6 @@ if (require.main === module) {
 
 module.exports = {
   isSuccessfulSampleStop,
+  resolveE2EScript,
   shouldForwardSampleOutput,
 };

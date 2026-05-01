@@ -57,4 +57,6 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Run local E2E helper
+        env:
+          THYMELEAFLET_E2E_SCRIPT: test:e2e:ci
         run: npm run test:e2e:local

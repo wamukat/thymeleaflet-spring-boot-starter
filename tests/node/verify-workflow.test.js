@@ -19,6 +19,7 @@ test('verify workflow uses repository build toolchain versions', () => {
 test('verify workflow runs Maven tests and local E2E helper', () => {
   assert.match(workflow, /run:\s*\.\/mvnw test -q/);
   assert.match(workflow, /run:\s*npm run test:workflow/);
+  assert.match(workflow, /THYMELEAFLET_E2E_SCRIPT:\s*test:e2e:ci/);
   assert.match(workflow, /run:\s*npm run test:e2e:local/);
 });
 
