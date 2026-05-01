@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.service.story;
 
 import io.github.wamukat.thymeleaflet.application.port.outbound.StoryDataPort;
+import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase.StoryConfigurationDiagnostic;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfiguration;
@@ -107,5 +108,36 @@ class StoryRetrievalUseCaseImplTest {
 
         assertThat(stories).extracting(FragmentStoryInfo::getStoryName)
             .containsExactly("default", "custom");
+    }
+
+    @Test
+    void shouldMapStoryConfigurationDiagnosticFromStoryDataPort() {
+        StoryDataPort.StoryConfigurationDiagnostic outboundDiagnostic =
+            new StoryDataPort.StoryConfigurationDiagnostic(
+                "STORY_YAML_LOAD_FAILED",
+                "Story configuration could not be loaded or parsed.",
+                "Failed to parse classpath:META-INF/thymeleaflet/stories/components/profile.stories.yml"
+            );
+        when(storyDataPort.getStoryConfigurationDiagnostic("components/profile"))
+            .thenReturn(Optional.of(outboundDiagnostic));
+
+        Optional<StoryConfigurationDiagnostic> diagnostic = useCase.getStoryConfigurationDiagnostic("components/profile");
+
+        assertThat(diagnostic).hasValueSatisfying(mappedDiagnostic -> {
+            assertThat(mappedDiagnostic.code()).isEqualTo("STORY_YAML_LOAD_FAILED");
+            assertThat(mappedDiagnostic.userSafeMessage())
+                .isEqualTo("Story configuration could not be loaded or parsed.");
+            assertThat(mappedDiagnostic.developerMessage())
+                .isEqualTo("Failed to parse classpath:META-INF/thymeleaflet/stories/components/profile.stories.yml");
+        });
+    }
+
+    @Test
+    void shouldReturnEmptyStoryConfigurationDiagnosticWhenStoryDataPortHasNoDiagnostic() {
+        when(storyDataPort.getStoryConfigurationDiagnostic("components/profile")).thenReturn(Optional.empty());
+
+        Optional<StoryConfigurationDiagnostic> diagnostic = useCase.getStoryConfigurationDiagnostic("components/profile");
+
+        assertThat(diagnostic).isEmpty();
     }
 }
