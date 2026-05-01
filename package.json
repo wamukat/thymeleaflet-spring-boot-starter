@@ -12,6 +12,7 @@
     "verify:starter": "./mvnw -DskipTests install",
     "sample:start": "cd sample && ../mvnw spring-boot:run -DskipTests",
     "test:e2e": "playwright test",
+    "test:e2e:local:unit": "node --test tests/node/run-local-e2e.test.js",
     "test:e2e:local": "node scripts/run-local-e2e.js"
   },
   "devDependencies": {
