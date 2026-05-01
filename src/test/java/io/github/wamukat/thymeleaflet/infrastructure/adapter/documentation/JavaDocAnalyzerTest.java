@@ -360,4 +360,31 @@ class JavaDocAnalyzerTest {
         assertThat(examples.get(1).getFragmentName()).isEqualTo("responsiveHeader");
         assertThat(examples.get(1).getArguments()).isEmpty();
     }
+
+    @Test
+    @DisplayName("@exampleタグでdata-th-replaceと属性内の>を解析できる")
+    void shouldParseExamplesWithDataThReplaceAndQuotedGreaterThan() {
+        // Given
+        String htmlContent = """
+            <!--
+            /**
+             * Examples using data-th attributes and quoted separators
+             * @example <th:block data-th-replace="~{'components/status' :: statusBadge(label='Ready > Draft')}"></th:block>
+             */
+            -->
+            <div th:fragment="statusBadge(label)">Status</div>
+            """;
+
+        // When
+        List<JavaDocAnalyzer.JavaDocInfo> result = analyzer.analyzeJavaDocFromHtml(htmlContent);
+
+        // Then
+        assertThat(result).hasSize(1);
+
+        List<JavaDocAnalyzer.ExampleInfo> examples = result.get(0).getExamples();
+        assertThat(examples).hasSize(1);
+        assertThat(examples.getFirst().getTemplatePath()).isEqualTo("components/status");
+        assertThat(examples.getFirst().getFragmentName()).isEqualTo("statusBadge");
+        assertThat(examples.getFirst().getArguments()).containsExactly("label='Ready > Draft'");
+    }
 }

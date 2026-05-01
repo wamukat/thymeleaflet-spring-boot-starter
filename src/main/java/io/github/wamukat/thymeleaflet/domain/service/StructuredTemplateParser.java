@@ -1,10 +1,9 @@
-package io.github.wamukat.thymeleaflet.infrastructure.adapter.template;
+package io.github.wamukat.thymeleaflet.domain.service;
 
 import org.attoparser.AbstractMarkupHandler;
 import org.attoparser.MarkupParser;
 import org.attoparser.ParseException;
 import org.attoparser.config.ParseConfiguration;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +14,6 @@ import java.util.Optional;
 /**
  * Internal parser facade for template-level extraction that should match Thymeleaf's HTML parser.
  */
-@Component
 public class StructuredTemplateParser {
 
     public ParsedTemplate parse(String html) {
@@ -29,9 +27,10 @@ public class StructuredTemplateParser {
         return handler.toParsedTemplate();
     }
 
-    public record ParsedTemplate(List<TemplateElement> elements, List<TemplateComment> comments) {
+    public record ParsedTemplate(List<TemplateElement> elements, List<TemplateText> textNodes, List<TemplateComment> comments) {
         public ParsedTemplate {
             elements = List.copyOf(elements);
+            textNodes = List.copyOf(textNodes);
             comments = List.copyOf(comments);
         }
     }
@@ -72,9 +71,13 @@ public class StructuredTemplateParser {
     public record TemplateComment(String content, int line, int column) {
     }
 
+    public record TemplateText(String content, int line, int column) {
+    }
+
     private static final class CollectingMarkupHandler extends AbstractMarkupHandler {
 
         private final List<MutableTemplateElement> elements = new ArrayList<>();
+        private final List<TemplateText> textNodes = new ArrayList<>();
         private final List<TemplateComment> comments = new ArrayList<>();
         private Optional<MutableTemplateElement> currentElement = Optional.empty();
 
@@ -164,6 +167,17 @@ public class StructuredTemplateParser {
             comments.add(new TemplateComment(slice(buffer, contentOffset, contentLen), line, col));
         }
 
+        @Override
+        public void handleText(
+            char[] buffer,
+            int offset,
+            int len,
+            int line,
+            int col
+        ) {
+            textNodes.add(new TemplateText(slice(buffer, offset, len), line, col));
+        }
+
         private void startElement(char[] buffer, int nameOffset, int nameLen, int line, int col) {
             MutableTemplateElement element = new MutableTemplateElement(slice(buffer, nameOffset, nameLen), line, col);
             elements.add(element);
@@ -173,6 +187,7 @@ public class StructuredTemplateParser {
         private ParsedTemplate toParsedTemplate() {
             return new ParsedTemplate(
                 elements.stream().map(MutableTemplateElement::toTemplateElement).toList(),
+                textNodes,
                 comments
             );
         }
