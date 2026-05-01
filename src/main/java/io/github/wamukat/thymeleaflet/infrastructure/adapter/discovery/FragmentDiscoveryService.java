@@ -2,22 +2,15 @@ package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
-import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Thymeleafフラグメントを自動発見・解析するサービス
@@ -27,27 +20,22 @@ public class FragmentDiscoveryService {
     
     private static final Logger logger = LoggerFactory.getLogger(FragmentDiscoveryService.class);
     
-    private static final Pattern FRAGMENT_PATTERN = Pattern.compile(
-        "th:fragment\\s*=\\s*[\"']([^\"']+)[\"']"
-    );
-    
-    private final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
-
+    private final TemplateScanner templateScanner;
+    private final FragmentDefinitionParser fragmentDefinitionParser;
     private final FragmentDomainService fragmentDomainService;
-
-    private final ResolvedStorybookConfig storybookConfig;
-
     private final FragmentSignatureParser fragmentSignatureParser;
     private final ThymeleafletCacheManager cacheManager;
 
     public FragmentDiscoveryService(
+        TemplateScanner templateScanner,
+        FragmentDefinitionParser fragmentDefinitionParser,
         FragmentDomainService fragmentDomainService,
-        ResolvedStorybookConfig storybookConfig,
         FragmentSignatureParser fragmentSignatureParser,
         ThymeleafletCacheManager cacheManager
     ) {
+        this.templateScanner = templateScanner;
+        this.fragmentDefinitionParser = fragmentDefinitionParser;
         this.fragmentDomainService = fragmentDomainService;
-        this.storybookConfig = storybookConfig;
         this.fragmentSignatureParser = fragmentSignatureParser;
         this.cacheManager = cacheManager;
     }
@@ -64,34 +52,18 @@ public class FragmentDiscoveryService {
         List<FragmentInfo> fragments = new ArrayList<>();
         
         try {
-            // 複数のテンプレートパスから検索
-            List<String> templatePaths = storybookConfig.getResources().getTemplatePaths();
-            logger.debug("[DEBUG_FRAGMENT_PARAMS] Searching in template paths: {}", templatePaths);
-            
-            for (String templatePath : templatePaths) {
-                String searchPattern = "classpath:" + templatePath + "**/*.html";
-                Resource[] resources = resourceResolver.getResources(searchPattern);
-                logger.debug("[DEBUG_FRAGMENT_PARAMS] Found {} template resources in path: {}", resources.length, templatePath);
-                
-                for (Resource resource : resources) {
-                    String relativeTemplatePath = extractTemplatePath(resource.getURI().toString());
-                    String content;
-                    try (var inputStream = resource.getInputStream()) {
-                        content = new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-                    }
-                    
-                    logger.debug("[DEBUG_FRAGMENT_PARAMS] Processing template: {} (URI: {})", relativeTemplatePath, resource.getURI());
-                    
-                    // Storybook自身のフラグメントは除外
-                    if (relativeTemplatePath.startsWith("thymeleaflet/")) {
-                        logger.debug("[DEBUG_FRAGMENT_PARAMS] Skipping thymeleaflet internal template: {}", relativeTemplatePath);
-                        continue;
-                    }
-                    
-                    List<FragmentInfo> templateFragments = parseFragmentsFromTemplate(relativeTemplatePath, content);
-                    logger.debug("[DEBUG_FRAGMENT_PARAMS] Found {} fragments in template: {}", templateFragments.size(), relativeTemplatePath);
-                    fragments.addAll(templateFragments);
+            for (TemplateScanner.TemplateResource template : templateScanner.scanTemplates()) {
+                logger.debug("[DEBUG_FRAGMENT_PARAMS] Processing template: {} (URI: {})", template.templatePath(), template.uri());
+
+                // Storybook自身のフラグメントは除外
+                if (template.templatePath().startsWith("thymeleaflet/")) {
+                    logger.debug("[DEBUG_FRAGMENT_PARAMS] Skipping thymeleaflet internal template: {}", template.templatePath());
+                    continue;
                 }
+
+                List<FragmentInfo> templateFragments = parseFragmentsFromTemplate(template);
+                logger.debug("[DEBUG_FRAGMENT_PARAMS] Found {} fragments in template: {}", templateFragments.size(), template.templatePath());
+                fragments.addAll(templateFragments);
             }
         } catch (IOException e) {
             logger.error("[DEBUG_FRAGMENT_PARAMS] Fragment discovery failed", e);
@@ -111,13 +83,13 @@ public class FragmentDiscoveryService {
     /**
      * テンプレートからフラグメント情報を解析
      */
-    private List<FragmentInfo> parseFragmentsFromTemplate(String templatePath, String content) {
+    private List<FragmentInfo> parseFragmentsFromTemplate(TemplateScanner.TemplateResource template) {
         List<FragmentInfo> fragments = new ArrayList<>();
-        Matcher matcher = FRAGMENT_PATTERN.matcher(content);
-        
-        while (matcher.find()) {
-            String fragmentDefinition = matcher.group(1);
-            analyzeFragment(templatePath, fragmentDefinition).ifPresent(fragments::add);
+        for (FragmentDefinitionParser.FragmentDefinition definition : fragmentDefinitionParser.parseTemplate(
+            template.templatePath(),
+            template.content()
+        )) {
+            analyzeFragment(definition.templatePath(), definition.definition()).ifPresent(fragments::add);
         }
         
         return fragments;
@@ -180,30 +152,6 @@ public class FragmentDiscoveryService {
             );
         };
     }
-    
-    
-    /**
-     * リソースURIからテンプレートパスを抽出
-     */
-    private String extractTemplatePath(String resourceUri) {
-        // 複数のテンプレートパスから最初に見つかるものを使用
-        for (String templatePath : storybookConfig.getResources().getTemplatePaths()) {
-            String pathWithoutSlash = templatePath.substring(1); // 先頭の / を除去
-            int index = resourceUri.indexOf(pathWithoutSlash);
-            if (index != -1) {
-                return resourceUri.substring(index + pathWithoutSlash.length()).replace(".html", "");
-            }
-        }
-        
-        // フォールバック: templates/ で検索
-        int index = resourceUri.indexOf("templates/");
-        if (index != -1) {
-            return resourceUri.substring(index + "templates/".length()).replace(".html", "");
-        }
-        
-        return resourceUri;
-    }
-    
     /**
      * フラグメント情報を保持するクラス
      */
