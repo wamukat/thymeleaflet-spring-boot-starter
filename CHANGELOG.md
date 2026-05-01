@@ -8,6 +8,35 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.21] - 2026-05-02
+
+- Changed
+  - Replaced fragile regex-only template attribute extraction with a structured parser abstraction backed by Thymeleaf-compatible parsing, then migrated model inference and JavaDoc analysis to the shared parser path. (Kanbalone #479, #480)
+  - Added a Thymeleaf expression tokenizer for model path inference, improving handling of utility calls, static class paths, aliases, reserved words, and unsupported dynamic bracket expressions. (Kanbalone #481)
+- Fixed
+  - Applied Java time Story YAML conversion to nested list model paths such as `view.someObject.items[].publishedAt`, so `#temporals.format` can render nested collection values from story data. (#153)
+- Docs
+  - Documented the template parsing architecture, supported syntax, and parser tradeoffs in English and Japanese documentation. (Kanbalone #483)
+- Test
+  - Added parser regression fixtures based on recent defects, including no-arg fragment references, quoted selectors, nested Java time paths, and child model inference. (Kanbalone #482)
+  - Added direct story diagnostic mapping tests plus template rendering coverage to ensure `code` and `userSafeMessage` are shown while `developerMessage` remains hidden. (Kanbalone #211, #212)
+  - Added local E2E coverage for malformed `.stories.yml` files showing a user-safe Story YAML diagnostic without changing existing snapshot baselines. (Kanbalone #213)
+- Build
+  - Updated Maven project, sample app, and README dependency examples to `0.2.21`.
+
+### Issues
+
+- #153 `#148` fix does not apply to nested list paths such as `view.someObject.items[].publishedAt`
+- Kanbalone #211 Story diagnostics mapping direct tests
+- Kanbalone #212 Story diagnostics template display tests
+- Kanbalone #213 Broken `.stories.yml` UI diagnostic E2E
+- Kanbalone #477 Roadmap: replace fragile template parsing with structured parsing
+- Kanbalone #479 Structured template parser abstraction
+- Kanbalone #480 Template model analyzer structured extraction migration
+- Kanbalone #481 Thymeleaf expression tokenizer for model path inference
+- Kanbalone #482 Parser regression fixture corpus
+- Kanbalone #483 Template parsing architecture documentation
+
 ## [0.2.20] - 2026-05-02
 
 - Fixed
