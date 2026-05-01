@@ -1,4 +1,15 @@
 const { test, expect } = require('@playwright/test');
+const fs = require('fs');
+const path = require('path');
+
+const brokenStoryFixtureSource = path.join(
+  __dirname,
+  '../../sample/src/test/resources/META-INF/thymeleaflet/stories/components/button-fallback.stories.yml'
+);
+const brokenStoryFixtureTarget = path.join(
+  __dirname,
+  '../../sample/target/classes/META-INF/thymeleaflet/stories/components/button-fallback.stories.yml'
+);
 
 async function openFragment(page, fragmentName) {
   await page.goto('/thymeleaflet/');
@@ -88,6 +99,21 @@ test('preview iframe does not show error page', async ({ page }) => {
   const bodyText = await frame.locator('body').innerText();
   expect(bodyText).not.toContain('System Error');
   expect(bodyText).not.toContain('システムエラー');
+});
+
+test('broken story yaml shows user-safe diagnostic', async ({ page }) => {
+  fs.mkdirSync(path.dirname(brokenStoryFixtureTarget), { recursive: true });
+  fs.copyFileSync(brokenStoryFixtureSource, brokenStoryFixtureTarget);
+
+  try {
+    await openFragment(page, 'fallbackButton');
+
+    await expect(page.getByText('STORY_YAML_LOAD_FAILED')).toBeVisible();
+    await expect(page.getByText('Story YAML was found but could not be loaded or parsed.')).toBeVisible();
+    await expect(page.getByText('JsonParseException')).toHaveCount(0);
+  } finally {
+    fs.rmSync(brokenStoryFixtureTarget, { force: true });
+  }
 });
 
 test('viewport preset updates width badge', async ({ page }) => {
