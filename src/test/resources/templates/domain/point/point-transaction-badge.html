@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+/**
+ * ポイント取引タイプバッジフラグメント
+ * ポイント取引タイプに応じたバッジ表示を提供するmoleculesレベルコンポーネント
+ *
+ * @param transactionType {@code TransactionType} [required] 取引タイプ（EARN/USE/その他）
+ * @example
+ * <span th:replace="~{domain/point/point-transaction-badge :: transactionTypeBadge('EARN')}"></span>
+ */
+-->
+<span th:fragment="transactionTypeBadge(transactionType)"
+      th:text="${transactionType}">EARN</span>
+</body>
+</html>

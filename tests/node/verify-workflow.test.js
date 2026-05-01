@@ -18,15 +18,18 @@ test('verify workflow uses repository build toolchain versions', () => {
 
 test('verify workflow runs Maven tests and local E2E helper', () => {
   assert.match(workflow, /run:\s*\.\/mvnw test -q/);
+  assert.match(workflow, /run:\s*npm run test:workflow/);
   assert.match(workflow, /run:\s*npm run test:e2e:local/);
 });
 
-test('verify workflow installs npm dependencies before Playwright and E2E', () => {
+test('verify workflow installs npm dependencies before workflow checks, Playwright, and E2E', () => {
   const installIndex = workflow.indexOf('run: npm ci');
+  const workflowTestIndex = workflow.indexOf('run: npm run test:workflow');
   const playwrightInstallIndex = workflow.indexOf('run: npx playwright install --with-deps chromium');
   const e2eIndex = workflow.indexOf('run: npm run test:e2e:local');
 
   assert.notEqual(installIndex, -1);
-  assert.ok(installIndex < playwrightInstallIndex);
+  assert.ok(installIndex < workflowTestIndex);
+  assert.ok(workflowTestIndex < playwrightInstallIndex);
   assert.ok(playwrightInstallIndex < e2eIndex);
 });
