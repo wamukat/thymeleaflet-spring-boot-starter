@@ -217,6 +217,7 @@ See:
 - [docs/javadoc.md](docs/javadoc.md)
 - [docs/stories.md](docs/stories.md)
 - [docs/security.md](docs/security.md)
+- [docs/template-parsing.md](docs/template-parsing.md)
 - [docs/parser-spec.md](docs/parser-spec.md)
 - [docs/parser-model.md](docs/parser-model.md)
 
