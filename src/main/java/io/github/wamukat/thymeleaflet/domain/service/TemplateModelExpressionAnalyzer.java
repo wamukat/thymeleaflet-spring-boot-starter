@@ -23,7 +23,9 @@ public class TemplateModelExpressionAnalyzer {
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("\\$\\{([^}]*)}");
     private static final Set<String> RESERVED_ROOTS = Set.of(
         "true", "false", "null",
-        "param", "session", "application", "request", "response"
+        "param", "session", "application", "request", "response",
+        "and", "or", "not", "eq", "ne", "lt", "le", "gt", "ge",
+        "instanceof", "matches", "div", "mod"
     );
     private final StructuredTemplateParser templateParser;
 
@@ -52,7 +54,7 @@ public class TemplateModelExpressionAnalyzer {
         for (String source : sources) {
             Matcher matcher = EXPRESSION_PATTERN.matcher(source);
             while (matcher.find()) {
-                String expression = stripStringLiterals(matcher.group(1));
+                String expression = matcher.group(1);
                 for (List<String> path : extractModelPaths(expression, excludedIdentifiers)) {
                     paths.add(ModelPath.of(path));
                 }
@@ -66,7 +68,7 @@ public class TemplateModelExpressionAnalyzer {
         for (String source : sources) {
             Matcher matcher = EXPRESSION_PATTERN.matcher(source);
             while (matcher.find()) {
-                String expression = stripStringLiterals(matcher.group(1));
+                String expression = matcher.group(1);
                 List<List<String>> extracted = new ArrayList<>();
                 extractModelPaths(expression, excludedIdentifiers, extracted);
                 for (List<String> path : extracted) {
@@ -86,89 +88,12 @@ public class TemplateModelExpressionAnalyzer {
         Set<String> excludedIdentifiers,
         @Nullable List<List<String>> noArgMethodPaths
     ) {
-        List<List<String>> paths = new ArrayList<>();
-        int length = expression.length();
-        int i = 0;
-        while (i < length) {
-            char current = expression.charAt(i);
-            if (!isIdentifierStart(current)) {
-                i++;
-                continue;
-            }
-            if (isInvalidRootStartContext(expression, i)) {
-                i++;
-                continue;
-            }
-
-            int start = i;
-            i++;
-            while (i < length && isIdentifierPart(expression.charAt(i))) {
-                i++;
-            }
-
-            String root = expression.substring(start, i);
-            if (RESERVED_ROOTS.contains(root) || excludedIdentifiers.contains(root)) {
-                continue;
-            }
-            if (isFunctionCall(expression, i)) {
-                continue;
-            }
-
-            List<String> segments = new ArrayList<>();
-            segments.add(root);
-
-            boolean endedWithNoArgMethodCall = false;
-            while (i < length) {
-                if (expression.startsWith("?.", i)) {
-                    i += 2;
-                } else if (expression.charAt(i) == '.') {
-                    i++;
-                } else if (expression.charAt(i) == '[') {
-                    int end = consumeBracketAccessor(expression, i);
-                    if (end <= i) {
-                        break;
-                    }
-                    Optional<String> keyOptional = extractBracketKey(expression.substring(i, end + 1));
-                    i = end + 1;
-                    if (keyOptional.isEmpty()) {
-                        continue;
-                    }
-                    segments.add(keyOptional.orElseThrow());
-                    continue;
-                } else {
-                    break;
-                }
-
-                if (i >= length || !isIdentifierStart(expression.charAt(i))) {
-                    break;
-                }
-                int propStart = i;
-                i++;
-                while (i < length && isIdentifierPart(expression.charAt(i))) {
-                    i++;
-                }
-                String propertyName = expression.substring(propStart, i);
-                if (isFunctionCall(expression, i)) {
-                    int closeParen = consumeFunctionCall(expression, i);
-                    if (closeParen > i && isNoArgFunctionCall(expression, i, closeParen)) {
-                        List<String> methodPath = new ArrayList<>(segments);
-                        methodPath.add(propertyName);
-                        if (noArgMethodPaths != null) {
-                            noArgMethodPaths.add(List.copyOf(methodPath));
-                        }
-                        endedWithNoArgMethodCall = true;
-                        i = closeParen + 1;
-                    }
-                    break;
-                }
-                segments.add(propertyName);
-            }
-
-            if (!segments.isEmpty() && !endedWithNoArgMethodCall) {
-                paths.add(segments);
-            }
-        }
-        return paths;
+        ExpressionPathParser parser = new ExpressionPathParser(
+            ThymeleafExpressionTokenizer.tokenize(expression),
+            excludedIdentifiers,
+            noArgMethodPaths
+        );
+        return parser.parse();
     }
 
     private Map<String, ModelPath> extractLoopVariablePaths(StructuredTemplateParser.ParsedTemplate template) {
@@ -191,8 +116,7 @@ public class TemplateModelExpressionAnalyzer {
             if (iterableExpression.startsWith("${") && iterableExpression.endsWith("}")) {
                 iterableExpression = iterableExpression.substring(2, iterableExpression.length() - 1);
             }
-            String sanitizedIterableExpression = stripStringLiterals(iterableExpression);
-            List<List<String>> iterablePaths = extractModelPaths(sanitizedIterableExpression, Set.of());
+            List<List<String>> iterablePaths = extractModelPaths(iterableExpression, Set.of());
             if (iterablePaths.isEmpty()) {
                 continue;
             }
@@ -388,39 +312,6 @@ public class TemplateModelExpressionAnalyzer {
         return true;
     }
 
-    private int consumeBracketAccessor(String expression, int start) {
-        int i = start;
-        int depth = 0;
-        while (i < expression.length()) {
-            char c = expression.charAt(i);
-            if (c == '[') {
-                depth++;
-            } else if (c == ']') {
-                depth--;
-                if (depth == 0) {
-                    return i;
-                }
-            }
-            i++;
-        }
-        return -1;
-    }
-
-    private Optional<String> extractBracketKey(String accessor) {
-        String trimmed = accessor.trim();
-        if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) {
-            return Optional.empty();
-        }
-        String inner = trimmed.substring(1, trimmed.length() - 1).trim();
-        if (inner.startsWith("'") && inner.endsWith("'") && inner.length() >= 2) {
-            return Optional.of(inner.substring(1, inner.length() - 1));
-        }
-        if (inner.startsWith("\"") && inner.endsWith("\"") && inner.length() >= 2) {
-            return Optional.of(inner.substring(1, inner.length() - 1));
-        }
-        return Optional.empty();
-    }
-
     private List<String> splitTopLevel(String value, char separator) {
         List<String> segments = new ArrayList<>();
         int depthParen = 0;
@@ -467,107 +358,292 @@ public class TemplateModelExpressionAnalyzer {
         return segments;
     }
 
-    private String stripStringLiterals(String expression) {
-        StringBuilder sanitized = new StringBuilder(expression.length());
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-        for (int i = 0; i < expression.length(); i++) {
-            char c = expression.charAt(i);
-            char previous = i > 0 ? expression.charAt(i - 1) : '\0';
-            if (c == '\'' && !inDoubleQuote && previous != '\\') {
-                inSingleQuote = !inSingleQuote;
-                sanitized.append(' ');
-                continue;
-            }
-            if (c == '"' && !inSingleQuote && previous != '\\') {
-                inDoubleQuote = !inDoubleQuote;
-                sanitized.append(' ');
-                continue;
-            }
-            sanitized.append((inSingleQuote || inDoubleQuote) ? '@' : c);
-        }
-        return sanitized.toString();
-    }
-
-    private boolean isInvalidRootStartContext(String expression, int index) {
-        int previousIndex = index - 1;
-        while (previousIndex >= 0 && Character.isWhitespace(expression.charAt(previousIndex))) {
-            previousIndex--;
-        }
-        if (previousIndex < 0) {
-            return false;
-        }
-        char previous = expression.charAt(previousIndex);
-        if (isIdentifierPart(previous)) {
-            return true;
-        }
-        return previous == '#'
-            || previous == '@'
-            || previous == '.'
-            || previous == '?'
-            || previous == '\''
-            || previous == '"';
-    }
-
-    private boolean isFunctionCall(String expression, int identifierEnd) {
-        int next = identifierEnd;
-        while (next < expression.length() && Character.isWhitespace(expression.charAt(next))) {
-            next++;
-        }
-        return next < expression.length() && expression.charAt(next) == '(';
-    }
-
-    private int consumeFunctionCall(String expression, int identifierEnd) {
-        int openParen = identifierEnd;
-        while (openParen < expression.length() && Character.isWhitespace(expression.charAt(openParen))) {
-            openParen++;
-        }
-        if (openParen >= expression.length() || expression.charAt(openParen) != '(') {
-            return -1;
-        }
-        int depth = 0;
-        boolean inSingleQuote = false;
-        boolean inDoubleQuote = false;
-        for (int i = openParen; i < expression.length(); i++) {
-            char c = expression.charAt(i);
-            char previous = i > 0 ? expression.charAt(i - 1) : '\0';
-            if (c == '\'' && !inDoubleQuote && previous != '\\') {
-                inSingleQuote = !inSingleQuote;
-            } else if (c == '"' && !inSingleQuote && previous != '\\') {
-                inDoubleQuote = !inDoubleQuote;
-            }
-            if (inSingleQuote || inDoubleQuote) {
-                continue;
-            }
-            if (c == '(') {
-                depth++;
-            } else if (c == ')') {
-                depth--;
-                if (depth == 0) {
-                    return i;
-                }
-            }
-        }
-        return -1;
-    }
-
-    private boolean isNoArgFunctionCall(String expression, int identifierEnd, int closeParenIndex) {
-        int openParen = identifierEnd;
-        while (openParen < expression.length() && Character.isWhitespace(expression.charAt(openParen))) {
-            openParen++;
-        }
-        if (openParen < 0 || closeParenIndex <= openParen) {
-            return false;
-        }
-        String args = expression.substring(openParen + 1, closeParenIndex).trim();
-        return args.isEmpty();
-    }
-
     private boolean isIdentifierStart(char c) {
         return Character.isLetter(c) || c == '_';
     }
 
     private boolean isIdentifierPart(char c) {
         return Character.isLetterOrDigit(c) || c == '_' || c == '-';
+    }
+
+    private enum ExpressionTokenType {
+        IDENTIFIER,
+        STRING,
+        DOT,
+        SAFE_DOT,
+        LEFT_PAREN,
+        RIGHT_PAREN,
+        LEFT_BRACKET,
+        RIGHT_BRACKET,
+        HASH,
+        AT,
+        OTHER
+    }
+
+    private record ExpressionToken(ExpressionTokenType type, String text) {
+    }
+
+    private static final class ThymeleafExpressionTokenizer {
+
+        private static List<ExpressionToken> tokenize(String expression) {
+            List<ExpressionToken> tokens = new ArrayList<>();
+            int index = 0;
+            while (index < expression.length()) {
+                char current = expression.charAt(index);
+                if (Character.isWhitespace(current)) {
+                    index++;
+                    continue;
+                }
+                if (Character.isLetter(current) || current == '_') {
+                    int start = index;
+                    index++;
+                    while (index < expression.length()) {
+                        char part = expression.charAt(index);
+                        if (!Character.isLetterOrDigit(part) && part != '_' && part != '-') {
+                            break;
+                        }
+                        index++;
+                    }
+                    tokens.add(new ExpressionToken(ExpressionTokenType.IDENTIFIER, expression.substring(start, index)));
+                    continue;
+                }
+                if (current == '\'' || current == '"') {
+                    ParseStringResult stringResult = consumeString(expression, index);
+                    tokens.add(new ExpressionToken(ExpressionTokenType.STRING, stringResult.content()));
+                    index = stringResult.nextIndex();
+                    continue;
+                }
+                if (current == '?' && index + 1 < expression.length() && expression.charAt(index + 1) == '.') {
+                    tokens.add(new ExpressionToken(ExpressionTokenType.SAFE_DOT, "?."));
+                    index += 2;
+                    continue;
+                }
+                switch (current) {
+                    case '.' -> tokens.add(new ExpressionToken(ExpressionTokenType.DOT, "."));
+                    case '(' -> tokens.add(new ExpressionToken(ExpressionTokenType.LEFT_PAREN, "("));
+                    case ')' -> tokens.add(new ExpressionToken(ExpressionTokenType.RIGHT_PAREN, ")"));
+                    case '[' -> tokens.add(new ExpressionToken(ExpressionTokenType.LEFT_BRACKET, "["));
+                    case ']' -> tokens.add(new ExpressionToken(ExpressionTokenType.RIGHT_BRACKET, "]"));
+                    case '#' -> tokens.add(new ExpressionToken(ExpressionTokenType.HASH, "#"));
+                    case '@' -> tokens.add(new ExpressionToken(ExpressionTokenType.AT, "@"));
+                    default -> tokens.add(new ExpressionToken(ExpressionTokenType.OTHER, Character.toString(current)));
+                }
+                index++;
+            }
+            return tokens;
+        }
+
+        private static ParseStringResult consumeString(String expression, int start) {
+            char quote = expression.charAt(start);
+            StringBuilder content = new StringBuilder();
+            int index = start + 1;
+            boolean escaped = false;
+            while (index < expression.length()) {
+                char current = expression.charAt(index);
+                if (escaped) {
+                    content.append(current);
+                    escaped = false;
+                    index++;
+                    continue;
+                }
+                if (current == '\\') {
+                    escaped = true;
+                    index++;
+                    continue;
+                }
+                if (current == quote) {
+                    return new ParseStringResult(content.toString(), index + 1);
+                }
+                content.append(current);
+                index++;
+            }
+            return new ParseStringResult(content.toString(), expression.length());
+        }
+
+        private record ParseStringResult(String content, int nextIndex) {
+        }
+    }
+
+    private final class ExpressionPathParser {
+
+        private final List<ExpressionToken> tokens;
+        private final Set<String> excludedIdentifiers;
+        private final @Nullable List<List<String>> noArgMethodPaths;
+        private int index;
+
+        private ExpressionPathParser(
+            List<ExpressionToken> tokens,
+            Set<String> excludedIdentifiers,
+            @Nullable List<List<String>> noArgMethodPaths
+        ) {
+            this.tokens = tokens;
+            this.excludedIdentifiers = excludedIdentifiers;
+            this.noArgMethodPaths = noArgMethodPaths;
+        }
+
+        private List<List<String>> parse() {
+            List<List<String>> paths = new ArrayList<>();
+            while (index < tokens.size()) {
+                if (!isAt(ExpressionTokenType.IDENTIFIER)) {
+                    index++;
+                    continue;
+                }
+                parseIdentifierPath().ifPresent(paths::add);
+            }
+            return paths;
+        }
+
+        private Optional<List<String>> parseIdentifierPath() {
+            String root = tokens.get(index).text();
+            if (isUtilityIdentifier(index) || isChainedIdentifier(index)) {
+                index++;
+                return Optional.empty();
+            }
+            if ("T".equals(root) && isAt(index + 1, ExpressionTokenType.LEFT_PAREN)) {
+                skipStaticClassReference();
+                return Optional.empty();
+            }
+            if (RESERVED_ROOTS.contains(root) || excludedIdentifiers.contains(root)) {
+                index++;
+                return Optional.empty();
+            }
+            if (isAt(index + 1, ExpressionTokenType.LEFT_PAREN)) {
+                index++;
+                return Optional.empty();
+            }
+
+            List<String> segments = new ArrayList<>();
+            segments.add(root);
+            index++;
+            boolean endedWithNoArgMethodCall = false;
+
+            while (index < tokens.size()) {
+                if (isAt(ExpressionTokenType.LEFT_BRACKET)) {
+                    Optional<String> bracketKey = parseBracketKey();
+                    if (bracketKey.isPresent()) {
+                        segments.add(bracketKey.orElseThrow());
+                        continue;
+                    }
+                    skipUnsupportedBracket();
+                    break;
+                }
+                if (!isAt(ExpressionTokenType.DOT) && !isAt(ExpressionTokenType.SAFE_DOT)) {
+                    break;
+                }
+                if (!isAt(index + 1, ExpressionTokenType.IDENTIFIER)) {
+                    break;
+                }
+                String propertyName = tokens.get(index + 1).text();
+                int propertyIndex = index + 1;
+                if (isAt(propertyIndex + 1, ExpressionTokenType.LEFT_PAREN)) {
+                    int closeParen = findClosingParen(propertyIndex + 1);
+                    if (closeParen > propertyIndex && isNoArgFunctionCall(propertyIndex + 1, closeParen)) {
+                        List<String> methodPath = new ArrayList<>(segments);
+                        methodPath.add(propertyName);
+                        if (noArgMethodPaths != null) {
+                            noArgMethodPaths.add(List.copyOf(methodPath));
+                        }
+                        endedWithNoArgMethodCall = true;
+                        index = closeParen + 1;
+                    } else {
+                        index = propertyIndex + 1;
+                    }
+                    break;
+                }
+                segments.add(propertyName);
+                index = propertyIndex + 1;
+            }
+
+            if (endedWithNoArgMethodCall) {
+                return Optional.empty();
+            }
+            return Optional.of(segments);
+        }
+
+        private Optional<String> parseBracketKey() {
+            if (isAt(index, ExpressionTokenType.LEFT_BRACKET)
+                && isAt(index + 1, ExpressionTokenType.STRING)
+                && isAt(index + 2, ExpressionTokenType.RIGHT_BRACKET)) {
+                String key = tokens.get(index + 1).text();
+                index += 3;
+                return Optional.of(key);
+            }
+            return Optional.empty();
+        }
+
+        private void skipUnsupportedBracket() {
+            if (!isAt(ExpressionTokenType.LEFT_BRACKET)) {
+                return;
+            }
+            int depth = 0;
+            while (index < tokens.size()) {
+                if (isAt(ExpressionTokenType.LEFT_BRACKET)) {
+                    depth++;
+                } else if (isAt(ExpressionTokenType.RIGHT_BRACKET)) {
+                    depth--;
+                    if (depth == 0) {
+                        index++;
+                        return;
+                    }
+                }
+                index++;
+            }
+        }
+
+        private boolean isUtilityIdentifier(int tokenIndex) {
+            return isAt(tokenIndex - 1, ExpressionTokenType.HASH) || isAt(tokenIndex - 1, ExpressionTokenType.AT);
+        }
+
+        private boolean isChainedIdentifier(int tokenIndex) {
+            return isAt(tokenIndex - 1, ExpressionTokenType.DOT) || isAt(tokenIndex - 1, ExpressionTokenType.SAFE_DOT);
+        }
+
+        private void skipStaticClassReference() {
+            int closeParen = findClosingParen(index + 1);
+            if (closeParen < 0) {
+                index++;
+                return;
+            }
+            index = closeParen + 1;
+            while (index + 3 < tokens.size()
+                && (isAt(index, ExpressionTokenType.DOT) || isAt(index, ExpressionTokenType.SAFE_DOT))
+                && isAt(index + 1, ExpressionTokenType.IDENTIFIER)
+                && isAt(index + 2, ExpressionTokenType.LEFT_PAREN)) {
+                int methodCloseParen = findClosingParen(index + 2);
+                if (methodCloseParen < 0 || !isNoArgFunctionCall(index + 2, methodCloseParen)) {
+                    index++;
+                    return;
+                }
+                index = methodCloseParen + 1;
+            }
+        }
+
+        private int findClosingParen(int openParenIndex) {
+            int depth = 0;
+            for (int cursor = openParenIndex; cursor < tokens.size(); cursor++) {
+                ExpressionTokenType type = tokens.get(cursor).type();
+                if (type == ExpressionTokenType.LEFT_PAREN) {
+                    depth++;
+                } else if (type == ExpressionTokenType.RIGHT_PAREN) {
+                    depth--;
+                    if (depth == 0) {
+                        return cursor;
+                    }
+                }
+            }
+            return -1;
+        }
+
+        private boolean isNoArgFunctionCall(int openParenIndex, int closeParenIndex) {
+            return closeParenIndex == openParenIndex + 1;
+        }
+
+        private boolean isAt(ExpressionTokenType type) {
+            return isAt(index, type);
+        }
+
+        private boolean isAt(int tokenIndex, ExpressionTokenType type) {
+            return tokenIndex >= 0 && tokenIndex < tokens.size() && tokens.get(tokenIndex).type() == type;
+        }
     }
 }

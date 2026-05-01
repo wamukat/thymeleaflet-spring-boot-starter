@@ -166,4 +166,66 @@ class TemplateModelExpressionAnalyzerTest {
         assertThat(snapshot.referencedTemplatePathsWithRecursionFlags())
             .containsEntry("components/complex-card", true);
     }
+
+    @Test
+    void shouldExtractModelPathsFromUtilityFunctionArgumentsWithoutStaticClassNoise() {
+        String html = """
+            <section>
+              <time th:text="${#temporals.format(item.publishedAt, 'yyyy-MM-dd')}">date</time>
+              <span th:if="${T(java.time.LocalDate).now().isAfter(view.cutoffDate)}">future</span>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("item", "publishedAt")))
+            .contains(ModelPath.of(List.of("view", "cutoffDate")))
+            .doesNotContain(ModelPath.of(List.of("temporals")))
+            .doesNotContain(ModelPath.of(List.of("java", "time", "LocalDate")));
+    }
+
+    @Test
+    void shouldPreserveNoArgAndAliasBehaviorWithTokenizer() {
+        String html = """
+            <section th:with="current=${view.currentUser}">
+              <article th:each="item : ${view.items}">
+                <span th:if="${item.visible() and current.active()}"></span>
+                <span th:text="${item.label ?: view.fallbackLabel}"></span>
+              </article>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.loopVariablePaths()).containsEntry("item", ModelPath.of(List.of("view", "items")));
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "items")))
+            .contains(ModelPath.of(List.of("item", "label")))
+            .contains(ModelPath.of(List.of("view", "fallbackLabel")))
+            .doesNotContain(ModelPath.of(List.of("current")))
+            .doesNotContain(ModelPath.of(List.of("and")));
+        assertThat(snapshot.noArgMethodPaths())
+            .contains(ModelPath.of(List.of("item", "visible")))
+            .doesNotContain(ModelPath.of(List.of("current", "active")));
+    }
+
+    @Test
+    void shouldFailClosedForUnsupportedBracketAccessors() {
+        String html = """
+            <section>
+              <span th:text="${view.map[key].label}"></span>
+              <span th:text="${view.items[0].name}"></span>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "map")))
+            .contains(ModelPath.of(List.of("view", "items")))
+            .doesNotContain(ModelPath.of(List.of("key")))
+            .doesNotContain(ModelPath.of(List.of("view", "map", "label")))
+            .doesNotContain(ModelPath.of(List.of("view", "items", "name")));
+    }
 }
