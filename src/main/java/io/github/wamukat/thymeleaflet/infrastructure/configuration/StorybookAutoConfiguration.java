@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.configuration;
 
 import java.time.Duration;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -19,6 +20,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplicat
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.core.env.Environment;
 import org.springframework.core.annotation.Order;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -63,8 +65,22 @@ public class StorybookAutoConfiguration {
     }
 
     @Bean
-    public ResolvedStorybookConfig resolvedStorybookConfig(StorybookProperties storybookProperties) {
+    public ResolvedStorybookConfig resolvedStorybookConfig(StorybookProperties storybookProperties, Environment environment) {
+        Optional<Boolean> cacheEnabled = resolveCacheEnabled(environment);
+        if (cacheEnabled.isPresent()) {
+            return ResolvedStorybookConfig.from(storybookProperties, cacheEnabled.orElseThrow());
+        }
         return ResolvedStorybookConfig.from(storybookProperties);
+    }
+
+    private Optional<Boolean> resolveCacheEnabled(Environment environment) {
+        if (environment.containsProperty("thymeleaflet.cache.enabled")) {
+            return Optional.empty();
+        }
+        if ("false".equalsIgnoreCase(environment.getProperty("spring.thymeleaf.cache"))) {
+            return Optional.of(false);
+        }
+        return Optional.empty();
     }
 
     @Bean
