@@ -1,0 +1,14 @@
+meta:
+  title: Broken Button Fallback Stories
+  description: Fixture used to verify user-safe story YAML diagnostics
+
+storyGroups:
+  fallbackButton:
+    title: Fallback Button
+    description: This file is intentionally malformed for diagnostic E2E coverage.
+    stories:
+      - name: default
+        title: Default
+        parameters:
+          label: Try it
+          variant: [this sequence is intentionally not closed
