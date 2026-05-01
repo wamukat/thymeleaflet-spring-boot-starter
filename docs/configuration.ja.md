@@ -49,6 +49,10 @@ JavaScript を使いたい場合は `resources.scripts` に登録してくださ
 | `thymeleaflet.cache.enabled` | boolean | `true` | フラグメント探索・JavaDoc解析・依存解析のメモリキャッシュ |
 | `thymeleaflet.cache.preload` | boolean | `false` | 起動時にキャッシュをウォームアップ |
 
+`spring.thymeleaf.cache=false` かつ `thymeleaflet.cache.enabled` が明示されていない場合、Thymeleaflet の内部
+キャッシュも無効になります。DevTools でのテンプレート再読込時に、フラグメント探索・JavaDoc 解析・型抽出・依存解析が
+古いキャッシュではなくソースリソースを読み直すためです。
+
 ## セキュリティ補助設定
 
 | プロパティ | 型 | デフォルト | 説明 |

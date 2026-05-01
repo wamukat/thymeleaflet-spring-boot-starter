@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentDependencyPort;
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
+import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
@@ -15,7 +16,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,23 +38,23 @@ public class FragmentDependencyService implements FragmentDependencyPort {
 
     private final ResourcePathValidator resourcePathValidator;
 
-    private final Map<String, List<DependencyComponent>> dependencyCache = new ConcurrentHashMap<>();
+    private final ThymeleafletCacheManager cacheManager;
 
     public FragmentDependencyService(
         ResolvedStorybookConfig storybookConfig,
-        ResourcePathValidator resourcePathValidator
+        ResourcePathValidator resourcePathValidator,
+        ThymeleafletCacheManager cacheManager
     ) {
         this.storybookConfig = storybookConfig;
         this.resourcePathValidator = resourcePathValidator;
+        this.cacheManager = cacheManager;
     }
 
     public List<DependencyComponent> findDependencies(String templatePath, String fragmentName) {
-        if (storybookConfig.getCache().isEnabled()) {
-            String cacheKey = templatePath + "::" + fragmentName;
-            List<DependencyComponent> cached = dependencyCache.get(cacheKey);
-            if (cached != null) {
-                return cached;
-            }
+        String cacheKey = templatePath + "::" + fragmentName;
+        Optional<List<DependencyComponent>> cached = cacheManager.get("fragment-dependencies", cacheKey);
+        if (cached.isPresent()) {
+            return cached.orElseThrow();
         }
         try {
             Resource resource = resourcePathValidator.findTemplate(
@@ -83,10 +83,9 @@ public class FragmentDependencyService implements FragmentDependencyPort {
             }
 
             List<DependencyComponent> result = new ArrayList<>(dependencies.values());
-            if (storybookConfig.getCache().isEnabled()) {
-                dependencyCache.put(templatePath + "::" + fragmentName, List.copyOf(result));
-            }
-            return result;
+            List<DependencyComponent> immutableResult = List.copyOf(result);
+            cacheManager.put("fragment-dependencies", cacheKey, immutableResult);
+            return immutableResult;
         } catch (Exception e) {
             logger.warn("Failed to extract dependencies for {}::{}: {}", templatePath, fragmentName, e.getMessage());
             return List.of();

@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
+import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,23 +33,23 @@ public class FragmentDiscoveryService {
     
     private final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
 
-    private volatile boolean cacheInitialized;
-    private volatile List<FragmentInfo> cachedFragments = List.of();
-
     private final FragmentDomainService fragmentDomainService;
 
     private final ResolvedStorybookConfig storybookConfig;
 
     private final FragmentSignatureParser fragmentSignatureParser;
+    private final ThymeleafletCacheManager cacheManager;
 
     public FragmentDiscoveryService(
         FragmentDomainService fragmentDomainService,
         ResolvedStorybookConfig storybookConfig,
-        FragmentSignatureParser fragmentSignatureParser
+        FragmentSignatureParser fragmentSignatureParser,
+        ThymeleafletCacheManager cacheManager
     ) {
         this.fragmentDomainService = fragmentDomainService;
         this.storybookConfig = storybookConfig;
         this.fragmentSignatureParser = fragmentSignatureParser;
+        this.cacheManager = cacheManager;
     }
     
     /**
@@ -56,8 +57,9 @@ public class FragmentDiscoveryService {
      */
     public List<FragmentInfo> discoverFragments() {
         logger.debug("[DEBUG_FRAGMENT_PARAMS] Starting fragment discovery process");
-        if (storybookConfig.getCache().isEnabled() && cacheInitialized) {
-            return cachedFragments;
+        Optional<List<FragmentInfo>> cached = cacheManager.get("fragment-discovery", "all");
+        if (cached.isPresent()) {
+            return cached.orElseThrow();
         }
         List<FragmentInfo> fragments = new ArrayList<>();
         
@@ -101,13 +103,9 @@ public class FragmentDiscoveryService {
             logger.debug("[DEBUG_FRAGMENT_PARAMS] Final fragment: {}", fragment.toString());
         }
         
-        if (storybookConfig.getCache().isEnabled()) {
-            cachedFragments = Collections.unmodifiableList(new ArrayList<>(fragments));
-            cacheInitialized = true;
-            return cachedFragments;
-        }
-
-        return fragments;
+        List<FragmentInfo> immutableFragments = Collections.unmodifiableList(new ArrayList<>(fragments));
+        cacheManager.put("fragment-discovery", "all", immutableFragments);
+        return immutableFragments;
     }
     
     /**
