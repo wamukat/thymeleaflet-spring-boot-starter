@@ -8,6 +8,7 @@
 
 | プロパティ | 型 | デフォルト | 説明 |
 |---|---|---|---|
+| `thymeleaflet.enabled` | boolean | `true` | Thymeleaflet の自動設定を有効化します。本番 profile では `false` にして開発用 UI の公開を防いでください |
 | `thymeleaflet.base-path` | String | `/thymeleaflet` | UI のベースパス |
 | `thymeleaflet.debug` | boolean | `false` | フラグメント探索のデバッグログ |
 
@@ -57,7 +58,10 @@ JavaScript を使いたい場合は `resources.scripts` に登録してくださ
 
 | プロパティ | 型 | デフォルト | 説明 |
 |---|---|---|---|
-| `thymeleaflet.security.auto-permit` | boolean | `false` | Opt-in: Spring Security 利用時に `/thymeleaflet/**` 許可の最小ルールを自動登録 |
+| `thymeleaflet.security.auto-permit` | boolean | `false` | Opt-in: Spring Security 利用時に `/thymeleaflet/**` 許可の最小ルールを自動登録。開発時の quick start 用です |
+
+`prod` または `production` profile が有効な状態で Thymeleaflet UI も有効な場合、起動時に WARN を出します。
+さらに `thymeleaflet.security.auto-permit=true` の場合は、UI パスを許可する高リスク設定として追加の WARN を出します。
 
 ### CSP 補足（意図的に緩め）
 
@@ -89,7 +93,13 @@ http.authorizeHttpRequests(auth -> auth
 ## 環境ごとの有効/無効
 
 Thymeleaflet は開発中の補助ツールとして利用する想定です。本番環境では
-自動設定を除外するか、本番ビルドから依存関係を外してください。
+`thymeleaflet.enabled=false` を設定するか、自動設定を除外するか、本番ビルドから依存関係を外してください。
+
+```yaml
+# application-prod.yml
+thymeleaflet:
+  enabled: false
+```
 
 ```yaml
 # application-prod.yml

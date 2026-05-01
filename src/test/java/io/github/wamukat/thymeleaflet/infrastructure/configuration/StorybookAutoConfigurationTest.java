@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.mock.env.MockEnvironment;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
@@ -49,6 +50,16 @@ class StorybookAutoConfigurationTest {
             ),
             "afterName should include Spring Boot 4 WebMvc auto-configuration"
         );
+    }
+
+    @Test
+    void autoConfiguration_shouldBeDisableableWithThymeleafletEnabledFalse() {
+        ConditionalOnProperty annotation = StorybookAutoConfiguration.class.getAnnotation(ConditionalOnProperty.class);
+
+        assertNotNull(annotation, "StorybookAutoConfiguration should support thymeleaflet.enabled=false");
+        assertEquals("thymeleaflet.enabled", annotation.name()[0]);
+        assertEquals("true", annotation.havingValue());
+        assertTrue(annotation.matchIfMissing());
     }
 
     @Test

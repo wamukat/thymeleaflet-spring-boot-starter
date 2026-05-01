@@ -91,12 +91,23 @@ thymeleaflet:
   base-path: /thymeleaflet
 
 # application-prod.yml
+thymeleaflet:
+  enabled: false
+```
+
+You can also exclude the auto-configuration:
+
+```yaml
+# application-prod.yml
 spring:
   autoconfigure:
     exclude: io.github.wamukat.thymeleaflet.infrastructure.configuration.StorybookAutoConfiguration
 ```
 
-Alternatively, remove the dependency from production builds.
+Alternatively, remove the dependency from production builds. If Thymeleaflet is
+active under a `prod` or `production` profile, startup logs a warning.
+`thymeleaflet.security.auto-permit=true` logs an additional warning because it
+permits the UI path.
 
 If your app uses Spring Security, either:
 
