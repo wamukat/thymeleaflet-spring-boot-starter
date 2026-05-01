@@ -200,6 +200,12 @@ npm run test:e2e
 
 The sample app serves Thymeleaflet on `http://localhost:6006/thymeleaflet`.
 
+## Pull Request Verification
+
+Pull requests and pushes to `main` run GitHub Actions verification with Java 21
+and Node.js 20. The workflow runs `./mvnw test -q` and the local E2E helper
+`npm run test:e2e:local`.
+
 ## Documentation
 
 See:
