@@ -28,13 +28,18 @@ public class JavaDocAnalyzer {
     );
     
     private static final Pattern PARAM_PATTERN = Pattern.compile(
-        "@param\\s+(\\w+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@model|\\s*@example|\\s*@background|\\s*\\*/|$)",
+        "@param\\s+(\\w+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@model|\\s*@fragment|\\s*@example|\\s*@background|\\s*\\*/|$)",
         Pattern.MULTILINE | Pattern.DOTALL
     );
 
     private static final Pattern MODEL_PATTERN = Pattern.compile(
-        "@model\\s+(\\w+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@model|\\s*@example|\\s*@background|\\s*\\*/|$)",
+        "@model\\s+(\\w+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*?)(?=\\s*@param|\\s*@model|\\s*@fragment|\\s*@example|\\s*@background|\\s*\\*/|$)",
         Pattern.MULTILINE | Pattern.DOTALL
+    );
+
+    private static final Pattern FRAGMENT_PATTERN = Pattern.compile(
+        "@fragment\\s+([A-Za-z_][\\w-]*)",
+        Pattern.MULTILINE
     );
     
     private static final Pattern EXAMPLE_PATTERN = Pattern.compile(
@@ -66,11 +71,12 @@ public class JavaDocAnalyzer {
             // 技術的データ抽出処理
             List<ParameterInfo> parameters = parseParameters(javadocContent);
             List<ModelInfo> models = parseModels(javadocContent);
+            Optional<String> fragmentName = parseFragmentName(javadocContent);
             List<ExampleInfo> examples = parseExamples(javadocContent);
             Optional<String> backgroundColor = parseBackgroundColor(javadocContent);
             String description = extractDescription(javadocContent);
             
-            JavaDocInfo docInfo = JavaDocInfo.of(description, parameters, models, examples, backgroundColor);
+            JavaDocInfo docInfo = JavaDocInfo.of(description, parameters, models, fragmentName, examples, backgroundColor);
             docInfoList.add(docInfo);
         }
         
@@ -168,6 +174,17 @@ public class JavaDocAnalyzer {
     }
     
     /**
+     * @fragmentタグから明示的なフラグメント名を解析
+     */
+    private Optional<String> parseFragmentName(String javadocContent) {
+        Matcher fragmentMatcher = FRAGMENT_PATTERN.matcher(javadocContent);
+        if (fragmentMatcher.find()) {
+            return Optional.of(fragmentMatcher.group(1));
+        }
+        return Optional.empty();
+    }
+
+    /**
      * @exampleタグから使用例を解析
      */
     private List<ExampleInfo> parseExamples(String javadocContent) {
@@ -251,6 +268,7 @@ public class JavaDocAnalyzer {
         private final String description;
         private final List<ParameterInfo> parameters;
         private final List<ModelInfo> models;
+        private final Optional<String> fragmentName;
         private final List<ExampleInfo> examples;
         private final Optional<String> backgroundColor;
         
@@ -264,12 +282,14 @@ public class JavaDocAnalyzer {
             String description,
             List<ParameterInfo> parameters,
             List<ModelInfo> models,
+            Optional<String> fragmentName,
             List<ExampleInfo> examples,
             Optional<String> backgroundColor
         ) {
             this.description = description;
             this.parameters = Collections.unmodifiableList(new ArrayList<>(parameters));
             this.models = Collections.unmodifiableList(new ArrayList<>(models));
+            this.fragmentName = Objects.requireNonNull(fragmentName, "fragmentName cannot be null");
             this.examples = Collections.unmodifiableList(new ArrayList<>(examples));
             this.backgroundColor = Objects.requireNonNull(backgroundColor, "backgroundColor cannot be null");
         }
@@ -284,7 +304,18 @@ public class JavaDocAnalyzer {
             List<ExampleInfo> examples,
             Optional<String> backgroundColor
         ) {
-            return new JavaDocInfo(description, parameters, models, examples, backgroundColor);
+            return new JavaDocInfo(description, parameters, models, Optional.empty(), examples, backgroundColor);
+        }
+
+        public static JavaDocInfo of(
+            String description,
+            List<ParameterInfo> parameters,
+            List<ModelInfo> models,
+            Optional<String> fragmentName,
+            List<ExampleInfo> examples,
+            Optional<String> backgroundColor
+        ) {
+            return new JavaDocInfo(description, parameters, models, fragmentName, examples, backgroundColor);
         }
 
         public static JavaDocInfo of(
@@ -294,7 +325,7 @@ public class JavaDocAnalyzer {
             List<ExampleInfo> examples,
             String backgroundColor
         ) {
-            return new JavaDocInfo(description, parameters, models, examples, Optional.ofNullable(backgroundColor));
+            return new JavaDocInfo(description, parameters, models, Optional.empty(), examples, Optional.ofNullable(backgroundColor));
         }
 
         /**
@@ -306,7 +337,7 @@ public class JavaDocAnalyzer {
             List<ExampleInfo> examples,
             Optional<String> backgroundColor
         ) {
-            return new JavaDocInfo(description, parameters, Collections.emptyList(), examples, backgroundColor);
+            return new JavaDocInfo(description, parameters, Collections.emptyList(), Optional.empty(), examples, backgroundColor);
         }
 
         public static JavaDocInfo of(
@@ -315,28 +346,30 @@ public class JavaDocAnalyzer {
             List<ExampleInfo> examples,
             String backgroundColor
         ) {
-            return new JavaDocInfo(description, parameters, Collections.emptyList(), examples, Optional.ofNullable(backgroundColor));
+            return new JavaDocInfo(description, parameters, Collections.emptyList(), Optional.empty(), examples, Optional.ofNullable(backgroundColor));
         }
         
         /**
          * JavaDocInfo作成 - ファクトリメソッド（基本版）
          */
         public static JavaDocInfo of(String description) {
-            return new JavaDocInfo(description, Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Optional.empty());
+            return new JavaDocInfo(description, Collections.emptyList(), Collections.emptyList(), Optional.empty(), Collections.emptyList(), Optional.empty());
         }
         
         // Getters
         public String getDescription() { return description; }
         public List<ParameterInfo> getParameters() { return parameters; }
         public List<ModelInfo> getModels() { return models; }
+        public String getFragmentName() { return fragmentName.orElse(""); }
+        public Optional<String> getFragmentNameOptional() { return fragmentName; }
         public List<ExampleInfo> getExamples() { return examples; }
         public String getBackgroundColor() { return backgroundColor.orElse(""); }
         public Optional<String> getBackgroundColorOptional() { return backgroundColor; }
         
         @Override
         public String toString() {
-            return String.format("JavaDocInfo{description='%s', parameters=%d, models=%d, examples=%d, background='%s'}",
-                               description, parameters.size(), models.size(), examples.size(), backgroundColor.orElse(""));
+            return String.format("JavaDocInfo{description='%s', parameters=%d, models=%d, fragment='%s', examples=%d, background='%s'}",
+                               description, parameters.size(), models.size(), fragmentName.orElse(""), examples.size(), backgroundColor.orElse(""));
         }
     }
 

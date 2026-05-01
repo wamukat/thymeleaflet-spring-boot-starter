@@ -131,6 +131,7 @@ thymeleaflet:
 /**
  * 会員情報詳細表示（memberDetail）
  *
+ * @fragment memberDetail
  * @param variant {@code String} [optional=standard] 表示バリアント
  * @model memberProfile {@code List<Map<String, Object>>} [required] 会員情報モデル
  * @example <div th:replace="~{domain/member/organisms/member-profile :: memberDetail()}"></div>
@@ -138,6 +139,9 @@ thymeleaflet:
  */
 -->
 ```
+
+説明文にフラグメント名を含めない場合（日本語などのローカライズされた説明文）は、`@fragment <name>` で
+JavaDoc とフラグメントを明示的に対応付けられます。未指定の場合は従来どおり `@example` と説明文で照合します。
 
 ## フラグメントシグネチャ解析ポリシー
 

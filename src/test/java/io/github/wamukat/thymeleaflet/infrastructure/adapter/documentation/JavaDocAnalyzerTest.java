@@ -272,6 +272,35 @@ class JavaDocAnalyzerTest {
     }
 
     @Test
+    @DisplayName("@fragmentタグから明示的なフラグメント名を解析できる")
+    void shouldParseFragmentTag() {
+        // Given
+        String htmlContent = """
+            <!--
+            /**
+             * 会員情報パネル（HTMX パーシャル）
+             *
+             * @fragment myPanel
+             * @model field1 {@code String} [required] フィールド1
+             */
+            -->
+            <section th:fragment="myPanel">Panel</section>
+            """;
+
+        // When
+        List<JavaDocAnalyzer.JavaDocInfo> result = analyzer.analyzeJavaDocFromHtml(htmlContent);
+
+        // Then
+        assertThat(result).hasSize(1);
+        JavaDocAnalyzer.JavaDocInfo docInfo = result.get(0);
+        assertThat(docInfo.getDescription()).isEqualTo("会員情報パネル（HTMX パーシャル）");
+        assertThat(docInfo.getFragmentNameOptional()).contains("myPanel");
+        assertThat(docInfo.getModels()).singleElement()
+            .extracting(JavaDocAnalyzer.ModelInfo::getDescription)
+            .isEqualTo("フィールド1");
+    }
+
+    @Test
     @DisplayName("@exampleタグでth:blockと引数なしフラグメントを解析できる")
     void shouldParseThBlockAndNoArgumentExamples() {
         // Given

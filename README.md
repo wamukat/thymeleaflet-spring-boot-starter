@@ -136,6 +136,7 @@ Thymeleaflet parses JavaDoc-style comments embedded in HTML templates. Example:
 /**
  * Member detail (memberDetail)
  *
+ * @fragment memberDetail
  * @param variant {@code String} [optional=standard] Display variant
  * @model memberProfile {@code List<Map<String, Object>>} [required] Member model
  * @example <div th:replace="~{domain/member/organisms/member-profile :: memberDetail()}"></div>
@@ -143,6 +144,9 @@ Thymeleaflet parses JavaDoc-style comments embedded in HTML templates. Example:
  */
 -->
 ```
+
+Use `@fragment <name>` to bind JavaDoc explicitly to a fragment when the description does not include the fragment name,
+for example in localized documentation. If omitted, Thymeleaflet falls back to `@example` and description matching.
 
 ## Fragment Signature Parsing Policy
 
