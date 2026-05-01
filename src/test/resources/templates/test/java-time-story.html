@@ -26,3 +26,33 @@
     <time th:text="${#temporals.format(item.publishedAt, 'yyyy-MM-dd HH:mm')}">Date</time>
   </article>
 </section>
+
+<!--
+/**
+ * Unread notices with Java time model values under view.
+ *
+ * @fragment unreadNoticeList
+ * @model unreadNotices[].publishedAt {@code java.time.LocalDateTime} [required] Published date
+ */
+-->
+<section th:fragment="unreadNoticeList()">
+  <article th:each="notice : ${view.unreadNotices}">
+    <h3 th:text="${notice.title}">Notice</h3>
+    <time th:text="${#temporals.format(notice.publishedAt, 'yyyy-MM-dd HH:mm')}">Date</time>
+  </article>
+</section>
+
+<!--
+/**
+ * Nested content list with Java time model values under view.
+ *
+ * @fragment contentList
+ * @model contentList.items[].publishedAt {@code java.time.LocalDateTime} [required] Published date
+ */
+-->
+<section th:fragment="contentList()">
+  <article th:each="item : ${view.contentList.items}">
+    <h3 th:text="${item.title}">Content</h3>
+    <time th:text="${#temporals.format(item.publishedAt, 'yyyy-MM-dd HH:mm')}">Date</time>
+  </article>
+</section>

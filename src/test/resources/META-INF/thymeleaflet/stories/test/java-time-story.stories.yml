@@ -17,3 +17,26 @@ storyGroups:
                 publishedAt: "2024-06-01T10:00:00"
               - title: Notice 2
                 publishedAt: "2024-06-02T11:30:00"
+  unreadNoticeList:
+    stories:
+      - name: default
+        title: Default
+        model:
+          view:
+            unreadNotices:
+              - title: Unread 1
+                publishedAt: "2024-07-01T08:15:00"
+              - title: Unread 2
+                publishedAt: "2024-07-02T09:45:00"
+  contentList:
+    stories:
+      - name: default
+        title: Default
+        model:
+          view:
+            contentList:
+              items:
+                - title: Content 1
+                  publishedAt: "2024-05-15T09:00:00"
+                - title: Content 2
+                  publishedAt: "2024-05-16T10:30:00"
