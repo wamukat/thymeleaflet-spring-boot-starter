@@ -10,24 +10,33 @@ const healthUrl = new URL('/thymeleaflet', baseUrl);
 
 let sampleProcess;
 let stopping = false;
+let shutdownMethod = 'none';
 
 async function main() {
   await runCommand(npmCommand, ['run', 'verify:starter']);
 
   sampleProcess = spawn(npmCommand, ['run', 'sample:start'], {
-    stdio: 'inherit',
+    stdio: ['ignore', 'pipe', 'pipe'],
     detached: !isWindows,
   });
+  forwardSampleOutput(sampleProcess);
 
   sampleProcess.on('exit', (code, signal) => {
+    if (isSuccessfulSampleStop({ stopping, shutdownMethod, code, signal })) {
+      return;
+    }
     if (!stopping) {
       console.error(`sample:start exited before E2E completed (code=${code}, signal=${signal})`);
       process.exitCode = code || 1;
+      return;
     }
+    console.error(`sample:start exited unexpectedly during shutdown (code=${code}, signal=${signal})`);
+    process.exitCode = code || 1;
   });
 
   await waitForSample(healthUrl, 90_000);
   await runCommand(npmCommand, ['run', 'test:e2e']);
+  console.log('\nLocal E2E completed successfully. Stopping sample app...');
 }
 
 function runCommand(command, args) {
@@ -73,14 +82,46 @@ function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function forwardSampleOutput(child) {
+  child.stdout?.on('data', (chunk) => {
+    if (shouldForwardSampleOutput(stopping)) {
+      process.stdout.write(chunk);
+    }
+  });
+  child.stderr?.on('data', (chunk) => {
+    if (shouldForwardSampleOutput(stopping)) {
+      process.stderr.write(chunk);
+    }
+  });
+}
+
+function shouldForwardSampleOutput(isStopping) {
+  return !isStopping;
+}
+
+function isSuccessfulSampleStop({ stopping: isStopping, shutdownMethod: method, code, signal }) {
+  if (!isStopping) {
+    return false;
+  }
+  if (method === 'sigterm') {
+    return code === 143 || signal === 'SIGTERM';
+  }
+  if (method === 'taskkill') {
+    return code === 1 || code === 128 || signal === null;
+  }
+  return false;
+}
+
 function stopSample() {
   if (!sampleProcess || sampleProcess.exitCode !== null || stopping) {
     return;
   }
   stopping = true;
   if (isWindows) {
+    shutdownMethod = 'taskkill';
     spawn('taskkill', ['/pid', String(sampleProcess.pid), '/t', '/f'], { stdio: 'ignore' });
   } else {
+    shutdownMethod = 'sigterm';
     process.kill(-sampleProcess.pid, 'SIGTERM');
   }
 }
@@ -95,11 +136,18 @@ process.on('SIGTERM', () => {
   process.exit(143);
 });
 
-main()
-  .catch((error) => {
-    console.error(error.message);
-    process.exitCode = 1;
-  })
-  .finally(() => {
-    stopSample();
-  });
+if (require.main === module) {
+  main()
+    .catch((error) => {
+      console.error(error.message);
+      process.exitCode = 1;
+    })
+    .finally(() => {
+      stopSample();
+    });
+}
+
+module.exports = {
+  isSuccessfulSampleStop,
+  shouldForwardSampleOutput,
+};
