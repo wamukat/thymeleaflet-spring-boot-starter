@@ -71,7 +71,7 @@ public class FragmentMainContentService {
      */
     public MainContentResult setupMainContent(Model model) {
         long startTime = System.currentTimeMillis();
-        logger.info("=== Main Content (Delayed Loading) START ===");
+        logger.debug("=== Main Content (Delayed Loading) START ===");
         
         try {
             // 完全なフラグメント情報を取得・処理
@@ -114,7 +114,7 @@ public class FragmentMainContentService {
             previewConfigService.applyPreviewConfig(model);
             
             long totalTime = System.currentTimeMillis() - startTime;
-            logger.info("=== Main Content (Delayed Loading) COMPLETED in {} ms ===", totalTime);
+            logger.debug("=== Main Content (Delayed Loading) COMPLETED in {} ms ===", totalTime);
             
             return MainContentResult.success(allFragments.size(), totalTime);
             

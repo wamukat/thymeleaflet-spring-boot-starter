@@ -49,14 +49,14 @@ public class FragmentListController {
     })
     public String fragmentList(Model model) {
         long startTime = System.currentTimeMillis();
-        logger.info("=== Fragment List (Placeholder Optimized) START ===");
+        logger.debug("=== Fragment List (Placeholder Optimized) START ===");
         model.addAttribute("thymeleafletVersion", thymeleafletVersionResolver.resolve());
         model.addAttribute("basePath", resolvedStorybookConfig.getBasePath());
         
         // 初期レンダリング時は重い処理をスキップ - フラグメント発見のみ実行
         List<FragmentDiscoveryService.FragmentInfo> fragments = fragmentDiscoveryService.discoverFragments();
         int totalCount = fragments.size();
-        logger.info("Fragment discovery using direct service: {} fragments", totalCount);
+        logger.debug("Fragment discovery using direct service: {} fragments", totalCount);
         
         // 基本的なフラグメント発見（エラーハンドリングは簡略化）
         if (fragments.isEmpty()) {
@@ -87,7 +87,7 @@ public class FragmentListController {
         model.addAttribute("uniquePaths", uniquePaths);
         
         long totalTime = System.currentTimeMillis() - startTime;
-        logger.info("=== Fragment List (Placeholder Optimized) COMPLETED in {} ms ===", totalTime);
+        logger.debug("=== Fragment List (Placeholder Optimized) COMPLETED in {} ms ===", totalTime);
         
         return "thymeleaflet/fragment-list";
     }

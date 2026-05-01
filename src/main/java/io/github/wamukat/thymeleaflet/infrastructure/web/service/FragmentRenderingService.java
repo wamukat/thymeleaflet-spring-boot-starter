@@ -30,21 +30,21 @@ import java.util.regex.Pattern;
 
 /**
  * フラグメント動的レンダリング処理専用サービス
- * 
+ *
  * 責務: Thymeleafフラグメントの動的レンダリング詳細処理
  * FragmentRenderingController肥大化問題解決のためのInfrastructure層サービス抽出
  */
 @Component
 public class FragmentRenderingService {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(FragmentRenderingService.class);
-    
+
     private final ValidationUseCase validationUseCase;
-    
+
     private final StoryRetrievalUseCase storyRetrievalUseCase;
-    
+
     private final StoryParameterUseCase storyParameterUseCase;
-    
+
     private final SecurePathConversionService securePathConversionService;
 
     private final ThymeleafFragmentRenderer thymeleafFragmentRenderer;
@@ -74,12 +74,12 @@ public class FragmentRenderingService {
         this.resourceLoader = resourceLoader;
         this.fragmentModelInferenceService = fragmentModelInferenceService;
     }
-    
+
     /**
      * ストーリー動的レンダリング処理
-     * 
+     *
      * セキュリティ変換、ストーリー取得、パラメータ設定、テンプレート参照生成を実行
-     * 
+     *
      * @param templatePath テンプレートパス (エンコード済み)
      * @param fragmentName フラグメント名
      * @param storyName ストーリー名
@@ -98,37 +98,37 @@ public class FragmentRenderingService {
                                        Map<String, Object> modelOverrides,
                                        Map<String, Object> methodReturnsOverrides) {
         try {
-            logger.info("=== RENDER STORY START ===");
-            logger.info("Request params: templatePath={}, fragmentName={}, storyName={}", 
+            logger.debug("=== RENDER STORY START ===");
+            logger.debug("Request params: templatePath={}, fragmentName={}, storyName={}",
                        templatePath, fragmentName, storyName);
 
             PreviewWarningRecorder.clear();
-            
+
             // セキュアパス変換を使用してテンプレートパスを復元
-            SecurePathConversionService.SecurityConversionResult conversionResult = 
+            SecurePathConversionService.SecurityConversionResult conversionResult =
                 securePathConversionService.convertSecurePath(templatePath, model);
             if (!conversionResult.succeeded()) {
                 return RenderingResult.error(conversionResult.templateReference()
                     .orElse("thymeleaflet/fragments/error-display :: error(type='danger')"));
             }
             String fullTemplatePath = conversionResult.fullTemplatePath().orElseThrow();
-            logger.info("Full template path: {}", fullTemplatePath);
-        
+            logger.debug("Full template path: {}", fullTemplatePath);
+
             // 対象ストーリーを取得
             Optional<FragmentStoryInfo> storyInfoOptional = storyRetrievalUseCase
                 .getStory(fullTemplatePath, fragmentName, storyName);
-            
-            logger.info("=== Story Config Debug ===");
-            logger.info("Story Info: {}", storyInfoOptional.orElse(null));
-            
+
+            logger.debug("=== Story Config Debug ===");
+            logger.debug("Story Info: {}", storyInfoOptional.orElse(null));
+
             if (storyInfoOptional.isEmpty()) {
-                logger.info("Story info is null, returning error");
+                logger.debug("Story info is null, returning error");
                 return RenderingResult.error("thymeleaflet/fragments/error-display :: error(type='info', title=null, message=null, showActionButton=true, actionText=null, actionScript=null, templatePath=null)");
             }
             FragmentStoryInfo storyInfo = storyInfoOptional.orElseThrow();
-            
-            logger.info("Has Story Config: {}", storyInfo.hasStoryConfig());
-            logger.info("Fragment Type: {}", storyInfo.getFragmentSummary().getType());
+
+            logger.debug("Has Story Config: {}", storyInfo.hasStoryConfig());
+            logger.debug("Fragment Type: {}", storyInfo.getFragmentSummary().getType());
 
             Map<String, Object> storyModel = storyInfo.getModel();
             if (storyModel.isEmpty()) {
@@ -161,7 +161,7 @@ public class FragmentRenderingService {
                 );
                 if (!inferredMethodReturns.isEmpty()) {
                     deepMergeWithOverride(mergedMethodReturns, inferredMethodReturns);
-                    logger.info("Applied inferred methodReturns values: {}", mergedMethodReturns.keySet());
+                    logger.debug("Applied inferred methodReturns values: {}", mergedMethodReturns.keySet());
                 }
             }
 
@@ -171,25 +171,25 @@ public class FragmentRenderingService {
                 for (String path : conflictPaths) {
                     recordMethodReturnConflictWarning(path);
                 }
-                logger.info("Applied methodReturns values: {}", mergedMethodReturns.keySet());
+                logger.debug("Applied methodReturns values: {}", mergedMethodReturns.keySet());
             }
 
             if (!mergedModel.isEmpty()) {
                 for (Map.Entry<String, Object> entry : mergedModel.entrySet()) {
                     model.addAttribute(entry.getKey(), thymeleafFragmentRenderer.resolveTemplateValue(entry.getValue()));
                 }
-                logger.info("Applied story model values: {}", mergedModel.keySet());
+                logger.debug("Applied story model values: {}", mergedModel.keySet());
             }
-            
+
             // SIMPLEフラグメント（パラメータなし）の場合はstories.ymlは不要
             if (storyInfo.getFragmentSummary().getType() == FragmentDomainService.FragmentType.SIMPLE) {
-                logger.info("SIMPLE fragment detected, skipping stories.yml requirement");
-                
+                logger.debug("SIMPLE fragment detected, skipping stories.yml requirement");
+
                 // クライアントサイド色判定のため、SIMPLEフラグメントも直接レンダリング
-                String templateRef = String.format("%s :: %s", 
-                    storyInfo.getFragmentSummary().getTemplatePath(), 
+                String templateRef = String.format("%s :: %s",
+                    storyInfo.getFragmentSummary().getTemplatePath(),
                     storyInfo.getFragmentSummary().getFragmentName());
-                logger.info("Rendering SIMPLE fragment with template reference: {}", templateRef);
+                logger.debug("Rendering SIMPLE fragment with template reference: {}", templateRef);
                 return RenderingResult.success(templateRef);
             }
 
@@ -198,11 +198,11 @@ public class FragmentRenderingService {
                 String templateRef = String.format("%s :: %s",
                     storyInfo.getFragmentSummary().getTemplatePath(),
                     storyInfo.getFragmentSummary().getFragmentName());
-                logger.info("No-parameter fragment detected (type: {}), rendering directly: {}",
+                logger.debug("No-parameter fragment detected (type: {}), rendering directly: {}",
                     storyInfo.getFragmentSummary().getType(), templateRef);
                 return RenderingResult.success(templateRef);
             }
-            
+
             // PARAMETERIZEDフラグメントの場合、ストーリー設定またはJavaDocフォールバックを試行
             Map<String, Object> parameters = storyParameterUseCase.getParametersForStory(storyInfo);
             Map<String, Object> mergedParameters = new HashMap<>(parameters);
@@ -225,76 +225,76 @@ public class FragmentRenderingService {
                     "thymeleaflet/fragments/error-display :: error(type='info', title=null, message=null, showActionButton=false, actionText=null, actionScript=null, templatePath=null)"
                 );
             }
-            
+
             if (mergedParameters.isEmpty() && mergedModel.isEmpty()) {
                 // Stories YAMLファイルもJavaDocも利用できない場合はエラー表示
                 model.addAttribute("fragmentName", fragmentName);
                 model.addAttribute("templatePath", fullTemplatePath);
-                logger.info("No parameters available from stories.yml or JavaDoc fallback");
+                logger.debug("No parameters available from stories.yml or JavaDoc fallback");
                 return RenderingResult.error("thymeleaflet/fragments/error-display :: error(type='warning', title=null, message=null, showActionButton=false, actionText=null, actionScript=null, templatePath=null)");
             }
-            
-            logger.info("Parameters obtained: {} (from {})", mergedParameters, 
+
+            logger.debug("Parameters obtained: {} (from {})", mergedParameters,
                        storyInfo.hasStoryConfig() ? "stories.yml" : "JavaDoc fallback");
-            
+
             // ストーリーのパラメータを設定
-            logger.info("=== PARAMETER SETTING START ===");
+            logger.debug("=== PARAMETER SETTING START ===");
             for (Map.Entry<String, Object> entry : mergedParameters.entrySet()) {
-                logger.info("Setting parameter: {} = {} (type: {})", 
-                           entry.getKey(), entry.getValue(), 
+                logger.debug("Setting parameter: {} = {} (type: {})",
+                           entry.getKey(), entry.getValue(),
                            classNameOf(entry.getValue()));
                 model.addAttribute(entry.getKey(), thymeleafFragmentRenderer.resolveTemplateValue(entry.getValue()));
             }
-            
+
             // 追加のモックデータを設定
-            logger.info("=== MOCK DATA SETUP ===");
+            logger.debug("=== MOCK DATA SETUP ===");
             validationUseCase.setupFragmentValidationData(new ValidationUseCase.ValidationCommand(
                 storyInfo.getFragmentSummary().getTemplatePath(),
                 storyInfo.getFragmentSummary().getFragmentName(),
                 storyInfo.getStoryName()
             ));
-            
+
             // デバッグログ
-            String templateRef = String.format("%s :: %s", 
-                storyInfo.getFragmentSummary().getTemplatePath(), 
+            String templateRef = String.format("%s :: %s",
+                storyInfo.getFragmentSummary().getTemplatePath(),
                 storyInfo.getFragmentSummary().getFragmentName());
-            logger.info("=== Fragment Render Debug ===");
-            logger.info("Template Reference: {}", templateRef);
-            logger.info("Fragment Name: {}", storyInfo.getFragmentSummary().getFragmentName());
-            logger.info("Template Path: {}", storyInfo.getFragmentSummary().getTemplatePath());
-            logger.info("Story Name: {}", storyName);
-            logger.info("Model attributes: {}", model.asMap().keySet());
-            logger.info("All model values: {}", model.asMap());
-            
+            logger.debug("=== Fragment Render Debug ===");
+            logger.debug("Template Reference: {}", templateRef);
+            logger.debug("Fragment Name: {}", storyInfo.getFragmentSummary().getFragmentName());
+            logger.debug("Template Path: {}", storyInfo.getFragmentSummary().getTemplatePath());
+            logger.debug("Story Name: {}", storyName);
+            logger.debug("Model attributes: {}", model.asMap().keySet());
+            logger.debug("All model values: {}", model.asMap());
+
             try {
-                logger.info("=== TEMPLATE RENDERING ATTEMPT ===");
-                logger.info("About to render template: {}", templateRef);
-                
+                logger.debug("=== TEMPLATE RENDERING ATTEMPT ===");
+                logger.debug("About to render template: {}", templateRef);
+
                 // クライアントサイド色判定のため、直接フラグメントをレンダリング
-                logger.info("Template rendering successful, returning: {}", templateRef);
+                logger.debug("Template rendering successful, returning: {}", templateRef);
                 return RenderingResult.success(templateRef);
             } catch (Exception e) {
                 logger.error("=== TEMPLATE RENDERING FAILED ===");
                 logger.error("Template Reference: {}", templateRef);
                 logger.error("Exception: {}", e.getMessage(), e);
-                
+
                 // エラー時は適切なエラーメッセージを表示
                 model.addAttribute("fragmentName", fragmentName);
                 model.addAttribute("templatePath", fullTemplatePath);
                 model.addAttribute("errorMessage", e.getMessage());
                 return RenderingResult.error("thymeleaflet/fragments/error-display :: error(type='warning', title=null, message=null, showActionButton=false, actionText=null, actionScript=null, templatePath=null)");
             }
-            
+
         } catch (Exception globalException) {
             // エラーハンドリング（簡素化版）
-            logger.error("Rendering error for {}::{}::{}: {}", 
+            logger.error("Rendering error for {}::{}::{}: {}",
                 templatePath, fragmentName, storyName, globalException.getMessage(), globalException);
-            
+
             model.addAttribute("error", "レンダリングエラーが発生しました: " + globalException.getMessage());
             model.addAttribute("templatePath", templatePath);
             model.addAttribute("fragmentName", fragmentName);
             model.addAttribute("storyName", storyName);
-            
+
             return RenderingResult.error("thymeleaflet/fragments/error-display :: error(type='danger')");
         }
     }
@@ -431,20 +431,20 @@ public class FragmentRenderingService {
     public static class RenderingResult {
         private final boolean succeeded;
         private final Optional<String> templateReference;
-        
+
         private RenderingResult(boolean succeeded, Optional<String> templateReference) {
             this.succeeded = succeeded;
             this.templateReference = templateReference;
         }
-        
+
         public static RenderingResult success(String templateReference) {
             return new RenderingResult(true, Optional.of(templateReference));
         }
-        
+
         public static RenderingResult error(String templateReference) {
             return new RenderingResult(false, Optional.of(templateReference));
         }
-        
+
         public boolean succeeded() { return succeeded; }
         public Optional<String> templateReference() { return templateReference; }
     }

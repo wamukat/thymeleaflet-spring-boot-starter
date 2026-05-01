@@ -80,7 +80,7 @@ public class FragmentJsonService {
             Object firstElement = fragmentList.get(0);
             if (firstElement instanceof FragmentDiscoveryService.FragmentInfo) {
                 // FragmentInfo型の場合、FragmentSummaryに変換
-                logger.info("Converting FragmentInfo list to FragmentSummary list");
+                logger.debug("Converting FragmentInfo list to FragmentSummary list");
                 @SuppressWarnings("unchecked")
                 List<FragmentDiscoveryService.FragmentInfo> infraFragments = (List<FragmentDiscoveryService.FragmentInfo>) fragmentList;
                 fragmentSummaryList = infraFragments.stream()
@@ -88,7 +88,7 @@ public class FragmentJsonService {
                     .collect(Collectors.toList());
             } else if (firstElement instanceof FragmentSummary) {
                 // 既にFragmentSummary型の場合
-                logger.info("Using existing FragmentSummary list");
+                logger.debug("Using existing FragmentSummary list");
                 @SuppressWarnings("unchecked")
                 List<FragmentSummary> summaryList = (List<FragmentSummary>) fragmentList;
                 fragmentSummaryList = summaryList;

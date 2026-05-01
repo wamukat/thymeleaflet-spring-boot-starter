@@ -80,7 +80,7 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
         command.getModel().addAttribute("defaultStory", result.defaultStory().orElse(null));
         command.getModel().addAttribute("defaultParameters", result.defaultParameters().orElse(Map.of()));
 
-        logger.info("setupStoryContentData completed for {}::{}::{}", command.getFullTemplatePath(), command.getFragmentName(), command.getStoryName());
+        logger.debug("setupStoryContentData completed for {}::{}::{}", command.getFullTemplatePath(), command.getFragmentName(), command.getStoryName());
 
         return PageSetupResponse.success();
     }

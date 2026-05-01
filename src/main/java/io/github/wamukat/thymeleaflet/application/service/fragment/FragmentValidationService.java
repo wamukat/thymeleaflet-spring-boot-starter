@@ -20,7 +20,7 @@ public class FragmentValidationService implements ValidationUseCase {
 
     @Override
     public void validateStoryRequest(ValidationCommand command) {
-        logger.info("Validating story request: {}", command.getTarget().orElse("unknown"));
+        logger.debug("Validating story request: {}", command.getTarget().orElse("unknown"));
         
         // ストーリーリクエストの検証ロジック
         if (command.getTemplatePath().isEmpty() || command.getTemplatePath().orElseThrow().trim().isEmpty()) {
@@ -33,16 +33,16 @@ public class FragmentValidationService implements ValidationUseCase {
             throw new IllegalArgumentException("Story name cannot be null or empty");
         }
         
-        logger.info("Story request validation passed for: {}", command.getTarget().orElse("unknown"));
+        logger.debug("Story request validation passed for: {}", command.getTarget().orElse("unknown"));
     }
 
     @Override
     public void setupFragmentValidationData(ValidationCommand command) {
-        logger.info("Setting up fragment validation data for: {}", command.getTarget().orElse("unknown"));
+        logger.debug("Setting up fragment validation data for: {}", command.getTarget().orElse("unknown"));
         
         // フラグメント検証データのセットアップ（プレースホルダー実装）
         // 現在は特に処理なし - 必要に応じて将来拡張
         
-        logger.info("Fragment validation data setup completed for: {}", command.getTarget().orElse("unknown"));
+        logger.debug("Fragment validation data setup completed for: {}", command.getTarget().orElse("unknown"));
     }
 }
