@@ -184,6 +184,38 @@ class ThymeleafletRenderingExceptionHandlerIntegrationTest {
     }
 
     @Test
+    @DisplayName("parser corpus の name() 形式 no-arg fragment 参照を描画できる")
+    void shouldRenderNoArgReferenceRegressionFixture() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/regression.parser-corpus/noArgReferenceShell/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Corpus topbar OK"),
+            "parser corpus の no-arg fragment を name() 形式で描画できること");
+        assertFalse(body.contains("Preview error"),
+            "no-arg parser corpus fixture がプレビューエラーにならないこと");
+    }
+
+    @Test
+    @DisplayName("parser corpus の nested fragment fixture を描画できる")
+    void shouldRenderNestedFragmentRegressionFixture() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/regression.parser-corpus/nestedFragmentShell/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Nested Label"),
+            "nested fragment fixture の子 fragment 参照を描画できること");
+        assertFalse(body.contains("Preview error"),
+            "nested parser corpus fixture がプレビューエラーにならないこと");
+    }
+
+    @Test
     @DisplayName("Map no-arg メソッドが未解決でも /render は継続し警告ヘッダーを返す")
     void shouldRenderWithWarningsForUnresolvedMapNoArgMethods() throws Exception {
         var mvcResult = mockMvc.perform(get("/thymeleaflet/test.map-noarg-warning/methodWarning/default/render")

@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.domain.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
 import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
+import io.github.wamukat.thymeleaflet.testsupport.FixtureResources;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -248,5 +249,23 @@ class TemplateModelExpressionAnalyzerTest {
             .doesNotContain(ModelPath.of(List.of("key")))
             .doesNotContain(ModelPath.of(List.of("view", "map", "label")))
             .doesNotContain(ModelPath.of(List.of("view", "items", "name")));
+    }
+
+    @Test
+    void shouldAnalyzeRealRegressionCorpusFixture() {
+        String html = FixtureResources.text("templates/regression/parser-corpus.html");
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "items")))
+            .contains(ModelPath.of(List.of("item", "label")))
+            .contains(ModelPath.of(List.of("view", "label")))
+            .contains(ModelPath.of(List.of("view", "nested", "title")))
+            .contains(ModelPath.of(List.of("view", "malformed", "label")));
+        assertThat(snapshot.loopVariablePaths())
+            .containsEntry("item", ModelPath.of(List.of("view", "items")));
+        assertThat(snapshot.referencedTemplatePathsWithRecursionFlags())
+            .containsEntry("regression/parser-corpus", true);
     }
 }

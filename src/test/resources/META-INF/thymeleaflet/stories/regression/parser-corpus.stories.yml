@@ -15,3 +15,15 @@ storyGroups:
         model:
           view:
             label: Quoted Label
+  noArgReferenceShell:
+    stories:
+      - name: default
+        title: no-arg reference
+  nestedFragmentShell:
+    stories:
+      - name: default
+        title: nested fragment shell
+        model:
+          view:
+            nested:
+              title: Nested Label
