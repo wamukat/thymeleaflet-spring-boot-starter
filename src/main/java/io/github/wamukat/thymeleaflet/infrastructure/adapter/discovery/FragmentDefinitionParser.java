@@ -1,28 +1,43 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
+import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 import org.springframework.stereotype.Component;
 
 @Component
 public class FragmentDefinitionParser {
 
-    private static final Pattern FRAGMENT_PATTERN = Pattern.compile(
-        "th:fragment\\s*=\\s*[\"']([^\"']+)[\"']"
-    );
+    private static final Set<String> FRAGMENT_ATTRIBUTES = Set.of("th:fragment", "data-th-fragment");
+
+    private final StructuredTemplateParser templateParser;
+
+    public FragmentDefinitionParser() {
+        this(new StructuredTemplateParser());
+    }
+
+    FragmentDefinitionParser(StructuredTemplateParser templateParser) {
+        this.templateParser = templateParser;
+    }
 
     public List<FragmentDefinition> parseTemplate(String templatePath, String content) {
         Objects.requireNonNull(templatePath, "templatePath cannot be null");
         Objects.requireNonNull(content, "content cannot be null");
         List<FragmentDefinition> definitions = new ArrayList<>();
-        Matcher matcher = FRAGMENT_PATTERN.matcher(content);
+        StructuredTemplateParser.ParsedTemplate template = templateParser.parse(content);
 
-        while (matcher.find()) {
-            definitions.add(new FragmentDefinition(templatePath, matcher.group(1)));
+        for (StructuredTemplateParser.TemplateElement element : template.elements()) {
+            for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                String name = attribute.name().toLowerCase(Locale.ROOT);
+                if (attribute.hasValue() && FRAGMENT_ATTRIBUTES.contains(name)) {
+                    definitions.add(new FragmentDefinition(templatePath, attribute.value()));
+                }
+            }
         }
 
         return List.copyOf(definitions);
