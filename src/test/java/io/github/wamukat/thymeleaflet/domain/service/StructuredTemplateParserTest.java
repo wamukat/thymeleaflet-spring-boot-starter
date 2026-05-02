@@ -207,6 +207,39 @@ class StructuredTemplateParserTest {
             );
     }
 
+    @Test
+    void parseWithDiagnostics_shouldWarnForDynamicFragmentReferences() {
+        String html = """
+            <section>
+              <div th:replace="${dynamicReference}"></div>
+              <div data-th-insert="~{components/card :: card()}"></div>
+            </section>
+            """;
+
+        StructuredTemplateParser.TemplateParseResult result = parser.parseWithDiagnostics(html);
+
+        assertThat(result.parsedTemplate().elements())
+            .extracting(StructuredTemplateParser.TemplateElement::name)
+            .containsExactly("section", "div", "div");
+        assertThat(result.diagnostics()).singleElement()
+            .satisfies(diagnostic -> {
+                assertThat(diagnostic.code()).isEqualTo("TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED");
+                assertThat(diagnostic.message()).contains("th:replace");
+                assertThat(diagnostic.line()).isGreaterThan(0);
+                assertThat(diagnostic.column()).isGreaterThan(0);
+            });
+    }
+
+    @Test
+    void parseWithDiagnostics_shouldReturnNoWarningsForStaticMarkup() {
+        StructuredTemplateParser.TemplateParseResult result = parser.parseWithDiagnostics("""
+            <section th:replace="~{components/card :: card()}">Card</section>
+            """);
+
+        assertThat(result.parsedTemplate().elements()).hasSize(1);
+        assertThat(result.diagnostics()).isEmpty();
+    }
+
     private static java.util.List<String> fragmentDefinitions(StructuredTemplateParser.ParsedTemplate parsed) {
         return parsed.elements().stream()
             .flatMap(element -> element.attributeValue("th:fragment").stream())

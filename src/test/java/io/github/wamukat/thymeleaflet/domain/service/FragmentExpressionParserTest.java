@@ -49,4 +49,34 @@ class FragmentExpressionParserTest {
         assertThat(parser.parse("~{components/card :: card(label=${view.title)}")).isEmpty();
         assertThat(parser.parse("~{${dynamicPath} :: card()}")).isEmpty();
     }
+
+    @Test
+    void parseWithDiagnostics_shouldReturnNoWarningsForValidExpression() {
+        FragmentExpressionParser.FragmentExpressionParseResult result =
+            parser.parseWithDiagnostics("~{components/card :: card(title='Hello')}");
+
+        assertThat(result.expression()).isPresent();
+        assertThat(result.diagnostics()).isEmpty();
+    }
+
+    @Test
+    void parseWithDiagnostics_shouldWarnForMalformedAndDynamicExpressions() {
+        FragmentExpressionParser.FragmentExpressionParseResult malformed =
+            parser.parseWithDiagnostics("~{components/card}");
+        FragmentExpressionParser.FragmentExpressionParseResult dynamic =
+            parser.parseWithDiagnostics("${dynamicRef}");
+
+        assertThat(malformed.expression()).isEmpty();
+        assertThat(malformed.diagnostics()).singleElement()
+            .satisfies(diagnostic -> {
+                assertThat(diagnostic.code()).isEqualTo("FRAGMENT_EXPRESSION_MALFORMED");
+                assertThat(diagnostic.message()).contains("components/card");
+            });
+        assertThat(dynamic.expression()).isEmpty();
+        assertThat(dynamic.diagnostics()).singleElement()
+            .satisfies(diagnostic -> {
+                assertThat(diagnostic.code()).isEqualTo("FRAGMENT_EXPRESSION_DYNAMIC");
+                assertThat(diagnostic.message()).contains("dynamicRef");
+            });
+    }
 }

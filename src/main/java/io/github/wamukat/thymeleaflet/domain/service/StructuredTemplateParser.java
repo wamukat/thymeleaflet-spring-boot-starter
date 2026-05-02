@@ -30,6 +30,67 @@ public class StructuredTemplateParser {
         return handler.toParsedTemplate();
     }
 
+    public TemplateParseResult parseWithDiagnostics(String html) {
+        Objects.requireNonNull(html, "html cannot be null");
+        try {
+            ParsedTemplate parsedTemplate = parse(html);
+            return new TemplateParseResult(parsedTemplate, diagnosticsFor(parsedTemplate));
+        } catch (IllegalArgumentException parseFailure) {
+            return new TemplateParseResult(
+                new ParsedTemplate(List.of(), List.of(), List.of()),
+                List.of(ParserDiagnostic.warning("TEMPLATE_MARKUP_MALFORMED", diagnosticMessage(parseFailure)))
+            );
+        }
+    }
+
+    private String diagnosticMessage(Exception failure) {
+        String message = failure.getMessage();
+        if (message == null || message.isBlank()) {
+            return failure.getClass().getSimpleName();
+        }
+        return message;
+    }
+
+    private List<ParserDiagnostic> diagnosticsFor(ParsedTemplate parsedTemplate) {
+        List<ParserDiagnostic> diagnostics = new ArrayList<>();
+        for (TemplateElement element : parsedTemplate.elements()) {
+            for (TemplateAttribute attribute : element.attributes()) {
+                if (isFragmentReferenceAttribute(attribute) && isDynamicSyntax(attribute.value())) {
+                    diagnostics.add(new ParserDiagnostic(
+                        "TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED",
+                        "Dynamic fragment reference was skipped in `" + attribute.name() + "`",
+                        attribute.line(),
+                        attribute.column()
+                    ));
+                }
+            }
+        }
+        return diagnostics;
+    }
+
+    private boolean isFragmentReferenceAttribute(TemplateAttribute attribute) {
+        String normalized = attribute.name().toLowerCase(Locale.ROOT);
+        return attribute.hasValue()
+            && (normalized.equals("th:replace")
+            || normalized.equals("th:insert")
+            || normalized.equals("th:include")
+            || normalized.equals("data-th-replace")
+            || normalized.equals("data-th-insert")
+            || normalized.equals("data-th-include"));
+    }
+
+    private boolean isDynamicSyntax(String value) {
+        String trimmed = value.trim();
+        return trimmed.startsWith("${") || trimmed.startsWith("*{") || trimmed.startsWith("#{");
+    }
+
+    public record TemplateParseResult(ParsedTemplate parsedTemplate, List<ParserDiagnostic> diagnostics) {
+        public TemplateParseResult {
+            parsedTemplate = Objects.requireNonNull(parsedTemplate, "parsedTemplate cannot be null");
+            diagnostics = List.copyOf(diagnostics);
+        }
+    }
+
     public record ParsedTemplate(List<TemplateElement> elements, List<TemplateText> textNodes, List<TemplateComment> comments) {
         public ParsedTemplate {
             elements = List.copyOf(elements);

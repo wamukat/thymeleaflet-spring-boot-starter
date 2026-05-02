@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
+import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
 import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 final class JavaDocExampleParser {
@@ -26,21 +26,33 @@ final class JavaDocExampleParser {
     }
 
     List<JavaDocAnalyzer.ExampleInfo> parse(String javadocContent) {
+        return parseWithDiagnostics(javadocContent).examples();
+    }
+
+    ExampleParseResult parseWithDiagnostics(String javadocContent) {
         List<JavaDocAnalyzer.ExampleInfo> examples = new ArrayList<>();
+        List<ParserDiagnostic> diagnostics = new ArrayList<>();
 
         for (String exampleMarkup : extractExampleMarkup(javadocContent)) {
-            StructuredTemplateParser.ParsedTemplate parsedTemplate = parseExampleMarkup(exampleMarkup);
+            StructuredTemplateParser.TemplateParseResult parseResult = parseExampleMarkup(exampleMarkup);
+            diagnostics.addAll(parseResult.diagnostics());
+            StructuredTemplateParser.ParsedTemplate parsedTemplate = parseResult.parsedTemplate();
             for (StructuredTemplateParser.TemplateElement element : parsedTemplate.elements()) {
                 for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
                     String normalizedName = attribute.name().toLowerCase(java.util.Locale.ROOT);
                     if (!attribute.hasValue() || !EXAMPLE_REPLACE_ATTRIBUTES.contains(normalizedName)) {
                         continue;
                     }
-                    parseExampleReference(attribute.value()).ifPresent(examples::add);
+                    FragmentExpressionParser.FragmentExpressionParseResult referenceResult =
+                        fragmentExpressionParser.parseWithDiagnostics(attribute.value());
+                    diagnostics.addAll(referenceResult.diagnostics());
+                    referenceResult.expression()
+                        .map(this::toExampleInfo)
+                        .ifPresent(examples::add);
                 }
             }
         }
-        return examples;
+        return new ExampleParseResult(examples, diagnostics);
     }
 
     private List<String> extractExampleMarkup(String javadocContent) {
@@ -104,18 +116,24 @@ final class JavaDocExampleParser {
         }
     }
 
-    private StructuredTemplateParser.ParsedTemplate parseExampleMarkup(String exampleMarkup) {
+    private StructuredTemplateParser.TemplateParseResult parseExampleMarkup(String exampleMarkup) {
         try {
-            return templateParser.parse(exampleMarkup);
+            return templateParser.parseWithDiagnostics(exampleMarkup);
         } catch (IllegalArgumentException parseFailure) {
             logger.debug("Failed to parse @example markup: {}", exampleMarkup, parseFailure);
-            return new StructuredTemplateParser.ParsedTemplate(List.of(), List.of(), List.of());
+            return new StructuredTemplateParser.TemplateParseResult(
+                new StructuredTemplateParser.ParsedTemplate(List.of(), List.of(), List.of()),
+                List.of(ParserDiagnostic.warning("JAVADOC_EXAMPLE_MARKUP_MALFORMED", diagnosticMessage(parseFailure)))
+            );
         }
     }
 
-    private Optional<JavaDocAnalyzer.ExampleInfo> parseExampleReference(String rawReference) {
-        return fragmentExpressionParser.parse(rawReference)
-            .map(this::toExampleInfo);
+    private String diagnosticMessage(Exception failure) {
+        String message = failure.getMessage();
+        if (message == null || message.isBlank()) {
+            return failure.getClass().getSimpleName();
+        }
+        return message;
     }
 
     private JavaDocAnalyzer.ExampleInfo toExampleInfo(FragmentExpression expression) {
@@ -124,5 +142,12 @@ final class JavaDocExampleParser {
             expression.fragmentName(),
             expression.arguments()
         );
+    }
+
+    record ExampleParseResult(List<JavaDocAnalyzer.ExampleInfo> examples, List<ParserDiagnostic> diagnostics) {
+        ExampleParseResult {
+            examples = List.copyOf(examples);
+            diagnostics = List.copyOf(diagnostics);
+        }
     }
 }
