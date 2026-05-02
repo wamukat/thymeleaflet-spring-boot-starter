@@ -27,6 +27,49 @@
 
 モデル推論レイヤは、以下の属性で `th:*` と `data-th-*` の両方をサポートします。
 
+## Fragment Syntax Support Matrix
+
+状態の意味:
+
+- Supported: runtime または static analysis で解析・利用できる。
+- Diagnostic-only: unsupported / dynamic として認識し、rendering は失敗させない。
+- Unsupported: 安定した意味でまだ解析していない。
+- Intentionally unsupported: Thymeleaf rendering には任せる、または static analysis 対象から意図的に外している。
+
+| Syntax | Status | Notes | Follow-up |
+| --- | --- | --- | --- |
+| `th:fragment="profileCard"` | Supported | simple fragment として discovery / 表示できる。 | declaration parser test で維持する。 |
+| `th:fragment="profileCard()"` | Supported | 空の parameter list を no-argument fragment として正規化する。 | declaration parser test で維持する。 |
+| `th:fragment="profileCard(name, age)"` | Supported | identifier parameter を宣言順で保持する。 | declaration parser test で維持する。 |
+| `data-th-fragment="profileCard(name)"` | Supported | discovery では `data-th-fragment` を `th:fragment` と同様に扱う。 | discovery test で維持する。 |
+| duplicate declaration parameters | Supported as-is | duplicate name は現在 declaration order のまま保持し、uniqueness diagnostic はまだ出していない。 | UI editing が uniqueness に依存する前に直接 diagnostic を追加する。 |
+| declaration parameter defaults / assignment syntax | Unsupported | `profileCard(name='x')` のような declaration 側 syntax は v1 UI support set の外。 | 実テンプレートで必要になった場合のみ再検討する。 |
+| non-identifier declaration names / parameters | Unsupported | Thymeleaf が受け付ける範囲より、Thymeleaflet の正規化出力は狭く保つ。 | 推測で正規化せず diagnostic として扱う。 |
+| `~{components/card :: card(title=${view.title})}` | Supported | static template path、selector、argument list を dependency / model inference に利用する。 | `FragmentExpressionParserTest` で維持する。 |
+| `~{'components/card' :: card(title='Ready')}` | Supported | quote 付き template path と literal argument をサポートする。literal-only call は child model recursion を skip する。 | parser corpus で維持する。 |
+| `~{"components/card" :: content}` | Supported | double quote 付き template path をサポートする。 | parser test で維持する。 |
+| `~{components/topbar :: topbar()}` | Supported | no-argument call を正規化し、child model requirements へ再帰しない。 | no-arg preprocessing test で維持する。 |
+| named call arguments, e.g. `card(title=${view.title})` | Supported as raw arguments | argument name/value は raw segment として保持する。declaration parameter への意味的 mapping は未実施。 | story value ordering が必要とする場合のみ semantic mapping を検討する。 |
+| `th:replace`, `th:insert`, `th:include` | Supported | static fragment expression を解析する。unsupported / dynamic reference は non-fatal に skip する。 | analyzer 間で shared attribute policy を集約する。 |
+| `data-th-replace`, `data-th-insert`, `data-th-include` | Supported | 関連箇所では `data-th-*` variant も parsing / diagnostics 対象に含める。 | analyzer 間で shared attribute policy を集約する。 |
+| fragment reference としての `${dynamicRef}` | Diagnostic-only | dynamic reference は static に解決できないため non-fatal diagnostic を出す。 | story diagnostics への surfaced 状態を維持する。 |
+| malformed fragment expressions | Diagnostic-only | malformed static reference は non-fatal diagnostic を出す。 | 可能なら expression diagnostic の source location を改善する。 |
+| `~{:: header}` のような same-template reference | Unsupported | `FragmentExpressionParser` は現在 non-empty static template path を要求する。 | 優先度の高い feature candidate。 |
+| `~{this :: header}` のような same-template reference | Unsupported | `this` は static path normalization で現在除外している。 | 優先度の高い feature candidate。 |
+| `~{template :: #header}` のような selector-style reference | Unsupported | CSS selector semantics は fragment name として正規化していない。 | matching / UI 表示ルールを定義してから検討する。 |
+| `~{template}` のような whole-template reference | Intentionally unsupported for fragment inference | Thymeleaf は template-level reference を rendering できるが、Thymeleaflet の fragment dependency inference には selector が必要。 | 具体的な preview workflow が出るまでは skip する。 |
+| `~{${view.template} :: card}` のような template path expression | Diagnostic-only | dynamic template path は dependency target が static に分からないため skip する。 | non-fatal のまま維持し、推測 path は作らない。 |
+| nested parentheses / quoted commas を含む fragment expression parameter | Supported | top-level split により nested expression と quote 内 separator を保持する。 | parser test で維持する。 |
+| unbalanced parentheses / quotes を含む fragment expression parameter | Diagnostic-only | fail closed し diagnostic を出す。 | parser test で維持する。 |
+
+推奨サポート順:
+
+1. Same-template static references: `~{:: fragment(...)}` と `~{this :: fragment(...)}`。
+2. `replace` / `insert` / `include` と `data-th-*` の shared fragment reference attribute policy。
+3. story diagnostic surface での複数 parser diagnostics 表示。
+4. `#id` や `.class` の selector-style references。matching と UI 表示ルールを先に決める。
+5. Semantic named-argument mapping。story value ordering が declaration-aware binding を必要とする場合のみ進める。
+
 ### `th:each`
 
 `th:each` は loop alias を iterable のモデルパスへ紐づけます。iterable 式の最初の推論パスが各 alias の source path になります。
