@@ -56,7 +56,7 @@
 | malformed fragment expressions | Diagnostic-only | malformed static reference は non-fatal diagnostic を出す。 | 可能なら expression diagnostic の source location を改善する。 |
 | `~{:: header}` のような same-template reference | Supported with current-template context | static analyzer は空の template path を現在の template path として解決する。current-template context なしの parser call は fail closed のまま。 | parser / dependency / model inference test で維持する。 |
 | `~{this :: header}` のような same-template reference | Supported with current-template context | static analyzer は `this` を現在の template path として解決する。current-template context なしの parser call は fail closed のまま。 | parser / dependency / model inference test で維持する。 |
-| `~{template :: #header}` のような selector-style reference | Unsupported | CSS selector semantics は fragment name として正規化していない。 | matching / UI 表示ルールを定義してから検討する。 |
+| `~{template :: #header}` や `~{template :: .card}` のような selector-style reference | Supported when deterministic | static dependency analysis は、`#id` / `.class` selector が valid な `th:fragment` または `data-th-fragment` 宣言を持つ要素に一意に一致する場合、その fragment 名へ解決する。曖昧な一致や fragment 宣言を持たない一致は non-fatal に skip する。 | parser / dependency test で維持する。 |
 | `~{template}` のような whole-template reference | Intentionally unsupported for fragment inference | Thymeleaf は template-level reference を rendering できるが、Thymeleaflet の fragment dependency inference には selector が必要。 | 具体的な preview workflow が出るまでは skip する。 |
 | `~{${view.template} :: card}` のような template path expression | Diagnostic-only | dynamic template path は dependency target が static に分からないため skip する。 | non-fatal のまま維持し、推測 path は作らない。 |
 | nested parentheses / quoted commas を含む fragment expression parameter | Supported | top-level split により nested expression と quote 内 separator を保持する。 | parser test で維持する。 |
@@ -64,8 +64,9 @@
 
 推奨サポート順:
 
-1. `#id` や `.class` の selector-style references。matching と UI 表示ルールを先に決める。
-2. Semantic named-argument mapping。story value ordering が declaration-aware binding を必要とする場合のみ進める。
+1. Semantic named-argument mapping。story value ordering が declaration-aware binding を必要とする場合のみ進める。
+2. duplicate declaration parameter diagnostics。UI editing が parameter uniqueness に依存する前に進める。
+3. stable bracket expression inference。dynamic key は推測せず、indexed path など安定したケースに限定する。
 
 Story diagnostic surface は複数の non-fatal parser diagnostics を保持できます。YAML load diagnostic は単一 source の diagnostic として扱い、parser diagnostics はユーザー向けに要約しつつ developer detail は server-side に留めます。
 

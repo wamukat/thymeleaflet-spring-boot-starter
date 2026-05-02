@@ -12,6 +12,7 @@ import org.springframework.core.io.ByteArrayResource;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -103,6 +104,101 @@ class FragmentDependencyServiceTest {
     }
 
     @Test
+    void findDependencies_resolvesSelectorStyleReferencesToTargetFragmentDefinitions() {
+        String pageHtml = """
+            <main>
+              <section th:fragment="shell(title)">
+                <div th:replace="~{components/header :: #site-header(title=${title})}"></div>
+                <div th:insert="~{components/card :: .summary-card}"></div>
+              </section>
+            </main>
+            """;
+        String headerHtml = """
+            <header id="site-header" th:fragment="header(title)">
+              <h1 th:text="${title}"></h1>
+            </header>
+            """;
+        String cardHtml = """
+            <article class="summary-card featured" data-th-fragment="summaryCard">
+              <p>Summary</p>
+            </article>
+            """;
+        FragmentDependencyService service = buildService(
+            Map.of(
+                "pages/shell", pageHtml,
+                "components/header", headerHtml,
+                "components/card", cardHtml
+            )
+        );
+
+        List<FragmentDependencyService.DependencyComponent> dependencies =
+            service.findDependencies("pages/shell", "shell");
+
+        assertThat(dependencies)
+            .extracting(FragmentDependencyService.DependencyComponent::key)
+            .containsExactly(
+                "components/header::header",
+                "components/card::summaryCard"
+            );
+    }
+
+    @Test
+    void findDependencies_skipsAmbiguousSelectorStyleReferences() {
+        String pageHtml = """
+            <main>
+              <section th:fragment="shell">
+                <div th:replace="~{components/cards :: .summary-card}"></div>
+              </section>
+            </main>
+            """;
+        String cardHtml = """
+            <main>
+              <article class="summary-card" th:fragment="firstCard"></article>
+              <article class="summary-card" th:fragment="secondCard"></article>
+            </main>
+            """;
+        FragmentDependencyService service = buildService(
+            Map.of(
+                "pages/shell", pageHtml,
+                "components/cards", cardHtml
+            )
+        );
+
+        List<FragmentDependencyService.DependencyComponent> dependencies =
+            service.findDependencies("pages/shell", "shell");
+
+        assertThat(dependencies).isEmpty();
+    }
+
+    @Test
+    void findDependencies_skipsSelectorStyleReferencesWhenNonFragmentMatchesMakeSelectorAmbiguous() {
+        String pageHtml = """
+            <main>
+              <section th:fragment="shell">
+                <div th:replace="~{components/cards :: .summary-card}"></div>
+              </section>
+            </main>
+            """;
+        String cardHtml = """
+            <main>
+              <article class="summary-card" th:fragment="card"></article>
+              <article class="summary-card">Decorative duplicate</article>
+            </main>
+            """;
+        FragmentDependencyService service = buildService(
+            Map.of(
+                "pages/shell", pageHtml,
+                "components/cards", cardHtml
+            )
+        );
+
+        List<FragmentDependencyService.DependencyComponent> dependencies =
+            service.findDependencies("pages/shell", "shell");
+
+        assertThat(dependencies).isEmpty();
+    }
+
+    @Test
     void findDependencies_usesSignatureParserAndDoesNotMatchMalformedFragmentDefinitions() {
         String html = """
             <main>
@@ -145,11 +241,17 @@ class FragmentDependencyServiceTest {
     }
 
     private FragmentDependencyService buildService(String templatePath, String html) {
+        return buildService(Map.of(templatePath, html));
+    }
+
+    private FragmentDependencyService buildService(Map<String, String> templates) {
         StorybookProperties properties = new StorybookProperties();
         ResolvedStorybookConfig config = ResolvedStorybookConfig.from(properties, false);
         ThymeleafletCacheManager cacheManager = new ThymeleafletCacheManager(config);
-        when(resourcePathValidator.findTemplate(eq(templatePath), eq(config.getResources().getTemplatePaths())))
-            .thenReturn(resource(html));
+        templates.forEach((templatePath, html) ->
+            when(resourcePathValidator.findTemplate(eq(templatePath), eq(config.getResources().getTemplatePaths())))
+                .thenReturn(resource(html))
+        );
         return new FragmentDependencyService(config, resourcePathValidator, cacheManager);
     }
 

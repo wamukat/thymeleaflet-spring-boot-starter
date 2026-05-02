@@ -59,6 +59,23 @@ class FragmentExpressionParserTest {
     }
 
     @Test
+    void parse_shouldPreserveSelectorStyleFragmentReferences() {
+        FragmentExpression idSelector = parser.parse("~{components/header :: #site-header}")
+            .orElseThrow();
+        FragmentExpression classSelector = parser.parse("~{components/card :: .summary-card(title=${view.title})}")
+            .orElseThrow();
+
+        assertThat(idSelector.templatePath()).isEqualTo("components/header");
+        assertThat(idSelector.fragmentName()).isEqualTo("#site-header");
+        assertThat(idSelector.arguments()).isEmpty();
+        assertThat(idSelector.hasArgumentList()).isFalse();
+        assertThat(classSelector.templatePath()).isEqualTo("components/card");
+        assertThat(classSelector.fragmentName()).isEqualTo(".summary-card");
+        assertThat(classSelector.arguments()).containsExactly("title=${view.title}");
+        assertThat(classSelector.hasArgumentList()).isTrue();
+    }
+
+    @Test
     void parse_shouldFailClosedForMalformedOrDynamicInput() {
         assertThat(parser.parse("${dynamicRef}")).isEmpty();
         assertThat(parser.parse("~{components/card}")).isEmpty();
