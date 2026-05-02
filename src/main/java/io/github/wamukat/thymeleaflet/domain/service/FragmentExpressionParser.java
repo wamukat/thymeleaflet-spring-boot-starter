@@ -9,6 +9,8 @@ import java.util.Optional;
 
 public class FragmentExpressionParser {
 
+    private final TopLevelSyntaxScanner topLevelSyntaxScanner = new TopLevelSyntaxScanner();
+
     public Optional<FragmentExpression> parse(String rawExpression) {
         return parseWithDiagnostics(rawExpression).expression();
     }
@@ -73,16 +75,7 @@ public class FragmentExpressionParser {
     }
 
     private int findTopLevelFragmentSeparator(String expression) {
-        ScanState state = new ScanState();
-        for (int index = 0; index < expression.length() - 1; index++) {
-            state.accept(expression.charAt(index));
-            if (!state.isInsideNestedSyntax()
-                && expression.charAt(index) == ':'
-                && expression.charAt(index + 1) == ':') {
-                return index;
-            }
-        }
-        return -1;
+        return topLevelSyntaxScanner.findFirst(expression, "::").orElse(-1);
     }
 
     private String normalizeTemplatePath(String rawTemplatePath) {
@@ -119,21 +112,11 @@ public class FragmentExpressionParser {
 
     private Optional<List<String>> splitTopLevel(String value, char separator) {
         List<String> segments = new ArrayList<>();
-        ScanState state = new ScanState();
-        int segmentStart = 0;
-
-        for (int index = 0; index < value.length(); index++) {
-            char current = value.charAt(index);
-            state.accept(current);
-            if (!state.isInsideNestedSyntax() && current == separator) {
-                addSegment(segments, value.substring(segmentStart, index));
-                segmentStart = index + 1;
-            }
-        }
-        if (!state.isBalanced()) {
+        TopLevelSyntaxScanner.SplitResult splitResult = topLevelSyntaxScanner.split(value, separator);
+        if (!splitResult.isBalanced()) {
             return Optional.empty();
         }
-        addSegment(segments, value.substring(segmentStart));
+        splitResult.segments().forEach(segment -> addSegment(segments, segment));
         return Optional.of(segments);
     }
 
@@ -174,49 +157,4 @@ public class FragmentExpressionParser {
         }
     }
 
-    private static final class ScanState {
-        private int depthParen;
-        private int depthBracket;
-        private int depthBrace;
-        private boolean inSingleQuote;
-        private boolean inDoubleQuote;
-        private char previous;
-
-        private void accept(char current) {
-            if (current == '\'' && !inDoubleQuote && previous != '\\') {
-                inSingleQuote = !inSingleQuote;
-                previous = current;
-                return;
-            }
-            if (current == '"' && !inSingleQuote && previous != '\\') {
-                inDoubleQuote = !inDoubleQuote;
-                previous = current;
-                return;
-            }
-            if (!inSingleQuote && !inDoubleQuote) {
-                if (current == '(') {
-                    depthParen++;
-                } else if (current == ')' && depthParen > 0) {
-                    depthParen--;
-                } else if (current == '[') {
-                    depthBracket++;
-                } else if (current == ']' && depthBracket > 0) {
-                    depthBracket--;
-                } else if (current == '{') {
-                    depthBrace++;
-                } else if (current == '}' && depthBrace > 0) {
-                    depthBrace--;
-                }
-            }
-            previous = current;
-        }
-
-        private boolean isInsideNestedSyntax() {
-            return inSingleQuote || inDoubleQuote || depthParen > 0 || depthBracket > 0 || depthBrace > 0;
-        }
-
-        private boolean isBalanced() {
-            return !inSingleQuote && !inDoubleQuote && depthParen == 0 && depthBracket == 0 && depthBrace == 0;
-        }
-    }
 }
