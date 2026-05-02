@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
 const test = require('node:test');
 
 const {
@@ -16,6 +17,18 @@ test('parseCentralPublishStatus reports manual publish required with deployment 
 
   assert.deepEqual(summary, {
     deploymentId: '4cc8f928-65c6-47d0-983b-24a451f11453',
+    status: 'manual-publish-required',
+    manualPublishUrl: CENTRAL_DEPLOYMENTS_URL,
+  });
+});
+
+test('parseCentralPublishStatus prefers Central deploymentId over unrelated UUIDs in noisy logs', () => {
+  const log = fs.readFileSync('tests/fixtures/central-publishing/noisy-manual-publish.txt', 'utf8');
+
+  const summary = parseCentralPublishStatus(log);
+
+  assert.deepEqual(summary, {
+    deploymentId: '3ab9d8d4-9a62-4835-8751-c7766d3ce6b8',
     status: 'manual-publish-required',
     manualPublishUrl: CENTRAL_DEPLOYMENTS_URL,
   });
