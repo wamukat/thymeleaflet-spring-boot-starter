@@ -8,6 +8,33 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.22] - 2026-05-02
+
+- Added
+  - Added a release-log helper, `npm run release:central-status`, that summarizes Maven Central deployment ID and status as `uploaded`, `validated`, `manual-publish-required`, or `published` for accurate release reporting. (Kanbalone #490)
+- Changed
+  - Migrated fragment dependency extraction to structured template parsing, including `data-th-*` replacement/include/insert attributes, quoted template paths, and subtree scoping for target fragments. (Kanbalone #486)
+  - Migrated fragment definition parsing to the shared structured template parser, including `data-th-fragment` support. (Kanbalone #487)
+  - Replaced the outer Thymeleaf expression regex in model inference with a quote/brace-aware scanner, improving handling of literal braces, malformed expressions, and selection expressions. (Kanbalone #488)
+- Fixed
+  - Preserved multiline `@param` and `@model` JavaDoc descriptions while splitting JavaDoc parsing into focused comment-block, tag, and example parser collaborators. (Kanbalone #489)
+- Docs
+  - Updated the Maven Central release guide to retain deploy logs, run the Central status helper, and report manual-publish-required deployments without claiming Maven Central publishing is complete. (Kanbalone #490)
+- Test
+  - Added regression coverage for structured fragment dependencies and definitions, Thymeleaf expression scanning edge cases, JavaDoc parsing blocks, and Central publish status parsing. (Kanbalone #486, #487, #488, #489, #490)
+- Build
+  - Updated Maven project, sample app, and README dependency examples to `0.2.22`.
+
+### Issues
+
+- Kanbalone #486 Migrate fragment dependency extraction to structured template parsing
+- Kanbalone #487 Migrate fragment definition parsing to structured template parsing
+- Kanbalone #488 Replace outer Thymeleaf expression extraction regex with tokenizer/parser
+- Kanbalone #489 Split JavaDocAnalyzer into focused parsers with regression coverage
+- Kanbalone #490 Add release helper for Central manual-publish status reporting
+- PR #155 Refactor structured template parsing hotspots
+- PR #156 Refactor JavaDoc parsing and release status reporting
+
 ## [0.2.21] - 2026-05-02
 
 - Changed
