@@ -458,6 +458,7 @@ public class TemplateModelExpressionAnalyzer {
 
     private enum ExpressionTokenType {
         IDENTIFIER,
+        NUMBER,
         STRING,
         DOT,
         SAFE_DOT,
@@ -498,6 +499,15 @@ public class TemplateModelExpressionAnalyzer {
                         index++;
                     }
                     tokens.add(new ExpressionToken(ExpressionTokenType.IDENTIFIER, expression.substring(start, index)));
+                    continue;
+                }
+                if (Character.isDigit(current)) {
+                    int start = index;
+                    index++;
+                    while (index < expression.length() && Character.isDigit(expression.charAt(index))) {
+                        index++;
+                    }
+                    tokens.add(new ExpressionToken(ExpressionTokenType.NUMBER, expression.substring(start, index)));
                     continue;
                 }
                 if (current == '\'' || current == '"') {
@@ -612,9 +622,9 @@ public class TemplateModelExpressionAnalyzer {
 
             while (index < tokens.size()) {
                 if (isAt(ExpressionTokenType.LEFT_BRACKET)) {
-                    Optional<String> bracketKey = parseBracketKey();
-                    if (bracketKey.isPresent()) {
-                        segments.add(bracketKey.orElseThrow());
+                    Optional<String> bracketSegment = parseBracketSegment();
+                    if (bracketSegment.isPresent()) {
+                        segments.add(bracketSegment.orElseThrow());
                         continue;
                     }
                     skipUnsupportedBracket();
@@ -653,13 +663,28 @@ public class TemplateModelExpressionAnalyzer {
             return Optional.of(segments);
         }
 
-        private Optional<String> parseBracketKey() {
+        private Optional<String> parseBracketSegment() {
             if (isAt(index, ExpressionTokenType.LEFT_BRACKET)
                 && isAt(index + 1, ExpressionTokenType.STRING)
                 && isAt(index + 2, ExpressionTokenType.RIGHT_BRACKET)) {
                 String key = tokens.get(index + 1).text();
                 index += 3;
                 return Optional.of(key);
+            }
+            if (isAt(index, ExpressionTokenType.LEFT_BRACKET)
+                && isAt(index + 1, ExpressionTokenType.NUMBER)
+                && isAt(index + 2, ExpressionTokenType.RIGHT_BRACKET)) {
+                index += 3;
+                return Optional.of("[]");
+            }
+            if (isAt(index, ExpressionTokenType.LEFT_BRACKET)
+                && isAt(index + 1, ExpressionTokenType.IDENTIFIER)
+                && isAt(index + 2, ExpressionTokenType.RIGHT_BRACKET)) {
+                String key = tokens.get(index + 1).text();
+                if (key.contains("-")) {
+                    index += 3;
+                    return Optional.of(key);
+                }
             }
             return Optional.empty();
         }

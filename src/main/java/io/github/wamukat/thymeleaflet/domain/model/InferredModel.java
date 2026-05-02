@@ -10,10 +10,17 @@ import java.util.Map;
  */
 public final class InferredModel {
 
+    private static final String INDEX_SEGMENT = "[]";
+
     private final LinkedHashMap<String, Object> values = new LinkedHashMap<>();
 
     public void putPath(List<String> path, Object leafValue) {
         if (path.isEmpty()) {
+            return;
+        }
+        int indexSegment = path.indexOf(INDEX_SEGMENT);
+        if (indexSegment > 0) {
+            putLoopPath(path.subList(0, indexSegment), path.subList(indexSegment + 1, path.size()), leafValue);
             return;
         }
         if (path.size() == 1) {
@@ -142,6 +149,11 @@ public final class InferredModel {
         if (path.isEmpty()) {
             return;
         }
+        int indexSegment = path.indexOf(INDEX_SEGMENT);
+        if (indexSegment > 0) {
+            putNestedListPath(root, path, indexSegment, leafValue);
+            return;
+        }
         if (path.size() == 1) {
             root.putIfAbsent(path.getFirst(), leafValue);
             return;
@@ -161,5 +173,28 @@ public final class InferredModel {
             current = casted;
         }
         current.putIfAbsent(path.get(path.size() - 1), leafValue);
+    }
+
+    private void putNestedListPath(Map<String, Object> root, List<String> path, int indexSegment, Object leafValue) {
+        Map<String, Object> current = root;
+        for (int i = 0; i < indexSegment - 1; i++) {
+            String segment = path.get(i);
+            Object child = current.get(segment);
+            if (!(child instanceof Map<?, ?> childMap)) {
+                Map<String, Object> created = new LinkedHashMap<>();
+                current.put(segment, created);
+                current = created;
+                continue;
+            }
+            @SuppressWarnings("unchecked")
+            Map<String, Object> casted = (Map<String, Object>) childMap;
+            current = casted;
+        }
+        List<Object> list = ensureListValue(current, path.get(indexSegment - 1));
+        if (indexSegment >= path.size() - 1) {
+            return;
+        }
+        Map<String, Object> firstItem = ensureFirstListMap(list);
+        putNestedMapPath(firstItem, path.subList(indexSegment + 1, path.size()), leafValue);
     }
 }

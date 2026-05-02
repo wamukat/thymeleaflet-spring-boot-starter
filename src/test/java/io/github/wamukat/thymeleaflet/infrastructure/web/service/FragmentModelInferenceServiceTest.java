@@ -148,4 +148,17 @@ class FragmentModelInferenceServiceTest {
         assertThat(inferred).containsKey("childMethodOnly");
         assertThat(inferred).doesNotContainKeys("title", "variant");
     }
+
+    @Test
+    void shouldInferIndexedNoArgMethodReturnCandidatesAsListModel() {
+        Map<String, Object> inferred = service.inferMethodReturnCandidates(
+            "fragments/indexed-method-inference-sample",
+            "indexedMethodInferenceSample",
+            List.of()
+        );
+
+        assertThat(inferred).containsEntry("view", Map.of(
+            "items", List.of(Map.of("hasVisible", false))
+        ));
+    }
 }

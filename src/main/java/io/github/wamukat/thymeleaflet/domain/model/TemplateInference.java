@@ -10,6 +10,8 @@ import java.util.Set;
  */
 public final class TemplateInference {
 
+    private static final String INDEX_SEGMENT = "[]";
+
     private final List<ModelPath> modelPaths;
     private final Map<String, ModelPath> loopVariablePaths;
     private final Map<String, Boolean> referencedTemplatePaths;
@@ -70,6 +72,17 @@ public final class TemplateInference {
                 continue;
             }
             ModelPath loopPath = loopVariablePaths.get(modelPath.root());
+            int indexSegment = modelPath.segments().indexOf(INDEX_SEGMENT);
+            if (indexSegment > 0) {
+                List<String> iterablePath = loopPath == null
+                    ? modelPath.segments().subList(0, indexSegment)
+                    : loopPath.segments();
+                List<String> itemSubPath = loopPath == null
+                    ? indexedItemSubPath(modelPath, indexSegment)
+                    : modelPath.segments().subList(1, modelPath.segments().size());
+                inferred.putLoopPath(iterablePath, itemSubPath, modelPath.inferSampleValue());
+                continue;
+            }
             if (loopPath != null) {
                 inferred.putLoopPath(loopPath.segments(), modelPath.subPathWithoutRoot(), modelPath.inferSampleValue());
                 continue;
@@ -77,6 +90,13 @@ public final class TemplateInference {
             inferred.putPath(modelPath.segments(), modelPath.inferSampleValue());
         }
         return inferred;
+    }
+
+    private List<String> indexedItemSubPath(ModelPath modelPath, int indexSegment) {
+        if (indexSegment >= modelPath.segments().size() - 1) {
+            return List.of();
+        }
+        return modelPath.segments().subList(indexSegment + 1, modelPath.segments().size());
     }
 
     public record ReferencedFragment(
