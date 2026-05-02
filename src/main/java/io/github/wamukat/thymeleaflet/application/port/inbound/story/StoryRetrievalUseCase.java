@@ -66,6 +66,21 @@ public interface StoryRetrievalUseCase {
     record StoryConfigurationDiagnostic(
         String code,
         String userSafeMessage,
-        String developerMessage
-    ) {}
+        String developerMessage,
+        List<DiagnosticItem> items
+    ) {
+        public StoryConfigurationDiagnostic(
+            String code,
+            String userSafeMessage,
+            String developerMessage
+        ) {
+            this(code, userSafeMessage, developerMessage, List.of());
+        }
+
+        public StoryConfigurationDiagnostic {
+            items = List.copyOf(items);
+        }
+    }
+
+    record DiagnosticItem(String code, String userSafeMessage) {}
 }

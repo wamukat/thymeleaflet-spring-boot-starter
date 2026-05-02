@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.service.story;
 
 import io.github.wamukat.thymeleaflet.application.port.outbound.StoryDataPort;
+import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase.DiagnosticItem;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase.StoryConfigurationDiagnostic;
 import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
@@ -168,6 +169,44 @@ class StoryRetrievalUseCaseImplTest {
                 .contains("Dynamic fragment reference was skipped in `th:replace`")
                 .contains("line 3")
                 .contains("column 12");
+            assertThat(mappedDiagnostic.items())
+                .extracting(DiagnosticItem::userSafeMessage)
+                .containsExactly("TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED at line 3, column 12");
+        });
+    }
+
+    @Test
+    void shouldMapMultipleParserDiagnosticsWhenStoryConfigurationHasNoDiagnostic() {
+        when(storyDataPort.getStoryConfigurationDiagnostic("components/profile")).thenReturn(Optional.empty());
+        when(fragmentCatalogPort.getTemplateParserDiagnostics("components/profile"))
+            .thenReturn(List.of(
+                new ParserDiagnostic(
+                    "TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED",
+                    "Dynamic fragment reference was skipped in `th:replace`",
+                    3,
+                    12
+                ),
+                ParserDiagnostic.warning(
+                    "FRAGMENT_EXPRESSION_MALFORMED",
+                    "Fragment expression is missing a valid template/fragment separator: ~{components/card}"
+                )
+            ));
+
+        Optional<StoryConfigurationDiagnostic> diagnostic = useCase.getStoryConfigurationDiagnostic("components/profile");
+
+        assertThat(diagnostic).hasValueSatisfying(mappedDiagnostic -> {
+            assertThat(mappedDiagnostic.code()).isEqualTo("TEMPLATE_PARSER_DIAGNOSTICS");
+            assertThat(mappedDiagnostic.userSafeMessage())
+                .isEqualTo("Some template syntax was skipped while analyzing this story.");
+            assertThat(mappedDiagnostic.developerMessage())
+                .contains("Dynamic fragment reference was skipped in `th:replace`")
+                .contains("Fragment expression is missing a valid template/fragment separator");
+            assertThat(mappedDiagnostic.items())
+                .extracting(DiagnosticItem::userSafeMessage)
+                .containsExactly(
+                    "TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED at line 3, column 12",
+                    "FRAGMENT_EXPRESSION_MALFORMED"
+                );
         });
     }
 }

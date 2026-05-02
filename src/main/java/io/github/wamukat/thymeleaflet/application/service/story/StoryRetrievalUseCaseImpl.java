@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * ストーリー取得専用ユースケース実装
@@ -129,17 +130,47 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
         if (storyDiagnostic.isPresent()) {
             return storyDiagnostic;
         }
-        return fragmentCatalogPort.getTemplateParserDiagnostics(templatePath).stream()
-            .findFirst()
-            .map(this::toStoryConfigurationDiagnostic);
+        List<ParserDiagnostic> parserDiagnostics = fragmentCatalogPort.getTemplateParserDiagnostics(templatePath);
+        if (parserDiagnostics.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(toStoryConfigurationDiagnostic(parserDiagnostics));
     }
 
-    private StoryConfigurationDiagnostic toStoryConfigurationDiagnostic(ParserDiagnostic diagnostic) {
+    private StoryConfigurationDiagnostic toStoryConfigurationDiagnostic(List<ParserDiagnostic> diagnostics) {
+        if (diagnostics.size() == 1) {
+            ParserDiagnostic diagnostic = diagnostics.getFirst();
+            return new StoryConfigurationDiagnostic(
+                diagnostic.code(),
+                "Some template syntax was skipped while analyzing this story.",
+                diagnosticDeveloperMessage(diagnostic),
+                List.of(toDiagnosticItem(diagnostic))
+            );
+        }
         return new StoryConfigurationDiagnostic(
-            diagnostic.code(),
+            "TEMPLATE_PARSER_DIAGNOSTICS",
             "Some template syntax was skipped while analyzing this story.",
-            diagnosticDeveloperMessage(diagnostic)
+            diagnostics.stream()
+                .map(this::diagnosticDeveloperMessage)
+                .collect(Collectors.joining("\n")),
+            diagnostics.stream()
+                .map(this::toDiagnosticItem)
+                .toList()
         );
+    }
+
+    private StoryRetrievalUseCase.DiagnosticItem toDiagnosticItem(ParserDiagnostic diagnostic) {
+        return new StoryRetrievalUseCase.DiagnosticItem(
+            diagnostic.code(),
+            diagnosticUserSafeMessage(diagnostic)
+        );
+    }
+
+    private String diagnosticUserSafeMessage(ParserDiagnostic diagnostic) {
+        if (diagnostic.line() > 0 && diagnostic.column() > 0) {
+            return diagnostic.code() + " at line " + diagnostic.line() + ", column " + diagnostic.column();
+        }
+        return diagnostic.code();
     }
 
     private String diagnosticDeveloperMessage(ParserDiagnostic diagnostic) {

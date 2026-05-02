@@ -53,6 +53,34 @@ class StoryDiagnosticTemplateRenderingTest {
     }
 
     @Test
+    void shouldRenderMultipleParserDiagnosticItemsWithoutDeveloperMessage() {
+        WebContext context = baseContext();
+        context.setVariable("storyConfigurationDiagnostic", new StoryRetrievalUseCase.StoryConfigurationDiagnostic(
+            "TEMPLATE_PARSER_DIAGNOSTICS",
+            "Some template syntax was skipped while analyzing this story.",
+            DEVELOPER_MESSAGE,
+            List.of(
+                new StoryRetrievalUseCase.DiagnosticItem(
+                    "TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED",
+                    "TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED at line 3, column 12"
+                ),
+                new StoryRetrievalUseCase.DiagnosticItem(
+                    "FRAGMENT_EXPRESSION_MALFORMED",
+                    "FRAGMENT_EXPRESSION_MALFORMED"
+                )
+            )
+        ));
+
+        String html = templateEngine.process("thymeleaflet/test/story-diagnostic-host", context);
+
+        assertThat(html)
+            .contains("TEMPLATE_PARSER_DIAGNOSTICS")
+            .contains("TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED at line 3, column 12")
+            .contains("FRAGMENT_EXPRESSION_MALFORMED")
+            .doesNotContain(DEVELOPER_MESSAGE);
+    }
+
+    @Test
     void shouldUseStoryDiagnosticAlertFromMainContentAndStoryPreviewTemplates() {
         assertThat(resourceText("templates/thymeleaflet/fragments/main-content.html"))
             .contains("story-configuration-diagnostic :: alert(${storyConfigurationDiagnostic})")
