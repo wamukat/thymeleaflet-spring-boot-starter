@@ -18,7 +18,7 @@ Template parsing is intentionally split into small layers:
    - Tokenizes identifiers, strings, dots, safe-navigation dots, parentheses, brackets, utility prefixes, and operators.
    - Extracts model paths from the expression subset needed by preview model inference.
    - Ignores utility object names such as `#temporals`, static class references such as `T(java.time.LocalDate)`, parameters, local aliases, and Thymeleaf reserved words.
-   - Fails closed for unsupported bracket expressions such as `view.map[key]`; the stable prefix is kept, but dynamic keys are not inferred as model paths.
+   - Infers stable bracket expressions such as `view.items[0].name`, `view['display-name']`, and `view[display-name]`, while failing closed for dynamic keys such as `view.map[key]`.
 4. `JavaDocAnalyzer`
    - Parses JavaDoc-style HTML comments for `@param`, `@model`, `@fragment`, `@example`, and `@background`.
    - Uses `StructuredTemplateParser` for `@example` markup so `th:replace` and `data-th-replace` examples follow the same attribute parsing rules as templates.
@@ -64,7 +64,7 @@ Status meanings:
 
 Recommended support order:
 
-1. Stable bracket expression inference for indexed paths, while keeping dynamic keys non-speculative.
+1. Extend bracket inference only when a new stable bracket form has a non-speculative model shape.
 
 Story diagnostic surfaces can carry multiple non-fatal parser diagnostics. YAML load diagnostics remain single-source diagnostics; parser diagnostics are summarized for users and retain developer details server-side.
 
@@ -130,6 +130,14 @@ Model path inference is intentionally conservative. Supported examples include:
 ```
 
 The inferred paths are `view.profile.name`, `item.publishedAt`, `view.cutoffDate`, and `view.display-name`.
+
+Stable indexed bracket expressions infer list-shaped sample data:
+
+```html
+<span th:text="${view.items[0].name}"></span>
+```
+
+This is modeled as `view.items[] -> name`. Dynamic keys such as `view.map[key].label` still stop at the stable prefix `view.map`.
 
 The analyzer does not try to fully evaluate Thymeleaf or Spring EL. Unsupported constructs are ignored or reduced to a stable prefix instead of producing speculative paths.
 

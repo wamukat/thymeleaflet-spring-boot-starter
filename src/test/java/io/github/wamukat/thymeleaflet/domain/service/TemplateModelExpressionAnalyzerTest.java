@@ -303,9 +303,11 @@ class TemplateModelExpressionAnalyzerTest {
     }
 
     @Test
-    void shouldFailClosedForUnsupportedBracketAccessors() {
+    void shouldInferStableBracketAccessorsAndFailClosedForDynamicKeys() {
         String html = """
             <section>
+              <span th:text="${view['display-name']}"></span>
+              <span th:text="${view[display-name]}"></span>
               <span th:text="${view.map[key].label}"></span>
               <span th:text="${view.items[0].name}"></span>
             </section>
@@ -314,11 +316,48 @@ class TemplateModelExpressionAnalyzerTest {
         TemplateInference snapshot = analyzer.analyze(html, Set.of());
 
         assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "display-name")))
             .contains(ModelPath.of(List.of("view", "map")))
-            .contains(ModelPath.of(List.of("view", "items")))
+            .contains(ModelPath.of(List.of("view", "items", "[]", "name")))
             .doesNotContain(ModelPath.of(List.of("key")))
             .doesNotContain(ModelPath.of(List.of("view", "map", "label")))
             .doesNotContain(ModelPath.of(List.of("view", "items", "name")));
+    }
+
+    @Test
+    void shouldBuildListModelForStableIndexedBracketAccessors() {
+        String html = """
+            <section>
+              <span th:text="${view.items[0].name}"></span>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.toInferredModel().toMap())
+            .containsEntry("view", java.util.Map.of(
+                "items", java.util.List.of(java.util.Map.of("name", "Sample name"))
+            ));
+    }
+
+    @Test
+    void shouldBuildNestedListModelForIndexedBracketAccessorsInsideLoopAliases() {
+        String html = """
+            <section>
+              <article th:each="item : ${view.items}">
+                <span th:text="${item.tags[0].label}"></span>
+              </article>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.toInferredModel().toMap())
+            .containsEntry("view", java.util.Map.of(
+                "items", java.util.List.of(java.util.Map.of(
+                    "tags", java.util.List.of(java.util.Map.of("label", "Sample label"))
+                ))
+            ));
     }
 
     @Test

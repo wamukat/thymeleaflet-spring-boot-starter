@@ -18,7 +18,7 @@
    - 識別子、文字列、dot、safe-navigation dot、括弧、bracket、utility prefix、operator を token 化します。
    - プレビューのモデル推論に必要な式のサブセットからモデルパスを抽出します。
    - `#temporals` などの utility 名、`T(java.time.LocalDate)` などの static class 参照、パラメータ、local alias、Thymeleaf の予約語はモデルパスにしません。
-   - `view.map[key]` のような未対応 bracket 式は fail closed にします。安定した prefix は残しますが、dynamic key はモデルパスとして推論しません。
+   - `view.items[0].name`、`view['display-name']`、`view[display-name]` のような安定した bracket 式を推論し、`view.map[key]` のような dynamic key は fail closed にします。
 4. `JavaDocAnalyzer`
    - HTML コメント内の JavaDoc 形式から `@param`、`@model`、`@fragment`、`@example`、`@background` を解析します。
    - `@example` markup には `StructuredTemplateParser` を使い、`th:replace` と `data-th-replace` の例をテンプレート本体と同じ属性解析ルールで扱います。
@@ -64,7 +64,7 @@
 
 推奨サポート順:
 
-1. stable bracket expression inference。dynamic key は推測せず、indexed path など安定したケースに限定する。
+1. bracket inference は、推測を含まない model shape を定義できる安定した bracket 形式に限定して拡張する。
 
 Story diagnostic surface は複数の non-fatal parser diagnostics を保持できます。YAML load diagnostic は単一 source の diagnostic として扱い、parser diagnostics はユーザー向けに要約しつつ developer detail は server-side に留めます。
 
@@ -130,6 +130,14 @@ fragment call が空引数、または全引数が literal の場合は、子モ
 ```
 
 推論されるパスは `view.profile.name`、`item.publishedAt`、`view.cutoffDate`、`view.display-name` です。
+
+安定した indexed bracket 式は list 形の sample data として推論します。
+
+```html
+<span th:text="${view.items[0].name}"></span>
+```
+
+これは `view.items[] -> name` として扱います。`view.map[key].label` のような dynamic key は引き続き安定した prefix `view.map` までで止めます。
 
 Analyzer は Thymeleaf や Spring EL を完全評価しません。未対応構文は、推測で壊れたパスを作らず、無視するか安定した prefix に縮退します。
 
