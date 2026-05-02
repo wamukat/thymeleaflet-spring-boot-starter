@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.domain.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
 import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
 import org.jspecify.annotations.Nullable;
 
@@ -25,13 +26,22 @@ public class TemplateModelExpressionAnalyzer {
         "instanceof", "matches", "div", "mod"
     );
     private final StructuredTemplateParser templateParser;
+    private final FragmentExpressionParser fragmentExpressionParser;
 
     public TemplateModelExpressionAnalyzer() {
-        this(new StructuredTemplateParser());
+        this(new StructuredTemplateParser(), new FragmentExpressionParser());
     }
 
     TemplateModelExpressionAnalyzer(StructuredTemplateParser templateParser) {
+        this(templateParser, new FragmentExpressionParser());
+    }
+
+    TemplateModelExpressionAnalyzer(
+        StructuredTemplateParser templateParser,
+        FragmentExpressionParser fragmentExpressionParser
+    ) {
         this.templateParser = templateParser;
+        this.fragmentExpressionParser = fragmentExpressionParser;
     }
 
     public TemplateInference analyze(String html, Set<String> parameterNames) {
@@ -191,51 +201,21 @@ public class TemplateModelExpressionAnalyzer {
             if (raw == null || raw.isBlank()) {
                 continue;
             }
-            String expression = raw.trim();
-            if (expression.startsWith("${") || expression.startsWith("*{") || expression.startsWith("#{")) {
-                continue;
-            }
-            if (expression.startsWith("~{") && expression.endsWith("}")) {
-                expression = expression.substring(2, expression.length() - 1).trim();
-            }
-            int fragmentSeparator = expression.indexOf("::");
-            if (fragmentSeparator <= 0) {
-                continue;
-            }
-            String candidatePath = expression.substring(0, fragmentSeparator).trim();
-            if (candidatePath.isEmpty() || candidatePath.startsWith("#") || candidatePath.startsWith("this")) {
-                continue;
-            }
-            if (candidatePath.startsWith("'") && candidatePath.endsWith("'") && candidatePath.length() >= 2) {
-                candidatePath = candidatePath.substring(1, candidatePath.length() - 1);
-            } else if (candidatePath.startsWith("\"") && candidatePath.endsWith("\"") && candidatePath.length() >= 2) {
-                candidatePath = candidatePath.substring(1, candidatePath.length() - 1);
-            }
-            if (candidatePath.startsWith("/")) {
-                candidatePath = candidatePath.substring(1);
-            }
-            if (!candidatePath.isEmpty()) {
-                boolean requiresRecursion = requiresChildModelRecursion(expression, fragmentSeparator);
-                referencedTemplatePaths.merge(candidatePath, requiresRecursion, (left, right) -> left || right);
-            }
+            fragmentExpressionParser.parse(raw)
+                .ifPresent(expression -> referencedTemplatePaths.merge(
+                    expression.templatePath(),
+                    requiresChildModelRecursion(expression),
+                    (left, right) -> left || right
+                ));
         }
         return referencedTemplatePaths;
     }
 
-    private boolean requiresChildModelRecursion(String expression, int fragmentSeparator) {
-        int openParen = expression.indexOf('(', fragmentSeparator);
-        if (openParen < 0) {
-            return true;
+    private boolean requiresChildModelRecursion(FragmentExpression expression) {
+        if (expression.arguments().isEmpty()) {
+            return !expression.hasArgumentList();
         }
-        int closeParen = expression.lastIndexOf(')');
-        if (closeParen < openParen) {
-            return true;
-        }
-        String argumentsText = expression.substring(openParen + 1, closeParen).trim();
-        if (argumentsText.isEmpty()) {
-            return false;
-        }
-        for (String argument : splitTopLevel(argumentsText, ',')) {
+        for (String argument : expression.arguments()) {
             if (argument.isBlank()) {
                 continue;
             }

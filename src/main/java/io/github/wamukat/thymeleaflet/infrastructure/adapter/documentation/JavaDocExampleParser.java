@@ -1,11 +1,12 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation;
 
+import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
+import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
 import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -17,9 +18,11 @@ final class JavaDocExampleParser {
     private static final Set<String> EXAMPLE_REPLACE_ATTRIBUTES = Set.of("th:replace", "data-th-replace");
 
     private final StructuredTemplateParser templateParser;
+    private final FragmentExpressionParser fragmentExpressionParser;
 
     JavaDocExampleParser(StructuredTemplateParser templateParser) {
         this.templateParser = Objects.requireNonNull(templateParser, "templateParser cannot be null");
+        this.fragmentExpressionParser = new FragmentExpressionParser();
     }
 
     List<JavaDocAnalyzer.ExampleInfo> parse(String javadocContent) {
@@ -111,57 +114,15 @@ final class JavaDocExampleParser {
     }
 
     private Optional<JavaDocAnalyzer.ExampleInfo> parseExampleReference(String rawReference) {
-        String expression = rawReference.trim();
-        if (expression.startsWith("~{") && expression.endsWith("}")) {
-            expression = expression.substring(2, expression.length() - 1).trim();
-        }
-        int fragmentSeparator = expression.indexOf("::");
-        if (fragmentSeparator <= 0) {
-            return Optional.empty();
-        }
-        String templatePath = unquote(expression.substring(0, fragmentSeparator).trim());
-        String fragmentExpression = expression.substring(fragmentSeparator + 2).trim();
-        if (templatePath.isBlank() || fragmentExpression.isBlank()) {
-            return Optional.empty();
-        }
-        String fragmentName = fragmentExpression;
-        String argumentsStr = "";
-        int openParen = fragmentExpression.indexOf('(');
-        if (openParen >= 0) {
-            int closeParen = fragmentExpression.lastIndexOf(')');
-            if (closeParen < openParen) {
-                return Optional.empty();
-            }
-            fragmentName = fragmentExpression.substring(0, openParen).trim();
-            argumentsStr = fragmentExpression.substring(openParen + 1, closeParen).trim();
-        }
-        if (fragmentName.isBlank()) {
-            return Optional.empty();
-        }
-        return Optional.of(JavaDocAnalyzer.ExampleInfo.of(templatePath, fragmentName, parseArguments(argumentsStr)));
+        return fragmentExpressionParser.parse(rawReference)
+            .map(this::toExampleInfo);
     }
 
-    private String unquote(String value) {
-        String trimmed = value.trim();
-        if (trimmed.length() >= 2
-            && ((trimmed.startsWith("'") && trimmed.endsWith("'"))
-            || (trimmed.startsWith("\"") && trimmed.endsWith("\"")))) {
-            return trimmed.substring(1, trimmed.length() - 1);
-        }
-        return trimmed;
-    }
-
-    private List<String> parseArguments(String argumentsStr) {
-        if (argumentsStr.trim().isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<String> arguments = new ArrayList<>();
-        String[] parts = argumentsStr.split(",(?=(?:[^']*'[^']*')*[^']*$)");
-        for (String part : parts) {
-            arguments.add(part.trim());
-        }
-
-        return arguments;
+    private JavaDocAnalyzer.ExampleInfo toExampleInfo(FragmentExpression expression) {
+        return JavaDocAnalyzer.ExampleInfo.of(
+            expression.templatePath(),
+            expression.fragmentName(),
+            expression.arguments()
+        );
     }
 }
