@@ -1,0 +1,11 @@
+[INFO] Running io.github.wamukat.thymeleaflet.contract.FragmentPreviewContractTest
+2026-05-02T11:57:09.469+09:00  WARN 76554 --- [           main] .s.s.UserDetailsServiceAutoConfiguration :
+
+Using generated security password: e3ac34f3-c5a3-41d8-a969-d702d21a0209
+
+This generated password is for development use only.
+[INFO] Uploaded bundle successfully, deployment name: Deployment, deploymentId: 3ab9d8d4-9a62-4835-8751-c7766d3ce6b8. Deployment will require manual publishing
+[INFO] Waiting until Deployment 3ab9d8d4-9a62-4835-8751-c7766d3ce6b8 is validated
+[INFO] Deployment 3ab9d8d4-9a62-4835-8751-c7766d3ce6b8 has been validated. To finish publishing visit https://central.sonatype.com/publishing/deployments
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS

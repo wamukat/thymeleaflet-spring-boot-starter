@@ -20,9 +20,13 @@ function parseCentralPublishStatus(logText) {
 }
 
 function extractDeploymentId(text) {
-  const labelledMatch = text.match(/deployment(?:\s+(?:id|name))?\s*[:=]\s*([0-9a-f]{8}-[0-9a-f-]{27,})/i);
+  const labelledMatch = text.match(/\bdeployment(?:\s*id|\s+id)?\s*[:=]\s*([0-9a-f]{8}-[0-9a-f-]{27,})/i);
   if (labelledMatch) {
     return labelledMatch[1];
+  }
+  const deploymentLineMatch = text.match(/\bDeployment\s+([0-9a-f]{8}-[0-9a-f-]{27,})\b/i);
+  if (deploymentLineMatch) {
+    return deploymentLineMatch[1];
   }
   const uuidMatch = text.match(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i);
   return uuidMatch ? uuidMatch[0] : '';
