@@ -3,6 +3,10 @@ package io.github.wamukat.thymeleaflet.domain.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.wamukat.thymeleaflet.testsupport.FixtureResources;
+import io.github.wamukat.thymeleaflet.testsupport.parser.CandidateElement;
+import io.github.wamukat.thymeleaflet.testsupport.parser.CandidateHtmlParserAdapter;
+import io.github.wamukat.thymeleaflet.testsupport.parser.CandidateTemplate;
+import io.github.wamukat.thymeleaflet.testsupport.parser.ParserComparisonContract;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Element;
@@ -11,11 +15,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class HtmlParserAdapterComparisonTest {
@@ -25,14 +26,11 @@ class HtmlParserAdapterComparisonTest {
 
     @Test
     void jsoupAdapter_shouldPreserveThymeleafAttributesAcrossRegressionCorpus() {
-        String html = FixtureResources.text("templates/regression/parser-corpus.html");
+        ParserComparisonContract.Comparison comparison = comparison();
 
-        StructuredTemplateParser.ParsedTemplate current = structuredParser.parse(html);
-        CandidateTemplate candidate = jsoupAdapter.parse(html);
-
-        assertThat(candidate.thymeleafAttributes())
-            .containsAll(currentThymeleafAttributes(current));
-        assertThat(candidate.thymeleafAttributes())
+        assertThat(comparison.candidate().thymeleafAttributes())
+            .containsAll(comparison.currentThymeleafAttributes());
+        assertThat(comparison.candidate().thymeleafAttributes())
             .contains(
                 "data-th-each=item : ${view.items}",
                 "th:replace=~{'regression/parser-corpus' :: quotedTarget(label=${view.label})}",
@@ -45,32 +43,26 @@ class HtmlParserAdapterComparisonTest {
 
     @Test
     void jsoupAdapter_shouldKeepFragmentDeclarationOrderStableForCorpus() {
-        String html = FixtureResources.text("templates/regression/parser-corpus.html");
+        ParserComparisonContract.Comparison comparison = comparison();
 
-        StructuredTemplateParser.ParsedTemplate current = structuredParser.parse(html);
-        CandidateTemplate candidate = jsoupAdapter.parse(html);
-
-        assertThat(candidate.fragmentDefinitions())
-            .containsSequence(currentFragmentDefinitions(current));
+        assertThat(comparison.candidate().fragmentDefinitions())
+            .containsSequence(comparison.currentFragmentDefinitions());
     }
 
     @Test
     void jsoupAdapter_shouldTolerateMalformedHtmlButNotReplaceCurrentParserCapabilities() {
-        String html = FixtureResources.text("templates/regression/parser-corpus.html");
+        ParserComparisonContract.Comparison comparison = comparison();
 
-        StructuredTemplateParser.ParsedTemplate current = structuredParser.parse(html);
-        CandidateTemplate candidate = jsoupAdapter.parse(html);
-
-        assertThat(currentElement(current, "malformedHtmlShell").attributeValue("th:fragment"))
+        assertThat(comparison.currentElement("malformedHtmlShell").attributeValue("th:fragment"))
             .hasValue("malformedHtmlShell");
-        assertThat(candidate.element("malformedHtmlShell").flatMap(element -> element.attributeValue("th:fragment")))
+        assertThat(comparison.candidate().element("malformedHtmlShell").flatMap(element -> element.attributeValue("th:fragment")))
             .hasValue("malformedHtmlShell");
-        assertThat(candidate.thymeleafAttributes())
+        assertThat(comparison.candidate().thymeleafAttributes())
             .contains("data-th-text=${view.malformed.label}");
 
-        assertThat(current.elements())
+        assertThat(comparison.current().elements())
             .allSatisfy(element -> assertThat(element.line()).isPositive());
-        assertThat(candidate.hasSourcePositions()).isFalse();
+        assertThat(comparison.candidate().hasSourcePositions()).isFalse();
     }
 
     @Test
@@ -87,27 +79,11 @@ class HtmlParserAdapterComparisonTest {
             .doesNotContain("${view.boundary.a}");
     }
 
-    private static List<String> currentThymeleafAttributes(StructuredTemplateParser.ParsedTemplate parsed) {
-        return parsed.elements().stream()
-            .flatMap(element -> element.thymeleafAttributes().stream())
-            .map(attribute -> attribute.name() + "=" + attribute.value())
-            .toList();
-    }
-
-    private static List<String> currentFragmentDefinitions(StructuredTemplateParser.ParsedTemplate parsed) {
-        return parsed.elements().stream()
-            .flatMap(element -> element.attributeValue("th:fragment").stream())
-            .toList();
-    }
-
-    private static StructuredTemplateParser.TemplateElement currentElement(
-        StructuredTemplateParser.ParsedTemplate parsed,
-        String fragmentName
-    ) {
-        return parsed.elements().stream()
-            .filter(element -> element.attributeValue("th:fragment").filter(fragmentName::equals).isPresent())
-            .findFirst()
-            .orElseThrow();
+    private ParserComparisonContract.Comparison comparison() {
+        return new ParserComparisonContract(structuredParser).compare(
+            FixtureResources.text("templates/regression/parser-corpus.html"),
+            jsoupAdapter
+        );
     }
 
     private static List<String> attributeValues(List<CandidateElement> elements, String attributeName) {
@@ -116,9 +92,10 @@ class HtmlParserAdapterComparisonTest {
             .toList();
     }
 
-    private static final class JsoupTemplateParserAdapter {
+    private static final class JsoupTemplateParserAdapter implements CandidateHtmlParserAdapter {
 
-        CandidateTemplate parse(String html) {
+        @Override
+        public CandidateTemplate parse(String html) {
             Objects.requireNonNull(html, "html cannot be null");
             Element root = Jsoup.parse(html, "", Parser.htmlParser());
             List<CandidateElement> elements = new ArrayList<>();
@@ -138,93 +115,6 @@ class HtmlParserAdapterComparisonTest {
             for (Element child : element.children()) {
                 collect(child, index, depth + 1, elements);
             }
-        }
-    }
-
-    private record CandidateTemplate(List<CandidateElement> elements) {
-        CandidateTemplate {
-            elements = List.copyOf(elements);
-        }
-
-        List<String> thymeleafAttributes() {
-            return elements.stream()
-                .flatMap(element -> element.thymeleafAttributes().stream())
-                .toList();
-        }
-
-        List<String> fragmentDefinitions() {
-            return elements.stream()
-                .flatMap(element -> element.attributeValue("th:fragment").stream())
-                .toList();
-        }
-
-        Optional<CandidateElement> element(String fragmentName) {
-            return elements.stream()
-                .filter(element -> element.attributeValue("th:fragment").filter(fragmentName::equals).isPresent())
-                .findFirst();
-        }
-
-        List<CandidateElement> subtree(CandidateElement root) {
-            Map<Integer, CandidateElement> byIndex = elements.stream()
-                .collect(Collectors.toUnmodifiableMap(CandidateElement::index, element -> element));
-            Predicate<CandidateElement> isRootOrDescendant =
-                element -> element.index() == root.index() || isDescendantOf(element, root.index(), byIndex);
-            return elements.stream()
-                .filter(isRootOrDescendant)
-                .toList();
-        }
-
-        boolean hasSourcePositions() {
-            return false;
-        }
-
-        private static boolean isDescendantOf(
-            CandidateElement candidate,
-            int rootIndex,
-            Map<Integer, CandidateElement> byIndex
-        ) {
-            int parentIndex = candidate.parentIndex();
-            while (parentIndex >= 0) {
-                if (parentIndex == rootIndex) {
-                    return true;
-                }
-                CandidateElement parent = byIndex.get(parentIndex);
-                if (parent == null) {
-                    return false;
-                }
-                parentIndex = parent.parentIndex();
-            }
-            return false;
-        }
-    }
-
-    private record CandidateElement(
-        String name,
-        Map<String, String> attributes,
-        int index,
-        int parentIndex,
-        int depth
-    ) {
-        CandidateElement {
-            name = name.trim();
-            attributes = Map.copyOf(attributes);
-        }
-
-        Optional<String> attributeValue(String attributeName) {
-            Objects.requireNonNull(attributeName, "attributeName cannot be null");
-            return Optional.ofNullable(attributes.get(attributeName));
-        }
-
-        List<String> thymeleafAttributes() {
-            return attributes.entrySet().stream()
-                .filter(entry -> isThymeleafAttribute(entry.getKey()))
-                .map(entry -> entry.getKey() + "=" + entry.getValue())
-                .toList();
-        }
-
-        private static boolean isThymeleafAttribute(String name) {
-            String normalized = name.toLowerCase(Locale.ROOT);
-            return normalized.startsWith("th:") || normalized.startsWith("data-th-");
         }
     }
 }
