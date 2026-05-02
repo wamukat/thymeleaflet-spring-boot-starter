@@ -389,6 +389,47 @@ class JavaDocAnalyzerTest {
     }
 
     @Test
+    @DisplayName("JavaDocAnalyzer 経由で generic 型と複数行タグ説明を解析できる")
+    void shouldAnalyzeGenericJavaDocTagsWithMultilineDescriptions() {
+        String htmlContent = """
+            <!--
+            /**
+             * Activity table.
+             *
+             * @fragment activityTable
+             * @param rows {@code Map<String, List<Item>>} [optional=empty] Row map.
+             * Supports grouped entries.
+             * values: "active", "archived"
+             * @model view.sections[].items {@code List<Map<String, Item>>} [required] Section items.
+             * Rendered in display order.
+             */
+            -->
+            <section th:fragment="activityTable(rows)">Table</section>
+            """;
+
+        List<JavaDocAnalyzer.JavaDocInfo> result = analyzer.analyzeJavaDocFromHtml(htmlContent);
+
+        assertThat(result).singleElement()
+            .satisfies(docInfo -> {
+                assertThat(docInfo.getFragmentNameOptional()).contains("activityTable");
+                assertThat(docInfo.getParameters()).singleElement()
+                    .satisfies(parameter -> {
+                        assertThat(parameter.getName()).isEqualTo("rows");
+                        assertThat(parameter.getType()).isEqualTo("Map<String, List<Item>>");
+                        assertThat(parameter.getDefaultValueOptional()).contains("empty");
+                        assertThat(parameter.getDescription()).isEqualTo("Row map. Supports grouped entries");
+                        assertThat(parameter.getAllowedValues()).containsExactly("active", "archived");
+                    });
+                assertThat(docInfo.getModels()).singleElement()
+                    .satisfies(model -> {
+                        assertThat(model.getName()).isEqualTo("view.sections[].items");
+                        assertThat(model.getType()).isEqualTo("List<Map<String, Item>>");
+                        assertThat(model.getDescription()).isEqualTo("Section items. Rendered in display order.");
+                    });
+            });
+    }
+
+    @Test
     @DisplayName("複数コメントで複数行説明・許可値・デフォルト値・背景色を維持して解析できる")
     void shouldParseMultipleBlocksWithMultilineDescriptionsAllowedValuesDefaultsAndBackground() {
         // Given
