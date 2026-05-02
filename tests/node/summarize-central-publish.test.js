@@ -40,6 +40,18 @@ test('parseCentralPublishStatus distinguishes uploaded, validated, and published
   assert.equal(parseCentralPublishStatus('Deployment artifact published for 33333333-3333-3333-3333-333333333333').status, 'published');
 });
 
+test('parseCentralPublishStatus reads published release log fixture', () => {
+  const log = fs.readFileSync('tests/fixtures/central-publishing/published-release.txt', 'utf8');
+
+  const summary = parseCentralPublishStatus(log);
+
+  assert.deepEqual(summary, {
+    deploymentId: '22222222-2222-2222-2222-222222222222',
+    status: 'published',
+    manualPublishUrl: '',
+  });
+});
+
 test('parseCentralPublishStatus handles Central state-token wording', () => {
   assert.equal(
     parseCentralPublishStatus('Deployment 44444444-4444-4444-4444-444444444444 has been VALIDATED').status,

@@ -26,5 +26,45 @@
 </section>
 
 <span th:fragment="quotedTarget(label)" th:text="${label}">Label</span>
+
+<!--
+ /**
+  * Parser regression corpus for no-arg fragment references with empty parentheses.
+  * Protects GH-149-style calls where a no-arg child fragment is referenced as name().
+  * @fragment noArgReferenceShell
+  */
+-->
+<section th:fragment="noArgReferenceShell">
+  <div th:replace="~{regression/parser-corpus :: noArgReferenceTarget()}"></div>
+</section>
+
+<header th:fragment="noArgReferenceTarget">Corpus topbar OK</header>
+
+<!--
+ /**
+  * Parser regression corpus for nested fragments and subtree extraction.
+  * @fragment nestedFragmentShell
+  * @model view.nested.title {@code String} [required] Nested title
+  */
+-->
+<article th:fragment="nestedFragmentShell">
+  <section>
+    <div th:fragment="nestedChild(title)" th:text="${title}">Nested title</div>
+    <th:block th:replace="~{regression/parser-corpus :: quotedTarget(label=${view.nested.title})}"></th:block>
+  </section>
+</article>
+
+<!--
+ /**
+  * Parser regression corpus for malformed-but-browser-tolerated HTML.
+  * Keeps structured parser coverage separate from render coverage.
+  * @fragment malformedHtmlShell
+  * @model view.malformed.label {@code String} [required] Malformed label
+  */
+-->
+<section th:fragment="malformedHtmlShell">
+  <div>
+    <span data-th-text="${view.malformed.label}">Malformed label
+</section>
 </body>
 </html>

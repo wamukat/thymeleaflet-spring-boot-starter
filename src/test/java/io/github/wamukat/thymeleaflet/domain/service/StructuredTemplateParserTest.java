@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.domain.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import io.github.wamukat.thymeleaflet.testsupport.FixtureResources;
 import org.junit.jupiter.api.Test;
 
 class StructuredTemplateParserTest {
@@ -130,5 +131,43 @@ class StructuredTemplateParserTest {
             .extracting(StructuredTemplateParser.TemplateComment::content)
             .asString()
             .contains("commented.out");
+    }
+
+    @Test
+    void parse_shouldCoverRealRegressionCorpusFixtures() {
+        String html = FixtureResources.text("templates/regression/parser-corpus.html");
+
+        StructuredTemplateParser.ParsedTemplate parsed = parser.parse(html);
+
+        assertThat(fragmentDefinitions(parsed))
+            .contains(
+                "dataThList",
+                "quotedSelectorShell",
+                "quotedTarget(label)",
+                "noArgReferenceShell",
+                "noArgReferenceTarget",
+                "nestedFragmentShell",
+                "nestedChild(title)",
+                "malformedHtmlShell"
+            );
+        assertThat(parsed.elements())
+            .anySatisfy(element -> assertThat(element.attributeValue("data-th-each"))
+                .hasValue("item : ${view.items}"))
+            .anySatisfy(element -> assertThat(element.attributeValue("th:replace"))
+                .hasValue("~{'regression/parser-corpus' :: quotedTarget(label=${view.label})}"))
+            .anySatisfy(element -> assertThat(element.attributeValue("th:replace"))
+                .hasValue("~{regression/parser-corpus :: noArgReferenceTarget()}"))
+            .anySatisfy(element -> assertThat(element.attributeValue("data-th-text"))
+                .hasValue("${view.malformed.label}"));
+        assertThat(parsed.comments())
+            .extracting(StructuredTemplateParser.TemplateComment::content)
+            .anySatisfy(comment -> assertThat(comment).contains("GH-149-style"))
+            .anySatisfy(comment -> assertThat(comment).contains("malformed-but-browser-tolerated HTML"));
+    }
+
+    private static java.util.List<String> fragmentDefinitions(StructuredTemplateParser.ParsedTemplate parsed) {
+        return parsed.elements().stream()
+            .flatMap(element -> element.attributeValue("th:fragment").stream())
+            .toList();
     }
 }
