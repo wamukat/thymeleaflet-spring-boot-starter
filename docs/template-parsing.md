@@ -42,7 +42,7 @@ Status meanings:
 | `th:fragment="profileCard()"` | Supported | Empty parameter list is normalized as a no-argument fragment. | Keep covered by declaration parser tests. |
 | `th:fragment="profileCard(name, age)"` | Supported | Identifier parameters are preserved in declaration order. | Keep covered by declaration parser tests. |
 | `data-th-fragment="profileCard(name)"` | Supported | Discovery treats `data-th-fragment` like `th:fragment`. | Keep covered by discovery tests. |
-| Duplicate declaration parameters | Supported as-is | Duplicate names are currently preserved in declaration order; no uniqueness diagnostic is emitted yet. | Add a direct diagnostic if UI editing starts relying on uniqueness. |
+| Duplicate declaration parameters | Diagnostic-only | Duplicate names are preserved in declaration order, and `FRAGMENT_SIGNATURE_DUPLICATE_PARAMETER` is surfaced as a non-fatal story diagnostic with source location when available. | Keep covered by parser and template diagnostic tests. |
 | Declaration parameter defaults or assignment syntax | Unsupported | Declaration-side syntax such as `profileCard(name='x')` is outside the v1 UI support set. | Revisit only if real templates need it. |
 | Non-identifier declaration names or parameters | Unsupported | Thymeleaf-compatible parsing may accept more than the UI support set; Thymeleaflet keeps normalized output narrow. | Keep as diagnostic rather than normalizing speculatively. |
 | `~{components/card :: card(title=${view.title})}` | Supported | Static template path, selector, and argument list are parsed for dependency and model inference. | Keep covered by `FragmentExpressionParserTest`. |
@@ -64,8 +64,7 @@ Status meanings:
 
 Recommended support order:
 
-1. Duplicate declaration parameter diagnostics, before UI editing relies on parameter uniqueness.
-2. Stable bracket expression inference for indexed paths, while keeping dynamic keys non-speculative.
+1. Stable bracket expression inference for indexed paths, while keeping dynamic keys non-speculative.
 
 Story diagnostic surfaces can carry multiple non-fatal parser diagnostics. YAML load diagnostics remain single-source diagnostics; parser diagnostics are summarized for users and retain developer details server-side.
 

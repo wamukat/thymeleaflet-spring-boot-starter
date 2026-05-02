@@ -42,7 +42,7 @@
 | `th:fragment="profileCard()"` | Supported | 空の parameter list を no-argument fragment として正規化する。 | declaration parser test で維持する。 |
 | `th:fragment="profileCard(name, age)"` | Supported | identifier parameter を宣言順で保持する。 | declaration parser test で維持する。 |
 | `data-th-fragment="profileCard(name)"` | Supported | discovery では `data-th-fragment` を `th:fragment` と同様に扱う。 | discovery test で維持する。 |
-| duplicate declaration parameters | Supported as-is | duplicate name は現在 declaration order のまま保持し、uniqueness diagnostic はまだ出していない。 | UI editing が uniqueness に依存する前に直接 diagnostic を追加する。 |
+| duplicate declaration parameters | Diagnostic-only | duplicate name は declaration order のまま保持し、`FRAGMENT_SIGNATURE_DUPLICATE_PARAMETER` を source location 付きの non-fatal story diagnostic として表示する。 | parser / template diagnostic test で維持する。 |
 | declaration parameter defaults / assignment syntax | Unsupported | `profileCard(name='x')` のような declaration 側 syntax は v1 UI support set の外。 | 実テンプレートで必要になった場合のみ再検討する。 |
 | non-identifier declaration names / parameters | Unsupported | Thymeleaf が受け付ける範囲より、Thymeleaflet の正規化出力は狭く保つ。 | 推測で正規化せず diagnostic として扱う。 |
 | `~{components/card :: card(title=${view.title})}` | Supported | static template path、selector、argument list を dependency / model inference に利用する。 | `FragmentExpressionParserTest` で維持する。 |
@@ -64,8 +64,7 @@
 
 推奨サポート順:
 
-1. duplicate declaration parameter diagnostics。UI editing が parameter uniqueness に依存する前に進める。
-2. stable bracket expression inference。dynamic key は推測せず、indexed path など安定したケースに限定する。
+1. stable bracket expression inference。dynamic key は推測せず、indexed path など安定したケースに限定する。
 
 Story diagnostic surface は複数の non-fatal parser diagnostics を保持できます。YAML load diagnostic は単一 source の diagnostic として扱い、parser diagnostics はユーザー向けに要約しつつ developer detail は server-side に留めます。
 

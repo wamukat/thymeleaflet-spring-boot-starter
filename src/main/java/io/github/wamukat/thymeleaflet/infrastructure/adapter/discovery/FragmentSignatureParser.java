@@ -1,12 +1,16 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
+import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
 import org.thymeleaf.standard.expression.FragmentSignature;
 import org.thymeleaf.standard.expression.FragmentSignatureUtils;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 @Component
 public class FragmentSignatureParser {
@@ -48,7 +52,22 @@ public class FragmentSignatureParser {
             }
         }
 
-        return new ParseSuccess(fragmentName, parameters);
+        return new ParseSuccess(fragmentName, parameters, duplicateParameterDiagnostics(fragmentName, parameters));
+    }
+
+    private List<ParserDiagnostic> duplicateParameterDiagnostics(String fragmentName, List<String> parameters) {
+        Set<String> seen = new HashSet<>();
+        List<ParserDiagnostic> diagnostics = new ArrayList<>();
+        for (String parameter : parameters) {
+            if (seen.add(parameter)) {
+                continue;
+            }
+            diagnostics.add(ParserDiagnostic.warning(
+                "FRAGMENT_SIGNATURE_DUPLICATE_PARAMETER",
+                "Fragment `" + fragmentName + "` declares duplicate parameter `" + parameter + "`."
+            ));
+        }
+        return diagnostics;
     }
 
     private static boolean isValidIdentifier(String value) {
@@ -103,10 +122,19 @@ public class FragmentSignatureParser {
     public sealed interface ParseResult permits ParseSuccess, ParseError {
     }
 
-    public record ParseSuccess(String fragmentName, List<String> parameters) implements ParseResult {
+    public record ParseSuccess(
+        String fragmentName,
+        List<String> parameters,
+        List<ParserDiagnostic> diagnostics
+    ) implements ParseResult {
+        public ParseSuccess(String fragmentName, List<String> parameters) {
+            this(fragmentName, parameters, List.of());
+        }
+
         public ParseSuccess {
             fragmentName = fragmentName.trim();
             parameters = List.copyOf(parameters);
+            diagnostics = List.copyOf(diagnostics);
         }
     }
 

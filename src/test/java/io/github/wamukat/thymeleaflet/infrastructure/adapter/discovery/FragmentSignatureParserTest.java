@@ -44,6 +44,21 @@ class FragmentSignatureParserTest {
     }
 
     @Test
+    @DisplayName("duplicate parameters are preserved with diagnostics")
+    void preservesDuplicateParametersWithDiagnostics() {
+        FragmentSignatureParser.ParseResult result = parser.parse("profileCard(name, age, name)");
+
+        assertThat(result).isInstanceOf(FragmentSignatureParser.ParseSuccess.class);
+        FragmentSignatureParser.ParseSuccess success = (FragmentSignatureParser.ParseSuccess) result;
+        assertThat(success.parameters()).containsExactly("name", "age", "name");
+        assertThat(success.diagnostics()).singleElement()
+            .satisfies(diagnostic -> {
+                assertThat(diagnostic.code()).isEqualTo("FRAGMENT_SIGNATURE_DUPLICATE_PARAMETER");
+                assertThat(diagnostic.message()).contains("name");
+            });
+    }
+
+    @Test
     @DisplayName("whitespace around signature is normalized")
     void parsesWithWhitespace() {
         FragmentSignatureParser.ParseResult result = parser.parse(" profileCard ( name , age ) ");

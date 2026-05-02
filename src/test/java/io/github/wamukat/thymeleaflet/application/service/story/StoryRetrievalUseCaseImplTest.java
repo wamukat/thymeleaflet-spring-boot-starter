@@ -176,6 +176,31 @@ class StoryRetrievalUseCaseImplTest {
     }
 
     @Test
+    void shouldMapDuplicateFragmentParameterDiagnosticWhenStoryConfigurationHasNoDiagnostic() {
+        when(storyDataPort.getStoryConfigurationDiagnostic("components/profile")).thenReturn(Optional.empty());
+        when(fragmentCatalogPort.getTemplateParserDiagnostics("components/profile"))
+            .thenReturn(List.of(new ParserDiagnostic(
+                "FRAGMENT_SIGNATURE_DUPLICATE_PARAMETER",
+                "Fragment `profileCard` declares duplicate parameter `name`.",
+                2,
+                14
+            )));
+
+        Optional<StoryConfigurationDiagnostic> diagnostic = useCase.getStoryConfigurationDiagnostic("components/profile");
+
+        assertThat(diagnostic).hasValueSatisfying(mappedDiagnostic -> {
+            assertThat(mappedDiagnostic.code()).isEqualTo("FRAGMENT_SIGNATURE_DUPLICATE_PARAMETER");
+            assertThat(mappedDiagnostic.developerMessage())
+                .contains("duplicate parameter `name`")
+                .contains("line 2")
+                .contains("column 14");
+            assertThat(mappedDiagnostic.items())
+                .extracting(DiagnosticItem::userSafeMessage)
+                .containsExactly("FRAGMENT_SIGNATURE_DUPLICATE_PARAMETER at line 2, column 14");
+        });
+    }
+
+    @Test
     void shouldMapMultipleParserDiagnosticsWhenStoryConfigurationHasNoDiagnostic() {
         when(storyDataPort.getStoryConfigurationDiagnostic("components/profile")).thenReturn(Optional.empty());
         when(fragmentCatalogPort.getTemplateParserDiagnostics("components/profile"))

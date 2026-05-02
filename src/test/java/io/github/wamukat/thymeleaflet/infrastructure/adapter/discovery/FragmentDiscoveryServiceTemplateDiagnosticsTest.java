@@ -76,4 +76,70 @@ class FragmentDiscoveryServiceTemplateDiagnosticsTest {
         assertThat(diagnostics)
             .noneSatisfy(diagnostic -> assertThat(diagnostic.code()).isEqualTo("FRAGMENT_EXPRESSION_MALFORMED"));
     }
+
+    @Test
+    void findTemplateParserDiagnostics_shouldReturnDuplicateFragmentParameterWarnings() throws IOException {
+        FragmentDiscoveryService service = new FragmentDiscoveryService(
+            templateScanner,
+            mock(FragmentDefinitionParser.class),
+            mock(FragmentDomainService.class),
+            new FragmentSignatureParser(),
+            new StructuredTemplateParser(),
+            new FragmentExpressionParser(),
+            mock(ThymeleafletCacheManager.class)
+        );
+        when(templateScanner.scanTemplates()).thenReturn(List.of(
+            new TemplateScanner.TemplateResource(
+                "components/profile",
+                """
+                    <section th:fragment="profileCard(name, age, name)">
+                    </section>
+                    """,
+                "classpath:/templates/components/profile.html"
+            )
+        ));
+
+        List<ParserDiagnostic> diagnostics = service.findTemplateParserDiagnostics("components/profile");
+
+        assertThat(diagnostics).singleElement()
+            .satisfies(diagnostic -> {
+                assertThat(diagnostic.code()).isEqualTo("FRAGMENT_SIGNATURE_DUPLICATE_PARAMETER");
+                assertThat(diagnostic.message()).contains("profileCard").contains("name");
+                assertThat(diagnostic.line()).isGreaterThan(0);
+                assertThat(diagnostic.column()).isGreaterThan(0);
+            });
+    }
+
+    @Test
+    void findTemplateParserDiagnostics_shouldReturnDuplicateDataThFragmentParameterWarnings() throws IOException {
+        FragmentDiscoveryService service = new FragmentDiscoveryService(
+            templateScanner,
+            mock(FragmentDefinitionParser.class),
+            mock(FragmentDomainService.class),
+            new FragmentSignatureParser(),
+            new StructuredTemplateParser(),
+            new FragmentExpressionParser(),
+            mock(ThymeleafletCacheManager.class)
+        );
+        when(templateScanner.scanTemplates()).thenReturn(List.of(
+            new TemplateScanner.TemplateResource(
+                "components/profile",
+                """
+                    <section data-th-fragment="profileCard(name, name)">
+                    </section>
+                    """,
+                "classpath:/templates/components/profile.html"
+            )
+        ));
+
+        List<ParserDiagnostic> diagnostics = service.findTemplateParserDiagnostics("components/profile");
+
+        assertThat(diagnostics).singleElement()
+            .satisfies(diagnostic -> {
+                assertThat(diagnostic.code()).isEqualTo("FRAGMENT_SIGNATURE_DUPLICATE_PARAMETER");
+                assertThat(diagnostic.message()).contains("profileCard").contains("name");
+                assertThat(diagnostic.line()).isGreaterThan(0);
+                assertThat(diagnostic.column()).isGreaterThan(0);
+            });
+    }
 }
