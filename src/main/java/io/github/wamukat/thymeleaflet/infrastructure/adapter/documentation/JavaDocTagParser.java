@@ -9,16 +9,6 @@ import java.util.regex.Pattern;
 
 final class JavaDocTagParser {
 
-    private static final Pattern PARAM_PATTERN = Pattern.compile(
-        "@param\\s+(\\w+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*)",
-        Pattern.DOTALL
-    );
-
-    private static final Pattern MODEL_PATTERN = Pattern.compile(
-        "@model\\s+([\\w.\\[\\]]+)\\s+\\{@code\\s+([^}]+?)\\}\\s+\\[(required|optional(?:=[^\\]]*)?)\\]\\s+([\\s\\S]*)",
-        Pattern.DOTALL
-    );
-
     private static final Pattern FRAGMENT_PATTERN = Pattern.compile(
         "@fragment\\s+([A-Za-z_][\\w-]*)",
         Pattern.MULTILINE
@@ -52,20 +42,18 @@ final class JavaDocTagParser {
         List<JavaDocAnalyzer.ParameterInfo> parameters = new ArrayList<>();
 
         for (String tagBlock : tagBlocks) {
-            Matcher paramMatcher = PARAM_PATTERN.matcher(tagBlock);
-            if (!paramMatcher.matches()) {
+            Optional<ParsedFieldTag> parsedTag = parseFieldTag(tagBlock, "param");
+            if (parsedTag.isEmpty()) {
                 continue;
             }
-            String name = paramMatcher.group(1);
-            String type = paramMatcher.group(2);
-            String requiredOrOptional = paramMatcher.group(3);
-            ParsedDescription parsedDescription = parseDescriptionWithAllowedValues(paramMatcher.group(4));
+            ParsedFieldTag fieldTag = parsedTag.get();
+            ParsedDescription parsedDescription = parseDescriptionWithAllowedValues(fieldTag.description());
 
             parameters.add(JavaDocAnalyzer.ParameterInfo.of(
-                name,
-                type,
-                "required".equals(requiredOrOptional),
-                parseDefaultValue(requiredOrOptional),
+                fieldTag.identifier(),
+                fieldTag.type(),
+                fieldTag.required(),
+                fieldTag.defaultValue(),
                 Optional.of(parsedDescription.description()),
                 parsedDescription.allowedValues()
             ));
@@ -78,36 +66,43 @@ final class JavaDocTagParser {
         List<JavaDocAnalyzer.ModelInfo> models = new ArrayList<>();
 
         for (String tagBlock : tagBlocks) {
-            Matcher modelMatcher = MODEL_PATTERN.matcher(tagBlock);
-            if (!modelMatcher.matches()) {
+            Optional<ParsedFieldTag> parsedTag = parseFieldTag(tagBlock, "model");
+            if (parsedTag.isEmpty()) {
                 continue;
             }
-            String name = modelMatcher.group(1);
-            String type = modelMatcher.group(2);
-            String requiredOrOptional = modelMatcher.group(3);
-            String description = normalizeDescription(modelMatcher.group(4));
+            ParsedFieldTag fieldTag = parsedTag.get();
 
             models.add(JavaDocAnalyzer.ModelInfo.of(
-                name,
-                type,
-                "required".equals(requiredOrOptional),
-                parseDefaultValue(requiredOrOptional),
-                Optional.of(description)
+                fieldTag.identifier(),
+                fieldTag.type(),
+                fieldTag.required(),
+                fieldTag.defaultValue(),
+                Optional.of(normalizeDescription(fieldTag.description()))
             ));
         }
 
         return models;
     }
 
-    private Optional<String> parseDefaultValue(String requiredOrOptional) {
-        if (!requiredOrOptional.startsWith("optional=")) {
+    private Optional<ParsedFieldTag> parseFieldTag(String tagBlock, String expectedTagName) {
+        TagCursor cursor = new TagCursor(tagBlock);
+        Optional<String> tagName = cursor.readTagName();
+        if (tagName.isEmpty() || !expectedTagName.equals(tagName.get())) {
             return Optional.empty();
         }
-        String rawDefaultValue = requiredOrOptional.substring("optional=".length());
-        if ("null".equals(rawDefaultValue)) {
+        Optional<String> identifier = cursor.readIdentifier();
+        Optional<String> type = cursor.readCodeLiteral();
+        Optional<ParsedMarker> marker = cursor.readMarker();
+        if (identifier.isEmpty() || type.isEmpty() || marker.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(rawDefaultValue);
+        return Optional.of(new ParsedFieldTag(
+            identifier.get(),
+            type.get(),
+            marker.get().required(),
+            marker.get().defaultValue(),
+            cursor.remainingDescription()
+        ));
     }
 
     private ParsedDescription parseDescriptionWithAllowedValues(String fullDescription) {
@@ -214,7 +209,10 @@ final class JavaDocTagParser {
     private String normalizeJavadocLine(String rawLine) {
         String line = rawLine.trim();
         if (line.startsWith("*")) {
-            return line.substring(1).trim();
+            line = line.substring(1).trim();
+        }
+        if (line.equals("/")) {
+            return "";
         }
         return line;
     }
@@ -233,5 +231,116 @@ final class JavaDocTagParser {
     }
 
     private record ParsedDescription(String description, List<String> allowedValues) {
+    }
+
+    private record ParsedFieldTag(
+        String identifier,
+        String type,
+        boolean required,
+        Optional<String> defaultValue,
+        String description
+    ) {
+    }
+
+    private record ParsedMarker(boolean required, Optional<String> defaultValue) {
+    }
+
+    private static final class TagCursor {
+        private static final String CODE_PREFIX = "{@code";
+        private final String source;
+        private int index;
+
+        private TagCursor(String source) {
+            this.source = source;
+        }
+
+        private Optional<String> readTagName() {
+            skipWhitespace();
+            if (!consume('@')) {
+                return Optional.empty();
+            }
+            return readUntilWhitespace()
+                .filter(tagName -> !tagName.isBlank());
+        }
+
+        private Optional<String> readIdentifier() {
+            skipWhitespace();
+            return readUntilWhitespace()
+                .filter(identifier -> !identifier.isBlank());
+        }
+
+        private Optional<String> readCodeLiteral() {
+            skipWhitespace();
+            if (!source.startsWith(CODE_PREFIX, index)) {
+                return Optional.empty();
+            }
+            index += CODE_PREFIX.length();
+            int end = source.indexOf('}', index);
+            if (end < 0) {
+                return Optional.empty();
+            }
+            String codeLiteral = source.substring(index, end).trim();
+            index = end + 1;
+            if (codeLiteral.isBlank()) {
+                return Optional.empty();
+            }
+            return Optional.of(codeLiteral);
+        }
+
+        private Optional<ParsedMarker> readMarker() {
+            skipWhitespace();
+            if (!consume('[')) {
+                return Optional.empty();
+            }
+            int end = source.indexOf(']', index);
+            if (end < 0) {
+                return Optional.empty();
+            }
+            String marker = source.substring(index, end).trim();
+            index = end + 1;
+            if ("required".equals(marker)) {
+                return Optional.of(new ParsedMarker(true, Optional.empty()));
+            }
+            if ("optional".equals(marker)) {
+                return Optional.of(new ParsedMarker(false, Optional.empty()));
+            }
+            if (marker.startsWith("optional=")) {
+                String defaultValue = marker.substring("optional=".length());
+                if (defaultValue.isBlank() || "null".equals(defaultValue)) {
+                    return Optional.of(new ParsedMarker(false, Optional.empty()));
+                }
+                return Optional.of(new ParsedMarker(false, Optional.of(defaultValue)));
+            }
+            return Optional.empty();
+        }
+
+        private String remainingDescription() {
+            return source.substring(index).trim();
+        }
+
+        private Optional<String> readUntilWhitespace() {
+            int start = index;
+            while (index < source.length() && !Character.isWhitespace(source.charAt(index))) {
+                index++;
+            }
+            if (start == index) {
+                return Optional.empty();
+            }
+            return Optional.of(source.substring(start, index));
+        }
+
+        private boolean consume(char expected) {
+            if (index >= source.length() || source.charAt(index) != expected) {
+                return false;
+            }
+            index++;
+            return true;
+        }
+
+        private void skipWhitespace() {
+            while (index < source.length() && Character.isWhitespace(source.charAt(index))) {
+                index++;
+            }
+        }
     }
 }
