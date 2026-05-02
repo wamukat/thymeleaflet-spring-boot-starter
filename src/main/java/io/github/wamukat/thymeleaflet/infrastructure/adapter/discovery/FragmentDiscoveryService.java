@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
+import io.github.wamukat.thymeleaflet.domain.service.FragmentReferenceAttributes;
 import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
 import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
@@ -13,10 +14,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Thymeleafフラグメントを自動発見・解析するサービス
@@ -25,15 +24,6 @@ import java.util.Set;
 public class FragmentDiscoveryService {
     
     private static final Logger logger = LoggerFactory.getLogger(FragmentDiscoveryService.class);
-
-    private static final Set<String> FRAGMENT_REFERENCE_ATTRIBUTES = Set.of(
-        "th:replace",
-        "th:insert",
-        "th:include",
-        "data-th-replace",
-        "data-th-insert",
-        "data-th-include"
-    );
     
     private final TemplateScanner templateScanner;
     private final FragmentDefinitionParser fragmentDefinitionParser;
@@ -126,7 +116,7 @@ public class FragmentDiscoveryService {
         for (StructuredTemplateParser.TemplateElement element : parseResult.parsedTemplate().elements()) {
             for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
                 if (!attribute.hasValue()
-                    || !FRAGMENT_REFERENCE_ATTRIBUTES.contains(attribute.name().toLowerCase(Locale.ROOT))) {
+                    || !FragmentReferenceAttributes.isReferenceAttribute(attribute.name())) {
                     continue;
                 }
                 diagnostics.addAll(fragmentExpressionParser.parseWithDiagnostics(attribute.value()).diagnostics());

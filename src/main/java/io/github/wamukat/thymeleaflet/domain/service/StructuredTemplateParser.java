@@ -69,14 +69,7 @@ public class StructuredTemplateParser {
     }
 
     private boolean isFragmentReferenceAttribute(TemplateAttribute attribute) {
-        String normalized = attribute.name().toLowerCase(Locale.ROOT);
-        return attribute.hasValue()
-            && (normalized.equals("th:replace")
-            || normalized.equals("th:insert")
-            || normalized.equals("th:include")
-            || normalized.equals("data-th-replace")
-            || normalized.equals("data-th-insert")
-            || normalized.equals("data-th-include"));
+        return attribute.hasValue() && FragmentReferenceAttributes.isReferenceAttribute(attribute.name());
     }
 
     private boolean isDynamicSyntax(String value) {

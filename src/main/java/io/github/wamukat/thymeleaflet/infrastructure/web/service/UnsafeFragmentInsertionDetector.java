@@ -1,20 +1,12 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
+import io.github.wamukat.thymeleaflet.domain.service.FragmentReferenceAttributes;
 import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 final class UnsafeFragmentInsertionDetector {
-
-    private static final Set<String> INSERTION_ATTRIBUTES = Set.of(
-        "th:replace",
-        "th:insert",
-        "data-th-replace",
-        "data-th-insert"
-    );
 
     private final StructuredTemplateParser templateParser;
 
@@ -56,7 +48,7 @@ final class UnsafeFragmentInsertionDetector {
         return parsedTemplate.elements().stream()
             .flatMap(element -> element.attributes().stream())
             .filter(attribute -> attribute.hasValue())
-            .filter(attribute -> INSERTION_ATTRIBUTES.contains(attribute.name().toLowerCase(Locale.ROOT)))
+            .filter(attribute -> FragmentReferenceAttributes.isInsertionAttribute(attribute.name()))
             .anyMatch(attribute -> isParameterExpression(attribute.value(), parameterName));
     }
 
