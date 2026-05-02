@@ -130,3 +130,14 @@ Add parser regressions when a defect involves template attributes, JavaDoc examp
 ```
 
 When adding syntax support, prefer parser-owned tests over broad end-to-end assertions. E2E should prove the user-facing preview still renders; unit and integration tests should define the parsing contract.
+
+## External Parser Evaluation
+
+`HtmlParserAdapterComparisonTest` is the comparison spike for evaluating external HTML parsers against the Thymeleaflet parser corpus. The current candidate is jsoup, added only as a test-scoped dependency. The test harness runs the regression corpus through both `StructuredTemplateParser` and the candidate adapter, then compares these contract points:
+
+- Thymeleaf attribute names and values are preserved, including `th:*`, `data-th-*`, quoted fragment selectors, multiline values, literal `>` characters, and boolean-adjacent attributes.
+- Fragment declarations remain discoverable in source order.
+- Browser-tolerated malformed HTML remains parseable enough for fragment and model extraction.
+- Subtree extraction can keep sibling fragments isolated.
+
+Recommendation: keep `StructuredTemplateParser` on Attoparser for production parsing. Attoparser uses Thymeleaf-compatible HTML parsing and exposes source line/column positions used by diagnostics. jsoup is useful as a corpus comparison tool and fallback research candidate, but it normalizes the document tree and does not provide the source positions required by current diagnostics. Do not replace the production parser until a future adapter proves equivalent on the corpus and provides a plan for source locations and Thymeleaf-specific parsing behavior.

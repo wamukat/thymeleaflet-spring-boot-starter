@@ -130,3 +130,14 @@ list 内の値を記述する場合は `@model` path に `[]` を使います。
 ```
 
 構文サポートを追加する場合は、広い E2E assertion より parser-owned test を優先してください。E2E はユーザー向け preview が描画できることを確認し、unit/integration test で解析契約を定義します。
+
+## 外部パーサ評価
+
+`HtmlParserAdapterComparisonTest` は、外部 HTML パーサを Thymeleaflet の parser corpus に対して評価するための比較 spike です。現在の候補は jsoup で、依存は test scope のみに限定しています。このテストハーネスは regression corpus を `StructuredTemplateParser` と候補アダプタの両方で解析し、次の契約を比較します。
+
+- `th:*`、`data-th-*`、quote 付き fragment selector、複数行値、literal `>`、boolean 属性に隣接する属性を含め、Thymeleaf 属性名と値を保持できること。
+- fragment 宣言を source order で発見できること。
+- browser tolerant な malformed HTML でも、fragment と model 抽出に必要な範囲を解析できること。
+- subtree 抽出で sibling fragment を分離できること。
+
+推奨方針: production parser は Attoparser ベースの `StructuredTemplateParser` を維持します。Attoparser は Thymeleaf 互換の HTML 解析を使え、diagnostics で利用する source line/column も提供できます。jsoup は corpus 比較ツールや fallback 候補の調査には有用ですが、document tree を正規化し、現行 diagnostics が必要とする source position を提供しません。将来の adapter が corpus 上で同等性を示し、source location と Thymeleaf 固有挙動の扱いを解決するまでは production parser を置き換えません。
