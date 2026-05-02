@@ -94,6 +94,24 @@ class TemplateModelExpressionAnalyzerTest {
     }
 
     @Test
+    void shouldExtractSelectorStyleReferencedTemplatePaths() {
+        String html = """
+            <section>
+              <th:block th:replace="~{components/header :: #site-header}"></th:block>
+              <th:block th:insert="~{components/card :: .summary-card(title=${view.title})}"></th:block>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.referencedTemplatePaths())
+            .contains("components/header", "components/card");
+        assertThat(snapshot.referencedTemplatePathsWithRecursionFlags())
+            .containsEntry("components/header", true)
+            .containsEntry("components/card", true);
+    }
+
+    @Test
     void shouldContinueSkippingSameTemplateReferencesWithoutCurrentTemplatePath() {
         String html = """
             <section>

@@ -56,7 +56,7 @@ Status meanings:
 | Malformed fragment expressions | Diagnostic-only | Malformed static references produce non-fatal diagnostics. | Improve source location for expression diagnostics when possible. |
 | Same-template references such as `~{:: header}` | Supported with current-template context | Static analyzers resolve the empty template path to the current template path. Parser calls without current-template context still fail closed. | Keep covered by parser, dependency, and model inference tests. |
 | Same-template references such as `~{this :: header}` | Supported with current-template context | Static analyzers resolve `this` to the current template path. Parser calls without current-template context still fail closed. | Keep covered by parser, dependency, and model inference tests. |
-| Selector-style references such as `~{template :: #header}` | Unsupported | CSS selector semantics are not normalized into a fragment name today. | Medium-value candidate; requires UI naming and matching rules. |
+| Selector-style references such as `~{template :: #header}` or `~{template :: .card}` | Supported when deterministic | Static dependency analysis resolves `#id` and `.class` selectors to a target `th:fragment` or `data-th-fragment` declaration when exactly one matching element has a valid fragment declaration. Ambiguous or non-fragment matches are skipped non-fatally. | Keep covered by parser and dependency tests. |
 | Whole-template references such as `~{template}` | Intentionally unsupported for fragment inference | Thymeleaf can render template-level references, but Thymeleaflet fragment dependency inference needs a selector. | Keep skipped unless a concrete preview workflow needs it. |
 | Template path expressions such as `~{${view.template} :: card}` | Diagnostic-only | Dynamic template paths are skipped because dependency targets are unknowable statically. | Keep non-fatal; do not infer speculative paths. |
 | Fragment expression parameters with nested parentheses or quoted commas | Supported | Top-level splitting preserves nested expressions and quoted separators. | Keep covered by parser tests. |
@@ -64,8 +64,9 @@ Status meanings:
 
 Recommended support order:
 
-1. Selector-style references such as `#id` or `.class`, only after matching and UI display rules are specified.
-2. Semantic named-argument mapping, only if story value ordering needs declaration-aware argument binding.
+1. Semantic named-argument mapping, only if story value ordering needs declaration-aware argument binding.
+2. Duplicate declaration parameter diagnostics, before UI editing relies on parameter uniqueness.
+3. Stable bracket expression inference for indexed paths, while keeping dynamic keys non-speculative.
 
 Story diagnostic surfaces can carry multiple non-fatal parser diagnostics. YAML load diagnostics remain single-source diagnostics; parser diagnostics are summarized for users and retain developer details server-side.
 
