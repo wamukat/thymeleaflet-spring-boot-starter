@@ -4,39 +4,65 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public class FragmentExpressionParser {
 
     public Optional<FragmentExpression> parse(String rawExpression) {
+        return parseWithDiagnostics(rawExpression).expression();
+    }
+
+    public FragmentExpressionParseResult parseWithDiagnostics(String rawExpression) {
         if (rawExpression == null || rawExpression.isBlank()) {
-            return Optional.empty();
+            return FragmentExpressionParseResult.empty(
+                ParserDiagnostic.warning("FRAGMENT_EXPRESSION_EMPTY", "Fragment expression is empty")
+            );
         }
         String expression = unwrapFragmentExpression(rawExpression.trim());
-        if (expression.isBlank()
-            || expression.startsWith("${")
-            || expression.startsWith("*{")
-            || expression.startsWith("#{")) {
-            return Optional.empty();
+        if (expression.isBlank()) {
+            return FragmentExpressionParseResult.empty(
+                ParserDiagnostic.warning("FRAGMENT_EXPRESSION_EMPTY", "Fragment expression is empty")
+            );
+        }
+        if (expression.startsWith("${") || expression.startsWith("*{") || expression.startsWith("#{")) {
+            return FragmentExpressionParseResult.empty(
+                ParserDiagnostic.warning(
+                    "FRAGMENT_EXPRESSION_DYNAMIC",
+                    "Dynamic fragment expression was skipped: " + rawExpression.trim()
+                )
+            );
         }
 
         int separatorIndex = findTopLevelFragmentSeparator(expression);
         if (separatorIndex <= 0 || separatorIndex >= expression.length() - 2) {
-            return Optional.empty();
+            return FragmentExpressionParseResult.empty(
+                ParserDiagnostic.warning(
+                    "FRAGMENT_EXPRESSION_MALFORMED",
+                    "Fragment expression is missing a valid template/fragment separator: " + rawExpression.trim()
+                )
+            );
         }
 
         String templatePath = normalizeTemplatePath(expression.substring(0, separatorIndex));
         Optional<FragmentSelector> selector = parseFragmentSelector(expression.substring(separatorIndex + 2));
         if (templatePath.isBlank() || selector.isEmpty()) {
-            return Optional.empty();
+            return FragmentExpressionParseResult.empty(
+                ParserDiagnostic.warning(
+                    "FRAGMENT_EXPRESSION_MALFORMED",
+                    "Fragment expression could not be parsed: " + rawExpression.trim()
+                )
+            );
         }
         FragmentSelector resolvedSelector = selector.orElseThrow();
-        return Optional.of(FragmentExpression.of(
-            templatePath,
-            resolvedSelector.name(),
-            resolvedSelector.arguments(),
-            resolvedSelector.hasArgumentList()
-        ));
+        return FragmentExpressionParseResult.success(
+            FragmentExpression.of(
+                templatePath,
+                resolvedSelector.name(),
+                resolvedSelector.arguments(),
+                resolvedSelector.hasArgumentList()
+            )
+        );
     }
 
     private String unwrapFragmentExpression(String rawExpression) {
@@ -128,6 +154,24 @@ public class FragmentExpressionParser {
     }
 
     private record FragmentSelector(String name, List<String> arguments, boolean hasArgumentList) {
+    }
+
+    public record FragmentExpressionParseResult(
+        Optional<FragmentExpression> expression,
+        List<ParserDiagnostic> diagnostics
+    ) {
+        public FragmentExpressionParseResult {
+            expression = Objects.requireNonNull(expression, "expression cannot be null");
+            diagnostics = List.copyOf(diagnostics);
+        }
+
+        private static FragmentExpressionParseResult success(FragmentExpression expression) {
+            return new FragmentExpressionParseResult(Optional.of(expression), List.of());
+        }
+
+        private static FragmentExpressionParseResult empty(ParserDiagnostic diagnostic) {
+            return new FragmentExpressionParseResult(Optional.empty(), List.of(diagnostic));
+        }
     }
 
     private static final class ScanState {
