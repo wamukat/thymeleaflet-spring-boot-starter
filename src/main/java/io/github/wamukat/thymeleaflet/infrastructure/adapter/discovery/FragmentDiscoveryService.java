@@ -115,6 +115,9 @@ public class FragmentDiscoveryService {
         List<ParserDiagnostic> diagnostics = new ArrayList<>(parseResult.diagnostics());
         for (StructuredTemplateParser.TemplateElement element : parseResult.parsedTemplate().elements()) {
             for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                if (attribute.hasValue() && isFragmentDeclarationAttribute(attribute.name())) {
+                    diagnostics.addAll(fragmentDeclarationDiagnostics(attribute));
+                }
                 if (!attribute.hasValue()
                     || !FragmentReferenceAttributes.isReferenceAttribute(attribute.name())) {
                     continue;
@@ -125,6 +128,25 @@ public class FragmentDiscoveryService {
             }
         }
         return List.copyOf(diagnostics);
+    }
+
+    private boolean isFragmentDeclarationAttribute(String attributeName) {
+        return attributeName.equals("th:fragment") || attributeName.equals("data-th-fragment");
+    }
+
+    private List<ParserDiagnostic> fragmentDeclarationDiagnostics(StructuredTemplateParser.TemplateAttribute attribute) {
+        FragmentSignatureParser.ParseResult parseResult = fragmentSignatureParser.parse(attribute.value());
+        if (!(parseResult instanceof FragmentSignatureParser.ParseSuccess parseSuccess)) {
+            return List.of();
+        }
+        return parseSuccess.diagnostics().stream()
+            .map(diagnostic -> new ParserDiagnostic(
+                diagnostic.code(),
+                diagnostic.message(),
+                attribute.line(),
+                attribute.column()
+            ))
+            .toList();
     }
     
     /**
