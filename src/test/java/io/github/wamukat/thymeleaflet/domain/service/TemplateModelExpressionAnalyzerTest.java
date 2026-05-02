@@ -186,6 +186,27 @@ class TemplateModelExpressionAnalyzerTest {
     }
 
     @Test
+    void shouldExtractExpressionsWithLiteralBracesAndSelectionExpressions() {
+        String html = """
+            <section>
+              <span th:text="${'}' + view.title}"></span>
+              <span th:title="prefix ${view.subtitle} suffix ${view.count}"></span>
+              <input data-th-value="*{selected.label}" />
+              <span th:text="${view.unclosed"></span>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "title")))
+            .contains(ModelPath.of(List.of("view", "subtitle")))
+            .contains(ModelPath.of(List.of("view", "count")))
+            .contains(ModelPath.of(List.of("selected", "label")))
+            .doesNotContain(ModelPath.of(List.of("view", "unclosed")));
+    }
+
+    @Test
     void shouldPreserveNoArgAndAliasBehaviorWithTokenizer() {
         String html = """
             <section th:with="current=${view.currentUser}">

@@ -12,15 +12,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * テンプレート式を解析し、モデル推論に必要な情報を抽出する。
  */
 public class TemplateModelExpressionAnalyzer {
 
-    private static final Pattern EXPRESSION_PATTERN = Pattern.compile("\\$\\{([^}]*)}");
     private static final Set<String> RESERVED_ROOTS = Set.of(
         "true", "false", "null",
         "param", "session", "application", "request", "response",
@@ -52,9 +49,7 @@ public class TemplateModelExpressionAnalyzer {
     private List<ModelPath> extractModelPathsFromSources(List<String> sources, Set<String> excludedIdentifiers) {
         List<ModelPath> paths = new ArrayList<>();
         for (String source : sources) {
-            Matcher matcher = EXPRESSION_PATTERN.matcher(source);
-            while (matcher.find()) {
-                String expression = matcher.group(1);
+            for (String expression : extractExpressionBodies(source)) {
                 for (List<String> path : extractModelPaths(expression, excludedIdentifiers)) {
                     paths.add(ModelPath.of(path));
                 }
@@ -66,9 +61,7 @@ public class TemplateModelExpressionAnalyzer {
     private List<ModelPath> extractNoArgMethodPathsFromSources(List<String> sources, Set<String> excludedIdentifiers) {
         LinkedHashSet<ModelPath> methodPaths = new LinkedHashSet<>();
         for (String source : sources) {
-            Matcher matcher = EXPRESSION_PATTERN.matcher(source);
-            while (matcher.find()) {
-                String expression = matcher.group(1);
+            for (String expression : extractExpressionBodies(source)) {
                 List<List<String>> extracted = new ArrayList<>();
                 extractModelPaths(expression, excludedIdentifiers, extracted);
                 for (List<String> path : extracted) {
@@ -77,6 +70,65 @@ public class TemplateModelExpressionAnalyzer {
             }
         }
         return new ArrayList<>(methodPaths);
+    }
+
+    private List<String> extractExpressionBodies(String source) {
+        List<String> expressions = new ArrayList<>();
+        int index = 0;
+        while (index < source.length() - 1) {
+            char current = source.charAt(index);
+            if ((current != '$' && current != '*') || source.charAt(index + 1) != '{') {
+                index++;
+                continue;
+            }
+            Optional<ExpressionBody> expressionBody = readExpressionBody(source, index + 2);
+            if (expressionBody.isEmpty()) {
+                index += 2;
+                continue;
+            }
+            ExpressionBody resolvedBody = expressionBody.orElseThrow();
+            expressions.add(resolvedBody.content());
+            index = resolvedBody.nextIndex();
+        }
+        return expressions;
+    }
+
+    private Optional<ExpressionBody> readExpressionBody(String source, int bodyStart) {
+        int depthBrace = 1;
+        boolean inSingleQuote = false;
+        boolean inDoubleQuote = false;
+        boolean escaped = false;
+        for (int index = bodyStart; index < source.length(); index++) {
+            char current = source.charAt(index);
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (current == '\\') {
+                escaped = true;
+                continue;
+            }
+            if (current == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+                continue;
+            }
+            if (current == '"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+                continue;
+            }
+            if (inSingleQuote || inDoubleQuote) {
+                continue;
+            }
+            if (current == '{') {
+                depthBrace++;
+            } else if (current == '}') {
+                depthBrace--;
+                if (depthBrace == 0) {
+                    return Optional.of(new ExpressionBody(source.substring(bodyStart, index), index + 1));
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     private List<List<String>> extractModelPaths(String expression, Set<String> excludedIdentifiers) {
@@ -378,6 +430,9 @@ public class TemplateModelExpressionAnalyzer {
         HASH,
         AT,
         OTHER
+    }
+
+    private record ExpressionBody(String content, int nextIndex) {
     }
 
     private record ExpressionToken(ExpressionTokenType type, String text) {

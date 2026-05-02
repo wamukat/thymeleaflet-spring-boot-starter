@@ -15,6 +15,9 @@ class FragmentDefinitionParserTest {
         String content = """
             <section th:fragment="card(title, body)">Card</section>
             <footer th:fragment='footer'>Footer</footer>
+            <aside
+                data-th-fragment = "sidebar ( items )"
+            >Sidebar</aside>
             """;
 
         List<FragmentDefinitionParser.FragmentDefinition> definitions = parser.parseTemplate(
@@ -24,10 +27,10 @@ class FragmentDefinitionParserTest {
 
         assertThat(definitions)
             .extracting(FragmentDefinitionParser.FragmentDefinition::definition)
-            .containsExactly("card(title, body)", "footer");
+            .containsExactly("card(title, body)", "footer", "sidebar ( items )");
         assertThat(definitions)
             .extracting(FragmentDefinitionParser.FragmentDefinition::templatePath)
-            .containsExactly("components/card", "components/card");
+            .containsExactly("components/card", "components/card", "components/card");
     }
 
     @Test

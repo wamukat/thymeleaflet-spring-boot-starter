@@ -86,6 +86,32 @@ class StructuredTemplateParserTest {
     }
 
     @Test
+    void parse_shouldExposeSubtreeForNestedElementsWithoutIncludingLaterSiblings() {
+        String html = """
+            <main>
+              <section th:fragment="card">
+                <section>
+                  <span th:text="${view.title}">Title</span>
+                </section>
+              </section>
+              <section th:fragment="other">
+                <span th:text="${view.other}">Other</span>
+              </section>
+            </main>
+            """;
+
+        StructuredTemplateParser.ParsedTemplate parsed = parser.parse(html);
+        StructuredTemplateParser.TemplateElement card = parsed.elements().stream()
+            .filter(element -> element.attributeValue("th:fragment").filter("card"::equals).isPresent())
+            .findFirst()
+            .orElseThrow();
+
+        assertThat(parsed.subtree(card))
+            .extracting(StructuredTemplateParser.TemplateElement::name)
+            .containsExactly("section", "section", "span");
+    }
+
+    @Test
     void parse_shouldExposeTextNodesWithoutTreatingCommentsAsText() {
         String html = """
             <section>
