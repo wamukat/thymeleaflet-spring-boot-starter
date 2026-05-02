@@ -148,7 +148,10 @@ class StructuredTemplateParserTest {
                 "noArgReferenceTarget",
                 "nestedFragmentShell",
                 "nestedChild(title)",
-                "malformedHtmlShell"
+                "malformedHtmlShell",
+                "mixedDependencyShell",
+                "siblingBoundaryA",
+                "siblingBoundaryB"
             );
         assertThat(parsed.elements())
             .anySatisfy(element -> assertThat(element.attributeValue("data-th-each"))
@@ -158,16 +161,74 @@ class StructuredTemplateParserTest {
             .anySatisfy(element -> assertThat(element.attributeValue("th:replace"))
                 .hasValue("~{regression/parser-corpus :: noArgReferenceTarget()}"))
             .anySatisfy(element -> assertThat(element.attributeValue("data-th-text"))
-                .hasValue("${view.malformed.label}"));
+                .hasValue("${view.malformed.label}"))
+            .anySatisfy(element -> assertThat(element.attributeValue("th:include"))
+                .hasValue("~{regression/parser-corpus :: nestedChild(title='Included > Nested')}"))
+            .anySatisfy(element -> assertThat(element.attributeValue("data-th-include"))
+                .hasValue("~{regression/parser-corpus :: nestedChild(title=${view.mixed.title})}"))
+            .anySatisfy(element -> assertThat(element.attributeValue("data-th-value"))
+                .hasValue("${view.mixed.title}"));
         assertThat(parsed.comments())
             .extracting(StructuredTemplateParser.TemplateComment::content)
             .anySatisfy(comment -> assertThat(comment).contains("GH-149-style"))
-            .anySatisfy(comment -> assertThat(comment).contains("malformed-but-browser-tolerated HTML"));
+            .anySatisfy(comment -> assertThat(comment).contains("malformed-but-browser-tolerated HTML"))
+            .anySatisfy(comment -> assertThat(comment).contains("commented.out"));
+        assertThat(parsed.textNodes())
+            .extracting(StructuredTemplateParser.TemplateText::content)
+            .anySatisfy(text -> assertThat(text).contains("Hello ${view.mixed.title}"))
+            .noneSatisfy(text -> assertThat(text).contains("commented.out"));
+    }
+
+    @Test
+    void parse_shouldExposeExpectedSubtreesForRegressionCorpusSiblings() {
+        String html = FixtureResources.text("templates/regression/parser-corpus.html");
+
+        StructuredTemplateParser.ParsedTemplate parsed = parser.parse(html);
+
+        assertThat(attributeValues(parsed.subtree(fragmentElement(parsed, "nestedFragmentShell")), "th:fragment"))
+            .contains("nestedFragmentShell", "nestedChild(title)");
+        assertThat(attributeValues(parsed.subtree(fragmentElement(parsed, "siblingBoundaryA")), "th:text"))
+            .contains("${view.boundary.a}")
+            .doesNotContain("${view.boundary.b}");
+        assertThat(attributeValues(parsed.subtree(fragmentElement(parsed, "siblingBoundaryB")), "th:text"))
+            .contains("${view.boundary.b}")
+            .doesNotContain("${view.boundary.a}");
+        assertThat(parsed.subtree(fragmentElement(parsed, "mixedDependencyShell")))
+            .flatExtracting(StructuredTemplateParser.TemplateElement::thymeleafAttributes)
+            .extracting(StructuredTemplateParser.TemplateAttribute::name)
+            .contains(
+                "th:replace",
+                "th:insert",
+                "th:include",
+                "data-th-replace",
+                "data-th-insert",
+                "data-th-include",
+                "data-th-value"
+            );
     }
 
     private static java.util.List<String> fragmentDefinitions(StructuredTemplateParser.ParsedTemplate parsed) {
         return parsed.elements().stream()
             .flatMap(element -> element.attributeValue("th:fragment").stream())
+            .toList();
+    }
+
+    private static StructuredTemplateParser.TemplateElement fragmentElement(
+        StructuredTemplateParser.ParsedTemplate parsed,
+        String fragmentName
+    ) {
+        return parsed.elements().stream()
+            .filter(element -> element.attributeValue("th:fragment").filter(fragmentName::equals).isPresent())
+            .findFirst()
+            .orElseThrow();
+    }
+
+    private static java.util.List<String> attributeValues(
+        java.util.List<StructuredTemplateParser.TemplateElement> elements,
+        String attributeName
+    ) {
+        return elements.stream()
+            .flatMap(element -> element.attributeValue(attributeName).stream())
             .toList();
     }
 }
