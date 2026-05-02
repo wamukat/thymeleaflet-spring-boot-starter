@@ -10,8 +10,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import io.github.wamukat.thymeleaflet.domain.service.DocumentationAnalysisService;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
+import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
 import io.github.wamukat.thymeleaflet.domain.service.StoryDataRepository;
 import io.github.wamukat.thymeleaflet.domain.service.StoryParameterDomainService;
+import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.NoArgFragmentReferencePreProcessorDialect;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafletAwareThymeleafView;
@@ -114,6 +116,18 @@ public class StorybookAutoConfiguration {
     @ConditionalOnMissingBean
     public TemplateModelExpressionAnalyzer templateModelExpressionAnalyzer() {
         return new TemplateModelExpressionAnalyzer();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public StructuredTemplateParser structuredTemplateParser() {
+        return new StructuredTemplateParser();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public FragmentExpressionParser fragmentExpressionParser() {
+        return new FragmentExpressionParser();
     }
 
     @Bean

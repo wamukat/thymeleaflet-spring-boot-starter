@@ -5,7 +5,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
+import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
 import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
+import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import java.io.IOException;
 import java.util.List;
@@ -19,6 +21,8 @@ class FragmentDiscoveryServiceTemplateDiagnosticsTest {
         mock(FragmentDefinitionParser.class),
         mock(FragmentDomainService.class),
         mock(FragmentSignatureParser.class),
+        new StructuredTemplateParser(),
+        new FragmentExpressionParser(),
         mock(ThymeleafletCacheManager.class)
     );
 
