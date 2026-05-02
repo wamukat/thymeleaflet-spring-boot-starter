@@ -387,4 +387,89 @@ class JavaDocAnalyzerTest {
         assertThat(examples.getFirst().getFragmentName()).isEqualTo("statusBadge");
         assertThat(examples.getFirst().getArguments()).containsExactly("label='Ready > Draft'");
     }
+
+    @Test
+    @DisplayName("複数コメントで複数行説明・許可値・デフォルト値・背景色を維持して解析できる")
+    void shouldParseMultipleBlocksWithMultilineDescriptionsAllowedValuesDefaultsAndBackground() {
+        // Given
+        String htmlContent = """
+            <main>
+            <!--
+            /**
+             * Account status badge.
+             * Renders a compact label for dashboard tables.
+             *
+             * @fragment accountStatus
+             * @param status {@code String} [required] Account status label.
+             * Supports active and suspended states。 values: "active", "suspended"
+             * @param muted {@code Boolean} [optional=false] Render muted color.
+             * @model account.id {@code String} [required] Account identifier
+             * @example <div th:replace="~{accounts/status :: accountStatus('active', false)}"></div>
+             * @background #f8fafc
+             */
+            -->
+            <div th:fragment="accountStatus(status, muted)">Status</div>
+
+            <!--
+            /**
+             * Account summary card.
+             *
+             * @param title {@code String} [optional=Summary] Card title
+             * @example <th:block data-th-replace="~{'accounts/card' :: accountCard(title='Summary')}"></th:block>
+             */
+            -->
+            <section th:fragment="accountCard(title)">Card</section>
+            </main>
+            """;
+
+        // When
+        List<JavaDocAnalyzer.JavaDocInfo> result = analyzer.analyzeJavaDocFromHtml(htmlContent);
+
+        // Then
+        assertThat(result).hasSize(2);
+
+        JavaDocAnalyzer.JavaDocInfo statusDoc = result.get(0);
+        assertThat(statusDoc.getDescription())
+            .isEqualTo("Account status badge.\nRenders a compact label for dashboard tables.");
+        assertThat(statusDoc.getFragmentNameOptional()).contains("accountStatus");
+        assertThat(statusDoc.getBackgroundColorOptional()).contains("#f8fafc");
+        assertThat(statusDoc.getModels()).singleElement()
+            .satisfies(model -> {
+                assertThat(model.getName()).isEqualTo("account.id");
+                assertThat(model.isRequired()).isTrue();
+            });
+        assertThat(statusDoc.getParameters()).hasSize(2);
+        assertThat(statusDoc.getParameters().get(0))
+            .satisfies(parameter -> {
+                assertThat(parameter.getName()).isEqualTo("status");
+                assertThat(parameter.isRequired()).isTrue();
+                assertThat(parameter.getDescription()).isEqualTo("Account status label. Supports active and suspended states");
+                assertThat(parameter.getAllowedValues()).containsExactly("active", "suspended");
+            });
+        assertThat(statusDoc.getParameters().get(1))
+            .satisfies(parameter -> {
+                assertThat(parameter.getName()).isEqualTo("muted");
+                assertThat(parameter.isRequired()).isFalse();
+                assertThat(parameter.getDefaultValueOptional()).contains("false");
+            });
+        assertThat(statusDoc.getExamples()).singleElement()
+            .satisfies(example -> {
+                assertThat(example.getTemplatePath()).isEqualTo("accounts/status");
+                assertThat(example.getFragmentName()).isEqualTo("accountStatus");
+                assertThat(example.getArguments()).containsExactly("'active'", "false");
+            });
+
+        JavaDocAnalyzer.JavaDocInfo cardDoc = result.get(1);
+        assertThat(cardDoc.getParameters()).singleElement()
+            .satisfies(parameter -> {
+                assertThat(parameter.getName()).isEqualTo("title");
+                assertThat(parameter.getDefaultValueOptional()).contains("Summary");
+            });
+        assertThat(cardDoc.getExamples()).singleElement()
+            .satisfies(example -> {
+                assertThat(example.getTemplatePath()).isEqualTo("accounts/card");
+                assertThat(example.getFragmentName()).isEqualTo("accountCard");
+                assertThat(example.getArguments()).containsExactly("title='Summary'");
+            });
+    }
 }

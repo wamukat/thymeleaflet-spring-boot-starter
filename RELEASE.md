@@ -38,14 +38,27 @@ GPG signing can be configured via environment variables or your local keyring.
 git tag vX.Y.Z
 ```
 
-4) Run the release build:
+4) Run the release build and keep the full deploy log:
 
 ```bash
-./mvnw -Prelease clean deploy
+./mvnw -Prelease clean deploy 2>&1 | tee /tmp/thymeleaflet-release-X.Y.Z.log
 ```
 
-5) Verify that the staging repository is closed and released in Sonatype (auto-release enabled).
-6) Check Maven Central for the published artifacts.
+5) Summarize the Central Publishing deployment status from the log:
+
+```bash
+npm run release:central-status -- /tmp/thymeleaflet-release-X.Y.Z.log
+```
+
+The helper reports:
+
+- `uploaded`: artifacts were uploaded or a deployment ID was created, but validation/publish status was not found.
+- `validated`: Central validation completed, but publish status was not found.
+- `manual-publish-required`: Central accepted/validated the deployment but requires manual publishing. Include the deployment ID and https://central.sonatype.com/publishing/deployments in release notes and do not claim Maven Central publishing is complete.
+- `published`: deployment output indicates the artifacts were published/released.
+
+6) Verify the deployment in Central Portal. If the helper reports `manual-publish-required`, publish the deployment manually from Central Portal or clearly report the remaining manual step.
+7) Check Maven Central for the published artifacts.
 
 ## How To Collect Release Changes (Checklist)
 
