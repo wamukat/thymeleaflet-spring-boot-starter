@@ -62,6 +62,26 @@ class ThymeleafletRenderingExceptionHandlerIntegrationTest {
     }
 
     @Test
+    @DisplayName("data-th-insert に通常文字列が渡された場合はエラーUIへフォールバックする")
+    void shouldFallbackToErrorFragmentOnInvalidDataThFragmentExpression() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/test.unsafe-fragment/dataUnsafe/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Preview error"),
+            "テンプレート例外時にプレビューエラー表示へフォールバックすること");
+        assertTrue(
+            body.contains("th:replace/th:insert")
+                || body.contains("thymeleaflet.error.message.invalidFragmentExpression"),
+            "原因ヒント付きメッセージが表示されること");
+        assertFalse(body.contains("Whitelabel Error Page"),
+            "ホストアプリのデフォルトエラーページに遷移しないこと");
+    }
+
+    @Test
     @DisplayName("JavaDoc @param の java.time 型に基づいて story parameters を変換して描画する")
     void shouldRenderJavaTimeParameterValuesFromStoryYaml() throws Exception {
         String body = mockMvc.perform(get("/thymeleaflet/test.java-time-story/detailHeader/default/render")

@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 /**
  * フラグメント動的レンダリング処理専用サービス
@@ -60,6 +59,8 @@ public class FragmentRenderingService {
 
     private final StoryJavaTimeValueCoercionService storyJavaTimeValueCoercionService;
 
+    private final UnsafeFragmentInsertionDetector unsafeFragmentInsertionDetector;
+
     public FragmentRenderingService(
         ValidationUseCase validationUseCase,
         StoryRetrievalUseCase storyRetrievalUseCase,
@@ -82,6 +83,7 @@ public class FragmentRenderingService {
         this.fragmentModelInferenceService = fragmentModelInferenceService;
         this.javaDocLookupService = javaDocLookupService;
         this.storyJavaTimeValueCoercionService = storyJavaTimeValueCoercionService;
+        this.unsafeFragmentInsertionDetector = new UnsafeFragmentInsertionDetector();
     }
 
     /**
@@ -416,25 +418,7 @@ public class FragmentRenderingService {
             return Optional.empty();
         }
 
-        for (Map.Entry<String, Object> entry : mergedParameters.entrySet()) {
-            Object value = entry.getValue();
-            if (!(value instanceof String stringValue)) {
-                continue;
-            }
-            String trimmedValue = stringValue.trim();
-            if (trimmedValue.startsWith("~{") && trimmedValue.endsWith("}")) {
-                continue;
-            }
-
-            String parameterName = entry.getKey();
-            Pattern unsafeInsertionPattern = Pattern.compile(
-                "th:(?:replace|insert)\\s*=\\s*['\"]\\$\\{\\s*" + Pattern.quote(parameterName) + "\\s*}['\"]"
-            );
-            if (unsafeInsertionPattern.matcher(templateSource).find()) {
-                return Optional.of(parameterName);
-            }
-        }
-        return Optional.empty();
+        return unsafeFragmentInsertionDetector.findUnsafeParameter(templateSource, mergedParameters);
     }
 
     private String readTemplateSource(String templatePath) {

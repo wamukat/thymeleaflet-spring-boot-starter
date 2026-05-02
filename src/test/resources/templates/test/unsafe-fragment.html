@@ -4,5 +4,12 @@
 <th:block th:fragment="unsafe(body)">
     <th:block th:replace="${body}"></th:block>
 </th:block>
+<th:block th:fragment="dataUnsafe(content)">
+    <div
+        data-th-insert="${
+          content
+        }">
+    </div>
+</th:block>
 </body>
 </html>
