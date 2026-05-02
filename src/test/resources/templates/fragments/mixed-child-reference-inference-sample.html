@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<section th:fragment="mixedChildReferenceInferenceSample">
+    <th:block th:replace="~{components/named-child-inference-sample :: child(${view.title}, variant=${view.variant})}"></th:block>
+</section>
+</body>
+</html>

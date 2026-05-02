@@ -67,8 +67,16 @@ public class TemplateModelExpressionAnalyzer {
         List<String> expressionSources = expressionSources(template);
         List<ModelPath> modelPaths = extractModelPathsFromSources(expressionSources, excludedIdentifiers);
         List<ModelPath> noArgMethodPaths = extractNoArgMethodPathsFromSources(expressionSources, excludedIdentifiers);
-        Map<String, Boolean> referencedTemplatePaths = extractReferencedTemplatePaths(template, currentTemplatePath);
-        return new TemplateInference(modelPaths, loopVariablePaths, referencedTemplatePaths, noArgMethodPaths);
+        List<TemplateInference.ReferencedFragment> referencedFragments =
+            extractReferencedFragments(template, currentTemplatePath);
+        Map<String, Boolean> referencedTemplatePaths = referencedTemplatePaths(referencedFragments);
+        return new TemplateInference(
+            modelPaths,
+            loopVariablePaths,
+            referencedTemplatePaths,
+            noArgMethodPaths,
+            referencedFragments
+        );
     }
 
     private List<ModelPath> extractModelPathsFromSources(List<String> sources, Set<String> excludedIdentifiers) {
@@ -208,21 +216,36 @@ public class TemplateModelExpressionAnalyzer {
         return loopVariables;
     }
 
-    private Map<String, Boolean> extractReferencedTemplatePaths(
+    private List<TemplateInference.ReferencedFragment> extractReferencedFragments(
         StructuredTemplateParser.ParsedTemplate template,
         Optional<String> currentTemplatePath
     ) {
-        Map<String, Boolean> referencedTemplatePaths = new LinkedHashMap<>();
+        List<TemplateInference.ReferencedFragment> referencedFragments = new ArrayList<>();
         for (String raw : fragmentInsertionAttributeValues(template)) {
             if (raw == null || raw.isBlank()) {
                 continue;
             }
             parseFragmentExpression(raw, currentTemplatePath)
-                .ifPresent(expression -> referencedTemplatePaths.merge(
+                .map(expression -> new TemplateInference.ReferencedFragment(
                     expression.templatePath(),
-                    requiresChildModelRecursion(expression),
-                    (left, right) -> left || right
-                ));
+                    expression.fragmentName(),
+                    expression.arguments(),
+                    expression.hasArgumentList(),
+                    requiresChildModelRecursion(expression)
+                ))
+                .ifPresent(referencedFragments::add);
+        }
+        return referencedFragments;
+    }
+
+    private Map<String, Boolean> referencedTemplatePaths(List<TemplateInference.ReferencedFragment> referencedFragments) {
+        Map<String, Boolean> referencedTemplatePaths = new LinkedHashMap<>();
+        for (TemplateInference.ReferencedFragment reference : referencedFragments) {
+            referencedTemplatePaths.merge(
+                reference.templatePath(),
+                reference.requiresChildModelRecursion(),
+                (left, right) -> left || right
+            );
         }
         return referencedTemplatePaths;
     }

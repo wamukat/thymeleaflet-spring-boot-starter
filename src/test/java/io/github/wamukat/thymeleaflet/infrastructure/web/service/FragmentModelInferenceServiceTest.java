@@ -109,4 +109,43 @@ class FragmentModelInferenceServiceTest {
 
         assertThat(inferred).doesNotContainKeys("label", "variant");
     }
+
+    @Test
+    void shouldMapNamedFragmentArgumentsToChildDeclarationParameters() {
+        Map<String, Object> inferred = service.inferModel(
+            "fragments/named-child-reference-inference-sample",
+            "namedChildReferenceInferenceSample",
+            List.of()
+        );
+
+        assertThat(inferred).containsKeys("view", "childOnly");
+        assertThat(inferred).doesNotContainKeys("title", "variant");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> view = (Map<String, Object>) Objects.requireNonNull(inferred.get("view"));
+        assertThat(view).containsKeys("title", "variant");
+    }
+
+    @Test
+    void shouldAvoidDeclarationAwareMappingForMixedFragmentArguments() {
+        Map<String, Object> inferred = service.inferModel(
+            "fragments/mixed-child-reference-inference-sample",
+            "mixedChildReferenceInferenceSample",
+            List.of()
+        );
+
+        assertThat(inferred).containsKeys("view", "title", "variant", "childOnly");
+    }
+
+    @Test
+    void shouldMapNamedFragmentArgumentsWhenInferringMethodReturnCandidates() {
+        Map<String, Object> inferred = service.inferMethodReturnCandidates(
+            "fragments/named-child-reference-inference-sample",
+            "namedChildReferenceInferenceSample",
+            List.of()
+        );
+
+        assertThat(inferred).containsKey("childMethodOnly");
+        assertThat(inferred).doesNotContainKeys("title", "variant");
+    }
 }

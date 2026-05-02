@@ -112,6 +112,26 @@ class TemplateModelExpressionAnalyzerTest {
     }
 
     @Test
+    void shouldPreserveReferencedFragmentRawArguments() {
+        String html = """
+            <section>
+              <th:block th:replace="~{components/card :: card(variant=${view.variant}, title='Ready')}"></th:block>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.referencedFragments()).singleElement()
+            .satisfies(reference -> {
+                assertThat(reference.templatePath()).isEqualTo("components/card");
+                assertThat(reference.fragmentName()).isEqualTo("card");
+                assertThat(reference.arguments()).containsExactly("variant=${view.variant}", "title='Ready'");
+                assertThat(reference.hasArgumentList()).isTrue();
+                assertThat(reference.requiresChildModelRecursion()).isTrue();
+            });
+    }
+
+    @Test
     void shouldContinueSkippingSameTemplateReferencesWithoutCurrentTemplatePath() {
         String html = """
             <section>

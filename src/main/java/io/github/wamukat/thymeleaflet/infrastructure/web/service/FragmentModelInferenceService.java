@@ -3,16 +3,21 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 import io.github.wamukat.thymeleaflet.domain.model.InferredModel;
 import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
 import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
+import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
+import io.github.wamukat.thymeleaflet.domain.service.TopLevelSyntaxScanner;
+import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentSignatureParser;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -25,6 +30,9 @@ public class FragmentModelInferenceService {
 
     private final ResourceLoader resourceLoader;
     private final TemplateModelExpressionAnalyzer expressionAnalyzer;
+    private final StructuredTemplateParser templateParser = new StructuredTemplateParser();
+    private final FragmentSignatureParser fragmentSignatureParser = new FragmentSignatureParser();
+    private final TopLevelSyntaxScanner topLevelSyntaxScanner = new TopLevelSyntaxScanner();
 
     public FragmentModelInferenceService(
         ResourceLoader resourceLoader,
@@ -71,16 +79,19 @@ public class FragmentModelInferenceService {
 
         TemplateInference inference = expressionAnalyzer.analyze(html, new HashSet<>(parameterNames), templatePath);
         InferredModel inferred = inference.toInferredModel();
-        for (Map.Entry<String, Boolean> entry : inference.referencedTemplatePathsWithRecursionFlags().entrySet()) {
-            String referencedTemplatePath = entry.getKey();
-            boolean requiresRecursion = entry.getValue();
-            if (!requiresRecursion) {
+        for (TemplateInference.ReferencedFragment reference : inference.referencedFragments()) {
+            if (!reference.requiresChildModelRecursion()) {
                 continue;
             }
+            String referencedTemplatePath = reference.templatePath();
             if (referencedTemplatePath.equals(templatePath)) {
                 continue;
             }
-            InferredModel child = inferModelRecursive(referencedTemplatePath, List.of(), visitedTemplatePaths);
+            InferredModel child = inferModelRecursive(
+                referencedTemplatePath,
+                mappedChildParameterNames(reference),
+                visitedTemplatePaths
+            );
             inferred.merge(child);
         }
         return inferred;
@@ -113,20 +124,106 @@ public class FragmentModelInferenceService {
             inferred.putPath(methodPath.segments(), methodPath.inferSampleValue());
         }
 
-        for (Map.Entry<String, Boolean> entry : inference.referencedTemplatePathsWithRecursionFlags().entrySet()) {
-            String referencedTemplatePath = entry.getKey();
-            boolean requiresRecursion = entry.getValue();
-            if (!requiresRecursion) {
+        for (TemplateInference.ReferencedFragment reference : inference.referencedFragments()) {
+            if (!reference.requiresChildModelRecursion()) {
                 continue;
             }
+            String referencedTemplatePath = reference.templatePath();
             if (referencedTemplatePath.equals(templatePath)) {
                 continue;
             }
-            InferredModel child = inferMethodReturnCandidatesRecursive(referencedTemplatePath, List.of(), visitedTemplatePaths);
+            InferredModel child = inferMethodReturnCandidatesRecursive(
+                referencedTemplatePath,
+                mappedChildParameterNames(reference),
+                visitedTemplatePaths
+            );
             inferred.merge(child);
         }
 
         return inferred;
+    }
+
+    private List<String> mappedChildParameterNames(TemplateInference.ReferencedFragment reference) {
+        if (!reference.hasArgumentList() || reference.arguments().isEmpty()) {
+            return List.of();
+        }
+        List<String> argumentNames = namedArgumentNames(reference.arguments());
+        if (argumentNames.isEmpty()) {
+            return List.of();
+        }
+        List<String> declarationParameters = fragmentParameterNames(reference.templatePath(), reference.fragmentName());
+        if (!declarationParameters.containsAll(argumentNames)) {
+            return List.of();
+        }
+        return argumentNames;
+    }
+
+    private List<String> namedArgumentNames(List<String> arguments) {
+        List<String> argumentNames = new ArrayList<>();
+        for (String argument : arguments) {
+            Optional<String> name = namedArgumentName(argument);
+            if (name.isEmpty()) {
+                return List.of();
+            }
+            argumentNames.add(name.orElseThrow());
+        }
+        return argumentNames;
+    }
+
+    private Optional<String> namedArgumentName(String argument) {
+        var assignIndex = topLevelSyntaxScanner.findFirst(argument, "=");
+        if (assignIndex.isEmpty() || assignIndex.orElseThrow() <= 0) {
+            return Optional.empty();
+        }
+        String candidate = argument.substring(0, assignIndex.orElseThrow()).trim();
+        if (!isIdentifier(candidate)) {
+            return Optional.empty();
+        }
+        return Optional.of(candidate);
+    }
+
+    private boolean isIdentifier(String candidate) {
+        if (candidate.isBlank() || !Character.isLetterOrDigit(candidate.charAt(0))) {
+            return false;
+        }
+        for (int index = 1; index < candidate.length(); index++) {
+            char current = candidate.charAt(index);
+            if (!Character.isLetterOrDigit(current) && current != '_' && current != '-') {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private List<String> fragmentParameterNames(String templatePath, String fragmentName) {
+        String html = readTemplateSource(templatePath);
+        if (html.isEmpty()) {
+            return List.of();
+        }
+        StructuredTemplateParser.ParsedTemplate parsedTemplate = templateParser.parse(html);
+        for (StructuredTemplateParser.TemplateElement element : parsedTemplate.elements()) {
+            Optional<List<String>> parameters = parseFragmentParameters(element, fragmentName);
+            if (parameters.isPresent()) {
+                return parameters.orElseThrow();
+            }
+        }
+        return List.of();
+    }
+
+    private Optional<List<String>> parseFragmentParameters(
+        StructuredTemplateParser.TemplateElement element,
+        String fragmentName
+    ) {
+        Optional<String> definition = element.attributeValue("th:fragment")
+            .or(() -> element.attributeValue("data-th-fragment"));
+        if (definition.isEmpty()) {
+            return Optional.empty();
+        }
+        FragmentSignatureParser.ParseResult result = fragmentSignatureParser.parse(definition.orElseThrow());
+        if (result instanceof FragmentSignatureParser.ParseSuccess success && success.fragmentName().equals(fragmentName)) {
+            return Optional.of(success.parameters());
+        }
+        return Optional.empty();
     }
 
     private String readTemplateSource(String templatePath) {

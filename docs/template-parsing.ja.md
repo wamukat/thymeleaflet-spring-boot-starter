@@ -49,7 +49,7 @@
 | `~{'components/card' :: card(title='Ready')}` | Supported | quote 付き template path と literal argument をサポートする。literal-only call は child model recursion を skip する。 | parser corpus で維持する。 |
 | `~{"components/card" :: content}` | Supported | double quote 付き template path をサポートする。 | parser test で維持する。 |
 | `~{components/topbar :: topbar()}` | Supported | no-argument call を正規化し、child model requirements へ再帰しない。 | no-arg preprocessing test で維持する。 |
-| named call arguments, e.g. `card(title=${view.title})` | Supported as raw arguments | argument name/value は raw segment として保持する。declaration parameter への意味的 mapping は未実施。 | story value ordering が必要とする場合のみ semantic mapping を検討する。 |
+| named call arguments, e.g. `card(title=${view.title})` | Supported with declaration-aware inference | argument name/value は raw segment として保持する。model inference では、call argument がすべて named で target declaration を取得できる場合に declaration parameter と照合する。positional と named の mixed call は conservative な raw behavior のまま扱う。 | analyzer / model inference test で維持する。 |
 | `th:replace`, `th:insert`, `th:include` | Supported | static fragment expression を解析する。unsupported / dynamic reference は non-fatal に skip する。 | analyzer 間で shared attribute policy を集約する。 |
 | `data-th-replace`, `data-th-insert`, `data-th-include` | Supported | 関連箇所では `data-th-*` variant も parsing / diagnostics 対象に含める。 | analyzer 間で shared attribute policy を集約する。 |
 | fragment reference としての `${dynamicRef}` | Diagnostic-only | dynamic reference は static に解決できないため non-fatal diagnostic を出す。 | story diagnostics への surfaced 状態を維持する。 |
@@ -64,9 +64,8 @@
 
 推奨サポート順:
 
-1. Semantic named-argument mapping。story value ordering が declaration-aware binding を必要とする場合のみ進める。
-2. duplicate declaration parameter diagnostics。UI editing が parameter uniqueness に依存する前に進める。
-3. stable bracket expression inference。dynamic key は推測せず、indexed path など安定したケースに限定する。
+1. duplicate declaration parameter diagnostics。UI editing が parameter uniqueness に依存する前に進める。
+2. stable bracket expression inference。dynamic key は推測せず、indexed path など安定したケースに限定する。
 
 Story diagnostic surface は複数の non-fatal parser diagnostics を保持できます。YAML load diagnostic は単一 source の diagnostic として扱い、parser diagnostics はユーザー向けに要約しつつ developer detail は server-side に留めます。
 
