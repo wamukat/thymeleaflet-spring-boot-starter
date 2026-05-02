@@ -27,6 +27,49 @@ Template parsing is intentionally split into small layers:
 
 The model inference layer supports both `th:*` and `data-th-*` forms for the attributes below.
 
+## Fragment Syntax Support Matrix
+
+Status meanings:
+
+- Supported: parsed and used by runtime or static analysis.
+- Diagnostic-only: recognized as unsupported or dynamic without failing rendering.
+- Unsupported: not currently parsed with stable semantics.
+- Intentionally unsupported: accepted only by Thymeleaf rendering or deliberately left out of static analysis.
+
+| Syntax | Status | Notes | Follow-up |
+| --- | --- | --- | --- |
+| `th:fragment="profileCard"` | Supported | Fragment declaration is discovered and displayed as a simple fragment. | Keep covered by declaration parser tests. |
+| `th:fragment="profileCard()"` | Supported | Empty parameter list is normalized as a no-argument fragment. | Keep covered by declaration parser tests. |
+| `th:fragment="profileCard(name, age)"` | Supported | Identifier parameters are preserved in declaration order. | Keep covered by declaration parser tests. |
+| `data-th-fragment="profileCard(name)"` | Supported | Discovery treats `data-th-fragment` like `th:fragment`. | Keep covered by discovery tests. |
+| Duplicate declaration parameters | Supported as-is | Duplicate names are currently preserved in declaration order; no uniqueness diagnostic is emitted yet. | Add a direct diagnostic if UI editing starts relying on uniqueness. |
+| Declaration parameter defaults or assignment syntax | Unsupported | Declaration-side syntax such as `profileCard(name='x')` is outside the v1 UI support set. | Revisit only if real templates need it. |
+| Non-identifier declaration names or parameters | Unsupported | Thymeleaf-compatible parsing may accept more than the UI support set; Thymeleaflet keeps normalized output narrow. | Keep as diagnostic rather than normalizing speculatively. |
+| `~{components/card :: card(title=${view.title})}` | Supported | Static template path, selector, and argument list are parsed for dependency and model inference. | Keep covered by `FragmentExpressionParserTest`. |
+| `~{'components/card' :: card(title='Ready')}` | Supported | Quoted template paths and literal arguments are supported. Literal-only calls skip child model recursion. | Keep covered by parser corpus. |
+| `~{"components/card" :: content}` | Supported | Double-quoted template paths are supported. | Keep covered by parser tests. |
+| `~{components/topbar :: topbar()}` | Supported | No-argument calls are normalized and do not recurse into child model requirements. | Keep covered by no-arg preprocessing tests. |
+| Named call arguments, for example `card(title=${view.title})` | Supported as raw arguments | Argument names and values are preserved as raw segments; they are not mapped to declaration parameters semantically. | Consider semantic named-argument mapping only if preview value ordering needs it. |
+| `th:replace`, `th:insert`, `th:include` | Supported | Static fragment expressions are analyzed. Unsupported or dynamic references are skipped non-fatally. | Centralize the shared attribute policy across analyzers. |
+| `data-th-replace`, `data-th-insert`, `data-th-include` | Supported | `data-th-*` variants are included in parsing and diagnostics where relevant. | Centralize the shared attribute policy across analyzers. |
+| `${dynamicRef}` as a fragment reference | Diagnostic-only | Dynamic references cannot be resolved statically and produce non-fatal diagnostics. | Keep diagnostic surfaced in story diagnostics. |
+| Malformed fragment expressions | Diagnostic-only | Malformed static references produce non-fatal diagnostics. | Improve source location for expression diagnostics when possible. |
+| Same-template references such as `~{:: header}` | Unsupported | `FragmentExpressionParser` currently requires a non-empty static template path. | High-value feature candidate. |
+| Same-template references such as `~{this :: header}` | Unsupported | `this` is currently rejected during static path normalization. | High-value feature candidate. |
+| Selector-style references such as `~{template :: #header}` | Unsupported | CSS selector semantics are not normalized into a fragment name today. | Medium-value candidate; requires UI naming and matching rules. |
+| Whole-template references such as `~{template}` | Intentionally unsupported for fragment inference | Thymeleaf can render template-level references, but Thymeleaflet fragment dependency inference needs a selector. | Keep skipped unless a concrete preview workflow needs it. |
+| Template path expressions such as `~{${view.template} :: card}` | Diagnostic-only | Dynamic template paths are skipped because dependency targets are unknowable statically. | Keep non-fatal; do not infer speculative paths. |
+| Fragment expression parameters with nested parentheses or quoted commas | Supported | Top-level splitting preserves nested expressions and quoted separators. | Keep covered by parser tests. |
+| Fragment expression parameters with unbalanced parentheses or quotes | Diagnostic-only | Parse fails closed and emits diagnostics. | Keep covered by parser tests. |
+
+Recommended support order:
+
+1. Same-template static references: `~{:: fragment(...)}` and `~{this :: fragment(...)}`.
+2. Shared fragment reference attribute policy for `replace` / `insert` / `include` and `data-th-*`.
+3. Multiple parser diagnostics on the story diagnostic surface.
+4. Selector-style references such as `#id` or `.class`, only after matching and UI display rules are specified.
+5. Semantic named-argument mapping, only if story value ordering needs declaration-aware argument binding.
+
 ### `th:each`
 
 `th:each` binds loop aliases to the iterable model path. The first inferred path in the iterable expression becomes the source path for each alias.
