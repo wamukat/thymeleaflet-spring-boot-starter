@@ -216,6 +216,22 @@ class ThymeleafletRenderingExceptionHandlerIntegrationTest {
     }
 
     @Test
+    @DisplayName("parser corpus の mixed dependency fixture を描画できる")
+    void shouldRenderMixedDependencyRegressionFixture() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/regression.parser-corpus/mixedDependencyShell/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Mixed Label"),
+            "mixed dependency fixture の model 値を描画できること");
+        assertFalse(body.contains("Preview error"),
+            "mixed dependency parser corpus fixture がプレビューエラーにならないこと");
+    }
+
+    @Test
     @DisplayName("Map no-arg メソッドが未解決でも /render は継続し警告ヘッダーを返す")
     void shouldRenderWithWarningsForUnresolvedMapNoArgMethods() throws Exception {
         var mvcResult = mockMvc.perform(get("/thymeleaflet/test.map-noarg-warning/methodWarning/default/render")

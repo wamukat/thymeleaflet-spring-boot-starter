@@ -27,3 +27,11 @@ storyGroups:
           view:
             nested:
               title: Nested Label
+  mixedDependencyShell:
+    stories:
+      - name: default
+        title: mixed dependency shell
+        model:
+          view:
+            mixed:
+              title: Mixed Label

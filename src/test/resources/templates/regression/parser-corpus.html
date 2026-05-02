@@ -66,5 +66,40 @@
   <div>
     <span data-th-text="${view.malformed.label}">Malformed label
 </section>
+
+<!--
+ /**
+  * Parser regression corpus for mixed dependency attributes and text/comment extraction.
+  * Covers th:replace, th:insert, th:include, and data-th-* siblings with quoted > values.
+  * @fragment mixedDependencyShell
+  * @model view.mixed.title {@code String} [required] Mixed title
+  */
+-->
+<section th:fragment="mixedDependencyShell"
+         th:with="label='Ready > Draft', local=${view.mixed.title}">
+  <!-- Parser should keep ${commented.out} inside comments only. -->
+  Hello ${view.mixed.title}
+  <div th:replace="~{regression/parser-corpus :: quotedTarget(label=${view.mixed.title})}"></div>
+  <div th:insert="~{'regression/parser-corpus' :: noArgReferenceTarget()}"></div>
+  <div th:include="~{regression/parser-corpus :: nestedChild(title='Included > Nested')}"></div>
+  <span data-th-replace="~{'regression/parser-corpus' :: quotedTarget(label='Data > Replace')}"></span>
+  <span data-th-insert="~{regression/parser-corpus :: noArgReferenceTarget()}"></span>
+  <span data-th-include="~{regression/parser-corpus :: nestedChild(title=${view.mixed.title})}"></span>
+  <input disabled data-th-value="${view.mixed.title}" />
+</section>
+
+<!--
+ /**
+  * Parser regression corpus for sibling subtree boundaries.
+  * @fragment siblingBoundaryA
+  */
+-->
+<section th:fragment="siblingBoundaryA">
+  <span th:text="${view.boundary.a}">A</span>
+</section>
+
+<section th:fragment="siblingBoundaryB">
+  <span th:text="${view.boundary.b}">B</span>
+</section>
 </body>
 </html>
