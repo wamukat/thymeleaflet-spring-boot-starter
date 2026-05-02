@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
+import io.github.wamukat.thymeleaflet.domain.service.FragmentReferenceAttributes;
 import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
 import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import org.slf4j.Logger;
@@ -10,12 +11,10 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 final class JavaDocExampleParser {
 
     private static final Logger logger = LoggerFactory.getLogger(JavaDocExampleParser.class);
-    private static final Set<String> EXAMPLE_REPLACE_ATTRIBUTES = Set.of("th:replace", "data-th-replace");
 
     private final StructuredTemplateParser templateParser;
     private final FragmentExpressionParser fragmentExpressionParser;
@@ -39,8 +38,7 @@ final class JavaDocExampleParser {
             StructuredTemplateParser.ParsedTemplate parsedTemplate = parseResult.parsedTemplate();
             for (StructuredTemplateParser.TemplateElement element : parsedTemplate.elements()) {
                 for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
-                    String normalizedName = attribute.name().toLowerCase(java.util.Locale.ROOT);
-                    if (!attribute.hasValue() || !EXAMPLE_REPLACE_ATTRIBUTES.contains(normalizedName)) {
+                    if (!attribute.hasValue() || !FragmentReferenceAttributes.isReplacementAttribute(attribute.name())) {
                         continue;
                     }
                     FragmentExpressionParser.FragmentExpressionParseResult referenceResult =

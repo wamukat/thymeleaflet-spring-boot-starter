@@ -4,6 +4,7 @@ import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentDependen
 import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
+import io.github.wamukat.thymeleaflet.domain.service.FragmentReferenceAttributes;
 import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentSignatureParser;
@@ -33,10 +34,6 @@ public class FragmentDependencyService implements FragmentDependencyPort {
     private static final Logger logger = LoggerFactory.getLogger(FragmentDependencyService.class);
 
     private static final Set<String> FRAGMENT_ATTRIBUTES = Set.of("th:fragment", "data-th-fragment");
-    private static final Set<String> DEPENDENCY_ATTRIBUTES = Set.of(
-        "th:replace", "th:include", "th:insert",
-        "data-th-replace", "data-th-include", "data-th-insert"
-    );
 
     private final ResolvedStorybookConfig storybookConfig;
 
@@ -164,8 +161,7 @@ public class FragmentDependencyService implements FragmentDependencyPort {
         List<String> expressions = new ArrayList<>();
         for (StructuredTemplateParser.TemplateElement element : elements) {
             for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
-                String name = attribute.name().toLowerCase(Locale.ROOT);
-                if (!attribute.hasValue() || !DEPENDENCY_ATTRIBUTES.contains(name)) {
+                if (!attribute.hasValue() || !FragmentReferenceAttributes.isReferenceAttribute(attribute.name())) {
                     continue;
                 }
                 expressions.add(attribute.value().trim());

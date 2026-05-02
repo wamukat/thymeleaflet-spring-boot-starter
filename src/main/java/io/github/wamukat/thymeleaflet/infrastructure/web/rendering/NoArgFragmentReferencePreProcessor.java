@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.rendering;
 
+import io.github.wamukat.thymeleaflet.domain.service.FragmentReferenceAttributes;
 import io.github.wamukat.thymeleaflet.domain.service.TopLevelSyntaxScanner;
 import org.thymeleaf.engine.AbstractTemplateHandler;
 import org.thymeleaf.model.IAttribute;
@@ -7,7 +8,6 @@ import org.thymeleaf.model.IOpenElementTag;
 import org.thymeleaf.model.IProcessableElementTag;
 import org.thymeleaf.model.IStandaloneElementTag;
 
-import java.util.Locale;
 import java.util.Optional;
 
 public final class NoArgFragmentReferencePreProcessor extends AbstractTemplateHandler {
@@ -55,11 +55,7 @@ public final class NoArgFragmentReferencePreProcessor extends AbstractTemplateHa
     }
 
     private static boolean isFragmentInsertionAttribute(IAttribute attribute) {
-        String attributeName = attribute.getAttributeCompleteName().toLowerCase(Locale.ROOT);
-        return attributeName.equals("th:replace")
-            || attributeName.equals("th:insert")
-            || attributeName.equals("data-th-replace")
-            || attributeName.equals("data-th-insert");
+        return FragmentReferenceAttributes.isInsertionAttribute(attribute.getAttributeCompleteName());
     }
 
     private record FragmentExpressionValue(String value, int bodyStart, int bodyEnd) {

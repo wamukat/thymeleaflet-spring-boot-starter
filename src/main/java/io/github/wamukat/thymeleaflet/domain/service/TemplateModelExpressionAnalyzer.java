@@ -195,9 +195,7 @@ public class TemplateModelExpressionAnalyzer {
 
     private Map<String, Boolean> extractReferencedTemplatePaths(StructuredTemplateParser.ParsedTemplate template) {
         Map<String, Boolean> referencedTemplatePaths = new LinkedHashMap<>();
-        for (String raw : thymeleafAttributeValues(template, Set.of(
-            "th:replace", "th:insert", "data-th-replace", "data-th-insert"
-        ))) {
+        for (String raw : fragmentInsertionAttributeValues(template)) {
             if (raw == null || raw.isBlank()) {
                 continue;
             }
@@ -209,6 +207,18 @@ public class TemplateModelExpressionAnalyzer {
                 ));
         }
         return referencedTemplatePaths;
+    }
+
+    private List<String> fragmentInsertionAttributeValues(StructuredTemplateParser.ParsedTemplate template) {
+        List<String> values = new ArrayList<>();
+        for (StructuredTemplateParser.TemplateElement element : template.elements()) {
+            for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                if (attribute.hasValue() && FragmentReferenceAttributes.isInsertionAttribute(attribute.name())) {
+                    values.add(attribute.value());
+                }
+            }
+        }
+        return values;
     }
 
     private boolean requiresChildModelRecursion(FragmentExpression expression) {
