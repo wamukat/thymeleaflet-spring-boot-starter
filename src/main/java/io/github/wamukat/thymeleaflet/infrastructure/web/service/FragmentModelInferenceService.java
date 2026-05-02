@@ -69,7 +69,7 @@ public class FragmentModelInferenceService {
             return new InferredModel();
         }
 
-        TemplateInference inference = expressionAnalyzer.analyze(html, new HashSet<>(parameterNames));
+        TemplateInference inference = expressionAnalyzer.analyze(html, new HashSet<>(parameterNames), templatePath);
         InferredModel inferred = inference.toInferredModel();
         for (Map.Entry<String, Boolean> entry : inference.referencedTemplatePathsWithRecursionFlags().entrySet()) {
             String referencedTemplatePath = entry.getKey();
@@ -99,7 +99,7 @@ public class FragmentModelInferenceService {
             return new InferredModel();
         }
 
-        TemplateInference inference = expressionAnalyzer.analyze(html, new HashSet<>(parameterNames));
+        TemplateInference inference = expressionAnalyzer.analyze(html, new HashSet<>(parameterNames), templatePath);
         InferredModel inferred = new InferredModel();
         for (ModelPath methodPath : inference.noArgMethodPaths()) {
             if (methodPath.isEmpty()) {

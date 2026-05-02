@@ -54,8 +54,8 @@ Status meanings:
 | `data-th-replace`, `data-th-insert`, `data-th-include` | Supported | `data-th-*` variants are included in parsing and diagnostics where relevant. | Centralize the shared attribute policy across analyzers. |
 | `${dynamicRef}` as a fragment reference | Diagnostic-only | Dynamic references cannot be resolved statically and produce non-fatal diagnostics. | Keep diagnostic surfaced in story diagnostics. |
 | Malformed fragment expressions | Diagnostic-only | Malformed static references produce non-fatal diagnostics. | Improve source location for expression diagnostics when possible. |
-| Same-template references such as `~{:: header}` | Unsupported | `FragmentExpressionParser` currently requires a non-empty static template path. | High-value feature candidate. |
-| Same-template references such as `~{this :: header}` | Unsupported | `this` is currently rejected during static path normalization. | High-value feature candidate. |
+| Same-template references such as `~{:: header}` | Supported with current-template context | Static analyzers resolve the empty template path to the current template path. Parser calls without current-template context still fail closed. | Keep covered by parser, dependency, and model inference tests. |
+| Same-template references such as `~{this :: header}` | Supported with current-template context | Static analyzers resolve `this` to the current template path. Parser calls without current-template context still fail closed. | Keep covered by parser, dependency, and model inference tests. |
 | Selector-style references such as `~{template :: #header}` | Unsupported | CSS selector semantics are not normalized into a fragment name today. | Medium-value candidate; requires UI naming and matching rules. |
 | Whole-template references such as `~{template}` | Intentionally unsupported for fragment inference | Thymeleaf can render template-level references, but Thymeleaflet fragment dependency inference needs a selector. | Keep skipped unless a concrete preview workflow needs it. |
 | Template path expressions such as `~{${view.template} :: card}` | Diagnostic-only | Dynamic template paths are skipped because dependency targets are unknowable statically. | Keep non-fatal; do not infer speculative paths. |
@@ -64,11 +64,9 @@ Status meanings:
 
 Recommended support order:
 
-1. Same-template static references: `~{:: fragment(...)}` and `~{this :: fragment(...)}`.
-2. Shared fragment reference attribute policy for `replace` / `insert` / `include` and `data-th-*`.
-3. Multiple parser diagnostics on the story diagnostic surface.
-4. Selector-style references such as `#id` or `.class`, only after matching and UI display rules are specified.
-5. Semantic named-argument mapping, only if story value ordering needs declaration-aware argument binding.
+1. Multiple parser diagnostics on the story diagnostic surface.
+2. Selector-style references such as `#id` or `.class`, only after matching and UI display rules are specified.
+3. Semantic named-argument mapping, only if story value ordering needs declaration-aware argument binding.
 
 ### `th:each`
 

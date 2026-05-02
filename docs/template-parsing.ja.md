@@ -54,8 +54,8 @@
 | `data-th-replace`, `data-th-insert`, `data-th-include` | Supported | 関連箇所では `data-th-*` variant も parsing / diagnostics 対象に含める。 | analyzer 間で shared attribute policy を集約する。 |
 | fragment reference としての `${dynamicRef}` | Diagnostic-only | dynamic reference は static に解決できないため non-fatal diagnostic を出す。 | story diagnostics への surfaced 状態を維持する。 |
 | malformed fragment expressions | Diagnostic-only | malformed static reference は non-fatal diagnostic を出す。 | 可能なら expression diagnostic の source location を改善する。 |
-| `~{:: header}` のような same-template reference | Unsupported | `FragmentExpressionParser` は現在 non-empty static template path を要求する。 | 優先度の高い feature candidate。 |
-| `~{this :: header}` のような same-template reference | Unsupported | `this` は static path normalization で現在除外している。 | 優先度の高い feature candidate。 |
+| `~{:: header}` のような same-template reference | Supported with current-template context | static analyzer は空の template path を現在の template path として解決する。current-template context なしの parser call は fail closed のまま。 | parser / dependency / model inference test で維持する。 |
+| `~{this :: header}` のような same-template reference | Supported with current-template context | static analyzer は `this` を現在の template path として解決する。current-template context なしの parser call は fail closed のまま。 | parser / dependency / model inference test で維持する。 |
 | `~{template :: #header}` のような selector-style reference | Unsupported | CSS selector semantics は fragment name として正規化していない。 | matching / UI 表示ルールを定義してから検討する。 |
 | `~{template}` のような whole-template reference | Intentionally unsupported for fragment inference | Thymeleaf は template-level reference を rendering できるが、Thymeleaflet の fragment dependency inference には selector が必要。 | 具体的な preview workflow が出るまでは skip する。 |
 | `~{${view.template} :: card}` のような template path expression | Diagnostic-only | dynamic template path は dependency target が static に分からないため skip する。 | non-fatal のまま維持し、推測 path は作らない。 |
@@ -64,11 +64,9 @@
 
 推奨サポート順:
 
-1. Same-template static references: `~{:: fragment(...)}` と `~{this :: fragment(...)}`。
-2. `replace` / `insert` / `include` と `data-th-*` の shared fragment reference attribute policy。
-3. story diagnostic surface での複数 parser diagnostics 表示。
-4. `#id` や `.class` の selector-style references。matching と UI 表示ルールを先に決める。
-5. Semantic named-argument mapping。story value ordering が declaration-aware binding を必要とする場合のみ進める。
+1. story diagnostic surface での複数 parser diagnostics 表示。
+2. `#id` や `.class` の selector-style references。matching と UI 表示ルールを先に決める。
+3. Semantic named-argument mapping。story value ordering が declaration-aware binding を必要とする場合のみ進める。
 
 ### `th:each`
 

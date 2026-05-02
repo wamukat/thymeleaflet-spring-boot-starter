@@ -43,11 +43,29 @@ class FragmentExpressionParserTest {
     }
 
     @Test
+    void parse_shouldResolveSameTemplateReferencesWhenCurrentTemplatePathIsProvided() {
+        FragmentExpression implicit = parser.parse("~{:: header(title=${view.title})}", "pages/dashboard")
+            .orElseThrow();
+        FragmentExpression explicit = parser.parse("~{this :: footer}", "pages/dashboard")
+            .orElseThrow();
+
+        assertThat(implicit.templatePath()).isEqualTo("pages/dashboard");
+        assertThat(implicit.fragmentName()).isEqualTo("header");
+        assertThat(implicit.arguments()).containsExactly("title=${view.title}");
+        assertThat(explicit.templatePath()).isEqualTo("pages/dashboard");
+        assertThat(explicit.fragmentName()).isEqualTo("footer");
+        assertThat(explicit.arguments()).isEmpty();
+        assertThat(explicit.hasArgumentList()).isFalse();
+    }
+
+    @Test
     void parse_shouldFailClosedForMalformedOrDynamicInput() {
         assertThat(parser.parse("${dynamicRef}")).isEmpty();
         assertThat(parser.parse("~{components/card}")).isEmpty();
         assertThat(parser.parse("~{components/card :: card(label=${view.title)}")).isEmpty();
         assertThat(parser.parse("~{${dynamicPath} :: card()}")).isEmpty();
+        assertThat(parser.parse("~{:: card()}")).isEmpty();
+        assertThat(parser.parse("~{this :: card()}")).isEmpty();
     }
 
     @Test

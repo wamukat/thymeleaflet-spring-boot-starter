@@ -15,7 +15,25 @@ public class FragmentExpressionParser {
         return parseWithDiagnostics(rawExpression).expression();
     }
 
+    public Optional<FragmentExpression> parse(String rawExpression, String currentTemplatePath) {
+        return parseWithDiagnostics(rawExpression, currentTemplatePath).expression();
+    }
+
     public FragmentExpressionParseResult parseWithDiagnostics(String rawExpression) {
+        return parseWithDiagnostics(rawExpression, Optional.empty());
+    }
+
+    public FragmentExpressionParseResult parseWithDiagnostics(String rawExpression, String currentTemplatePath) {
+        if (currentTemplatePath == null || currentTemplatePath.isBlank()) {
+            return parseWithDiagnostics(rawExpression, Optional.empty());
+        }
+        return parseWithDiagnostics(rawExpression, Optional.of(currentTemplatePath.trim()));
+    }
+
+    private FragmentExpressionParseResult parseWithDiagnostics(
+        String rawExpression,
+        Optional<String> currentTemplatePath
+    ) {
         if (rawExpression == null || rawExpression.isBlank()) {
             return FragmentExpressionParseResult.empty(
                 ParserDiagnostic.warning("FRAGMENT_EXPRESSION_EMPTY", "Fragment expression is empty")
@@ -37,7 +55,7 @@ public class FragmentExpressionParser {
         }
 
         int separatorIndex = findTopLevelFragmentSeparator(expression);
-        if (separatorIndex <= 0 || separatorIndex >= expression.length() - 2) {
+        if (separatorIndex < 0 || separatorIndex >= expression.length() - 2) {
             return FragmentExpressionParseResult.empty(
                 ParserDiagnostic.warning(
                     "FRAGMENT_EXPRESSION_MALFORMED",
@@ -46,7 +64,7 @@ public class FragmentExpressionParser {
             );
         }
 
-        String templatePath = normalizeTemplatePath(expression.substring(0, separatorIndex));
+        String templatePath = normalizeTemplatePath(expression.substring(0, separatorIndex), currentTemplatePath);
         Optional<FragmentSelector> selector = parseFragmentSelector(expression.substring(separatorIndex + 2));
         if (templatePath.isBlank() || selector.isEmpty()) {
             return FragmentExpressionParseResult.empty(
@@ -78,12 +96,15 @@ public class FragmentExpressionParser {
         return topLevelSyntaxScanner.findFirst(expression, "::").orElse(-1);
     }
 
-    private String normalizeTemplatePath(String rawTemplatePath) {
+    private String normalizeTemplatePath(String rawTemplatePath, Optional<String> currentTemplatePath) {
         String templatePath = unquote(rawTemplatePath.trim());
+        if (templatePath.isBlank() || templatePath.equals("this")) {
+            return currentTemplatePath.orElse("");
+        }
         if (templatePath.startsWith("/") && templatePath.length() > 1) {
             templatePath = templatePath.substring(1);
         }
-        if (templatePath.startsWith("#") || templatePath.startsWith("this") || templatePath.contains("${")) {
+        if (templatePath.startsWith("#") || templatePath.contains("${")) {
             return "";
         }
         return templatePath;
