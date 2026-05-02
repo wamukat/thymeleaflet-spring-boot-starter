@@ -1,7 +1,9 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentDependencyPort;
+import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
+import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
 import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
@@ -42,6 +44,7 @@ public class FragmentDependencyService implements FragmentDependencyPort {
     private final ThymeleafletCacheManager cacheManager;
 
     private final StructuredTemplateParser templateParser;
+    private final FragmentExpressionParser fragmentExpressionParser;
 
     @Autowired
     public FragmentDependencyService(
@@ -49,7 +52,7 @@ public class FragmentDependencyService implements FragmentDependencyPort {
         ResourcePathValidator resourcePathValidator,
         ThymeleafletCacheManager cacheManager
     ) {
-        this(storybookConfig, resourcePathValidator, cacheManager, new StructuredTemplateParser());
+        this(storybookConfig, resourcePathValidator, cacheManager, new StructuredTemplateParser(), new FragmentExpressionParser());
     }
 
     FragmentDependencyService(
@@ -58,10 +61,21 @@ public class FragmentDependencyService implements FragmentDependencyPort {
         ThymeleafletCacheManager cacheManager,
         StructuredTemplateParser templateParser
     ) {
+        this(storybookConfig, resourcePathValidator, cacheManager, templateParser, new FragmentExpressionParser());
+    }
+
+    FragmentDependencyService(
+        ResolvedStorybookConfig storybookConfig,
+        ResourcePathValidator resourcePathValidator,
+        ThymeleafletCacheManager cacheManager,
+        StructuredTemplateParser templateParser,
+        FragmentExpressionParser fragmentExpressionParser
+    ) {
         this.storybookConfig = storybookConfig;
         this.resourcePathValidator = resourcePathValidator;
         this.cacheManager = cacheManager;
         this.templateParser = templateParser;
+        this.fragmentExpressionParser = fragmentExpressionParser;
     }
 
     public List<DependencyComponent> findDependencies(String templatePath, String fragmentName) {
@@ -119,21 +133,13 @@ public class FragmentDependencyService implements FragmentDependencyPort {
     }
 
     private Optional<DependencyComponent> parseDependency(String expression) {
-        String normalizedExpression = unwrapFragmentExpression(expression);
-        String[] parts = normalizedExpression.split("::", 2);
-        if (parts.length < 2) {
-            return Optional.empty();
-        }
-        String templatePath = unquote(parts[0].trim());
-        String fragmentPart = parts[1].trim();
-        String fragmentName = fragmentPart.split("\\(")[0].trim();
+        return fragmentExpressionParser.parse(expression)
+            .map(this::toDependencyComponent);
+    }
 
-        if (templatePath.isEmpty() || fragmentName.isEmpty()) {
-            return Optional.empty();
-        }
-
-        String encodedPath = SecureTemplatePath.createUnsafe(templatePath.replace("/", ".")).forUrl();
-        return Optional.of(new DependencyComponent(templatePath, fragmentName, encodedPath));
+    private DependencyComponent toDependencyComponent(FragmentExpression expression) {
+        String encodedPath = SecureTemplatePath.createUnsafe(expression.templatePath().replace("/", ".")).forUrl();
+        return new DependencyComponent(expression.templatePath(), expression.fragmentName(), encodedPath);
     }
 
     private List<String> extractDependencyExpressions(List<StructuredTemplateParser.TemplateElement> elements) {
@@ -169,24 +175,6 @@ public class FragmentDependencyService implements FragmentDependencyPort {
             .map(StructuredTemplateParser.TemplateAttribute::value)
             .map(String::trim)
             .findFirst();
-    }
-
-    private String unwrapFragmentExpression(String expression) {
-        String normalized = expression.trim();
-        if (normalized.startsWith("~{") && normalized.endsWith("}")) {
-            return normalized.substring(2, normalized.length() - 1).trim();
-        }
-        return normalized;
-    }
-
-    private String unquote(String value) {
-        if (value.length() < 2) {
-            return value;
-        }
-        if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith("\"") && value.endsWith("\""))) {
-            return value.substring(1, value.length() - 1);
-        }
-        return value;
     }
 
     public record DependencyComponent(String templatePath, String fragmentName, String encodedTemplatePath) {
