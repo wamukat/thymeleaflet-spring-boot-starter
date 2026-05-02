@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<article th:fragment="child(title, variant)">
+    <h2 th:text="${title}"></h2>
+    <strong th:text="${title.trim()}"></strong>
+    <p th:text="${variant}"></p>
+    <span th:text="${childOnly}"></span>
+    <small th:text="${childMethodOnly.trim()}"></small>
+</article>
+</body>
+</html>

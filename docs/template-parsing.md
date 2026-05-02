@@ -49,7 +49,7 @@ Status meanings:
 | `~{'components/card' :: card(title='Ready')}` | Supported | Quoted template paths and literal arguments are supported. Literal-only calls skip child model recursion. | Keep covered by parser corpus. |
 | `~{"components/card" :: content}` | Supported | Double-quoted template paths are supported. | Keep covered by parser tests. |
 | `~{components/topbar :: topbar()}` | Supported | No-argument calls are normalized and do not recurse into child model requirements. | Keep covered by no-arg preprocessing tests. |
-| Named call arguments, for example `card(title=${view.title})` | Supported as raw arguments | Argument names and values are preserved as raw segments; they are not mapped to declaration parameters semantically. | Consider semantic named-argument mapping only if preview value ordering needs it. |
+| Named call arguments, for example `card(title=${view.title})` | Supported with declaration-aware inference | Argument names and values are preserved as raw segments. During model inference, named arguments are matched to target declaration parameters when all call arguments are named and the target declaration is available. Mixed positional/named calls keep the conservative raw behavior. | Keep covered by analyzer and model inference tests. |
 | `th:replace`, `th:insert`, `th:include` | Supported | Static fragment expressions are analyzed. Unsupported or dynamic references are skipped non-fatally. | Centralize the shared attribute policy across analyzers. |
 | `data-th-replace`, `data-th-insert`, `data-th-include` | Supported | `data-th-*` variants are included in parsing and diagnostics where relevant. | Centralize the shared attribute policy across analyzers. |
 | `${dynamicRef}` as a fragment reference | Diagnostic-only | Dynamic references cannot be resolved statically and produce non-fatal diagnostics. | Keep diagnostic surfaced in story diagnostics. |
@@ -64,9 +64,8 @@ Status meanings:
 
 Recommended support order:
 
-1. Semantic named-argument mapping, only if story value ordering needs declaration-aware argument binding.
-2. Duplicate declaration parameter diagnostics, before UI editing relies on parameter uniqueness.
-3. Stable bracket expression inference for indexed paths, while keeping dynamic keys non-speculative.
+1. Duplicate declaration parameter diagnostics, before UI editing relies on parameter uniqueness.
+2. Stable bracket expression inference for indexed paths, while keeping dynamic keys non-speculative.
 
 Story diagnostic surfaces can carry multiple non-fatal parser diagnostics. YAML load diagnostics remain single-source diagnostics; parser diagnostics are summarized for users and retain developer details server-side.
 

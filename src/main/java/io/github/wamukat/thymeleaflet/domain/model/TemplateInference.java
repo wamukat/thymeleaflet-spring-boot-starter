@@ -14,6 +14,7 @@ public final class TemplateInference {
     private final Map<String, ModelPath> loopVariablePaths;
     private final Map<String, Boolean> referencedTemplatePaths;
     private final List<ModelPath> noArgMethodPaths;
+    private final List<ReferencedFragment> referencedFragments;
 
     public TemplateInference(
         List<ModelPath> modelPaths,
@@ -21,10 +22,21 @@ public final class TemplateInference {
         Map<String, Boolean> referencedTemplatePaths,
         List<ModelPath> noArgMethodPaths
     ) {
+        this(modelPaths, loopVariablePaths, referencedTemplatePaths, noArgMethodPaths, List.of());
+    }
+
+    public TemplateInference(
+        List<ModelPath> modelPaths,
+        Map<String, ModelPath> loopVariablePaths,
+        Map<String, Boolean> referencedTemplatePaths,
+        List<ModelPath> noArgMethodPaths,
+        List<ReferencedFragment> referencedFragments
+    ) {
         this.modelPaths = List.copyOf(modelPaths);
         this.loopVariablePaths = Map.copyOf(new LinkedHashMap<>(loopVariablePaths));
         this.referencedTemplatePaths = Map.copyOf(new LinkedHashMap<>(referencedTemplatePaths));
         this.noArgMethodPaths = List.copyOf(noArgMethodPaths);
+        this.referencedFragments = List.copyOf(referencedFragments);
     }
 
     public List<ModelPath> modelPaths() {
@@ -47,6 +59,10 @@ public final class TemplateInference {
         return noArgMethodPaths;
     }
 
+    public List<ReferencedFragment> referencedFragments() {
+        return referencedFragments;
+    }
+
     public InferredModel toInferredModel() {
         InferredModel inferred = new InferredModel();
         for (ModelPath modelPath : modelPaths) {
@@ -61,5 +77,19 @@ public final class TemplateInference {
             inferred.putPath(modelPath.segments(), modelPath.inferSampleValue());
         }
         return inferred;
+    }
+
+    public record ReferencedFragment(
+        String templatePath,
+        String fragmentName,
+        List<String> arguments,
+        boolean hasArgumentList,
+        boolean requiresChildModelRecursion
+    ) {
+        public ReferencedFragment {
+            templatePath = templatePath.trim();
+            fragmentName = fragmentName.trim();
+            arguments = List.copyOf(arguments);
+        }
     }
 }
