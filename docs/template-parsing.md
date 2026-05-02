@@ -133,7 +133,7 @@ When adding syntax support, prefer parser-owned tests over broad end-to-end asse
 
 ## External Parser Evaluation
 
-`HtmlParserAdapterComparisonTest` is the comparison spike for evaluating external HTML parsers against the Thymeleaflet parser corpus. The current candidate is jsoup, added only as a test-scoped dependency. The test harness runs the regression corpus through both `StructuredTemplateParser` and the candidate adapter, then compares these contract points:
+`HtmlParserAdapterComparisonTest` is the comparison spike for evaluating external HTML parsers against the Thymeleaflet parser corpus. The current candidate is jsoup, added only as a test-scoped dependency. The reusable test-support contract in `io.github.wamukat.thymeleaflet.testsupport.parser` runs the regression corpus through both `StructuredTemplateParser` and a candidate adapter, then compares these contract points:
 
 - Thymeleaf attribute names and values are preserved, including `th:*`, `data-th-*`, quoted fragment selectors, multiline values, literal `>` characters, and boolean-adjacent attributes.
 - Fragment declarations remain discoverable in source order.

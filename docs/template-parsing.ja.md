@@ -133,7 +133,7 @@ list 内の値を記述する場合は `@model` path に `[]` を使います。
 
 ## 外部パーサ評価
 
-`HtmlParserAdapterComparisonTest` は、外部 HTML パーサを Thymeleaflet の parser corpus に対して評価するための比較 spike です。現在の候補は jsoup で、依存は test scope のみに限定しています。このテストハーネスは regression corpus を `StructuredTemplateParser` と候補アダプタの両方で解析し、次の契約を比較します。
+`HtmlParserAdapterComparisonTest` は、外部 HTML パーサを Thymeleaflet の parser corpus に対して評価するための比較 spike です。現在の候補は jsoup で、依存は test scope のみに限定しています。`io.github.wamukat.thymeleaflet.testsupport.parser` の reusable test-support contract は regression corpus を `StructuredTemplateParser` と候補アダプタの両方で解析し、次の契約を比較します。
 
 - `th:*`、`data-th-*`、quote 付き fragment selector、複数行値、literal `>`、boolean 属性に隣接する属性を含め、Thymeleaf 属性名と値を保持できること。
 - fragment 宣言を source order で発見できること。
