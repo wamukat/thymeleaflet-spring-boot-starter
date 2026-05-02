@@ -64,9 +64,10 @@ Status meanings:
 
 Recommended support order:
 
-1. Multiple parser diagnostics on the story diagnostic surface.
-2. Selector-style references such as `#id` or `.class`, only after matching and UI display rules are specified.
-3. Semantic named-argument mapping, only if story value ordering needs declaration-aware argument binding.
+1. Selector-style references such as `#id` or `.class`, only after matching and UI display rules are specified.
+2. Semantic named-argument mapping, only if story value ordering needs declaration-aware argument binding.
+
+Story diagnostic surfaces can carry multiple non-fatal parser diagnostics. YAML load diagnostics remain single-source diagnostics; parser diagnostics are summarized for users and retain developer details server-side.
 
 ### `th:each`
 

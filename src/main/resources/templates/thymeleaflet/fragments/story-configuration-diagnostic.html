@@ -21,6 +21,13 @@
     <div th:text="${resolvedDiagnostic.userSafeMessage}">
         Story YAML was found but could not be loaded.
     </div>
+    <ul th:if="${resolvedDiagnostic.items != null and !resolvedDiagnostic.items.isEmpty()}"
+        class="mt-2 list-disc space-y-1 pl-4">
+        <li th:each="item : ${resolvedDiagnostic.items}"
+            th:text="${item.userSafeMessage}">
+            TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED at line 3, column 12
+        </li>
+    </ul>
 </div>
 
 </body>

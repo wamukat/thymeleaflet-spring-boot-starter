@@ -64,9 +64,10 @@
 
 推奨サポート順:
 
-1. story diagnostic surface での複数 parser diagnostics 表示。
-2. `#id` や `.class` の selector-style references。matching と UI 表示ルールを先に決める。
-3. Semantic named-argument mapping。story value ordering が declaration-aware binding を必要とする場合のみ進める。
+1. `#id` や `.class` の selector-style references。matching と UI 表示ルールを先に決める。
+2. Semantic named-argument mapping。story value ordering が declaration-aware binding を必要とする場合のみ進める。
+
+Story diagnostic surface は複数の non-fatal parser diagnostics を保持できます。YAML load diagnostic は単一 source の diagnostic として扱い、parser diagnostics はユーザー向けに要約しつつ developer detail は server-side に留めます。
 
 ### `th:each`
 
