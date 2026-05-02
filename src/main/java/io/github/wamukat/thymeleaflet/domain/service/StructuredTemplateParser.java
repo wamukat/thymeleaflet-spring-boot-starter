@@ -8,8 +8,11 @@ import org.attoparser.config.ParseConfiguration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Internal parser facade for template-level extraction that should match Thymeleaf's HTML parser.
@@ -33,12 +36,61 @@ public class StructuredTemplateParser {
             textNodes = List.copyOf(textNodes);
             comments = List.copyOf(comments);
         }
+
+        public List<TemplateElement> subtree(TemplateElement root) {
+            Objects.requireNonNull(root, "root cannot be null");
+            Map<Integer, TemplateElement> byIndex = elements.stream()
+                .collect(Collectors.toUnmodifiableMap(TemplateElement::index, element -> element));
+            return elements.stream()
+                .filter(element -> element.index() == root.index() || isDescendantOf(element, root.index(), byIndex))
+                .toList();
+        }
+
+        public List<TemplateElement> elementsMatchingSubtree(Predicate<TemplateElement> rootPredicate) {
+            Objects.requireNonNull(rootPredicate, "rootPredicate cannot be null");
+            return elements.stream()
+                .filter(rootPredicate)
+                .findFirst()
+                .map(this::subtree)
+                .orElse(elements);
+        }
+
+        private static boolean isDescendantOf(
+            TemplateElement candidate,
+            int rootIndex,
+            Map<Integer, TemplateElement> byIndex
+        ) {
+            int parentIndex = candidate.parentIndex();
+            while (parentIndex >= 0) {
+                if (parentIndex == rootIndex) {
+                    return true;
+                }
+                TemplateElement parent = byIndex.get(parentIndex);
+                if (parent == null) {
+                    return false;
+                }
+                parentIndex = parent.parentIndex();
+            }
+            return false;
+        }
     }
 
-    public record TemplateElement(String name, List<TemplateAttribute> attributes, int line, int column) {
+    public record TemplateElement(
+        String name,
+        List<TemplateAttribute> attributes,
+        int line,
+        int column,
+        int index,
+        int parentIndex,
+        int depth
+    ) {
         public TemplateElement {
             name = name.trim();
             attributes = List.copyOf(attributes);
+        }
+
+        public TemplateElement(String name, List<TemplateAttribute> attributes, int line, int column) {
+            this(name, attributes, line, column, -1, -1, 0);
         }
 
         public Optional<String> attributeValue(String attributeName) {
@@ -77,6 +129,7 @@ public class StructuredTemplateParser {
     private static final class CollectingMarkupHandler extends AbstractMarkupHandler {
 
         private final List<MutableTemplateElement> elements = new ArrayList<>();
+        private final List<Integer> openElementStack = new ArrayList<>();
         private final List<TemplateText> textNodes = new ArrayList<>();
         private final List<TemplateComment> comments = new ArrayList<>();
         private Optional<MutableTemplateElement> currentElement = Optional.empty();
@@ -112,6 +165,7 @@ public class StructuredTemplateParser {
             int line,
             int col
         ) {
+            currentElement.ifPresent(element -> openElementStack.add(element.index));
             currentElement = Optional.empty();
         }
 
@@ -125,6 +179,28 @@ public class StructuredTemplateParser {
             int col
         ) {
             currentElement = Optional.empty();
+        }
+
+        @Override
+        public void handleCloseElementStart(
+            char[] buffer,
+            int nameOffset,
+            int nameLen,
+            int line,
+            int col
+        ) {
+            closeElement(buffer, nameOffset, nameLen);
+        }
+
+        @Override
+        public void handleAutoCloseElementStart(
+            char[] buffer,
+            int nameOffset,
+            int nameLen,
+            int line,
+            int col
+        ) {
+            closeElement(buffer, nameOffset, nameLen);
         }
 
         @Override
@@ -179,9 +255,29 @@ public class StructuredTemplateParser {
         }
 
         private void startElement(char[] buffer, int nameOffset, int nameLen, int line, int col) {
-            MutableTemplateElement element = new MutableTemplateElement(slice(buffer, nameOffset, nameLen), line, col);
+            int index = elements.size();
+            int parentIndex = openElementStack.isEmpty() ? -1 : openElementStack.get(openElementStack.size() - 1);
+            MutableTemplateElement element = new MutableTemplateElement(
+                slice(buffer, nameOffset, nameLen),
+                line,
+                col,
+                index,
+                parentIndex,
+                openElementStack.size()
+            );
             elements.add(element);
             currentElement = Optional.of(element);
+        }
+
+        private void closeElement(char[] buffer, int nameOffset, int nameLen) {
+            String name = slice(buffer, nameOffset, nameLen);
+            for (int index = openElementStack.size() - 1; index >= 0; index--) {
+                MutableTemplateElement openElement = elements.get(openElementStack.get(index));
+                openElementStack.remove(index);
+                if (openElement.name.equalsIgnoreCase(name)) {
+                    return;
+                }
+            }
         }
 
         private ParsedTemplate toParsedTemplate() {
@@ -204,16 +300,22 @@ public class StructuredTemplateParser {
         private final String name;
         private final int line;
         private final int column;
+        private final int index;
+        private final int parentIndex;
+        private final int depth;
         private final List<TemplateAttribute> attributes = new ArrayList<>();
 
-        private MutableTemplateElement(String name, int line, int column) {
+        private MutableTemplateElement(String name, int line, int column, int index, int parentIndex, int depth) {
             this.name = name;
             this.line = line;
             this.column = column;
+            this.index = index;
+            this.parentIndex = parentIndex;
+            this.depth = depth;
         }
 
         private TemplateElement toTemplateElement() {
-            return new TemplateElement(name, attributes, line, column);
+            return new TemplateElement(name, attributes, line, column, index, parentIndex, depth);
         }
     }
 }

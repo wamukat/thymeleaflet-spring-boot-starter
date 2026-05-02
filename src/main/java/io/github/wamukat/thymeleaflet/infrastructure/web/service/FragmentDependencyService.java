@@ -2,11 +2,13 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentDependencyPort;
 import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
+import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
@@ -14,10 +16,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 /**
  * フラグメント内で利用している依存コンポーネントを抽出
@@ -27,11 +29,10 @@ public class FragmentDependencyService implements FragmentDependencyPort {
 
     private static final Logger logger = LoggerFactory.getLogger(FragmentDependencyService.class);
 
-    private static final Pattern FRAGMENT_DECL_PATTERN = Pattern.compile(
-        "th:fragment\\s*=\\s*[\"']([^\"']+)[\"']"
-    );
-    private static final Pattern DEPENDENCY_ATTR_PATTERN = Pattern.compile(
-        "th:(?:replace|include|insert)\\s*=\\s*"
+    private static final Set<String> FRAGMENT_ATTRIBUTES = Set.of("th:fragment", "data-th-fragment");
+    private static final Set<String> DEPENDENCY_ATTRIBUTES = Set.of(
+        "th:replace", "th:include", "th:insert",
+        "data-th-replace", "data-th-include", "data-th-insert"
     );
 
     private final ResolvedStorybookConfig storybookConfig;
@@ -40,14 +41,27 @@ public class FragmentDependencyService implements FragmentDependencyPort {
 
     private final ThymeleafletCacheManager cacheManager;
 
+    private final StructuredTemplateParser templateParser;
+
+    @Autowired
     public FragmentDependencyService(
         ResolvedStorybookConfig storybookConfig,
         ResourcePathValidator resourcePathValidator,
         ThymeleafletCacheManager cacheManager
     ) {
+        this(storybookConfig, resourcePathValidator, cacheManager, new StructuredTemplateParser());
+    }
+
+    FragmentDependencyService(
+        ResolvedStorybookConfig storybookConfig,
+        ResourcePathValidator resourcePathValidator,
+        ThymeleafletCacheManager cacheManager,
+        StructuredTemplateParser templateParser
+    ) {
         this.storybookConfig = storybookConfig;
         this.resourcePathValidator = resourcePathValidator;
         this.cacheManager = cacheManager;
+        this.templateParser = templateParser;
     }
 
     public List<DependencyComponent> findDependencies(String templatePath, String fragmentName) {
@@ -67,10 +81,11 @@ public class FragmentDependencyService implements FragmentDependencyPort {
             }
 
             String html = new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-            String target = extractFragmentBlock(html, fragmentName).orElse(html);
+            StructuredTemplateParser.ParsedTemplate template = templateParser.parse(html);
+            List<StructuredTemplateParser.TemplateElement> targetElements = elementsForFragment(template, fragmentName);
 
             Map<String, DependencyComponent> dependencies = new LinkedHashMap<>();
-            for (String expression : extractDependencyExpressions(target)) {
+            for (String expression : extractDependencyExpressions(targetElements)) {
                 Optional<DependencyComponent> component = parseDependency(expression);
                 if (component.isEmpty()) {
                     continue;
@@ -104,11 +119,12 @@ public class FragmentDependencyService implements FragmentDependencyPort {
     }
 
     private Optional<DependencyComponent> parseDependency(String expression) {
-        String[] parts = expression.split("::");
+        String normalizedExpression = unwrapFragmentExpression(expression);
+        String[] parts = normalizedExpression.split("::", 2);
         if (parts.length < 2) {
             return Optional.empty();
         }
-        String templatePath = parts[0].trim();
+        String templatePath = unquote(parts[0].trim());
         String fragmentPart = parts[1].trim();
         String fragmentName = fragmentPart.split("\\(")[0].trim();
 
@@ -120,91 +136,57 @@ public class FragmentDependencyService implements FragmentDependencyPort {
         return Optional.of(new DependencyComponent(templatePath, fragmentName, encodedPath));
     }
 
-    private List<String> extractDependencyExpressions(String html) {
+    private List<String> extractDependencyExpressions(List<StructuredTemplateParser.TemplateElement> elements) {
         List<String> expressions = new ArrayList<>();
-        Matcher matcher = DEPENDENCY_ATTR_PATTERN.matcher(html);
-        while (matcher.find()) {
-            int index = matcher.end();
-            if (index >= html.length()) {
-                continue;
-            }
-            char quote = html.charAt(index);
-            if (quote != '"' && quote != '\'') {
-                continue;
-            }
-            int valueStart = index + 1;
-            int valueEnd = html.indexOf(quote, valueStart);
-            if (valueEnd == -1) {
-                continue;
-            }
-            String rawValue = html.substring(valueStart, valueEnd).trim();
-            if (rawValue.startsWith("~{") && rawValue.endsWith("}")) {
-                expressions.add(rawValue.substring(2, rawValue.length() - 1).trim());
+        for (StructuredTemplateParser.TemplateElement element : elements) {
+            for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                String name = attribute.name().toLowerCase(Locale.ROOT);
+                if (!attribute.hasValue() || !DEPENDENCY_ATTRIBUTES.contains(name)) {
+                    continue;
+                }
+                expressions.add(attribute.value().trim());
             }
         }
         return expressions;
     }
 
-    private Optional<String> extractFragmentBlock(String html, String fragmentName) {
-        Matcher matcher = FRAGMENT_DECL_PATTERN.matcher(html);
-        while (matcher.find()) {
-            String definition = matcher.group(1).trim();
-            String name = definition.split("\\(")[0].trim();
-            if (!name.equals(fragmentName)) {
-                continue;
-            }
-
-            int tagStart = html.lastIndexOf('<', matcher.start());
-            if (tagStart == -1) {
-                return Optional.empty();
-            }
-            int tagEnd = html.indexOf('>', matcher.end());
-            if (tagEnd == -1) {
-                return Optional.empty();
-            }
-
-            Optional<String> tagName = extractTagName(html.substring(tagStart, tagEnd + 1));
-            if (tagName.isEmpty()) {
-                return Optional.empty();
-            }
-            String resolvedTagName = tagName.orElseThrow();
-
-            int depth = 0;
-            int index = tagStart;
-            while (index < html.length()) {
-                int nextOpen = html.indexOf("<" + resolvedTagName, index);
-                int nextClose = html.indexOf("</" + resolvedTagName, index);
-
-                if (nextClose == -1) {
-                    return Optional.of(html.substring(tagStart));
-                }
-
-                if (nextOpen != -1 && nextOpen < nextClose) {
-                    depth++;
-                    index = nextOpen + resolvedTagName.length() + 1;
-                    continue;
-                }
-
-                depth--;
-                int closeEnd = html.indexOf('>', nextClose);
-                if (closeEnd == -1) {
-                    return Optional.of(html.substring(tagStart));
-                }
-                index = closeEnd + 1;
-                if (depth <= 0) {
-                    return Optional.of(html.substring(tagStart, index));
-                }
-            }
-        }
-        return Optional.empty();
+    private List<StructuredTemplateParser.TemplateElement> elementsForFragment(
+        StructuredTemplateParser.ParsedTemplate template,
+        String fragmentName
+    ) {
+        return template.elementsMatchingSubtree(element ->
+            fragmentDefinition(element)
+                .map(definition -> definition.split("\\(", 2)[0].trim())
+                .filter(fragmentName::equals)
+                .isPresent()
+        );
     }
 
-    private Optional<String> extractTagName(String tag) {
-        Matcher matcher = Pattern.compile("<\\s*([a-zA-Z0-9:-]+)").matcher(tag);
-        if (matcher.find()) {
-            return Optional.of(matcher.group(1));
+    private Optional<String> fragmentDefinition(StructuredTemplateParser.TemplateElement element) {
+        return element.attributes().stream()
+            .filter(StructuredTemplateParser.TemplateAttribute::hasValue)
+            .filter(attribute -> FRAGMENT_ATTRIBUTES.contains(attribute.name().toLowerCase(Locale.ROOT)))
+            .map(StructuredTemplateParser.TemplateAttribute::value)
+            .map(String::trim)
+            .findFirst();
+    }
+
+    private String unwrapFragmentExpression(String expression) {
+        String normalized = expression.trim();
+        if (normalized.startsWith("~{") && normalized.endsWith("}")) {
+            return normalized.substring(2, normalized.length() - 1).trim();
         }
-        return Optional.empty();
+        return normalized;
+    }
+
+    private String unquote(String value) {
+        if (value.length() < 2) {
+            return value;
+        }
+        if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith("\"") && value.endsWith("\""))) {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 
     public record DependencyComponent(String templatePath, String fragmentName, String encodedTemplatePath) {
