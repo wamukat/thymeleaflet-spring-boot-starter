@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.application.port.outbound;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
+import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,5 +19,8 @@ public interface FragmentCatalogPort {
             .filter(fragment -> fragment.getFragmentName().equals(fragmentName))
             .findFirst();
     }
-}
 
+    default List<ParserDiagnostic> getTemplateParserDiagnostics(String templatePath) {
+        return List.of();
+    }
+}

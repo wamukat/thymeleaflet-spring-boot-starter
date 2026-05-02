@@ -9,6 +9,7 @@ import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfigurat
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryGroup;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
+import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -119,12 +120,34 @@ public class StoryRetrievalUseCaseImpl implements StoryRetrievalUseCase {
 
     @Override
     public Optional<StoryConfigurationDiagnostic> getStoryConfigurationDiagnostic(String templatePath) {
-        return storyDataPort.getStoryConfigurationDiagnostic(templatePath)
+        Optional<StoryConfigurationDiagnostic> storyDiagnostic = storyDataPort.getStoryConfigurationDiagnostic(templatePath)
             .map(diagnostic -> new StoryConfigurationDiagnostic(
                 diagnostic.code(),
                 diagnostic.userSafeMessage(),
                 diagnostic.developerMessage()
             ));
+        if (storyDiagnostic.isPresent()) {
+            return storyDiagnostic;
+        }
+        return fragmentCatalogPort.getTemplateParserDiagnostics(templatePath).stream()
+            .findFirst()
+            .map(this::toStoryConfigurationDiagnostic);
+    }
+
+    private StoryConfigurationDiagnostic toStoryConfigurationDiagnostic(ParserDiagnostic diagnostic) {
+        return new StoryConfigurationDiagnostic(
+            diagnostic.code(),
+            "Some template syntax was skipped while analyzing this story.",
+            diagnosticDeveloperMessage(diagnostic)
+        );
+    }
+
+    private String diagnosticDeveloperMessage(ParserDiagnostic diagnostic) {
+        String location = "";
+        if (diagnostic.line() > 0 && diagnostic.column() > 0) {
+            location = " at line " + diagnostic.line() + ", column " + diagnostic.column();
+        }
+        return diagnostic.message() + location;
     }
 
 }

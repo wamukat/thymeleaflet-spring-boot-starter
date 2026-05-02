@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.application.service.story;
 
 import io.github.wamukat.thymeleaflet.application.port.outbound.StoryDataPort;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase.StoryConfigurationDiagnostic;
+import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfiguration;
@@ -10,6 +11,7 @@ import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryMeta;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
+import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentDiscoveryService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.junit.jupiter.api.Test;
@@ -31,6 +33,9 @@ class StoryRetrievalUseCaseImplTest {
 
     @Mock
     private StoryDataPort storyDataPort;
+
+    @Mock
+    private FragmentCatalogPort fragmentCatalogPort;
 
     @Mock
     private FragmentSummaryMapper fragmentSummaryMapper;
@@ -117,7 +122,7 @@ class StoryRetrievalUseCaseImplTest {
                 "STORY_YAML_LOAD_FAILED",
                 "Story configuration could not be loaded or parsed.",
                 "Failed to parse classpath:META-INF/thymeleaflet/stories/components/profile.stories.yml"
-            );
+        );
         when(storyDataPort.getStoryConfigurationDiagnostic("components/profile"))
             .thenReturn(Optional.of(outboundDiagnostic));
 
@@ -135,9 +140,34 @@ class StoryRetrievalUseCaseImplTest {
     @Test
     void shouldReturnEmptyStoryConfigurationDiagnosticWhenStoryDataPortHasNoDiagnostic() {
         when(storyDataPort.getStoryConfigurationDiagnostic("components/profile")).thenReturn(Optional.empty());
+        when(fragmentCatalogPort.getTemplateParserDiagnostics("components/profile")).thenReturn(List.of());
 
         Optional<StoryConfigurationDiagnostic> diagnostic = useCase.getStoryConfigurationDiagnostic("components/profile");
 
         assertThat(diagnostic).isEmpty();
+    }
+
+    @Test
+    void shouldMapParserDiagnosticWhenStoryConfigurationHasNoDiagnostic() {
+        when(storyDataPort.getStoryConfigurationDiagnostic("components/profile")).thenReturn(Optional.empty());
+        when(fragmentCatalogPort.getTemplateParserDiagnostics("components/profile"))
+            .thenReturn(List.of(new ParserDiagnostic(
+                "TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED",
+                "Dynamic fragment reference was skipped in `th:replace`",
+                3,
+                12
+            )));
+
+        Optional<StoryConfigurationDiagnostic> diagnostic = useCase.getStoryConfigurationDiagnostic("components/profile");
+
+        assertThat(diagnostic).hasValueSatisfying(mappedDiagnostic -> {
+            assertThat(mappedDiagnostic.code()).isEqualTo("TEMPLATE_DYNAMIC_FRAGMENT_REFERENCE_SKIPPED");
+            assertThat(mappedDiagnostic.userSafeMessage())
+                .isEqualTo("Some template syntax was skipped while analyzing this story.");
+            assertThat(mappedDiagnostic.developerMessage())
+                .contains("Dynamic fragment reference was skipped in `th:replace`")
+                .contains("line 3")
+                .contains("column 12");
+        });
     }
 }

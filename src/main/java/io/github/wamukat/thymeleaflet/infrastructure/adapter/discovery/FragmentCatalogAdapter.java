@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
 import io.github.wamukat.thymeleaflet.application.port.outbound.FragmentCatalogPort;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
+import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.mapper.FragmentSummaryMapper;
 import org.springframework.stereotype.Component;
 
@@ -30,5 +31,9 @@ public class FragmentCatalogAdapter implements FragmentCatalogPort {
             .map(fragmentSummaryMapper::toDomain)
             .toList();
     }
-}
 
+    @Override
+    public List<ParserDiagnostic> getTemplateParserDiagnostics(String templatePath) {
+        return fragmentDiscoveryService.findTemplateParserDiagnostics(templatePath);
+    }
+}

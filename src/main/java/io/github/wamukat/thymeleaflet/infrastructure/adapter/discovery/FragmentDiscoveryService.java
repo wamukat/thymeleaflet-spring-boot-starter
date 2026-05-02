@@ -1,6 +1,9 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery;
 
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
+import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
+import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
+import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +13,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Thymeleafフラグメントを自動発見・解析するサービス
@@ -19,11 +24,22 @@ import java.util.Optional;
 public class FragmentDiscoveryService {
     
     private static final Logger logger = LoggerFactory.getLogger(FragmentDiscoveryService.class);
+
+    private static final Set<String> FRAGMENT_REFERENCE_ATTRIBUTES = Set.of(
+        "th:replace",
+        "th:insert",
+        "th:include",
+        "data-th-replace",
+        "data-th-insert",
+        "data-th-include"
+    );
     
     private final TemplateScanner templateScanner;
     private final FragmentDefinitionParser fragmentDefinitionParser;
     private final FragmentDomainService fragmentDomainService;
     private final FragmentSignatureParser fragmentSignatureParser;
+    private final StructuredTemplateParser structuredTemplateParser = new StructuredTemplateParser();
+    private final FragmentExpressionParser fragmentExpressionParser = new FragmentExpressionParser();
     private final ThymeleafletCacheManager cacheManager;
 
     public FragmentDiscoveryService(
@@ -78,6 +94,36 @@ public class FragmentDiscoveryService {
         List<FragmentInfo> immutableFragments = Collections.unmodifiableList(new ArrayList<>(fragments));
         cacheManager.put("fragment-discovery", "all", immutableFragments);
         return immutableFragments;
+    }
+
+    public List<ParserDiagnostic> findTemplateParserDiagnostics(String templatePath) {
+        try {
+            for (TemplateScanner.TemplateResource template : templateScanner.scanTemplates()) {
+                if (!template.templatePath().equals(templatePath)) {
+                    continue;
+                }
+                return parserDiagnostics(template.content());
+            }
+        } catch (IOException exception) {
+            logger.warn("Failed to scan template diagnostics for {}: {}", templatePath, exception.getMessage());
+        }
+        return List.of();
+    }
+
+    private List<ParserDiagnostic> parserDiagnostics(String templateContent) {
+        StructuredTemplateParser.TemplateParseResult parseResult =
+            structuredTemplateParser.parseWithDiagnostics(templateContent);
+        List<ParserDiagnostic> diagnostics = new ArrayList<>(parseResult.diagnostics());
+        for (StructuredTemplateParser.TemplateElement element : parseResult.parsedTemplate().elements()) {
+            for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                if (!attribute.hasValue()
+                    || !FRAGMENT_REFERENCE_ATTRIBUTES.contains(attribute.name().toLowerCase(Locale.ROOT))) {
+                    continue;
+                }
+                diagnostics.addAll(fragmentExpressionParser.parseWithDiagnostics(attribute.value()).diagnostics());
+            }
+        }
+        return List.copyOf(diagnostics);
     }
     
     /**
