@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -38,8 +39,8 @@ public class FragmentDiscoveryService {
     private final FragmentDefinitionParser fragmentDefinitionParser;
     private final FragmentDomainService fragmentDomainService;
     private final FragmentSignatureParser fragmentSignatureParser;
-    private final StructuredTemplateParser structuredTemplateParser = new StructuredTemplateParser();
-    private final FragmentExpressionParser fragmentExpressionParser = new FragmentExpressionParser();
+    private final StructuredTemplateParser structuredTemplateParser;
+    private final FragmentExpressionParser fragmentExpressionParser;
     private final ThymeleafletCacheManager cacheManager;
 
     public FragmentDiscoveryService(
@@ -47,13 +48,21 @@ public class FragmentDiscoveryService {
         FragmentDefinitionParser fragmentDefinitionParser,
         FragmentDomainService fragmentDomainService,
         FragmentSignatureParser fragmentSignatureParser,
+        StructuredTemplateParser structuredTemplateParser,
+        FragmentExpressionParser fragmentExpressionParser,
         ThymeleafletCacheManager cacheManager
     ) {
-        this.templateScanner = templateScanner;
-        this.fragmentDefinitionParser = fragmentDefinitionParser;
-        this.fragmentDomainService = fragmentDomainService;
-        this.fragmentSignatureParser = fragmentSignatureParser;
-        this.cacheManager = cacheManager;
+        this.templateScanner = Objects.requireNonNull(templateScanner, "templateScanner cannot be null");
+        this.fragmentDefinitionParser =
+            Objects.requireNonNull(fragmentDefinitionParser, "fragmentDefinitionParser cannot be null");
+        this.fragmentDomainService = Objects.requireNonNull(fragmentDomainService, "fragmentDomainService cannot be null");
+        this.fragmentSignatureParser =
+            Objects.requireNonNull(fragmentSignatureParser, "fragmentSignatureParser cannot be null");
+        this.structuredTemplateParser =
+            Objects.requireNonNull(structuredTemplateParser, "structuredTemplateParser cannot be null");
+        this.fragmentExpressionParser =
+            Objects.requireNonNull(fragmentExpressionParser, "fragmentExpressionParser cannot be null");
+        this.cacheManager = Objects.requireNonNull(cacheManager, "cacheManager cannot be null");
     }
     
     /**
