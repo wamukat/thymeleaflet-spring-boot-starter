@@ -11,3 +11,11 @@ storyGroups:
         title: Default
         parameters:
           body: value
+  dataUnsafe:
+    title: Data Unsafe
+    description: Unsafe data-th-insert parameter case
+    stories:
+      - name: default
+        title: Default
+        parameters:
+          content: value
