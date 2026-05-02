@@ -1,5 +1,6 @@
 package io.github.wamukat.thymeleaflet.infrastructure.web.rendering;
 
+import io.github.wamukat.thymeleaflet.domain.service.TopLevelSyntaxScanner;
 import org.thymeleaf.engine.AbstractTemplateHandler;
 import org.thymeleaf.model.IAttribute;
 import org.thymeleaf.model.IOpenElementTag;
@@ -10,6 +11,8 @@ import java.util.Locale;
 import java.util.Optional;
 
 public final class NoArgFragmentReferencePreProcessor extends AbstractTemplateHandler {
+
+    private static final TopLevelSyntaxScanner TOP_LEVEL_SYNTAX_SCANNER = new TopLevelSyntaxScanner();
 
     @Override
     public void handleOpenElement(IOpenElementTag tag) {
@@ -83,15 +86,11 @@ public final class NoArgFragmentReferencePreProcessor extends AbstractTemplateHa
         }
 
         private Optional<Integer> findTopLevelFragmentSeparator() {
-            ScanState state = new ScanState();
-            for (int index = bodyStart; index < bodyEnd - 1; index++) {
-                char current = value.charAt(index);
-                if (!state.isInsideNestedSyntax() && current == ':' && value.charAt(index + 1) == ':') {
-                    return Optional.of(index);
-                }
-                state.accept(current);
+            var separatorIndex = TOP_LEVEL_SYNTAX_SCANNER.findFirst(value, "::", bodyStart, bodyEnd);
+            if (separatorIndex.isEmpty()) {
+                return Optional.empty();
             }
-            return Optional.empty();
+            return Optional.of(separatorIndex.getAsInt());
         }
 
         private Optional<String> normalizeSelector(int selectorStart) {
@@ -163,15 +162,7 @@ public final class NoArgFragmentReferencePreProcessor extends AbstractTemplateHa
         }
 
         private static int findTopLevelOpenParen(String value) {
-            ScanState state = new ScanState();
-            for (int index = 0; index < value.length(); index++) {
-                char current = value.charAt(index);
-                if (!state.isInsideNestedSyntax() && current == '(') {
-                    return index;
-                }
-                state.accept(current);
-            }
-            return -1;
+            return TOP_LEVEL_SYNTAX_SCANNER.findFirst(value, "(").orElse(-1);
         }
 
         private static int lastNonWhitespaceIndex(String value) {
@@ -196,45 +187,4 @@ public final class NoArgFragmentReferencePreProcessor extends AbstractTemplateHa
         }
     }
 
-    private static final class ScanState {
-        private int depthParen;
-        private int depthBracket;
-        private int depthBrace;
-        private boolean inSingleQuote;
-        private boolean inDoubleQuote;
-        private char previous;
-
-        private void accept(char current) {
-            if (current == '\'' && !inDoubleQuote && previous != '\\') {
-                inSingleQuote = !inSingleQuote;
-                previous = current;
-                return;
-            }
-            if (current == '"' && !inSingleQuote && previous != '\\') {
-                inDoubleQuote = !inDoubleQuote;
-                previous = current;
-                return;
-            }
-            if (!inSingleQuote && !inDoubleQuote) {
-                if (current == '(') {
-                    depthParen++;
-                } else if (current == ')' && depthParen > 0) {
-                    depthParen--;
-                } else if (current == '[') {
-                    depthBracket++;
-                } else if (current == ']' && depthBracket > 0) {
-                    depthBracket--;
-                } else if (current == '{') {
-                    depthBrace++;
-                } else if (current == '}' && depthBrace > 0) {
-                    depthBrace--;
-                }
-            }
-            previous = current;
-        }
-
-        private boolean isInsideNestedSyntax() {
-            return inSingleQuote || inDoubleQuote || depthParen > 0 || depthBracket > 0 || depthBrace > 0;
-        }
-    }
 }
