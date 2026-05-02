@@ -6,6 +6,7 @@ import io.github.wamukat.thymeleaflet.domain.model.SecureTemplatePath;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
 import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.infrastructure.cache.ThymeleafletCacheManager;
+import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentSignatureParser;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResourcePathValidator;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import org.slf4j.Logger;
@@ -45,6 +46,7 @@ public class FragmentDependencyService implements FragmentDependencyPort {
 
     private final StructuredTemplateParser templateParser;
     private final FragmentExpressionParser fragmentExpressionParser;
+    private final FragmentSignatureParser fragmentSignatureParser;
 
     @Autowired
     public FragmentDependencyService(
@@ -52,7 +54,14 @@ public class FragmentDependencyService implements FragmentDependencyPort {
         ResourcePathValidator resourcePathValidator,
         ThymeleafletCacheManager cacheManager
     ) {
-        this(storybookConfig, resourcePathValidator, cacheManager, new StructuredTemplateParser(), new FragmentExpressionParser());
+        this(
+            storybookConfig,
+            resourcePathValidator,
+            cacheManager,
+            new StructuredTemplateParser(),
+            new FragmentExpressionParser(),
+            new FragmentSignatureParser()
+        );
     }
 
     FragmentDependencyService(
@@ -61,7 +70,14 @@ public class FragmentDependencyService implements FragmentDependencyPort {
         ThymeleafletCacheManager cacheManager,
         StructuredTemplateParser templateParser
     ) {
-        this(storybookConfig, resourcePathValidator, cacheManager, templateParser, new FragmentExpressionParser());
+        this(
+            storybookConfig,
+            resourcePathValidator,
+            cacheManager,
+            templateParser,
+            new FragmentExpressionParser(),
+            new FragmentSignatureParser()
+        );
     }
 
     FragmentDependencyService(
@@ -69,13 +85,15 @@ public class FragmentDependencyService implements FragmentDependencyPort {
         ResourcePathValidator resourcePathValidator,
         ThymeleafletCacheManager cacheManager,
         StructuredTemplateParser templateParser,
-        FragmentExpressionParser fragmentExpressionParser
+        FragmentExpressionParser fragmentExpressionParser,
+        FragmentSignatureParser fragmentSignatureParser
     ) {
         this.storybookConfig = storybookConfig;
         this.resourcePathValidator = resourcePathValidator;
         this.cacheManager = cacheManager;
         this.templateParser = templateParser;
         this.fragmentExpressionParser = fragmentExpressionParser;
+        this.fragmentSignatureParser = fragmentSignatureParser;
     }
 
     public List<DependencyComponent> findDependencies(String templatePath, String fragmentName) {
@@ -160,12 +178,26 @@ public class FragmentDependencyService implements FragmentDependencyPort {
         StructuredTemplateParser.ParsedTemplate template,
         String fragmentName
     ) {
-        return template.elementsMatchingSubtree(element ->
-            fragmentDefinition(element)
-                .map(definition -> definition.split("\\(", 2)[0].trim())
-                .filter(fragmentName::equals)
-                .isPresent()
-        );
+        return template.elements().stream()
+            .filter(element -> matchesFragmentName(element, fragmentName))
+            .findFirst()
+            .map(template::subtree)
+            .orElse(List.of());
+    }
+
+    private boolean matchesFragmentName(StructuredTemplateParser.TemplateElement element, String fragmentName) {
+        return fragmentDefinition(element)
+            .flatMap(this::parseFragmentName)
+            .filter(fragmentName::equals)
+            .isPresent();
+    }
+
+    private Optional<String> parseFragmentName(String definition) {
+        FragmentSignatureParser.ParseResult result = fragmentSignatureParser.parse(definition);
+        if (result instanceof FragmentSignatureParser.ParseSuccess success) {
+            return Optional.of(success.fragmentName());
+        }
+        return Optional.empty();
     }
 
     private Optional<String> fragmentDefinition(StructuredTemplateParser.TemplateElement element) {

@@ -73,6 +73,48 @@ class FragmentDependencyServiceTest {
             );
     }
 
+    @Test
+    void findDependencies_usesSignatureParserAndDoesNotMatchMalformedFragmentDefinitions() {
+        String html = """
+            <main>
+              <section th:fragment="card(title,,variant)">
+                <div th:replace="~{components/unsafe :: shouldNotLeak()}"></div>
+              </section>
+              <section th:fragment="other">
+                <div th:replace="~{components/other :: ignored()}"></div>
+              </section>
+            </main>
+            """;
+        FragmentDependencyService service = buildService("pages/card", html);
+
+        List<FragmentDependencyService.DependencyComponent> dependencies =
+            service.findDependencies("pages/card", "card");
+
+        assertThat(dependencies).isEmpty();
+    }
+
+    @Test
+    void findDependencies_keepsSiblingBoundariesForParameterizedFragmentSignatures() {
+        String html = """
+            <main>
+              <section th:fragment="card(title, variant)">
+                <div th:replace="~{components/card-body :: body(title=${title})}"></div>
+              </section>
+              <section th:fragment="cardExtra(title)">
+                <div th:replace="~{components/extra :: ignored(title=${title})}"></div>
+              </section>
+            </main>
+            """;
+        FragmentDependencyService service = buildService("pages/card", html);
+
+        List<FragmentDependencyService.DependencyComponent> dependencies =
+            service.findDependencies("pages/card", "card");
+
+        assertThat(dependencies)
+            .extracting(FragmentDependencyService.DependencyComponent::key)
+            .containsExactly("components/card-body::body");
+    }
+
     private FragmentDependencyService buildService(String templatePath, String html) {
         StorybookProperties properties = new StorybookProperties();
         ResolvedStorybookConfig config = ResolvedStorybookConfig.from(properties, false);
