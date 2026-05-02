@@ -76,6 +76,38 @@ class TemplateModelExpressionAnalyzerTest {
     }
 
     @Test
+    void shouldResolveSameTemplateReferencedTemplatePathsWhenCurrentTemplatePathIsProvided() {
+        String html = """
+            <section>
+              <th:block th:replace="~{:: header(title=${view.title})}"></th:block>
+              <th:block th:insert="~{this :: footer()}"></th:block>
+              <th:block th:replace="~{${dynamicPath} :: ignored()}"></th:block>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of(), "pages/dashboard");
+
+        assertThat(snapshot.referencedTemplatePaths())
+            .containsExactly("pages/dashboard");
+        assertThat(snapshot.referencedTemplatePathsWithRecursionFlags())
+            .containsEntry("pages/dashboard", true);
+    }
+
+    @Test
+    void shouldContinueSkippingSameTemplateReferencesWithoutCurrentTemplatePath() {
+        String html = """
+            <section>
+              <th:block th:replace="~{:: header(title=${view.title})}"></th:block>
+              <th:block th:insert="~{this :: footer()}"></th:block>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.referencedTemplatePaths()).isEmpty();
+    }
+
+    @Test
     void shouldExtractModelPathsAndReferencesFromDataThAttributes() {
         String html = """
             <section data-th-with="localText='hello'">

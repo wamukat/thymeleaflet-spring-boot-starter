@@ -101,7 +101,7 @@ public class FragmentDiscoveryService {
                 if (!template.templatePath().equals(templatePath)) {
                     continue;
                 }
-                return parserDiagnostics(template.content());
+                return parserDiagnostics(template.templatePath(), template.content());
             }
         } catch (IOException exception) {
             logger.warn("Failed to scan template diagnostics for {}: {}", templatePath, exception.getMessage());
@@ -109,7 +109,7 @@ public class FragmentDiscoveryService {
         return List.of();
     }
 
-    private List<ParserDiagnostic> parserDiagnostics(String templateContent) {
+    private List<ParserDiagnostic> parserDiagnostics(String templatePath, String templateContent) {
         StructuredTemplateParser.TemplateParseResult parseResult =
             structuredTemplateParser.parseWithDiagnostics(templateContent);
         List<ParserDiagnostic> diagnostics = new ArrayList<>(parseResult.diagnostics());
@@ -119,7 +119,9 @@ public class FragmentDiscoveryService {
                     || !FragmentReferenceAttributes.isReferenceAttribute(attribute.name())) {
                     continue;
                 }
-                diagnostics.addAll(fragmentExpressionParser.parseWithDiagnostics(attribute.value()).diagnostics());
+                diagnostics.addAll(
+                    fragmentExpressionParser.parseWithDiagnostics(attribute.value(), templatePath).diagnostics()
+                );
             }
         }
         return List.copyOf(diagnostics);

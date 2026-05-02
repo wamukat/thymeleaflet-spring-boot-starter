@@ -115,7 +115,7 @@ public class FragmentDependencyService implements FragmentDependencyPort {
 
             Map<String, DependencyComponent> dependencies = new LinkedHashMap<>();
             for (String expression : extractDependencyExpressions(targetElements)) {
-                Optional<DependencyComponent> component = parseDependency(expression);
+                Optional<DependencyComponent> component = parseDependency(expression, templatePath);
                 if (component.isEmpty()) {
                     continue;
                 }
@@ -147,8 +147,8 @@ public class FragmentDependencyService implements FragmentDependencyPort {
             .toList();
     }
 
-    private Optional<DependencyComponent> parseDependency(String expression) {
-        return fragmentExpressionParser.parse(expression)
+    private Optional<DependencyComponent> parseDependency(String expression, String currentTemplatePath) {
+        return fragmentExpressionParser.parse(expression, currentTemplatePath)
             .map(this::toDependencyComponent);
     }
 

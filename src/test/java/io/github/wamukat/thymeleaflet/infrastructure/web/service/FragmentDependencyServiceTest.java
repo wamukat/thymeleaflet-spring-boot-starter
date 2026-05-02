@@ -74,6 +74,35 @@ class FragmentDependencyServiceTest {
     }
 
     @Test
+    void findDependencies_resolvesSameTemplateReferencesToCurrentTemplatePath() {
+        String html = """
+            <main>
+              <section th:fragment="shell(title)">
+                <div th:replace="~{:: header(title=${title})}"></div>
+                <div th:insert="~{this :: footer()}"></div>
+              </section>
+              <section th:fragment="header(title)">
+                <h2 th:text="${title}"></h2>
+              </section>
+              <section th:fragment="footer">
+                <p>Footer</p>
+              </section>
+            </main>
+            """;
+        FragmentDependencyService service = buildService("pages/shell", html);
+
+        List<FragmentDependencyService.DependencyComponent> dependencies =
+            service.findDependencies("pages/shell", "shell");
+
+        assertThat(dependencies)
+            .extracting(FragmentDependencyService.DependencyComponent::key)
+            .containsExactly(
+                "pages/shell::header",
+                "pages/shell::footer"
+            );
+    }
+
+    @Test
     void findDependencies_usesSignatureParserAndDoesNotMatchMalformedFragmentDefinitions() {
         String html = """
             <main>

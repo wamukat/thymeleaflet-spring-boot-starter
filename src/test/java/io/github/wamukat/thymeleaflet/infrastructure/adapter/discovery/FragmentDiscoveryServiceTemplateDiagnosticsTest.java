@@ -55,4 +55,25 @@ class FragmentDiscoveryServiceTemplateDiagnosticsTest {
                 assertThat(diagnostic.message()).contains("components/card");
             });
     }
+
+    @Test
+    void findTemplateParserDiagnostics_shouldAcceptSameTemplateFragmentReferences() throws IOException {
+        when(templateScanner.scanTemplates()).thenReturn(List.of(
+            new TemplateScanner.TemplateResource(
+                "components/profile",
+                """
+                    <section>
+                      <div th:replace="~{:: header(title=${view.title})}"></div>
+                      <div th:insert="~{this :: footer()}"></div>
+                    </section>
+                    """,
+                "classpath:/templates/components/profile.html"
+            )
+        ));
+
+        List<ParserDiagnostic> diagnostics = discoveryService.findTemplateParserDiagnostics("components/profile");
+
+        assertThat(diagnostics)
+            .noneSatisfy(diagnostic -> assertThat(diagnostic.code()).isEqualTo("FRAGMENT_EXPRESSION_MALFORMED"));
+    }
 }

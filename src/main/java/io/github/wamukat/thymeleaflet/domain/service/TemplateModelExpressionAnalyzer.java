@@ -45,6 +45,21 @@ public class TemplateModelExpressionAnalyzer {
     }
 
     public TemplateInference analyze(String html, Set<String> parameterNames) {
+        return analyze(html, parameterNames, Optional.empty());
+    }
+
+    public TemplateInference analyze(String html, Set<String> parameterNames, String currentTemplatePath) {
+        if (currentTemplatePath == null || currentTemplatePath.isBlank()) {
+            return analyze(html, parameterNames, Optional.empty());
+        }
+        return analyze(html, parameterNames, Optional.of(currentTemplatePath.trim()));
+    }
+
+    private TemplateInference analyze(
+        String html,
+        Set<String> parameterNames,
+        Optional<String> currentTemplatePath
+    ) {
         StructuredTemplateParser.ParsedTemplate template = templateParser.parse(html);
         Set<String> excludedIdentifiers = new HashSet<>(parameterNames);
         excludedIdentifiers.addAll(extractLocalVariablesFromThWith(template));
@@ -52,7 +67,7 @@ public class TemplateModelExpressionAnalyzer {
         List<String> expressionSources = expressionSources(template);
         List<ModelPath> modelPaths = extractModelPathsFromSources(expressionSources, excludedIdentifiers);
         List<ModelPath> noArgMethodPaths = extractNoArgMethodPathsFromSources(expressionSources, excludedIdentifiers);
-        Map<String, Boolean> referencedTemplatePaths = extractReferencedTemplatePaths(template);
+        Map<String, Boolean> referencedTemplatePaths = extractReferencedTemplatePaths(template, currentTemplatePath);
         return new TemplateInference(modelPaths, loopVariablePaths, referencedTemplatePaths, noArgMethodPaths);
     }
 
@@ -193,13 +208,16 @@ public class TemplateModelExpressionAnalyzer {
         return loopVariables;
     }
 
-    private Map<String, Boolean> extractReferencedTemplatePaths(StructuredTemplateParser.ParsedTemplate template) {
+    private Map<String, Boolean> extractReferencedTemplatePaths(
+        StructuredTemplateParser.ParsedTemplate template,
+        Optional<String> currentTemplatePath
+    ) {
         Map<String, Boolean> referencedTemplatePaths = new LinkedHashMap<>();
         for (String raw : fragmentInsertionAttributeValues(template)) {
             if (raw == null || raw.isBlank()) {
                 continue;
             }
-            fragmentExpressionParser.parse(raw)
+            parseFragmentExpression(raw, currentTemplatePath)
                 .ifPresent(expression -> referencedTemplatePaths.merge(
                     expression.templatePath(),
                     requiresChildModelRecursion(expression),
@@ -207,6 +225,13 @@ public class TemplateModelExpressionAnalyzer {
                 ));
         }
         return referencedTemplatePaths;
+    }
+
+    private Optional<FragmentExpression> parseFragmentExpression(String raw, Optional<String> currentTemplatePath) {
+        if (currentTemplatePath.isPresent()) {
+            return fragmentExpressionParser.parse(raw, currentTemplatePath.orElseThrow());
+        }
+        return fragmentExpressionParser.parse(raw);
     }
 
     private List<String> fragmentInsertionAttributeValues(StructuredTemplateParser.ParsedTemplate template) {
