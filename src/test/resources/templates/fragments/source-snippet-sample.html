@@ -56,5 +56,26 @@
   </section>
 
   <div th:fragment="shortFragment">short</div>
+
+  <section
+      data-note="notAFragment should not match just because it appears on the line"
+      th:fragment="actualFragment">
+    <p>actual</p>
+  </section>
+
+  <section data-note='th:fragment="fakeFragment"'>
+    <p>fake attribute value</p>
+  </section>
+
+  <section data-th-fragment-extra="extraFragment">
+    <p>extra attribute name</p>
+  </section>
+
+  <article
+      data-th-fragment="
+        multilineFragment(title)
+      ">
+    <h2 th:text="${title}">Title</h2>
+  </article>
 </body>
 </html>

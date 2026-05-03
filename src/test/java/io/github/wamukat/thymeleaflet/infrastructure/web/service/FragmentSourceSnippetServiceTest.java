@@ -56,4 +56,29 @@ class FragmentSourceSnippetServiceTest {
         assertThat(snippet).contains("-->");
         assertThat(snippet).contains("th:fragment=\"lineDocumentedFragment(title, body)\"");
     }
+
+    @Test
+    void shouldNotMatchFragmentNameFromNonFragmentAttributeText() {
+        assertThat(service.resolveSnippet("fragments/source-snippet-sample", "notAFragment")).isEmpty();
+    }
+
+    @Test
+    void shouldNotTreatFragmentAttributeTextInsideOtherAttributeValueAsDefinition() {
+        assertThat(service.resolveSnippet("fragments/source-snippet-sample", "fakeFragment")).isEmpty();
+    }
+
+    @Test
+    void shouldNotTreatFragmentAttributeNamePrefixAsDefinition() {
+        assertThat(service.resolveSnippet("fragments/source-snippet-sample", "extraFragment")).isEmpty();
+    }
+
+    @Test
+    void shouldResolveMultilineDataThFragmentDefinition() {
+        String snippet = service.resolveSnippet("fragments/source-snippet-sample", "multilineFragment")
+            .orElseThrow();
+
+        assertThat(snippet).contains("data-th-fragment=");
+        assertThat(snippet).contains("multilineFragment(title)");
+        assertThat(snippet).contains("th:text=\"${title}\"");
+    }
 }
