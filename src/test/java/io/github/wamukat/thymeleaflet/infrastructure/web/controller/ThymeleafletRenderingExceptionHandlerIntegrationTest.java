@@ -220,6 +220,42 @@ class ThymeleafletRenderingExceptionHandlerIntegrationTest {
     }
 
     @Test
+    @DisplayName("stories.yml が無い場合も JavaDoc fallback default でパラメータとモデルを描画する")
+    void shouldRenderJavaDocFallbackDefaultsWithoutStoryYaml() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/test.render-fallback/javadocFallback/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("JavaDoc Title"),
+            "JavaDoc @model optional default がレンダリングモデルに適用されること");
+        assertTrue(body.contains("JavaDoc Label"),
+            "JavaDoc @param optional default がレンダリングパラメータに適用されること");
+        assertFalse(body.contains("Preview error"),
+            "stories.yml なしの JavaDoc fallback がプレビューエラーにならないこと");
+    }
+
+    @Test
+    @DisplayName("stories.yml が無い data-dependent fragment でも switch/case 代表値 fallback で描画する")
+    void shouldRenderSwitchCaseRepresentativeFallbackWithoutStoryYaml() throws Exception {
+        String body = mockMvc.perform(get("/thymeleaflet/test.render-fallback/statusSummary/default/render")
+                .header("Accept-Language", "en"))
+            .andExpect(status().isOk())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+
+        assertTrue(body.contains("Active status"),
+            "th:switch の最初の literal th:case が代表値として推論されること");
+        assertFalse(body.contains("Default status"),
+            "代表値が適用され、default case には落ちないこと");
+        assertFalse(body.contains("Preview error"),
+            "switch/case fallback がプレビューエラーにならないこと");
+    }
+
+    @Test
     @DisplayName("parser corpus の nested fragment fixture を描画できる")
     void shouldRenderNestedFragmentRegressionFixture() throws Exception {
         String body = mockMvc.perform(get("/thymeleaflet/regression.parser-corpus/nestedFragmentShell/default/render")
