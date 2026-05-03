@@ -8,6 +8,72 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.23] - 2026-05-03
+
+- Added
+  - Added a fragment syntax support matrix in English and Japanese, classifying supported, diagnostic-only, unsupported, and planned Thymeleaf fragment syntax. (Kanbalone #523)
+  - Added parser diagnostic carriers and story alert support for multiple parser diagnostics, so malformed template/story syntax can surface more than one user-safe issue. (Kanbalone #502, #527)
+- Changed
+  - Replaced broad fragment-expression regex handling with shared parsers for fragment references, fragment signatures, and top-level syntax scanning. This improves quoted selectors, nested parameters, same-template references, and no-argument fragment selector handling. (Kanbalone #499, #505, #506, #508, #526)
+  - Replaced JavaDoc field regex parsing with structured tag/example parsing while preserving existing story documentation behavior. (Kanbalone #501)
+  - Centralized fragment reference attribute policy and injected structured parsers into fragment discovery to keep dependency extraction, fragment discovery, and unsafe insertion checks on the same parser path. (Kanbalone #524, #525)
+  - Improved template model inference for selector-style fragment references, named fragment arguments, and stable bracket expressions such as indexed list paths and literal map keys while keeping dynamic keys conservative. (Kanbalone #530, #531, #533)
+- Fixed
+  - Fixed Central deployment ID extraction when Central publish logs contain noisy manual-publish output. (Kanbalone #497)
+  - Added non-fatal diagnostics for duplicate fragment declaration parameters while preserving declaration order. (Kanbalone #532)
+- Docs
+  - Updated template parsing documentation to describe selector-style fragment references, named argument inference, duplicate parameter diagnostics, and stable bracket expression inference. (Kanbalone #523, #530, #531, #532, #533)
+- Test
+  - Added parser fixture corpus, structured parser edge corpus, parser comparison contracts, external HTML parser adapter evaluation, and regression coverage for fragment syntax parsing and model inference behavior. (Kanbalone #498, #500, #503, #528)
+- Build
+  - Updated Maven project, sample app, and README dependency examples to `0.2.23`.
+
+### Issues
+
+- Kanbalone #497 Fix Central deployment id extraction
+- Kanbalone #498 Parser fixture corpus
+- Kanbalone #499 Shared fragment expression parser
+- Kanbalone #500 Structured parser edge corpus
+- Kanbalone #501 JavaDoc tag parser
+- Kanbalone #502 Parser diagnostics carriers
+- Kanbalone #503 External HTML parser adapter evaluation
+- Kanbalone #505 Dependency fragment signature parser
+- Kanbalone #506 No-arg fragment selector normalizer
+- Kanbalone #508 Top-level syntax scanner
+- Kanbalone #523 Fragment syntax support matrix
+- Kanbalone #524 Fragment discovery parser injection
+- Kanbalone #525 Fragment reference attribute policy
+- Kanbalone #526 Same-template fragment references
+- Kanbalone #527 Multiple parser diagnostics
+- Kanbalone #528 Parser comparison test support
+- Kanbalone #530 Selector-style fragment references
+- Kanbalone #531 Named fragment argument mapping
+- Kanbalone #532 Duplicate fragment parameter diagnostics
+- Kanbalone #533 Stable bracket expression inference
+- PR #158 Fix Central deployment id extraction
+- PR #159 Expand parser fixture corpus
+- PR #160 Introduce shared fragment expression parser
+- PR #161 Expand structured parser edge corpus
+- PR #162 Replace JavaDoc field regex parsing
+- PR #163 Add parser diagnostics carriers
+- PR #164 Evaluate external HTML parser adapter
+- PR #165 Use signature parser for dependency fragment matching
+- PR #166 Scan no-arg fragment selectors without broad regex replacement
+- PR #167 Use structured attributes for unsafe fragment insertion checks
+- PR #168 Extract top-level syntax scanner
+- PR #169 Surface parser diagnostics in story diagnostics
+- PR #170 Extract parser comparison test contract
+- PR #171 Document fragment syntax support matrix
+- PR #172 Inject parsers into fragment discovery service
+- PR #173 Centralize fragment reference attribute policy
+- PR #174 Support same-template fragment references
+- PR #175 Support multiple parser diagnostics in story alerts
+- PR #176 Harden parser comparison test support
+- PR #177 Support selector-style fragment references
+- PR #178 Map named fragment arguments for inference
+- PR #179 Diagnose duplicate fragment parameters
+- PR #180 Infer stable bracket expression paths
+
 ## [0.2.22] - 2026-05-02
 
 - Added
