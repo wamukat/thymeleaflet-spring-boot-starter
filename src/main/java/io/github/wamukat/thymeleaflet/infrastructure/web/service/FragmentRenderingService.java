@@ -8,7 +8,6 @@ import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.PreviewWarningRecorder;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
-import io.github.wamukat.thymeleaflet.infrastructure.web.service.SecurePathConversionService;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,9 +20,6 @@ import org.springframework.ui.Model;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,8 +39,6 @@ public class FragmentRenderingService {
 
     private final StoryRetrievalUseCase storyRetrievalUseCase;
 
-    private final StoryParameterUseCase storyParameterUseCase;
-
     private final SecurePathConversionService securePathConversionService;
 
     private final ThymeleafFragmentRenderer thymeleafFragmentRenderer;
@@ -53,15 +47,11 @@ public class FragmentRenderingService {
 
     private final ResourceLoader resourceLoader;
 
-    private final FragmentModelInferenceService fragmentModelInferenceService;
-
     private final JavaDocLookupService javaDocLookupService;
-
-    private final StoryJavaTimeValueCoercionService storyJavaTimeValueCoercionService;
 
     private final UnsafeFragmentInsertionDetector unsafeFragmentInsertionDetector;
 
-    private final JavaDocFallbackValueService javaDocFallbackValueService = new JavaDocFallbackValueService();
+    private final StoryRenderValueAssembler storyRenderValueAssembler;
 
     public FragmentRenderingService(
         ValidationUseCase validationUseCase,
@@ -77,15 +67,18 @@ public class FragmentRenderingService {
     ) {
         this.validationUseCase = validationUseCase;
         this.storyRetrievalUseCase = storyRetrievalUseCase;
-        this.storyParameterUseCase = storyParameterUseCase;
         this.securePathConversionService = securePathConversionService;
         this.thymeleafFragmentRenderer = thymeleafFragmentRenderer;
         this.messageSource = messageSource;
         this.resourceLoader = resourceLoader;
-        this.fragmentModelInferenceService = fragmentModelInferenceService;
         this.javaDocLookupService = javaDocLookupService;
-        this.storyJavaTimeValueCoercionService = storyJavaTimeValueCoercionService;
         this.unsafeFragmentInsertionDetector = new UnsafeFragmentInsertionDetector();
+        this.storyRenderValueAssembler = new StoryRenderValueAssembler(
+            storyParameterUseCase,
+            fragmentModelInferenceService,
+            storyJavaTimeValueCoercionService,
+            messageSource
+        );
     }
 
     /**
@@ -146,65 +139,20 @@ public class FragmentRenderingService {
             Optional<JavaDocAnalyzer.JavaDocInfo> javaDocInfo =
                 javaDocLookupService.findJavaDocInfo(fullTemplatePath, fragmentName);
 
-            Map<String, Object> storyModel = storyInfo.getModel();
-            if (storyModel.isEmpty()) {
-                storyModel = fragmentModelInferenceService.inferModel(
+            StoryRenderValueAssembler.RenderValueAssemblyRequest valueAssemblyRequest =
+                new StoryRenderValueAssembler.RenderValueAssemblyRequest(
+                    storyInfo,
+                    javaDocInfo,
                     fullTemplatePath,
                     fragmentName,
-                    storyInfo.getFragmentSummary().getParameters()
+                    parameterOverrides,
+                    modelOverrides,
+                    methodReturnsOverrides
                 );
-                if (javaDocInfo.isPresent()) {
-                    Map<String, Object> javaDocModelDefaults =
-                        javaDocFallbackValueService.modelDefaults(javaDocInfo.orElseThrow());
-                    if (!javaDocModelDefaults.isEmpty()) {
-                        Map<String, Object> mergedFallbackModel = new HashMap<>(storyModel);
-                        deepMergeWithOverride(mergedFallbackModel, javaDocModelDefaults);
-                        storyModel = mergedFallbackModel;
-                    }
-                }
-            }
-            Map<String, Object> mergedModel = new HashMap<>();
-            if (!storyModel.isEmpty()) {
-                deepMergeWithOverride(mergedModel, storyModel);
-            }
-            if (!modelOverrides.isEmpty()) {
-                deepMergeWithOverride(mergedModel, modelOverrides);
-            }
-
-            Map<String, Object> mergedMethodReturns = new HashMap<>();
-            if (!storyInfo.getMethodReturns().isEmpty()) {
-                deepMergeWithOverride(mergedMethodReturns, storyInfo.getMethodReturns());
-            }
-            if (!methodReturnsOverrides.isEmpty()) {
-                deepMergeWithOverride(mergedMethodReturns, methodReturnsOverrides);
-            }
-            if (mergedMethodReturns.isEmpty() && !storyInfo.hasStoryConfig()) {
-                Map<String, Object> inferredMethodReturns = fragmentModelInferenceService.inferMethodReturnCandidates(
-                    fullTemplatePath,
-                    fragmentName,
-                    storyInfo.getFragmentSummary().getParameters()
-                );
-                if (!inferredMethodReturns.isEmpty()) {
-                    deepMergeWithOverride(mergedMethodReturns, inferredMethodReturns);
-                    logger.debug("Applied inferred methodReturns values: {}", mergedMethodReturns.keySet());
-                }
-            }
-
-            if (!mergedMethodReturns.isEmpty()) {
-                List<String> conflictPaths = new ArrayList<>();
-                mergeMethodReturnsWithoutOverride(mergedModel, mergedMethodReturns, "", conflictPaths);
-                for (String path : conflictPaths) {
-                    recordMethodReturnConflictWarning(path);
-                }
-                logger.debug("Applied methodReturns values: {}", mergedMethodReturns.keySet());
-            }
-
-            if (javaDocInfo.isPresent()) {
-                mergedModel = storyJavaTimeValueCoercionService.coerceModel(
-                    mergedModel,
-                    javaDocInfo.orElseThrow()
-                );
-            }
+            StoryRenderValueAssembler.ModelAndMethodReturnValues modelValues =
+                storyRenderValueAssembler.assembleModelAndMethodReturns(valueAssemblyRequest);
+            Map<String, Object> mergedModel = modelValues.model();
+            Map<String, Object> mergedMethodReturns = modelValues.methodReturns();
 
             if (!mergedModel.isEmpty()) {
                 for (Map.Entry<String, Object> entry : mergedModel.entrySet()) {
@@ -235,30 +183,7 @@ public class FragmentRenderingService {
                 return RenderingResult.success(templateRef);
             }
 
-            // PARAMETERIZEDフラグメントの場合、ストーリー設定またはJavaDocフォールバックを試行
-            Map<String, Object> parameters = storyParameterUseCase.getParametersForStory(storyInfo);
-            if (!storyInfo.hasStoryConfig() && javaDocInfo.isPresent()) {
-                Map<String, Object> javaDocParameterDefaults = javaDocFallbackValueService.parameterDefaults(
-                    javaDocInfo.orElseThrow(),
-                    fullTemplatePath,
-                    fragmentName
-                );
-                if (!javaDocParameterDefaults.isEmpty()) {
-                    Map<String, Object> mergedFallbackParameters = new HashMap<>(parameters);
-                    mergedFallbackParameters.putAll(javaDocParameterDefaults);
-                    parameters = mergedFallbackParameters;
-                }
-            }
-            Map<String, Object> mergedParameters = new HashMap<>(parameters);
-            if (!parameterOverrides.isEmpty()) {
-                mergedParameters.putAll(parameterOverrides);
-            }
-            if (javaDocInfo.isPresent()) {
-                mergedParameters = storyJavaTimeValueCoercionService.coerceParameters(
-                    mergedParameters,
-                    javaDocInfo.orElseThrow()
-                );
-            }
+            Map<String, Object> mergedParameters = storyRenderValueAssembler.assembleParameters(valueAssemblyRequest);
 
             Optional<String> unsafeParameter = findUnsafeFragmentInsertionParameter(
                 storyInfo.getFragmentSummary().getTemplatePath(),
@@ -351,85 +276,6 @@ public class FragmentRenderingService {
 
     private String classNameOf(@Nullable Object target) {
         return Objects.isNull(target) ? "null" : target.getClass().getSimpleName();
-    }
-
-    private void deepMergeWithOverride(Map<String, Object> target, Map<String, Object> source) {
-        source.forEach((key, sourceValue) -> {
-            Object targetValue = target.get(key);
-            if (sourceValue instanceof Map<?, ?> sourceMap && targetValue instanceof Map<?, ?> targetMap) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> castedTarget = (Map<String, Object>) targetMap;
-                deepMergeWithOverride(castedTarget, toStringKeyMap(sourceMap));
-                return;
-            }
-            target.put(key, deepCopyValue(sourceValue));
-        });
-    }
-
-    private void mergeMethodReturnsWithoutOverride(
-        Map<String, Object> target,
-        Map<String, Object> methodReturns,
-        String parentPath,
-        List<String> conflictPaths
-    ) {
-        methodReturns.forEach((key, sourceValue) -> {
-            String currentPath = parentPath.isEmpty() ? key : parentPath + "." + key;
-            Object targetValue = target.get(key);
-
-            if (sourceValue instanceof Map<?, ?> sourceMap) {
-                if (!target.containsKey(key)) {
-                    target.put(key, deepCopyValue(sourceValue));
-                    return;
-                }
-                if (targetValue instanceof Map<?, ?> targetMap) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> castedTarget = (Map<String, Object>) targetMap;
-                    mergeMethodReturnsWithoutOverride(
-                        castedTarget,
-                        toStringKeyMap(sourceMap),
-                        currentPath,
-                        conflictPaths
-                    );
-                    return;
-                }
-                conflictPaths.add(currentPath);
-                return;
-            }
-
-            if (target.containsKey(key)) {
-                conflictPaths.add(currentPath);
-                return;
-            }
-            target.put(key, deepCopyValue(sourceValue));
-        });
-    }
-
-    private void recordMethodReturnConflictWarning(String path) {
-        String warning = messageSource.getMessage(
-            "thymeleaflet.preview.warning.methodReturnConflict",
-            new Object[] {path},
-            "Skipped methodReturns path due to model conflict: " + path,
-            LocaleContextHolder.getLocale()
-        );
-        PreviewWarningRecorder.record(warning);
-    }
-
-    private Map<String, Object> toStringKeyMap(Map<?, ?> rawMap) {
-        Map<String, Object> converted = new HashMap<>();
-        rawMap.forEach((key, value) -> converted.put(String.valueOf(key), deepCopyValue(value)));
-        return converted;
-    }
-
-    private @Nullable Object deepCopyValue(@Nullable Object value) {
-        if (value instanceof Map<?, ?> mapValue) {
-            return toStringKeyMap(mapValue);
-        }
-        if (value instanceof List<?> listValue) {
-            List<Object> copied = new ArrayList<>(listValue.size());
-            listValue.forEach(item -> copied.add(deepCopyValue(item)));
-            return copied;
-        }
-        return value;
     }
 
     private Optional<String> findUnsafeFragmentInsertionParameter(
