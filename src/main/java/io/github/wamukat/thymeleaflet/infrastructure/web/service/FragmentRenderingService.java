@@ -61,6 +61,8 @@ public class FragmentRenderingService {
 
     private final UnsafeFragmentInsertionDetector unsafeFragmentInsertionDetector;
 
+    private final JavaDocFallbackValueService javaDocFallbackValueService = new JavaDocFallbackValueService();
+
     public FragmentRenderingService(
         ValidationUseCase validationUseCase,
         StoryRetrievalUseCase storyRetrievalUseCase,
@@ -151,6 +153,15 @@ public class FragmentRenderingService {
                     fragmentName,
                     storyInfo.getFragmentSummary().getParameters()
                 );
+                if (javaDocInfo.isPresent()) {
+                    Map<String, Object> javaDocModelDefaults =
+                        javaDocFallbackValueService.modelDefaults(javaDocInfo.orElseThrow());
+                    if (!javaDocModelDefaults.isEmpty()) {
+                        Map<String, Object> mergedFallbackModel = new HashMap<>(storyModel);
+                        deepMergeWithOverride(mergedFallbackModel, javaDocModelDefaults);
+                        storyModel = mergedFallbackModel;
+                    }
+                }
             }
             Map<String, Object> mergedModel = new HashMap<>();
             if (!storyModel.isEmpty()) {
@@ -226,6 +237,18 @@ public class FragmentRenderingService {
 
             // PARAMETERIZEDフラグメントの場合、ストーリー設定またはJavaDocフォールバックを試行
             Map<String, Object> parameters = storyParameterUseCase.getParametersForStory(storyInfo);
+            if (!storyInfo.hasStoryConfig() && javaDocInfo.isPresent()) {
+                Map<String, Object> javaDocParameterDefaults = javaDocFallbackValueService.parameterDefaults(
+                    javaDocInfo.orElseThrow(),
+                    fullTemplatePath,
+                    fragmentName
+                );
+                if (!javaDocParameterDefaults.isEmpty()) {
+                    Map<String, Object> mergedFallbackParameters = new HashMap<>(parameters);
+                    mergedFallbackParameters.putAll(javaDocParameterDefaults);
+                    parameters = mergedFallbackParameters;
+                }
+            }
             Map<String, Object> mergedParameters = new HashMap<>(parameters);
             if (!parameterOverrides.isEmpty()) {
                 mergedParameters.putAll(parameterOverrides);

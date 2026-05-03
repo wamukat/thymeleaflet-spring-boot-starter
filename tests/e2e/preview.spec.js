@@ -64,6 +64,36 @@ test('selectInput fullscreen matches snapshot', async ({ page }) => {
   await expect(overlay).not.toHaveClass(/preview-fullscreen-active/);
 });
 
+test('selectInput source includes complete leading comment block', async ({ page }) => {
+  await openFragment(page, 'selectInput');
+  const source = page.locator('.fragment-source-code');
+  await expect(source).toContainText('/**');
+  await expect(source).toContainText('Select input (selectInput)');
+  await expect(source).toContainText('@param label');
+  await expect(source).toContainText('@model options');
+  await expect(source).toContainText('@example');
+  await expect(source).toContainText('th:fragment="selectInput');
+});
+
+test('fragment syntax sample renders supported variants', async ({ page }) => {
+  await openFragment(page, 'fragmentSyntaxOverview');
+  const preview = page.frameLocator('#fragment-preview-host iframe').locator('body');
+  await expect(preview).toContainText('Named arguments');
+  await expect(preview).toContainText('Same-template reference');
+  await expect(preview).toContainText('data-th-fragment');
+  await expect(preview).toContainText('Selector-style reference');
+  await expect(preview).toContainText('Quoted path + no-arg fragment');
+  await expect(preview).toContainText('Java 25 /// comments');
+});
+
+test('line comment documented fragment source includes Java 25 comment block', async ({ page }) => {
+  await openFragment(page, 'lineCommentDocumentedBadge');
+  const source = page.locator('.fragment-source-code');
+  await expect(source).toContainText('/// Java 25 line doc comment badge');
+  await expect(source).toContainText('/// @example');
+  await expect(source).toContainText('th:fragment="lineCommentDocumentedBadge"');
+});
+
 test('story selection updates URL', async ({ page }) => {
   await openFragment(page, 'selectInput');
   await selectStory(page, 'Custom');

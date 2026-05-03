@@ -1,0 +1,106 @@
+meta:
+  title: Fragment Syntax
+  description: Supported Thymeleaf fragment declaration and reference variants
+
+storyGroups:
+  fragmentSyntaxOverview:
+    title: Fragment Syntax Overview
+    description: Combined preview for supported declaration/reference variants
+    stories:
+      - name: default
+        title: Default
+        model:
+          view:
+            title: Release ready
+            tone: success
+            localTitle: Local same-template reference
+        preview:
+          wrapper: |
+            <div class="px-6 py-6 text-base-content font-display">
+              <div class="max-w-6xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+  namedArgumentBadge:
+    title: Named Argument Badge
+    description: Declaration-aware named argument syntax
+    stories:
+      - name: default
+        title: Default
+        parameters:
+          title: Named argument
+          tone: primary
+        preview:
+          wrapper: |
+            <div class="px-6 py-6 text-base-content font-display">
+              <div class="max-w-3xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+  sameTemplatePanel:
+    title: Same-template Panel
+    description: "Same-template `::` reference target"
+    stories:
+      - name: default
+        title: Default
+        parameters:
+          title: Same-template target
+        preview:
+          wrapper: |
+            <div class="px-6 py-6 text-base-content font-display">
+              <div class="max-w-3xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+  dataAttributeBadge:
+    title: Data Attribute Badge
+    description: "`data-th-fragment` declaration target"
+    stories:
+      - name: default
+        title: Default
+        preview:
+          wrapper: |
+            <div class="px-6 py-6 text-base-content font-display">
+              <div class="max-w-3xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+  selectorSyntaxCard:
+    title: Selector Syntax Card
+    description: "Deterministic `#id` selector-style reference target"
+    stories:
+      - name: default
+        title: Default
+        preview:
+          wrapper: |
+            <div class="px-6 py-6 text-base-content font-display">
+              <div class="max-w-3xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+  quotedPathNote:
+    title: Quoted Path Note
+    description: Quoted template path and no-argument declaration target
+    stories:
+      - name: default
+        title: Default
+        preview:
+          wrapper: |
+            <div class="px-6 py-6 text-base-content font-display">
+              <div class="max-w-3xl mx-auto">
+                {{content}}
+              </div>
+            </div>
+  lineCommentDocumentedBadge:
+    title: Line Comment Documented Badge
+    description: "Source display for Java 25 `///` comments"
+    stories:
+      - name: default
+        title: Default
+        preview:
+          wrapper: |
+            <div class="px-6 py-6 text-base-content font-display">
+              <div class="max-w-3xl mx-auto">
+                {{content}}
+              </div>
+            </div>

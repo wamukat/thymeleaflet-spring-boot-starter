@@ -28,6 +28,24 @@ class JavaDocExampleParserTest {
     }
 
     @Test
+    void parseWithDiagnostics_shouldResolveCurrentTemplateExamples() {
+        JavaDocExampleParser.ExampleParseResult result = parser.parseWithDiagnostics("""
+            /**
+             * Current template example.
+             * @example <div th:replace="~{:: card(title='Local')}"></div>
+             */
+            """, "components/card");
+
+        assertThat(result.examples()).singleElement()
+            .satisfies(example -> {
+                assertThat(example.getTemplatePath()).isEqualTo("components/card");
+                assertThat(example.getFragmentName()).isEqualTo("card");
+                assertThat(example.getArguments()).containsExactly("title='Local'");
+            });
+        assertThat(result.diagnostics()).isEmpty();
+    }
+
+    @Test
     void parseWithDiagnostics_shouldWarnForInvalidExampleReferences() {
         JavaDocExampleParser.ExampleParseResult result = parser.parseWithDiagnostics("""
             /**

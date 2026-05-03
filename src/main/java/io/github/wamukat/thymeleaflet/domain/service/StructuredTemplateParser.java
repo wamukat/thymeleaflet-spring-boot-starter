@@ -177,7 +177,7 @@ public class StructuredTemplateParser {
     public record TemplateComment(String content, int line, int column) {
     }
 
-    public record TemplateText(String content, int line, int column) {
+    public record TemplateText(String content, int line, int column, int parentIndex, int depth) {
     }
 
     private static final class CollectingMarkupHandler extends AbstractMarkupHandler {
@@ -305,7 +305,8 @@ public class StructuredTemplateParser {
             int line,
             int col
         ) {
-            textNodes.add(new TemplateText(slice(buffer, offset, len), line, col));
+            int parentIndex = openElementStack.isEmpty() ? -1 : openElementStack.get(openElementStack.size() - 1);
+            textNodes.add(new TemplateText(slice(buffer, offset, len), line, col, parentIndex, openElementStack.size()));
         }
 
         private void startElement(char[] buffer, int nameOffset, int nameLen, int line, int col) {

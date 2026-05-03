@@ -40,7 +40,7 @@ public class FragmentSourceSnippetService {
         }
 
         int openTagLine = findOpeningTagLine(lines, targetLine);
-        int start = Math.max(0, openTagLine - CONTEXT_LINES_BEFORE);
+        int start = findSnippetStartLine(lines, openTagLine);
         int endExclusive = findSnippetEndExclusive(lines, openTagLine, targetLine);
 
         StringBuilder snippet = new StringBuilder();
@@ -60,6 +60,68 @@ public class FragmentSourceSnippetService {
             }
         }
         return targetLine;
+    }
+
+    private int findSnippetStartLine(List<String> lines, int openTagLine) {
+        return findLeadingCommentBlockStart(lines, openTagLine)
+            .orElse(Math.max(0, openTagLine - CONTEXT_LINES_BEFORE));
+    }
+
+    private Optional<Integer> findLeadingCommentBlockStart(List<String> lines, int openTagLine) {
+        int cursor = previousNonBlankLine(lines, openTagLine - 1);
+        int earliestCommentStart = -1;
+
+        while (cursor >= 0) {
+            if (lines.get(cursor).contains("-->")) {
+                int commentStart = findHtmlCommentStart(lines, cursor);
+                if (commentStart < 0) {
+                    break;
+                }
+                earliestCommentStart = commentStart;
+                cursor = previousNonBlankLine(lines, commentStart - 1);
+            } else if (isJavaLineDocComment(lines.get(cursor))) {
+                int commentStart = findJavaLineDocCommentStart(lines, cursor);
+                earliestCommentStart = commentStart;
+                cursor = previousNonBlankLine(lines, commentStart - 1);
+            } else {
+                break;
+            }
+        }
+
+        return earliestCommentStart >= 0 ? Optional.of(earliestCommentStart) : Optional.empty();
+    }
+
+    private int findHtmlCommentStart(List<String> lines, int commentEndLine) {
+        for (int i = commentEndLine; i >= 0; i--) {
+            if (lines.get(i).contains("<!--")) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private int findJavaLineDocCommentStart(List<String> lines, int commentEndLine) {
+        int start = commentEndLine;
+        for (int i = commentEndLine - 1; i >= 0; i--) {
+            if (!isJavaLineDocComment(lines.get(i))) {
+                break;
+            }
+            start = i;
+        }
+        return start;
+    }
+
+    private boolean isJavaLineDocComment(String line) {
+        return line.trim().startsWith("///");
+    }
+
+    private int previousNonBlankLine(List<String> lines, int startLine) {
+        for (int i = startLine; i >= 0; i--) {
+            if (!lines.get(i).isBlank()) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private int findSnippetEndExclusive(List<String> lines, int openTagLine, int targetLine) {
