@@ -30,8 +30,12 @@ class JavaDocContentServiceTest {
             List<JavaDocAnalyzer.JavaDocInfo> after = service.loadJavaDocInfos("cache/devtools-cache-sample");
 
             assertThat(before).singleElement()
-                .extracting(JavaDocAnalyzer.JavaDocInfo::getDescription)
-                .isEqualTo("Before update");
+                .satisfies(docInfo -> {
+                    assertThat(docInfo.getDescription()).isEqualTo("Before update");
+                    assertThat(docInfo.getExamples()).singleElement()
+                        .extracting(JavaDocAnalyzer.ExampleInfo::getTemplatePath)
+                        .isEqualTo("cache/devtools-cache-sample");
+                });
             assertThat(after).singleElement()
                 .extracting(JavaDocAnalyzer.JavaDocInfo::getDescription)
                 .isEqualTo("After update");
@@ -84,7 +88,7 @@ class JavaDocContentServiceTest {
             <!--
             /**
              * %s
-             * @example <div th:replace="~{cache/devtools-cache-sample :: sample()}"></div>
+             * @example <div th:replace="~{:: sample()}"></div>
              */
             -->
             <div th:fragment="sample()">Sample</div>

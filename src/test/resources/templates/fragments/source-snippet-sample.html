@@ -29,6 +29,53 @@
     <div>line 25</div>
   </section>
 
+  <!--
+  /**
+   * Commented fragment
+   *
+   * @param label {@code String} [required] Label text
+   * @param description {@code String} [optional=] Description text
+   * @example <div th:replace="~{fragments/source-snippet-sample :: commentedFragment(label='Title', description='Body')}"></div>
+   */
+  -->
+  <article th:fragment="commentedFragment(label, description)">
+    <h2 th:text="${label}">Title</h2>
+    <p th:text="${description}">Body</p>
+  </article>
+
+  <!--
+  /// Java 25 line documented fragment
+  ///
+  /// @param title {@code String} [required] Title text
+  /// @param body {@code String} [optional=] Body text
+  /// @example <div th:replace="~{fragments/source-snippet-sample :: lineDocumentedFragment(title='Title', body='Body')}"></div>
+  -->
+  <section th:fragment="lineDocumentedFragment(title, body)">
+    <h2 th:text="${title}">Title</h2>
+    <p th:text="${body}">Body</p>
+  </section>
+
   <div th:fragment="shortFragment">short</div>
+
+  <section
+      data-note="notAFragment should not match just because it appears on the line"
+      th:fragment="actualFragment">
+    <p>actual</p>
+  </section>
+
+  <section data-note='th:fragment="fakeFragment"'>
+    <p>fake attribute value</p>
+  </section>
+
+  <section data-th-fragment-extra="extraFragment">
+    <p>extra attribute name</p>
+  </section>
+
+  <article
+      data-th-fragment="
+        multilineFragment(title)
+      ">
+    <h2 th:text="${title}">Title</h2>
+  </article>
 </body>
 </html>

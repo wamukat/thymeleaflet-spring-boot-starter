@@ -72,7 +72,8 @@ public class JavaDocContentService {
         }
 
         try {
-            List<JavaDocAnalyzer.JavaDocInfo> docs = javaDocAnalyzer.analyzeJavaDocFromHtml(htmlContent.get());
+            List<JavaDocAnalyzer.JavaDocInfo> docs =
+                javaDocAnalyzer.analyzeJavaDocFromHtml(htmlContent.get(), templatePath);
             cacheManager.put("javadocs", templatePath, docs);
             return docs;
         } catch (Exception e) {

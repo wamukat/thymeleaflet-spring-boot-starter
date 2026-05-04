@@ -70,8 +70,40 @@ class FragmentModelInferenceServiceTest {
         @SuppressWarnings("unchecked")
         Map<String, Object> row = (Map<String, Object>) items.get(0);
         assertThat(row).containsKeys("occurredAt", "description", "amount", "balanceAfter");
+        assertThat(row).doesNotContainKey("index");
         assertThat(row.get("amount")).isEqualTo(0);
         assertThat(row.get("balanceAfter")).isEqualTo(0);
+    }
+
+    @Test
+    void shouldInferFormFieldsFromThObjectAndThField() {
+        Map<String, Object> inferred = service.inferModel(
+            "fragments/form-object-inference-sample",
+            "profileForm",
+            List.of()
+        );
+
+        assertThat(inferred).containsKey("profileForm");
+        assertThat(inferred).doesNotContainKeys("email", "enabled", "address");
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> profileForm =
+            (Map<String, Object>) Objects.requireNonNull(inferred.get("profileForm"));
+        assertThat(profileForm)
+            .containsEntry("email", "sample@example.com")
+            .containsEntry("enabled", false)
+            .containsEntry("address", Map.of("city", "Sample city"));
+    }
+
+    @Test
+    void shouldNotInferFormFieldsWhenThObjectRootIsAParameter() {
+        Map<String, Object> inferred = service.inferModel(
+            "fragments/form-object-inference-sample",
+            "profileForm",
+            List.of("profileForm")
+        );
+
+        assertThat(inferred).isEmpty();
     }
 
     @Test

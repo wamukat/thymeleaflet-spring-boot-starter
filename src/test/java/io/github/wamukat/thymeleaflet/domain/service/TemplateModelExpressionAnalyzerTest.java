@@ -35,6 +35,142 @@ class TemplateModelExpressionAnalyzerTest {
     }
 
     @Test
+    void shouldIgnoreLoopStatusPropertiesOnlyInsideLoopScope() {
+        String html = """
+            <section>
+              <p th:text="${stat.summary}"></p>
+              <p th:text="${stat.index}"></p>
+              <article th:each="row, stat : ${pointPage.items}">
+                <p th:text="${stat}"></p>
+                <p th:text="${stat.index}"></p>
+                <p th:text="${stat.customValue}"></p>
+                <p th:text="${row.amount}"></p>
+              </article>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("pointPage", "items")))
+            .contains(ModelPath.of(List.of("stat", "summary")))
+            .contains(ModelPath.of(List.of("stat", "index")))
+            .contains(ModelPath.of(List.of("row", "amount")))
+            .doesNotContain(ModelPath.of(List.of("stat")))
+            .doesNotContain(ModelPath.of(List.of("stat", "customValue")))
+            .filteredOn(path -> path.equals(ModelPath.of(List.of("stat", "index"))))
+            .hasSize(1);
+        assertThat(snapshot.loopVariablePaths())
+            .containsEntry("row", ModelPath.of(List.of("pointPage", "items")))
+            .doesNotContainKey("stat");
+    }
+
+    @Test
+    void shouldIgnoreLoopStatusPropertiesInInlineTextOnlyInsideLoopScope() {
+        String html = """
+            <section>
+              [[${stat.index}]]
+              <article th:each="row, stat : ${pointPage.items}">
+                [[${stat}]]
+                [[${stat.index}]]
+                [[${stat.customValue}]]
+                [[${row.amount}]]
+              </article>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("pointPage", "items")))
+            .contains(ModelPath.of(List.of("stat", "index")))
+            .contains(ModelPath.of(List.of("row", "amount")))
+            .doesNotContain(ModelPath.of(List.of("stat")))
+            .doesNotContain(ModelPath.of(List.of("stat", "customValue")))
+            .filteredOn(path -> path.equals(ModelPath.of(List.of("stat", "index"))))
+            .hasSize(1);
+        assertThat(snapshot.loopVariablePaths())
+            .containsEntry("row", ModelPath.of(List.of("pointPage", "items")))
+            .doesNotContainKey("stat");
+    }
+
+    @Test
+    void shouldNotApplyDeclaredLoopStatusAliasToOwnIterableExpression() {
+        String html = """
+            <section>
+              <article th:each="row, stat : ${stat.items}">
+                <p th:text="${stat}"></p>
+                <p th:text="${stat.index}"></p>
+                <p th:text="${row.amount}"></p>
+              </article>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("stat", "items")))
+            .contains(ModelPath.of(List.of("row", "amount")))
+            .doesNotContain(ModelPath.of(List.of("stat")))
+            .doesNotContain(ModelPath.of(List.of("stat", "index")));
+        assertThat(snapshot.loopVariablePaths())
+            .containsEntry("row", ModelPath.of(List.of("stat", "items")))
+            .doesNotContainKey("stat");
+    }
+
+    @Test
+    void shouldNotMapLoopAliasToAncestorLoopStatusIterablePath() {
+        String html = """
+            <section>
+              <article th:each="group, stat : ${groups}">
+                <p th:each="item : ${stat.current.items}" th:text="${item.name}"></p>
+              </article>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("groups")))
+            .contains(ModelPath.of(List.of("item", "name")))
+            .doesNotContain(ModelPath.of(List.of("stat", "current", "items")));
+        assertThat(snapshot.loopVariablePaths())
+            .containsEntry("group", ModelPath.of(List.of("groups")))
+            .doesNotContainKey("stat")
+            .doesNotContainKey("item");
+    }
+
+    @Test
+    void shouldIgnoreImplicitLoopStatusAliasInsideLoopScope() {
+        String html = """
+            <section>
+              <p th:text="${rowStat.index}"></p>
+              [[${rowStat.index}]]
+              <article th:each="row : ${pointPage.items}">
+                <p th:text="${rowStat.index}"></p>
+                <p th:text="${rowStat.customValue}"></p>
+                [[${rowStat.count}]]
+                <p th:text="${row.amount}"></p>
+              </article>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("pointPage", "items")))
+            .contains(ModelPath.of(List.of("rowStat", "index")))
+            .contains(ModelPath.of(List.of("row", "amount")))
+            .doesNotContain(ModelPath.of(List.of("rowStat", "customValue")))
+            .doesNotContain(ModelPath.of(List.of("rowStat", "count")))
+            .filteredOn(path -> path.equals(ModelPath.of(List.of("rowStat", "index"))))
+            .hasSize(2);
+        assertThat(snapshot.loopVariablePaths())
+            .containsEntry("row", ModelPath.of(List.of("pointPage", "items")))
+            .doesNotContainKey("rowStat");
+    }
+
+    @Test
     void shouldExtractStaticReferencedTemplatePaths() {
         String html = """
             <div>
@@ -278,6 +414,67 @@ class TemplateModelExpressionAnalyzerTest {
     }
 
     @Test
+    void shouldResolveSelectionExpressionsAgainstActiveThObject() {
+        String html = """
+            <form th:object="${profileForm}">
+              <input th:field="*{email}" />
+              <input th:field="*{enabled}" />
+              <span th:text="*{address.city}"></span>
+            </form>
+            <input th:field="*{standalone.value}" />
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("profileForm")))
+            .contains(ModelPath.of(List.of("profileForm", "email")))
+            .contains(ModelPath.of(List.of("profileForm", "enabled")))
+            .contains(ModelPath.of(List.of("profileForm", "address", "city")))
+            .contains(ModelPath.of(List.of("standalone", "value")))
+            .doesNotContain(ModelPath.of(List.of("email")))
+            .doesNotContain(ModelPath.of(List.of("enabled")))
+            .doesNotContain(ModelPath.of(List.of("address", "city")));
+    }
+
+    @Test
+    void shouldNotInferSelectionFieldsWhenThObjectRootIsExcluded() {
+        String html = """
+            <form th:object="${profileForm}">
+              <input th:field="*{email}" />
+              <span th:text="*{address.city}"></span>
+            </form>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of("profileForm"));
+
+        assertThat(snapshot.modelPaths())
+            .doesNotContain(ModelPath.of(List.of("profileForm")))
+            .doesNotContain(ModelPath.of(List.of("profileForm", "email")))
+            .doesNotContain(ModelPath.of(List.of("email")))
+            .doesNotContain(ModelPath.of(List.of("address", "city")));
+    }
+
+    @Test
+    void shouldResolveLoopIterableSelectionExpressionAgainstActiveThObject() {
+        String html = """
+            <form th:object="${orderForm}">
+              <article th:each="item : *{items}">
+                <p th:text="${item.name}"></p>
+              </article>
+            </form>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("orderForm")))
+            .contains(ModelPath.of(List.of("item", "name")));
+        assertThat(snapshot.loopVariablePaths())
+            .containsEntry("item", ModelPath.of(List.of("orderForm", "items")));
+    }
+
+    @Test
     void shouldPreserveNoArgAndAliasBehaviorWithTokenizer() {
         String html = """
             <section th:with="current=${view.currentUser}">
@@ -358,6 +555,111 @@ class TemplateModelExpressionAnalyzerTest {
                     "tags", java.util.List.of(java.util.Map.of("label", "Sample label"))
                 ))
             ));
+    }
+
+    @Test
+    void shouldInferRepresentativeValuesFromSwitchCaseLiterals() {
+        String html = """
+            <section>
+              <div th:switch="${view.status}">
+                <span th:case="*">Default</span>
+                <span th:case="'active'">Active</span>
+                <span th:case="${dynamicCase}">Dynamic</span>
+              </div>
+              <div data-th-switch="${view.count}">
+                <span data-th-case="3">Three</span>
+              </div>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "status")))
+            .contains(ModelPath.of(List.of("view", "count")));
+        assertThat(snapshot.representativeValues())
+            .containsEntry(ModelPath.of(List.of("view", "status")), "active")
+            .containsEntry(ModelPath.of(List.of("view", "count")), 3)
+            .doesNotContainValue("*");
+        assertThat(snapshot.toInferredModel().toMap())
+            .containsEntry("view", java.util.Map.of("status", "active", "count", 3));
+    }
+
+    @Test
+    void shouldInferSwitchCaseValuesInsideSelectionAndLoopScopes() {
+        String html = """
+            <form th:object="${profileForm}">
+              <div th:switch="*{role}">
+                <span th:case="'admin'">Admin</span>
+              </div>
+              <article th:each="item : *{items}">
+                <div th:switch="${item.state}">
+                  <span th:case="'ready'">Ready</span>
+                </div>
+              </article>
+            </form>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.representativeValues())
+            .containsEntry(ModelPath.of(List.of("profileForm", "role")), "admin")
+            .containsEntry(ModelPath.of(List.of("item", "state")), "ready");
+        assertThat(snapshot.toInferredModel().toMap())
+            .containsEntry("profileForm", java.util.Map.of(
+                "role", "admin",
+                "items", java.util.List.of(java.util.Map.of("state", "ready"))
+            ));
+    }
+
+    @Test
+    void shouldNotUseNestedSwitchCaseAsOuterRepresentativeValue() {
+        String html = """
+            <section>
+              <div th:switch="${view.status}">
+                <section th:case="*">
+                  <div th:switch="${view.cardType}">
+                    <span th:case="'card'">Card</span>
+                  </div>
+                </section>
+                <span th:case="'active'">Active</span>
+              </div>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.representativeValues())
+            .containsEntry(ModelPath.of(List.of("view", "status")), "active")
+            .containsEntry(ModelPath.of(List.of("view", "cardType")), "card");
+        assertThat(snapshot.toInferredModel().toMap())
+            .containsEntry("view", java.util.Map.of("status", "active", "cardType", "card"));
+    }
+
+    @Test
+    void shouldNotInferRepresentativeValueFromComputedSwitchExpression() {
+        String html = """
+            <section>
+              <div th:switch="${view.status == 'active'}">
+                <span th:case="true">Active</span>
+                <span th:case="false">Inactive</span>
+              </div>
+              <div th:switch="${view.resolveStatus()}">
+                <span th:case="'ready'">Ready</span>
+              </div>
+            </section>
+            """;
+
+        TemplateInference snapshot = analyzer.analyze(html, Set.of());
+
+        assertThat(snapshot.modelPaths())
+            .contains(ModelPath.of(List.of("view", "status")))
+            .doesNotContain(ModelPath.of(List.of("view")));
+        assertThat(snapshot.noArgMethodPaths())
+            .contains(ModelPath.of(List.of("view", "resolveStatus")));
+        assertThat(snapshot.representativeValues())
+            .doesNotContainKey(ModelPath.of(List.of("view", "status")))
+            .doesNotContainKey(ModelPath.of(List.of("view")));
     }
 
     @Test

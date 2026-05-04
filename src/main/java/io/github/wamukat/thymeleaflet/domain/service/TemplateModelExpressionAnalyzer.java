@@ -3,7 +3,6 @@ package io.github.wamukat.thymeleaflet.domain.service;
 import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
 import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
-import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -13,18 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * テンプレート式を解析し、モデル推論に必要な情報を抽出する。
  */
 public class TemplateModelExpressionAnalyzer {
 
-    private static final Set<String> RESERVED_ROOTS = Set.of(
-        "true", "false", "null",
-        "param", "session", "application", "request", "response",
-        "and", "or", "not", "eq", "ne", "lt", "le", "gt", "ge",
-        "instanceof", "matches", "div", "mod"
-    );
     private final StructuredTemplateParser templateParser;
     private final FragmentExpressionParser fragmentExpressionParser;
 
@@ -63,50 +57,88 @@ public class TemplateModelExpressionAnalyzer {
         StructuredTemplateParser.ParsedTemplate template = templateParser.parse(html);
         Set<String> excludedIdentifiers = new HashSet<>(parameterNames);
         excludedIdentifiers.addAll(extractLocalVariablesFromThWith(template));
-        Map<String, ModelPath> loopVariablePaths = extractLoopVariablePaths(template);
-        List<String> expressionSources = expressionSources(template);
+        Map<String, ModelPath> loopVariablePaths = extractLoopVariablePaths(template, excludedIdentifiers);
+        List<ExpressionSource> expressionSources = expressionSources(template, excludedIdentifiers);
         List<ModelPath> modelPaths = extractModelPathsFromSources(expressionSources, excludedIdentifiers);
         List<ModelPath> noArgMethodPaths = extractNoArgMethodPathsFromSources(expressionSources, excludedIdentifiers);
         List<TemplateInference.ReferencedFragment> referencedFragments =
             extractReferencedFragments(template, currentTemplatePath);
         Map<String, Boolean> referencedTemplatePaths = referencedTemplatePaths(referencedFragments);
+        Map<ModelPath, Object> representativeValues = extractSwitchCaseRepresentativeValues(
+            template,
+            excludedIdentifiers
+        );
         return new TemplateInference(
             modelPaths,
             loopVariablePaths,
             referencedTemplatePaths,
             noArgMethodPaths,
-            referencedFragments
+            referencedFragments,
+            representativeValues
         );
     }
 
-    private List<ModelPath> extractModelPathsFromSources(List<String> sources, Set<String> excludedIdentifiers) {
+    private List<ModelPath> extractModelPathsFromSources(
+        List<ExpressionSource> sources,
+        Set<String> excludedIdentifiers
+    ) {
         List<ModelPath> paths = new ArrayList<>();
-        for (String source : sources) {
-            for (String expression : extractExpressionBodies(source)) {
-                for (List<String> path : extractModelPaths(expression, excludedIdentifiers)) {
-                    paths.add(ModelPath.of(path));
+        for (ExpressionSource source : sources) {
+            for (TemplateExpression expression : extractExpressionBodies(source.value())) {
+                if (expression.selectionExpression() && source.selectionRootExcluded()) {
+                    continue;
+                }
+                for (List<String> path : extractModelPaths(expression.content(), excludedIdentifiers)) {
+                    if (expression.selectionExpression() && source.selectionRoot().isPresent()) {
+                        path = selectedPath(source.selectionRoot().orElseThrow(), path);
+                    }
+                    ModelPath modelPath = ModelPath.of(path);
+                    if (!isLoopStatusPath(modelPath, source.loopStatusAliases())) {
+                        paths.add(modelPath);
+                    }
                 }
             }
         }
         return paths;
     }
 
-    private List<ModelPath> extractNoArgMethodPathsFromSources(List<String> sources, Set<String> excludedIdentifiers) {
+    private List<ModelPath> extractNoArgMethodPathsFromSources(
+        List<ExpressionSource> sources,
+        Set<String> excludedIdentifiers
+    ) {
         LinkedHashSet<ModelPath> methodPaths = new LinkedHashSet<>();
-        for (String source : sources) {
-            for (String expression : extractExpressionBodies(source)) {
+        for (ExpressionSource source : sources) {
+            for (TemplateExpression expression : extractExpressionBodies(source.value())) {
+                if (expression.selectionExpression() && source.selectionRootExcluded()) {
+                    continue;
+                }
                 List<List<String>> extracted = new ArrayList<>();
-                extractModelPaths(expression, excludedIdentifiers, extracted);
+                extractModelPaths(expression.content(), excludedIdentifiers, extracted);
                 for (List<String> path : extracted) {
-                    methodPaths.add(ModelPath.of(path));
+                    if (expression.selectionExpression() && source.selectionRoot().isPresent()) {
+                        path = selectedPath(source.selectionRoot().orElseThrow(), path);
+                    }
+                    ModelPath modelPath = ModelPath.of(path);
+                    if (!isLoopStatusPath(modelPath, source.loopStatusAliases())) {
+                        methodPaths.add(modelPath);
+                    }
                 }
             }
         }
         return new ArrayList<>(methodPaths);
     }
 
-    private List<String> extractExpressionBodies(String source) {
-        List<String> expressions = new ArrayList<>();
+    private List<String> selectedPath(ModelPath selectionRoot, List<String> selectionPath) {
+        if (selectionPath.isEmpty()) {
+            return selectionRoot.segments();
+        }
+        List<String> path = new ArrayList<>(selectionRoot.segments());
+        path.addAll(selectionPath);
+        return path;
+    }
+
+    private List<TemplateExpression> extractExpressionBodies(String source) {
+        List<TemplateExpression> expressions = new ArrayList<>();
         int index = 0;
         while (index < source.length() - 1) {
             char current = source.charAt(index);
@@ -120,7 +152,7 @@ public class TemplateModelExpressionAnalyzer {
                 continue;
             }
             ExpressionBody resolvedBody = expressionBody.orElseThrow();
-            expressions.add(resolvedBody.content());
+            expressions.add(new TemplateExpression(resolvedBody.content(), current == '*'));
             index = resolvedBody.nextIndex();
         }
         return expressions;
@@ -165,55 +197,79 @@ public class TemplateModelExpressionAnalyzer {
     }
 
     private List<List<String>> extractModelPaths(String expression, Set<String> excludedIdentifiers) {
-        return extractModelPaths(expression, excludedIdentifiers, null);
+        return TemplateExpressionPathExtractor.modelPaths(expression, excludedIdentifiers);
     }
 
     private List<List<String>> extractModelPaths(
         String expression,
         Set<String> excludedIdentifiers,
-        @Nullable List<List<String>> noArgMethodPaths
+        List<List<String>> noArgMethodPaths
     ) {
-        ExpressionPathParser parser = new ExpressionPathParser(
-            ThymeleafExpressionTokenizer.tokenize(expression),
-            excludedIdentifiers,
-            noArgMethodPaths
-        );
-        return parser.parse();
+        return TemplateExpressionPathExtractor.modelPaths(expression, excludedIdentifiers, noArgMethodPaths);
     }
 
-    private Map<String, ModelPath> extractLoopVariablePaths(StructuredTemplateParser.ParsedTemplate template) {
+    private Map<String, ModelPath> extractLoopVariablePaths(
+        StructuredTemplateParser.ParsedTemplate template,
+        Set<String> excludedIdentifiers
+    ) {
         Map<String, ModelPath> loopVariables = new LinkedHashMap<>();
-        for (String raw : thymeleafAttributeValues(template, Set.of("th:each", "data-th-each"))) {
-            if (raw == null || raw.isBlank()) {
-                continue;
-            }
-            int separator = raw.indexOf(':');
-            if (separator <= 0 || separator >= raw.length() - 1) {
-                continue;
-            }
-            String variablePart = raw.substring(0, separator).trim();
-            String iterablePart = raw.substring(separator + 1).trim();
-            List<String> aliases = extractLoopAliases(variablePart);
-            if (aliases.isEmpty()) {
-                continue;
-            }
-            String iterableExpression = iterablePart;
-            if (iterableExpression.startsWith("${") && iterableExpression.endsWith("}")) {
-                iterableExpression = iterableExpression.substring(2, iterableExpression.length() - 1);
-            }
-            List<List<String>> iterablePaths = extractModelPaths(iterableExpression, Set.of());
-            if (iterablePaths.isEmpty()) {
-                continue;
-            }
-            List<String> iterablePath = iterablePaths.getFirst();
-            if (iterablePath.isEmpty()) {
-                continue;
-            }
-            for (String alias : aliases) {
-                loopVariables.putIfAbsent(alias, ModelPath.of(iterablePath));
+        Map<Integer, StructuredTemplateParser.TemplateElement> elementsByIndex = template.elements().stream()
+            .collect(Collectors.toMap(StructuredTemplateParser.TemplateElement::index, element -> element));
+        for (StructuredTemplateParser.TemplateElement element : template.elements()) {
+            Set<String> ancestorLoopStatusAliases = activeLoopStatusAliases(element.parentIndex(), elementsByIndex);
+            SelectionScope activeSelectionRoot = activeSelectionRoot(element, elementsByIndex, excludedIdentifiers);
+            for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                if (!attribute.hasValue() || !isLoopDeclarationAttribute(attribute)) {
+                    continue;
+                }
+                String raw = attribute.value();
+                if (raw.isBlank()) {
+                    continue;
+                }
+                int separator = raw.indexOf(':');
+                if (separator <= 0 || separator >= raw.length() - 1) {
+                    continue;
+                }
+                String variablePart = raw.substring(0, separator).trim();
+                String iterablePart = raw.substring(separator + 1).trim();
+                LoopVariables parsedLoopVariables = extractLoopVariables(variablePart);
+                if (parsedLoopVariables.itemAliases().isEmpty()) {
+                    continue;
+                }
+                String iterableExpression = iterablePart;
+                boolean selectionExpression = iterableExpression.startsWith("*{") && iterableExpression.endsWith("}");
+                if (iterableExpression.startsWith("${") && iterableExpression.endsWith("}")) {
+                    iterableExpression = iterableExpression.substring(2, iterableExpression.length() - 1);
+                } else if (selectionExpression) {
+                    iterableExpression = iterableExpression.substring(2, iterableExpression.length() - 1);
+                }
+                if (selectionExpression && activeSelectionRoot.excluded()) {
+                    continue;
+                }
+                List<List<String>> iterablePaths = extractModelPaths(iterableExpression, Set.of());
+                for (List<String> iterablePath : iterablePaths) {
+                    if (iterablePath.isEmpty()) {
+                        continue;
+                    }
+                    if (selectionExpression && activeSelectionRoot.root().isPresent()) {
+                        iterablePath = selectedPath(activeSelectionRoot.root().orElseThrow(), iterablePath);
+                    }
+                    ModelPath loopPath = ModelPath.of(iterablePath);
+                    if (isLoopStatusPath(loopPath, ancestorLoopStatusAliases)) {
+                        continue;
+                    }
+                    for (String alias : parsedLoopVariables.itemAliases()) {
+                        loopVariables.putIfAbsent(alias, loopPath);
+                    }
+                    break;
+                }
             }
         }
         return loopVariables;
+    }
+
+    private boolean isLoopStatusPath(ModelPath modelPath, Set<String> loopStatusAliases) {
+        return loopStatusAliases.contains(modelPath.root());
     }
 
     private List<TemplateInference.ReferencedFragment> extractReferencedFragments(
@@ -248,6 +304,99 @@ public class TemplateModelExpressionAnalyzer {
             );
         }
         return referencedTemplatePaths;
+    }
+
+    private Map<ModelPath, Object> extractSwitchCaseRepresentativeValues(
+        StructuredTemplateParser.ParsedTemplate template,
+        Set<String> excludedIdentifiers
+    ) {
+        Map<ModelPath, Object> representativeValues = new LinkedHashMap<>();
+        Map<Integer, StructuredTemplateParser.TemplateElement> elementsByIndex = template.elements().stream()
+            .collect(Collectors.toMap(StructuredTemplateParser.TemplateElement::index, element -> element));
+        for (StructuredTemplateParser.TemplateElement element : template.elements()) {
+            SelectionScope selectionRoot = activeSelectionRoot(element, elementsByIndex, excludedIdentifiers);
+            for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                if (!attribute.hasValue() || !isSwitchAttribute(attribute)) {
+                    continue;
+                }
+                Optional<ModelPath> switchPath = switchExpressionPath(attribute.value(), selectionRoot, excludedIdentifiers);
+                if (switchPath.isEmpty() || representativeValues.containsKey(switchPath.orElseThrow())) {
+                    continue;
+                }
+                firstRepresentativeCaseValue(element, template.subtree(element), elementsByIndex)
+                    .ifPresent(value -> representativeValues.put(switchPath.orElseThrow(), value));
+            }
+        }
+        return representativeValues;
+    }
+
+    private Optional<ModelPath> switchExpressionPath(
+        String rawExpression,
+        SelectionScope selectionRoot,
+        Set<String> excludedIdentifiers
+    ) {
+        String expression = rawExpression.trim();
+        boolean selectionExpression = expression.startsWith("*{") && expression.endsWith("}");
+        if (expression.startsWith("${") && expression.endsWith("}")) {
+            expression = expression.substring(2, expression.length() - 1);
+        } else if (selectionExpression) {
+            expression = expression.substring(2, expression.length() - 1);
+        }
+        if (selectionExpression && selectionRoot.excluded()) {
+            return Optional.empty();
+        }
+        Optional<List<String>> directPath = TemplateExpressionPathExtractor.directModelPath(
+            expression,
+            excludedIdentifiers
+        );
+        if (directPath.isEmpty() || directPath.orElseThrow().isEmpty()) {
+            return Optional.empty();
+        }
+        List<String> path = directPath.orElseThrow();
+        if (selectionExpression && selectionRoot.root().isPresent()) {
+            path = selectedPath(selectionRoot.root().orElseThrow(), path);
+        }
+        return Optional.of(ModelPath.of(path));
+    }
+
+    private Optional<Object> firstRepresentativeCaseValue(
+        StructuredTemplateParser.TemplateElement switchElement,
+        List<StructuredTemplateParser.TemplateElement> subtree,
+        Map<Integer, StructuredTemplateParser.TemplateElement> elementsByIndex
+    ) {
+        for (StructuredTemplateParser.TemplateElement element : subtree) {
+            if (!belongsToSwitch(element, switchElement, elementsByIndex)) {
+                continue;
+            }
+            for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+                if (!attribute.hasValue() || !isCaseAttribute(attribute)) {
+                    continue;
+                }
+                Optional<Object> value = StaticLiteralValueParser.parse(attribute.value());
+                if (value.isPresent()) {
+                    return value;
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private boolean belongsToSwitch(
+        StructuredTemplateParser.TemplateElement candidate,
+        StructuredTemplateParser.TemplateElement switchElement,
+        Map<Integer, StructuredTemplateParser.TemplateElement> elementsByIndex
+    ) {
+        if (candidate.index() == switchElement.index()) {
+            return true;
+        }
+        StructuredTemplateParser.TemplateElement current = elementsByIndex.get(candidate.parentIndex());
+        while (current != null) {
+            if (hasSwitchAttribute(current)) {
+                return current.index() == switchElement.index();
+            }
+            current = elementsByIndex.get(current.parentIndex());
+        }
+        return false;
     }
 
     private Optional<FragmentExpression> parseFragmentExpression(String raw, Optional<String> currentTemplatePath) {
@@ -329,21 +478,167 @@ public class TemplateModelExpressionAnalyzer {
         return localVariables;
     }
 
-    private List<String> expressionSources(StructuredTemplateParser.ParsedTemplate template) {
-        List<String> sources = new ArrayList<>();
+    private List<ExpressionSource> expressionSources(
+        StructuredTemplateParser.ParsedTemplate template,
+        Set<String> excludedIdentifiers
+    ) {
+        List<ExpressionSource> sources = new ArrayList<>();
+        Map<Integer, StructuredTemplateParser.TemplateElement> elementsByIndex = template.elements().stream()
+            .collect(Collectors.toMap(StructuredTemplateParser.TemplateElement::index, element -> element));
         for (StructuredTemplateParser.TemplateElement element : template.elements()) {
+            Set<String> activeLoopStatusAliases = activeLoopStatusAliases(element, elementsByIndex);
+            Set<String> ancestorLoopStatusAliases = activeLoopStatusAliases(element.parentIndex(), elementsByIndex);
+            SelectionScope activeSelectionRoot = activeSelectionRoot(element, elementsByIndex, excludedIdentifiers);
             for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
                 if (attribute.hasValue()) {
-                    sources.add(attribute.value());
+                    Set<String> loopStatusAliases = isLoopDeclarationAttribute(attribute)
+                        ? ancestorLoopStatusAliases
+                        : activeLoopStatusAliases;
+                    SelectionScope selectionRoot = isSelectionRootAttribute(attribute)
+                        ? activeSelectionRoot(element.parentIndex(), elementsByIndex, excludedIdentifiers)
+                        : activeSelectionRoot;
+                    sources.add(new ExpressionSource(
+                        attribute.value(),
+                        loopStatusAliases,
+                        selectionRoot.root(),
+                        selectionRoot.excluded()
+                    ));
                 }
             }
         }
         for (StructuredTemplateParser.TemplateText text : template.textNodes()) {
             if (!text.content().isBlank()) {
-                sources.add(text.content());
+                sources.add(new ExpressionSource(
+                    text.content(),
+                    activeLoopStatusAliases(text.parentIndex(), elementsByIndex),
+                    activeSelectionRoot(text.parentIndex(), elementsByIndex, excludedIdentifiers).root(),
+                    activeSelectionRoot(text.parentIndex(), elementsByIndex, excludedIdentifiers).excluded()
+                ));
             }
         }
         return sources;
+    }
+
+    private Set<String> activeLoopStatusAliases(
+        StructuredTemplateParser.TemplateElement element,
+        Map<Integer, StructuredTemplateParser.TemplateElement> elementsByIndex
+    ) {
+        Set<String> aliases = new HashSet<>();
+        StructuredTemplateParser.TemplateElement current = element;
+        while (current != null) {
+            aliases.addAll(loopStatusAliases(current));
+            current = elementsByIndex.get(current.parentIndex());
+        }
+        return aliases;
+    }
+
+    private boolean isLoopDeclarationAttribute(StructuredTemplateParser.TemplateAttribute attribute) {
+        String normalizedName = attribute.name().toLowerCase(java.util.Locale.ROOT);
+        return normalizedName.equals("th:each") || normalizedName.equals("data-th-each");
+    }
+
+    private boolean isSelectionRootAttribute(StructuredTemplateParser.TemplateAttribute attribute) {
+        String normalizedName = attribute.name().toLowerCase(java.util.Locale.ROOT);
+        return normalizedName.equals("th:object") || normalizedName.equals("data-th-object");
+    }
+
+    private boolean isSwitchAttribute(StructuredTemplateParser.TemplateAttribute attribute) {
+        String normalizedName = attribute.name().toLowerCase(java.util.Locale.ROOT);
+        return normalizedName.equals("th:switch") || normalizedName.equals("data-th-switch");
+    }
+
+    private boolean hasSwitchAttribute(StructuredTemplateParser.TemplateElement element) {
+        return element.attributes().stream().anyMatch(attribute -> attribute.hasValue() && isSwitchAttribute(attribute));
+    }
+
+    private boolean isCaseAttribute(StructuredTemplateParser.TemplateAttribute attribute) {
+        String normalizedName = attribute.name().toLowerCase(java.util.Locale.ROOT);
+        return normalizedName.equals("th:case") || normalizedName.equals("data-th-case");
+    }
+
+    private SelectionScope activeSelectionRoot(
+        StructuredTemplateParser.TemplateElement element,
+        Map<Integer, StructuredTemplateParser.TemplateElement> elementsByIndex,
+        Set<String> excludedIdentifiers
+    ) {
+        StructuredTemplateParser.TemplateElement current = element;
+        while (current != null) {
+            SelectionScope root = selectionRoot(current, excludedIdentifiers);
+            if (root.root().isPresent() || root.excluded()) {
+                return root;
+            }
+            current = elementsByIndex.get(current.parentIndex());
+        }
+        return SelectionScope.none();
+    }
+
+    private SelectionScope activeSelectionRoot(
+        int parentIndex,
+        Map<Integer, StructuredTemplateParser.TemplateElement> elementsByIndex,
+        Set<String> excludedIdentifiers
+    ) {
+        StructuredTemplateParser.TemplateElement parent = elementsByIndex.get(parentIndex);
+        if (parent == null) {
+            return SelectionScope.none();
+        }
+        return activeSelectionRoot(parent, elementsByIndex, excludedIdentifiers);
+    }
+
+    private SelectionScope selectionRoot(
+        StructuredTemplateParser.TemplateElement element,
+        Set<String> excludedIdentifiers
+    ) {
+        for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+            if (!attribute.hasValue() || !isSelectionRootAttribute(attribute)) {
+                continue;
+            }
+            String expression = attribute.value().trim();
+            if (expression.startsWith("${") && expression.endsWith("}")) {
+                expression = expression.substring(2, expression.length() - 1);
+            }
+            List<List<String>> allPaths = extractModelPaths(expression, Set.of());
+            if (!allPaths.isEmpty() && !allPaths.getFirst().isEmpty()) {
+                ModelPath rawRoot = ModelPath.of(allPaths.getFirst());
+                if (excludedIdentifiers.contains(rawRoot.root())) {
+                    return SelectionScope.excludedScope();
+                }
+            }
+            List<List<String>> paths = extractModelPaths(expression, excludedIdentifiers);
+            if (!paths.isEmpty() && !paths.getFirst().isEmpty()) {
+                return SelectionScope.of(ModelPath.of(paths.getFirst()));
+            }
+        }
+        return SelectionScope.none();
+    }
+
+    private Set<String> activeLoopStatusAliases(
+        int parentIndex,
+        Map<Integer, StructuredTemplateParser.TemplateElement> elementsByIndex
+    ) {
+        StructuredTemplateParser.TemplateElement parent = elementsByIndex.get(parentIndex);
+        if (parent == null) {
+            return Set.of();
+        }
+        return activeLoopStatusAliases(parent, elementsByIndex);
+    }
+
+    private Set<String> loopStatusAliases(StructuredTemplateParser.TemplateElement element) {
+        Set<String> aliases = new HashSet<>();
+        for (StructuredTemplateParser.TemplateAttribute attribute : element.attributes()) {
+            if (!attribute.hasValue()) {
+                continue;
+            }
+            String normalizedName = attribute.name().toLowerCase(java.util.Locale.ROOT);
+            if (!normalizedName.equals("th:each") && !normalizedName.equals("data-th-each")) {
+                continue;
+            }
+            int separator = attribute.value().indexOf(':');
+            if (separator <= 0) {
+                continue;
+            }
+            aliases.addAll(extractLoopVariables(attribute.value().substring(0, separator).trim()).statusAliases());
+        }
+        return aliases;
     }
 
     private List<String> thymeleafAttributeValues(
@@ -365,12 +660,13 @@ public class TemplateModelExpressionAnalyzer {
         return values;
     }
 
-    private List<String> extractLoopAliases(String variablePart) {
+    private LoopVariables extractLoopVariables(String variablePart) {
         String normalized = variablePart.trim();
         if (normalized.isEmpty()) {
-            return List.of();
+            return new LoopVariables(List.of(), List.of());
         }
-        if (normalized.startsWith("(") && normalized.endsWith(")") && normalized.length() > 2) {
+        boolean tupleStyle = normalized.startsWith("(") && normalized.endsWith(")") && normalized.length() > 2;
+        if (tupleStyle) {
             normalized = normalized.substring(1, normalized.length() - 1);
         }
         List<String> aliases = new ArrayList<>();
@@ -387,7 +683,52 @@ public class TemplateModelExpressionAnalyzer {
                 aliases.add(alias);
             }
         }
-        return aliases;
+        if (tupleStyle || aliases.size() <= 1) {
+            List<String> statusAliases = aliases.size() == 1 && !tupleStyle
+                ? List.of(aliases.getFirst() + "Stat")
+                : List.of();
+            return new LoopVariables(aliases, statusAliases);
+        }
+        return new LoopVariables(List.of(aliases.getFirst()), aliases.subList(1, aliases.size()));
+    }
+
+    private record LoopVariables(List<String> itemAliases, List<String> statusAliases) {
+        private LoopVariables {
+            itemAliases = List.copyOf(itemAliases);
+            statusAliases = List.copyOf(statusAliases);
+        }
+    }
+
+    private record TemplateExpression(String content, boolean selectionExpression) {
+    }
+
+    private record SelectionScope(Optional<ModelPath> root, boolean excluded) {
+        static SelectionScope none() {
+            return new SelectionScope(Optional.empty(), false);
+        }
+
+        static SelectionScope of(ModelPath root) {
+            return new SelectionScope(Optional.of(root), false);
+        }
+
+        static SelectionScope excludedScope() {
+            return new SelectionScope(Optional.empty(), true);
+        }
+    }
+
+    private record ExpressionBody(String content, int nextIndex) {
+    }
+
+    private record ExpressionSource(
+        String value,
+        Set<String> loopStatusAliases,
+        Optional<ModelPath> selectionRoot,
+        boolean selectionRootExcluded
+    ) {
+        private ExpressionSource {
+            loopStatusAliases = Set.copyOf(loopStatusAliases);
+            selectionRoot = selectionRoot == null ? Optional.empty() : selectionRoot;
+        }
     }
 
     private boolean isValidIdentifier(String candidate) {
@@ -454,314 +795,5 @@ public class TemplateModelExpressionAnalyzer {
 
     private boolean isIdentifierPart(char c) {
         return Character.isLetterOrDigit(c) || c == '_' || c == '-';
-    }
-
-    private enum ExpressionTokenType {
-        IDENTIFIER,
-        NUMBER,
-        STRING,
-        DOT,
-        SAFE_DOT,
-        LEFT_PAREN,
-        RIGHT_PAREN,
-        LEFT_BRACKET,
-        RIGHT_BRACKET,
-        HASH,
-        AT,
-        OTHER
-    }
-
-    private record ExpressionBody(String content, int nextIndex) {
-    }
-
-    private record ExpressionToken(ExpressionTokenType type, String text) {
-    }
-
-    private static final class ThymeleafExpressionTokenizer {
-
-        private static List<ExpressionToken> tokenize(String expression) {
-            List<ExpressionToken> tokens = new ArrayList<>();
-            int index = 0;
-            while (index < expression.length()) {
-                char current = expression.charAt(index);
-                if (Character.isWhitespace(current)) {
-                    index++;
-                    continue;
-                }
-                if (Character.isLetter(current) || current == '_') {
-                    int start = index;
-                    index++;
-                    while (index < expression.length()) {
-                        char part = expression.charAt(index);
-                        if (!Character.isLetterOrDigit(part) && part != '_' && part != '-') {
-                            break;
-                        }
-                        index++;
-                    }
-                    tokens.add(new ExpressionToken(ExpressionTokenType.IDENTIFIER, expression.substring(start, index)));
-                    continue;
-                }
-                if (Character.isDigit(current)) {
-                    int start = index;
-                    index++;
-                    while (index < expression.length() && Character.isDigit(expression.charAt(index))) {
-                        index++;
-                    }
-                    tokens.add(new ExpressionToken(ExpressionTokenType.NUMBER, expression.substring(start, index)));
-                    continue;
-                }
-                if (current == '\'' || current == '"') {
-                    ParseStringResult stringResult = consumeString(expression, index);
-                    tokens.add(new ExpressionToken(ExpressionTokenType.STRING, stringResult.content()));
-                    index = stringResult.nextIndex();
-                    continue;
-                }
-                if (current == '?' && index + 1 < expression.length() && expression.charAt(index + 1) == '.') {
-                    tokens.add(new ExpressionToken(ExpressionTokenType.SAFE_DOT, "?."));
-                    index += 2;
-                    continue;
-                }
-                switch (current) {
-                    case '.' -> tokens.add(new ExpressionToken(ExpressionTokenType.DOT, "."));
-                    case '(' -> tokens.add(new ExpressionToken(ExpressionTokenType.LEFT_PAREN, "("));
-                    case ')' -> tokens.add(new ExpressionToken(ExpressionTokenType.RIGHT_PAREN, ")"));
-                    case '[' -> tokens.add(new ExpressionToken(ExpressionTokenType.LEFT_BRACKET, "["));
-                    case ']' -> tokens.add(new ExpressionToken(ExpressionTokenType.RIGHT_BRACKET, "]"));
-                    case '#' -> tokens.add(new ExpressionToken(ExpressionTokenType.HASH, "#"));
-                    case '@' -> tokens.add(new ExpressionToken(ExpressionTokenType.AT, "@"));
-                    default -> tokens.add(new ExpressionToken(ExpressionTokenType.OTHER, Character.toString(current)));
-                }
-                index++;
-            }
-            return tokens;
-        }
-
-        private static ParseStringResult consumeString(String expression, int start) {
-            char quote = expression.charAt(start);
-            StringBuilder content = new StringBuilder();
-            int index = start + 1;
-            boolean escaped = false;
-            while (index < expression.length()) {
-                char current = expression.charAt(index);
-                if (escaped) {
-                    content.append(current);
-                    escaped = false;
-                    index++;
-                    continue;
-                }
-                if (current == '\\') {
-                    escaped = true;
-                    index++;
-                    continue;
-                }
-                if (current == quote) {
-                    return new ParseStringResult(content.toString(), index + 1);
-                }
-                content.append(current);
-                index++;
-            }
-            return new ParseStringResult(content.toString(), expression.length());
-        }
-
-        private record ParseStringResult(String content, int nextIndex) {
-        }
-    }
-
-    private final class ExpressionPathParser {
-
-        private final List<ExpressionToken> tokens;
-        private final Set<String> excludedIdentifiers;
-        private final @Nullable List<List<String>> noArgMethodPaths;
-        private int index;
-
-        private ExpressionPathParser(
-            List<ExpressionToken> tokens,
-            Set<String> excludedIdentifiers,
-            @Nullable List<List<String>> noArgMethodPaths
-        ) {
-            this.tokens = tokens;
-            this.excludedIdentifiers = excludedIdentifiers;
-            this.noArgMethodPaths = noArgMethodPaths;
-        }
-
-        private List<List<String>> parse() {
-            List<List<String>> paths = new ArrayList<>();
-            while (index < tokens.size()) {
-                if (!isAt(ExpressionTokenType.IDENTIFIER)) {
-                    index++;
-                    continue;
-                }
-                parseIdentifierPath().ifPresent(paths::add);
-            }
-            return paths;
-        }
-
-        private Optional<List<String>> parseIdentifierPath() {
-            String root = tokens.get(index).text();
-            if (isUtilityIdentifier(index) || isChainedIdentifier(index)) {
-                index++;
-                return Optional.empty();
-            }
-            if ("T".equals(root) && isAt(index + 1, ExpressionTokenType.LEFT_PAREN)) {
-                skipStaticClassReference();
-                return Optional.empty();
-            }
-            if (RESERVED_ROOTS.contains(root) || excludedIdentifiers.contains(root)) {
-                index++;
-                return Optional.empty();
-            }
-            if (isAt(index + 1, ExpressionTokenType.LEFT_PAREN)) {
-                index++;
-                return Optional.empty();
-            }
-
-            List<String> segments = new ArrayList<>();
-            segments.add(root);
-            index++;
-            boolean endedWithNoArgMethodCall = false;
-
-            while (index < tokens.size()) {
-                if (isAt(ExpressionTokenType.LEFT_BRACKET)) {
-                    Optional<String> bracketSegment = parseBracketSegment();
-                    if (bracketSegment.isPresent()) {
-                        segments.add(bracketSegment.orElseThrow());
-                        continue;
-                    }
-                    skipUnsupportedBracket();
-                    break;
-                }
-                if (!isAt(ExpressionTokenType.DOT) && !isAt(ExpressionTokenType.SAFE_DOT)) {
-                    break;
-                }
-                if (!isAt(index + 1, ExpressionTokenType.IDENTIFIER)) {
-                    break;
-                }
-                String propertyName = tokens.get(index + 1).text();
-                int propertyIndex = index + 1;
-                if (isAt(propertyIndex + 1, ExpressionTokenType.LEFT_PAREN)) {
-                    int closeParen = findClosingParen(propertyIndex + 1);
-                    if (closeParen > propertyIndex && isNoArgFunctionCall(propertyIndex + 1, closeParen)) {
-                        List<String> methodPath = new ArrayList<>(segments);
-                        methodPath.add(propertyName);
-                        if (noArgMethodPaths != null) {
-                            noArgMethodPaths.add(List.copyOf(methodPath));
-                        }
-                        endedWithNoArgMethodCall = true;
-                        index = closeParen + 1;
-                    } else {
-                        index = propertyIndex + 1;
-                    }
-                    break;
-                }
-                segments.add(propertyName);
-                index = propertyIndex + 1;
-            }
-
-            if (endedWithNoArgMethodCall) {
-                return Optional.empty();
-            }
-            return Optional.of(segments);
-        }
-
-        private Optional<String> parseBracketSegment() {
-            if (isAt(index, ExpressionTokenType.LEFT_BRACKET)
-                && isAt(index + 1, ExpressionTokenType.STRING)
-                && isAt(index + 2, ExpressionTokenType.RIGHT_BRACKET)) {
-                String key = tokens.get(index + 1).text();
-                index += 3;
-                return Optional.of(key);
-            }
-            if (isAt(index, ExpressionTokenType.LEFT_BRACKET)
-                && isAt(index + 1, ExpressionTokenType.NUMBER)
-                && isAt(index + 2, ExpressionTokenType.RIGHT_BRACKET)) {
-                index += 3;
-                return Optional.of("[]");
-            }
-            if (isAt(index, ExpressionTokenType.LEFT_BRACKET)
-                && isAt(index + 1, ExpressionTokenType.IDENTIFIER)
-                && isAt(index + 2, ExpressionTokenType.RIGHT_BRACKET)) {
-                String key = tokens.get(index + 1).text();
-                if (key.contains("-")) {
-                    index += 3;
-                    return Optional.of(key);
-                }
-            }
-            return Optional.empty();
-        }
-
-        private void skipUnsupportedBracket() {
-            if (!isAt(ExpressionTokenType.LEFT_BRACKET)) {
-                return;
-            }
-            int depth = 0;
-            while (index < tokens.size()) {
-                if (isAt(ExpressionTokenType.LEFT_BRACKET)) {
-                    depth++;
-                } else if (isAt(ExpressionTokenType.RIGHT_BRACKET)) {
-                    depth--;
-                    if (depth == 0) {
-                        index++;
-                        return;
-                    }
-                }
-                index++;
-            }
-        }
-
-        private boolean isUtilityIdentifier(int tokenIndex) {
-            return isAt(tokenIndex - 1, ExpressionTokenType.HASH) || isAt(tokenIndex - 1, ExpressionTokenType.AT);
-        }
-
-        private boolean isChainedIdentifier(int tokenIndex) {
-            return isAt(tokenIndex - 1, ExpressionTokenType.DOT) || isAt(tokenIndex - 1, ExpressionTokenType.SAFE_DOT);
-        }
-
-        private void skipStaticClassReference() {
-            int closeParen = findClosingParen(index + 1);
-            if (closeParen < 0) {
-                index++;
-                return;
-            }
-            index = closeParen + 1;
-            while (index + 3 < tokens.size()
-                && (isAt(index, ExpressionTokenType.DOT) || isAt(index, ExpressionTokenType.SAFE_DOT))
-                && isAt(index + 1, ExpressionTokenType.IDENTIFIER)
-                && isAt(index + 2, ExpressionTokenType.LEFT_PAREN)) {
-                int methodCloseParen = findClosingParen(index + 2);
-                if (methodCloseParen < 0 || !isNoArgFunctionCall(index + 2, methodCloseParen)) {
-                    index++;
-                    return;
-                }
-                index = methodCloseParen + 1;
-            }
-        }
-
-        private int findClosingParen(int openParenIndex) {
-            int depth = 0;
-            for (int cursor = openParenIndex; cursor < tokens.size(); cursor++) {
-                ExpressionTokenType type = tokens.get(cursor).type();
-                if (type == ExpressionTokenType.LEFT_PAREN) {
-                    depth++;
-                } else if (type == ExpressionTokenType.RIGHT_PAREN) {
-                    depth--;
-                    if (depth == 0) {
-                        return cursor;
-                    }
-                }
-            }
-            return -1;
-        }
-
-        private boolean isNoArgFunctionCall(int openParenIndex, int closeParenIndex) {
-            return closeParenIndex == openParenIndex + 1;
-        }
-
-        private boolean isAt(ExpressionTokenType type) {
-            return isAt(index, type);
-        }
-
-        private boolean isAt(int tokenIndex, ExpressionTokenType type) {
-            return tokenIndex >= 0 && tokenIndex < tokens.size() && tokens.get(tokenIndex).type() == type;
-        }
     }
 }

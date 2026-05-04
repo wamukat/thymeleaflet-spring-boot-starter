@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<form th:fragment="profileForm" th:object="${profileForm}">
+  <label>
+    Email
+    <input type="email" th:field="*{email}" />
+  </label>
+  <label>
+    Enabled
+    <input type="checkbox" th:field="*{enabled}" />
+  </label>
+  <label>
+    City
+    <input type="text" th:field="*{address.city}" />
+  </label>
+</form>
+</body>
+</html>

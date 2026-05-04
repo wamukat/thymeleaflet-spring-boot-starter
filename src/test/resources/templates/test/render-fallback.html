@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+/**
+ * JavaDoc fallback fixture for javadocFallback.
+ *
+ * @fragment javadocFallback
+ * @param label {@code String} [optional=JavaDoc Label] Label fallback
+ * @model view.title {@code String} [optional=JavaDoc Title] Title fallback
+ */
+-->
+<section th:fragment="javadocFallback(label)">
+    <h1 th:text="${view.title}">Title</h1>
+    <p th:text="${label}">Label</p>
+</section>
+
+<section th:fragment="statusSummary">
+    <div th:switch="${view.status}">
+        <p th:case="'active'">Active status</p>
+        <p th:case="'disabled'">Disabled status</p>
+        <p th:case="*">Default status</p>
+    </div>
+</section>
+</body>
+</html>

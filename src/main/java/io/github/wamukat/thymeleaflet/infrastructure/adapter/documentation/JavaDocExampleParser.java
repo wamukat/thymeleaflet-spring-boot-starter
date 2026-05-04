@@ -28,7 +28,15 @@ final class JavaDocExampleParser {
         return parseWithDiagnostics(javadocContent).examples();
     }
 
+    List<JavaDocAnalyzer.ExampleInfo> parse(String javadocContent, String currentTemplatePath) {
+        return parseWithDiagnostics(javadocContent, currentTemplatePath).examples();
+    }
+
     ExampleParseResult parseWithDiagnostics(String javadocContent) {
+        return parseWithDiagnostics(javadocContent, "");
+    }
+
+    ExampleParseResult parseWithDiagnostics(String javadocContent, String currentTemplatePath) {
         List<JavaDocAnalyzer.ExampleInfo> examples = new ArrayList<>();
         List<ParserDiagnostic> diagnostics = new ArrayList<>();
 
@@ -42,7 +50,9 @@ final class JavaDocExampleParser {
                         continue;
                     }
                     FragmentExpressionParser.FragmentExpressionParseResult referenceResult =
-                        fragmentExpressionParser.parseWithDiagnostics(attribute.value());
+                        currentTemplatePath == null || currentTemplatePath.isBlank()
+                            ? fragmentExpressionParser.parseWithDiagnostics(attribute.value())
+                            : fragmentExpressionParser.parseWithDiagnostics(attribute.value(), currentTemplatePath);
                     diagnostics.addAll(referenceResult.diagnostics());
                     referenceResult.expression()
                         .map(this::toExampleInfo)

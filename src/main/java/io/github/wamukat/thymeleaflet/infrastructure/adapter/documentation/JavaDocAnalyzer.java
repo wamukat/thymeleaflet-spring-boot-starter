@@ -41,6 +41,10 @@ public class JavaDocAnalyzer {
      * HTMLテンプレートからJavaDocコメントを解析
      */
     public List<JavaDocInfo> analyzeJavaDocFromHtml(String htmlContent) {
+        return analyzeJavaDocFromHtml(htmlContent, "");
+    }
+
+    public List<JavaDocInfo> analyzeJavaDocFromHtml(String htmlContent, String currentTemplatePath) {
         Objects.requireNonNull(htmlContent, "htmlContent cannot be null");
         List<JavaDocInfo> docInfoList = new ArrayList<>();
 
@@ -55,7 +59,7 @@ public class JavaDocAnalyzer {
                 parsedTags.parameters(),
                 parsedTags.models(),
                 parsedTags.fragmentName(),
-                exampleParser.parse(javadocContent),
+                exampleParser.parse(javadocContent, currentTemplatePath),
                 parsedTags.backgroundColor()
             ));
         }

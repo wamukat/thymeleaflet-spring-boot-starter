@@ -28,4 +28,57 @@ class FragmentSourceSnippetServiceTest {
         assertThat(snippet).contains("th:fragment=\"shortFragment\"");
         assertThat(snippet).contains("short");
     }
+
+    @Test
+    void shouldIncludeWholeLeadingCommentBlockForDocumentedFragment() {
+        String snippet = service.resolveSnippet("fragments/source-snippet-sample", "commentedFragment")
+            .orElseThrow();
+
+        assertThat(snippet).contains("/**");
+        assertThat(snippet).contains("* Commented fragment");
+        assertThat(snippet).contains("* @param label");
+        assertThat(snippet).contains("* @param description");
+        assertThat(snippet).contains("* @example");
+        assertThat(snippet).contains("-->");
+        assertThat(snippet).contains("th:fragment=\"commentedFragment(label, description)\"");
+    }
+
+    @Test
+    void shouldIncludeWholeHtmlCommentWrappedJavaLineDocCommentBlockForDocumentedFragment() {
+        String snippet = service.resolveSnippet("fragments/source-snippet-sample", "lineDocumentedFragment")
+            .orElseThrow();
+
+        assertThat(snippet).contains("<!--");
+        assertThat(snippet).contains("/// Java 25 line documented fragment");
+        assertThat(snippet).contains("/// @param title");
+        assertThat(snippet).contains("/// @param body");
+        assertThat(snippet).contains("/// @example");
+        assertThat(snippet).contains("-->");
+        assertThat(snippet).contains("th:fragment=\"lineDocumentedFragment(title, body)\"");
+    }
+
+    @Test
+    void shouldNotMatchFragmentNameFromNonFragmentAttributeText() {
+        assertThat(service.resolveSnippet("fragments/source-snippet-sample", "notAFragment")).isEmpty();
+    }
+
+    @Test
+    void shouldNotTreatFragmentAttributeTextInsideOtherAttributeValueAsDefinition() {
+        assertThat(service.resolveSnippet("fragments/source-snippet-sample", "fakeFragment")).isEmpty();
+    }
+
+    @Test
+    void shouldNotTreatFragmentAttributeNamePrefixAsDefinition() {
+        assertThat(service.resolveSnippet("fragments/source-snippet-sample", "extraFragment")).isEmpty();
+    }
+
+    @Test
+    void shouldResolveMultilineDataThFragmentDefinition() {
+        String snippet = service.resolveSnippet("fragments/source-snippet-sample", "multilineFragment")
+            .orElseThrow();
+
+        assertThat(snippet).contains("data-th-fragment=");
+        assertThat(snippet).contains("multilineFragment(title)");
+        assertThat(snippet).contains("th:text=\"${title}\"");
+    }
 }
