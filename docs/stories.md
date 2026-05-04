@@ -49,6 +49,8 @@ storyGroups:
 - `model`: model values to inject
 - `methodReturns`: no-arg method return values for preview
 - `preview.wrapper`: optional HTML wrapper for preview
+- `preview.viewport`: optional default preview viewport preset ID
+- `preview.minHeight`: optional preview minimum height in pixels
 
 ## Model
 
@@ -184,6 +186,28 @@ preview:
         {{content}}
       </div>
     </div>
+```
+
+## Preview Viewport
+
+Use `preview.viewport` to open a story with a configured viewport preset selected by default.
+The value must match a configured preset ID such as `mobileSmall`, `mobileLarge`, `tablet`, or `desktop`.
+Stories without `preview.viewport` keep the responsive Fit behavior.
+
+```yaml
+preview:
+  viewport: mobileSmall
+```
+
+## Preview Minimum Height
+
+Use `preview.minHeight` when a fragment uses out-of-flow layout such as `position: fixed` or `position: sticky`.
+The value is a pixel number applied as the minimum responsive preview height.
+Stories without `preview.minHeight` keep the existing auto-height behavior.
+
+```yaml
+preview:
+  minHeight: 96
 ```
 
 ## Custom Story (UI Overrides)

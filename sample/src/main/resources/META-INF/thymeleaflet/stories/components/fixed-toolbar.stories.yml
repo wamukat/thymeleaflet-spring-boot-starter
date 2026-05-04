@@ -1,0 +1,13 @@
+meta:
+  title: Fixed Toolbar
+  description: Fixed-position fragment that relies on preview min height
+
+storyGroups:
+  fixedToolbar:
+    title: Fixed Toolbar
+    description: Demonstrates preview min height for fixed-position fragments
+    stories:
+      - name: default
+        title: Default
+        preview:
+          minHeight: 96

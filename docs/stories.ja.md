@@ -49,6 +49,8 @@ storyGroups:
 - `model`: モデル値
 - `methodReturns`: no-arg メソッド呼び出しの戻り値（プレビュー用）
 - `preview.wrapper`: プレビューのラッパー
+- `preview.viewport`: デフォルト表示するプレビュービューポートのプリセットID
+- `preview.minHeight`: プレビューの最小高さ（px）
 
 ## Model（モデル）
 
@@ -165,6 +167,28 @@ preview:
         {{content}}
       </div>
     </div>
+```
+
+## プレビュービューポート
+
+`preview.viewport` を使うと、ストーリーを開いた時点で指定したビューポートプリセットを選択できます。
+値は `mobileSmall`、`mobileLarge`、`tablet`、`desktop` など設定済みプリセットのIDに一致させてください。
+`preview.viewport` がないストーリーは従来どおり responsive Fit で表示されます。
+
+```yaml
+preview:
+  viewport: mobileSmall
+```
+
+## プレビュー最小高さ
+
+`position: fixed` や `position: sticky` のように通常フロー外で配置されるフラグメントには `preview.minHeight` を使えます。
+値は px 単位の数値で、responsive preview の最小高さとして適用されます。
+`preview.minHeight` がないストーリーは従来どおり自動高さで表示されます。
+
+```yaml
+preview:
+  minHeight: 96
 ```
 
 ## Custom ストーリー（UI 上書き）

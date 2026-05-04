@@ -170,6 +170,25 @@ test('viewport preset updates width badge', async ({ page }) => {
   expect(text).toMatch(/\d+px/);
 });
 
+test('story preview viewport selects the configured default preset', async ({ page }) => {
+  await openFragment(page, 'responsiveHeader');
+  const select = page.locator('#preview-viewport-select');
+  await expect(select).toHaveValue('mobileSmall');
+
+  const badge = page.locator('#preview-viewport-badge');
+  await expect(badge).toHaveText('320px');
+});
+
+test('story preview min height keeps fixed fragments visible', async ({ page }) => {
+  await openFragment(page, 'fixedToolbar');
+  const host = page.locator('#fragment-preview-host');
+  await expect(host).toBeVisible();
+  await expect(host).toHaveJSProperty('clientHeight', 96);
+
+  const frame = page.frameLocator('#fragment-preview-host iframe');
+  await expect(frame.getByText('Fixed toolbar')).toBeVisible();
+});
+
 test('background toggle switches preview class', async ({ page }) => {
   await openFragment(page, 'simpleCard');
   const container = page.locator('#preview-container');

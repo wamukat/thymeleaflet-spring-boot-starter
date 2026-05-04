@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.infrastructure.adapter.persistence;
 
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryConfiguration;
+import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryGroup;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,6 +12,7 @@ import org.springframework.core.io.ResourceLoader;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,6 +71,68 @@ class YamlStoryConfigurationLoaderTest {
         assertThat(result).isPresent();
         StoryConfiguration config = result.get();
         assertThat(config.storyGroups()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("preview.viewportをStoryPreview設定として読み込める")
+    void shouldLoadStoryPreviewViewport() throws IOException {
+        // Given
+        String templatePath = "templates/domain/components/responsive-header";
+        String yamlContent = """
+            storyGroups:
+              responsiveHeader:
+                title: "Responsive Header"
+                stories:
+                  - name: default
+                    preview:
+                      viewport: mobileSmall
+                      wrapper: |
+                        <div>{{content}}</div>
+            """;
+
+        when(mockResourceLoader.getResource(any(String.class))).thenReturn(mockResource);
+        when(mockResource.exists()).thenReturn(true);
+        when(mockResource.getInputStream()).thenReturn(new ByteArrayInputStream(yamlContent.getBytes()));
+
+        // When
+        Optional<StoryConfiguration> result = loader.loadStoryConfiguration(templatePath);
+
+        // Then
+        assertThat(result).isPresent();
+        StoryGroup storyGroup = Objects.requireNonNull(
+            result.orElseThrow().storyGroups().get("responsiveHeader"));
+        assertThat(storyGroup.stories().get(0).preview().viewport())
+            .isEqualTo("mobileSmall");
+    }
+
+    @Test
+    @DisplayName("preview.minHeightをStoryPreview設定として読み込める")
+    void shouldLoadStoryPreviewMinHeight() throws IOException {
+        // Given
+        String templatePath = "templates/domain/components/fixed-toolbar";
+        String yamlContent = """
+            storyGroups:
+              fixedToolbar:
+                title: "Fixed Toolbar"
+                stories:
+                  - name: default
+                    preview:
+                      minHeight: 96
+            """;
+
+        when(mockResourceLoader.getResource(any(String.class))).thenReturn(mockResource);
+        when(mockResource.exists()).thenReturn(true);
+        when(mockResource.getInputStream()).thenReturn(new ByteArrayInputStream(yamlContent.getBytes()));
+
+        // When
+        Optional<StoryConfiguration> result = loader.loadStoryConfiguration(templatePath);
+
+        // Then
+        assertThat(result).isPresent();
+        StoryGroup storyGroup = Objects.requireNonNull(
+            result.orElseThrow().storyGroups().get("fixedToolbar"));
+        assertThat(storyGroup.stories().get(0).preview().minHeight())
+            .isEqualTo(96);
     }
 
     @Test
