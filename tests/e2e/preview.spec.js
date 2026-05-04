@@ -143,6 +143,15 @@ test('preview iframe does not show error page', async ({ page }) => {
   expect(bodyText).not.toContain('システムエラー');
 });
 
+test('preview iframe allows rendered error text content', async ({ page }) => {
+  await openFragment(page, 'errorBanner');
+  const frame = page.frameLocator('#fragment-preview-host iframe');
+
+  await expect(frame.getByText('システムエラーが発生しました')).toBeVisible();
+  await expect(frame.getByText('System Error can be valid user-facing content.')).toBeVisible();
+  await expect(page.locator('#preview-warning-banner')).toBeHidden();
+});
+
 test('broken story yaml shows user-safe diagnostic', async ({ page }) => {
   fs.mkdirSync(path.dirname(brokenStoryFixtureTarget), { recursive: true });
   fs.copyFileSync(brokenStoryFixtureSource, brokenStoryFixtureTarget);

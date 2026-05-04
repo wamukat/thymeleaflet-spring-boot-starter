@@ -797,9 +797,6 @@
             const warnings = decodeWarningsHeader(
                 response.headers.get('X-Thymeleaflet-Preview-Warnings')
             );
-            if (html.includes('システムエラー') || html.includes('System Error')) {
-                throw new Error('Preview error page detected');
-            }
             iframeControls.renderFrame(targetHost, html);
             renderPreviewWarnings(warnings);
             await waitForFontsOnce();
