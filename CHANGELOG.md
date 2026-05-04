@@ -8,6 +8,37 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.24] - 2026-05-04
+
+- Added
+  - Added sample fragment syntax variants and stories for supported Thymeleaf fragment declaration/reference forms, including Java 25 `///` documentation comments wrapped for Thymeleaf compatibility.
+  - Added rendering-level fallback integration coverage for missing `*.stories.yml` cases, including JavaDoc-derived defaults and `th:switch` / `th:case` inferred representative values. (Kanbalone #549)
+- Changed
+  - Improved missing-story fallback inference for `th:each` item shapes, `th:object` / `th:field` forms, JavaDoc defaults, `@example` values, and `th:switch` / `th:case` values so previews can render useful defaults without explicit story data.
+  - Split template model expression analysis into a dedicated path extractor and parser helpers, reducing responsibility in `TemplateModelExpressionAnalyzer`. (Kanbalone #547)
+  - Extracted fallback story value assembly out of `FragmentRenderingService` into a dedicated collaborator while preserving simple/no-parameter render behavior. (Kanbalone #548)
+  - Reworked source snippet fragment detection to parse `th:fragment` / `data-th-fragment` signatures through `FragmentSignatureParser` instead of broad fragment-name line matching, including multiline attribute support. (Kanbalone #550)
+- Fixed
+  - Preserved complete leading source comments for fragment source display, including Java 25 `///` comment blocks wrapped in HTML comments.
+  - Avoided false source-snippet matches from unrelated attribute values and prefixed attribute names such as `data-th-fragment-extra`. (Kanbalone #550)
+- Test
+  - Added focused unit and integration tests for fallback value assembly, literal parsing, model expression path extraction, rendering fallback behavior, and source snippet parser edge cases. (Kanbalone #547, #548, #549, #550)
+  - Expanded E2E coverage for complete leading source comments, Java 25 line-document comments, and supported fragment syntax sample rendering.
+- Build
+  - Updated Maven project, sample app, and README dependency examples to `0.2.24`.
+
+### Issues
+
+- Kanbalone #541 Improve fallback model inference from `th:each` item shape
+- Kanbalone #542 Improve fallback inference for `th:object` and `th:field` forms
+- Kanbalone #543 Use JavaDoc defaults and `@example` calls for fallback story values
+- Kanbalone #544 Infer representative fallback values from `th:switch` and `th:case`
+- Kanbalone #545 Refactor fallback literal parsing into shared helper
+- Kanbalone #547 Split TemplateModelExpressionAnalyzer responsibilities
+- Kanbalone #548 Extract fallback story value assembly from FragmentRenderingService
+- Kanbalone #549 Add rendering-level fallback integration tests
+- Kanbalone #550 Reduce regex-based source snippet extraction risk
+
 ## [0.2.23] - 2026-05-03
 
 - Added
