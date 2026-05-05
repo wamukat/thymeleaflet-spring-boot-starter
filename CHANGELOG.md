@@ -8,6 +8,21 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.25] - 2026-05-05
+
+- Added
+  - Added a sample full-page `appLayout` fragment and story to cover layouts declared on the `<html>` root element.
+- Fixed
+  - Supported previews for complete HTML documents returned by `<html th:fragment="...">` layout fragments by preserving the rendered document head/body and injecting only preview resources plus height reporting instead of wrapping the document as a partial snippet. (#185)
+- Test
+  - Added E2E regression coverage ensuring full-page layout fragments render without preview warnings and without `#preview-root` wrapper injection.
+- Build
+  - Updated Maven project, sample app, and README dependency examples to `0.2.25`.
+
+### Issues
+
+- #185 `<html>` root fragments returning full HTML documents fail preview loading
+
 ## [0.2.24] - 2026-05-04
 
 - Added

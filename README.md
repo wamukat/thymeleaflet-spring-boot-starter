@@ -52,7 +52,7 @@ Maven:
 <dependency>
   <groupId>io.github.wamukat</groupId>
   <artifactId>thymeleaflet-spring-boot-starter</artifactId>
-  <version>0.2.24</version>
+  <version>0.2.25</version>
 </dependency>
 ```
 
@@ -60,7 +60,7 @@ Gradle:
 
 ```kotlin
 dependencies {
-    implementation("io.github.wamukat:thymeleaflet-spring-boot-starter:0.2.24")
+    implementation("io.github.wamukat:thymeleaflet-spring-boot-starter:0.2.25")
 }
 ```
 
