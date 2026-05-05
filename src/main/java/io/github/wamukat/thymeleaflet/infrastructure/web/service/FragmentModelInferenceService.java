@@ -7,6 +7,7 @@ import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
 import io.github.wamukat.thymeleaflet.domain.service.TemplateModelExpressionAnalyzer;
 import io.github.wamukat.thymeleaflet.domain.service.TopLevelSyntaxScanner;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.discovery.FragmentSignatureParser;
+import org.jspecify.annotations.Nullable;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Component;
@@ -45,7 +46,7 @@ public class FragmentModelInferenceService {
     public Map<String, Object> inferModel(String templatePath, String fragmentName, List<String> parameterNames) {
         InferredModel inferred = inferModelRecursive(
             templatePath,
-            parameterNames == null ? List.of() : parameterNames,
+            parameterNames,
             new HashSet<>()
         );
         return inferred.toMap();
@@ -54,7 +55,7 @@ public class FragmentModelInferenceService {
     public Map<String, Object> inferMethodReturnCandidates(
         String templatePath,
         String fragmentName,
-        List<String> parameterNames
+        @Nullable List<String> parameterNames
     ) {
         InferredModel inferred = inferMethodReturnCandidatesRecursive(
             templatePath,

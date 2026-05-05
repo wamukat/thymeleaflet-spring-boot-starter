@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -49,8 +50,8 @@ public class ThymeleafletAwareThymeleafView extends ThymeleafView {
 
     @Override
     protected void renderFragment(
-        Set<String> markupSelectorsToRender,
-        Map<String, ?> model,
+        @Nullable Set<String> markupSelectorsToRender,
+        @Nullable Map<String, ?> model,
         HttpServletRequest request,
         HttpServletResponse response
     ) throws Exception {
@@ -87,7 +88,10 @@ public class ThymeleafletAwareThymeleafView extends ThymeleafView {
             mergedModel.putAll(model);
         }
 
-        ApplicationContext applicationContext = getApplicationContext();
+        ApplicationContext applicationContext = Objects.requireNonNull(
+            getApplicationContext(),
+            "ApplicationContext is required"
+        );
         RequestContext requestContext = new RequestContext(request, response, getServletContext(), mergedModel);
         SpringWebMvcThymeleafRequestContext thymeleafRequestContext =
             new SpringWebMvcThymeleafRequestContext(requestContext, request);
@@ -120,7 +124,7 @@ public class ThymeleafletAwareThymeleafView extends ThymeleafView {
             new WebExpressionContext(configuration, webExchange, getLocale(), mergedModel);
 
         String templateName;
-        Set<String> markupSelectors;
+        @Nullable Set<String> markupSelectors;
         if (!viewTemplateName.contains("::")) {
             templateName = viewTemplateName;
             markupSelectors = null;
@@ -162,7 +166,7 @@ public class ThymeleafletAwareThymeleafView extends ThymeleafView {
         String templateContentType = getContentType();
         String templateCharacterEncoding = getCharacterEncoding();
 
-        Set<String> processMarkupSelectors;
+        @Nullable Set<String> processMarkupSelectors;
         if (markupSelectors != null && !markupSelectors.isEmpty()) {
             if (markupSelectorsToRender != null && !markupSelectorsToRender.isEmpty()) {
                 throw new IllegalArgumentException(

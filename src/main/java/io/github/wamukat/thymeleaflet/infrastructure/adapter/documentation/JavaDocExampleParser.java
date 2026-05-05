@@ -5,6 +5,7 @@ import io.github.wamukat.thymeleaflet.domain.service.FragmentExpressionParser;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentReferenceAttributes;
 import io.github.wamukat.thymeleaflet.domain.service.ParserDiagnostic;
 import io.github.wamukat.thymeleaflet.domain.service.StructuredTemplateParser;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +29,7 @@ final class JavaDocExampleParser {
         return parseWithDiagnostics(javadocContent).examples();
     }
 
-    List<JavaDocAnalyzer.ExampleInfo> parse(String javadocContent, String currentTemplatePath) {
+    List<JavaDocAnalyzer.ExampleInfo> parse(String javadocContent, @Nullable String currentTemplatePath) {
         return parseWithDiagnostics(javadocContent, currentTemplatePath).examples();
     }
 
@@ -36,7 +37,7 @@ final class JavaDocExampleParser {
         return parseWithDiagnostics(javadocContent, "");
     }
 
-    ExampleParseResult parseWithDiagnostics(String javadocContent, String currentTemplatePath) {
+    ExampleParseResult parseWithDiagnostics(String javadocContent, @Nullable String currentTemplatePath) {
         List<JavaDocAnalyzer.ExampleInfo> examples = new ArrayList<>();
         List<ParserDiagnostic> diagnostics = new ArrayList<>();
 

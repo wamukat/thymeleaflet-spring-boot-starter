@@ -44,7 +44,7 @@ public class MapNoArgMethodResolver implements MethodResolver {
         EvaluationContext context,
         Object targetObject,
         String name,
-        List<TypeDescriptor> argumentTypes
+        @Nullable List<TypeDescriptor> argumentTypes
     ) throws AccessException {
         if (!(targetObject instanceof Map<?, ?> mapTarget)) {
             return null;

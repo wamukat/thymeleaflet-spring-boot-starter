@@ -3,6 +3,7 @@ package io.github.wamukat.thymeleaflet.domain.service;
 import io.github.wamukat.thymeleaflet.domain.model.ModelPath;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
 import io.github.wamukat.thymeleaflet.domain.model.TemplateInference;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,7 +43,7 @@ public class TemplateModelExpressionAnalyzer {
         return analyze(html, parameterNames, Optional.empty());
     }
 
-    public TemplateInference analyze(String html, Set<String> parameterNames, String currentTemplatePath) {
+    public TemplateInference analyze(String html, Set<String> parameterNames, @Nullable String currentTemplatePath) {
         if (currentTemplatePath == null || currentTemplatePath.isBlank()) {
             return analyze(html, parameterNames, Optional.empty());
         }
@@ -727,7 +728,6 @@ public class TemplateModelExpressionAnalyzer {
     ) {
         private ExpressionSource {
             loopStatusAliases = Set.copyOf(loopStatusAliases);
-            selectionRoot = selectionRoot == null ? Optional.empty() : selectionRoot;
         }
     }
 

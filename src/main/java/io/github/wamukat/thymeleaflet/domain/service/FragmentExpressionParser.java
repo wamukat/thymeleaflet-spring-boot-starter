@@ -1,6 +1,7 @@
 package io.github.wamukat.thymeleaflet.domain.service;
 
 import io.github.wamukat.thymeleaflet.domain.model.FragmentExpression;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,19 +12,22 @@ public class FragmentExpressionParser {
 
     private final TopLevelSyntaxScanner topLevelSyntaxScanner = new TopLevelSyntaxScanner();
 
-    public Optional<FragmentExpression> parse(String rawExpression) {
+    public Optional<FragmentExpression> parse(@Nullable String rawExpression) {
         return parseWithDiagnostics(rawExpression).expression();
     }
 
-    public Optional<FragmentExpression> parse(String rawExpression, String currentTemplatePath) {
+    public Optional<FragmentExpression> parse(@Nullable String rawExpression, @Nullable String currentTemplatePath) {
         return parseWithDiagnostics(rawExpression, currentTemplatePath).expression();
     }
 
-    public FragmentExpressionParseResult parseWithDiagnostics(String rawExpression) {
+    public FragmentExpressionParseResult parseWithDiagnostics(@Nullable String rawExpression) {
         return parseWithDiagnostics(rawExpression, Optional.empty());
     }
 
-    public FragmentExpressionParseResult parseWithDiagnostics(String rawExpression, String currentTemplatePath) {
+    public FragmentExpressionParseResult parseWithDiagnostics(
+        @Nullable String rawExpression,
+        @Nullable String currentTemplatePath
+    ) {
         if (currentTemplatePath == null || currentTemplatePath.isBlank()) {
             return parseWithDiagnostics(rawExpression, Optional.empty());
         }
@@ -31,7 +35,7 @@ public class FragmentExpressionParser {
     }
 
     private FragmentExpressionParseResult parseWithDiagnostics(
-        String rawExpression,
+        @Nullable String rawExpression,
         Optional<String> currentTemplatePath
     ) {
         if (rawExpression == null || rawExpression.isBlank()) {

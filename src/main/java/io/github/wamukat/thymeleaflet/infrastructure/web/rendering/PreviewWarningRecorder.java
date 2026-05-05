@@ -40,7 +40,7 @@ public final class PreviewWarningRecorder {
         }
     }
 
-    public static void record(String warningMessage) {
+    public static void record(@Nullable String warningMessage) {
         if (warningMessage == null || warningMessage.isBlank()) {
             return;
         }
