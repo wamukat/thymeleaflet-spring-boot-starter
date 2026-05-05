@@ -1,0 +1,18 @@
+meta:
+  title: App Layout
+  description: Full-page layout fragment examples
+
+storyGroups:
+  appLayout:
+    title: Application Layout
+    description: Complete HTML document fragment declared on the html root element
+    stories:
+      - name: default
+        title: Default
+        parameters:
+          pageTitle: Member 42 dashboard
+          activeNav: overview
+          memberId: "42"
+          bodyContent: |
+            <h2 class="text-xl font-bold">Member 42 dashboard</h2>
+            <p class="mt-3 text-sm text-base-content/70">Overview content rendered from a story parameter.</p>

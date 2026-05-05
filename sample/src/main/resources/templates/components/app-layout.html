@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<!--
+/**
+ * Application layout (appLayout)
+ *
+ * Demonstrates a complete-page fragment declared on the <html> root element.
+ *
+ * @param pageTitle {@code String} [required] Page title
+ * @param activeNav {@code String} [required] Active navigation item
+ * @param memberId {@code String} [required] Member identifier
+ * @param bodyContent {@code String} [required] Main page HTML
+ * @example <html th:replace="~{components/app-layout :: appLayout('Dashboard', 'overview', '42', ${content})}"></html>
+ */
+-->
+<html lang="en" th:fragment="appLayout(pageTitle, activeNav, memberId, bodyContent)">
+<head>
+    <title th:text="${pageTitle}">Dashboard</title>
+    <meta name="description" content="Full-page fragment preview fixture">
+</head>
+<body class="min-h-screen bg-base-200 text-base-content">
+<header class="border-b border-base-300 bg-base-100 px-6 py-4">
+    <div class="mx-auto flex max-w-5xl items-center justify-between">
+        <div>
+            <p class="text-xs font-semibold uppercase text-base-content/60">Member portal</p>
+            <h1 class="text-2xl font-bold" th:text="${pageTitle}">Dashboard</h1>
+        </div>
+        <span class="badge badge-primary" th:text="${'Member ' + memberId}">Member 42</span>
+    </div>
+</header>
+<main class="mx-auto grid max-w-5xl gap-6 px-6 py-8 md:grid-cols-[14rem_1fr]">
+    <nav class="rounded-lg border border-base-300 bg-base-100 p-4">
+        <a class="block rounded px-3 py-2 font-semibold"
+           th:classappend="${activeNav == 'overview'} ? ' bg-primary text-primary-content' : ''">Overview</a>
+        <a class="mt-2 block rounded px-3 py-2"
+           th:classappend="${activeNav == 'billing'} ? ' bg-primary text-primary-content' : ''">Billing</a>
+    </nav>
+    <section class="rounded-lg border border-base-300 bg-base-100 p-6 shadow-sm">
+        <div th:utext="${bodyContent}">
+            <h2>Member 42 dashboard</h2>
+        </div>
+    </section>
+</main>
+</body>
+</html>
