@@ -204,12 +204,92 @@
             .filter(Boolean);
     }
 
+    function isFullHtmlDocument(html) {
+        return /^\s*(?:<!doctype\s+html[^>]*>\s*)?<html(?:\s|>)/i.test(html || '');
+    }
+
     iframeControls.getBackgroundColor = function(host) {
         if (!host) return 'transparent';
         const container = host.closest('#preview-container');
         if (!container) return 'transparent';
         return getComputedStyle(container).backgroundColor || 'transparent';
     };
+
+    function buildHeightNotifierScript(previewId) {
+        return `<script>
+            (function() {
+                const previewId = ${JSON.stringify(previewId)};
+                const postHeight = (height) => {
+                    const safeHeight = Number.isFinite(height) ? height : 0;
+                    parent.postMessage({ type: 'thymeleaflet:preview-height', id: previewId, height: safeHeight }, '*');
+                };
+                function notifyHeight() {
+                    const root = document.getElementById('preview-root');
+                    const content = document.getElementById('preview-content');
+                    let height = Math.ceil(
+                        Math.max(
+                            document.documentElement.scrollHeight,
+                            document.body.scrollHeight
+                        )
+                    );
+                    if (root && content) {
+                        const rect = content.getBoundingClientRect();
+                        const style = getComputedStyle(root);
+                        const paddingTop = parseFloat(style.paddingTop) || 0;
+                        const paddingBottom = parseFloat(style.paddingBottom) || 0;
+                        height = Math.ceil(rect.height + paddingTop + paddingBottom);
+                    }
+                    postHeight(height);
+                }
+                if ('ResizeObserver' in window) {
+                    const observer = new ResizeObserver(() => notifyHeight());
+                    observer.observe(document.body);
+                }
+                if ('MutationObserver' in window) {
+                    const mutationObserver = new MutationObserver(() => notifyHeight());
+                    mutationObserver.observe(document.body, {
+                        attributes: true,
+                        childList: true,
+                        subtree: true
+                    });
+                }
+                document.addEventListener('click', () => {
+                    setTimeout(notifyHeight, 30);
+                    setTimeout(notifyHeight, 150);
+                });
+                window.addEventListener('load', notifyHeight);
+                setTimeout(notifyHeight, 50);
+                setTimeout(notifyHeight, 250);
+            })();
+        </scr` + `ipt>`;
+    }
+
+    function buildFullHtmlDocument(html, previewId, resourceHeadParts, scripts) {
+        const parsed = new DOMParser().parseFromString(html, 'text/html');
+        const doc = parsed.implementation.createHTMLDocument('');
+        doc.documentElement.replaceWith(parsed.documentElement);
+        const head = doc.head || doc.documentElement.insertBefore(doc.createElement('head'), doc.body);
+        const body = doc.body || doc.documentElement.appendChild(doc.createElement('body'));
+        resourceHeadParts.forEach(part => {
+            head.insertAdjacentHTML('beforeend', part);
+        });
+        head.insertAdjacentHTML('beforeend', `<style>
+            html, body {
+                margin: 0;
+                min-height: 100%;
+            }
+            *, *::before, *::after {
+                box-sizing: border-box;
+            }
+        </style>`);
+        scripts.forEach(src => {
+            const script = doc.createElement('script');
+            script.setAttribute('src', src);
+            body.appendChild(script);
+        });
+        body.insertAdjacentHTML('beforeend', buildHeightNotifierScript(previewId));
+        return '<!DOCTYPE html>' + doc.documentElement.outerHTML;
+    }
 
     iframeControls.buildDocument = function(host, html, backgroundColor) {
         const styles = parseResourceList(host.dataset.previewStylesheets);
@@ -223,13 +303,22 @@
         const previewId = `preview-${Date.now()}-${previewIdCounter++}`;
         const resolvedBackground = backgroundColor || 'transparent';
 
-        const headParts = [
+        const resourceHeadParts = [
             '<meta charset="utf-8">',
             '<meta name="viewport" content="width=device-width, initial-scale=1">'
         ];
         styles.forEach(href => {
-            headParts.push(`<link rel="stylesheet" href="${href}">`);
+            resourceHeadParts.push(`<link rel="stylesheet" href="${href}">`);
         });
+
+        if (isFullHtmlDocument(wrappedHtml)) {
+            return {
+                doc: buildFullHtmlDocument(wrappedHtml, previewId, resourceHeadParts, scripts),
+                previewId
+            };
+        }
+
+        const headParts = [...resourceHeadParts];
         headParts.push(
             `<style>
                 html, body {
@@ -263,52 +352,7 @@
         scripts.forEach(src => {
             bodyParts.push(`<script src="${src}"></scr` + `ipt>`);
         });
-        bodyParts.push(`<script>
-            (function() {
-                const previewId = ${JSON.stringify(previewId)};
-                const postHeight = (height) => {
-                    const safeHeight = Number.isFinite(height) ? height : 0;
-                    parent.postMessage({ type: 'thymeleaflet:preview-height', id: previewId, height: safeHeight }, '*');
-                };
-                function notifyHeight() {
-                const root = document.getElementById('preview-root');
-                const content = document.getElementById('preview-content');
-                let height = Math.ceil(
-                    Math.max(
-                        document.documentElement.scrollHeight,
-                        document.body.scrollHeight
-                    )
-                );
-                if (root && content) {
-                    const rect = content.getBoundingClientRect();
-                    const style = getComputedStyle(root);
-                    const paddingTop = parseFloat(style.paddingTop) || 0;
-                    const paddingBottom = parseFloat(style.paddingBottom) || 0;
-                    height = Math.ceil(rect.height + paddingTop + paddingBottom);
-                }
-                postHeight(height);
-            }
-                if ('ResizeObserver' in window) {
-                    const observer = new ResizeObserver(() => notifyHeight());
-                    observer.observe(document.body);
-                }
-                if ('MutationObserver' in window) {
-                    const mutationObserver = new MutationObserver(() => notifyHeight());
-                    mutationObserver.observe(document.body, {
-                        attributes: true,
-                        childList: true,
-                        subtree: true
-                    });
-                }
-                document.addEventListener('click', () => {
-                    setTimeout(notifyHeight, 30);
-                    setTimeout(notifyHeight, 150);
-                });
-                window.addEventListener('load', notifyHeight);
-                setTimeout(notifyHeight, 50);
-                setTimeout(notifyHeight, 250);
-            })();
-        </scr` + `ipt>`);
+        bodyParts.push(buildHeightNotifierScript(previewId));
 
         const doc = [
             '<!DOCTYPE html><html><head>',

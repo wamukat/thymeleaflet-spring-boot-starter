@@ -86,6 +86,18 @@ test('fragment syntax sample renders supported variants', async ({ page }) => {
   await expect(preview).toContainText('Java 25 /// comments');
 });
 
+test('html root fragment preview renders full page layout', async ({ page }) => {
+  await openFragment(page, 'appLayout');
+  const frame = page.frameLocator('#fragment-preview-host iframe');
+  await expect(frame.locator('body')).toContainText('Member 42 dashboard');
+  await expect(frame.locator('body')).toContainText('Overview');
+  await expect(frame.locator('body')).toHaveClass(/min-h-screen/);
+  await expect(frame.locator('#preview-root')).toHaveCount(0);
+  const titleText = await frame.locator('title').evaluate(node => node.textContent);
+  expect(titleText).toBe('Member 42 dashboard');
+  await expect(page.locator('#preview-warning-banner')).toBeHidden();
+});
+
 test('line comment documented fragment source includes Java 25 comment block', async ({ page }) => {
   await openFragment(page, 'lineCommentDocumentedBadge');
   const source = page.locator('.fragment-source-code');
