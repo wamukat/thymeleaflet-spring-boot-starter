@@ -8,6 +8,27 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.26] - 2026-05-05
+
+- Added
+  - Added story preview metadata for default viewport selection via `preview.viewport`, so responsive-only fragments can open in the intended viewport without manual switching. (#183)
+  - Added story preview minimum height support via `preview.minHeight`, so fixed and sticky fragments can remain visible even when they do not contribute normal document flow height. (#184)
+  - Added sample stories for responsive viewport defaults, fixed toolbar previews, and rendered error text content.
+- Fixed
+  - Stopped treating rendered HTML text containing `システムエラー` or `System Error` as a preview load failure when the render response itself succeeds. (#152)
+- Docs
+  - Documented `preview.viewport` and `preview.minHeight` story metadata in English and Japanese story documentation.
+- Test
+  - Added YAML loading and E2E coverage for story preview viewport/min-height metadata and legitimate rendered error text content.
+- Build
+  - Updated Maven project, sample app, and README dependency examples to `0.2.26`.
+
+### Issues
+
+- #152 Preview falsely reports load failure when rendered HTML contains `システムエラー` or `System Error`
+- #183 Story default viewport metadata
+- #184 Story preview minimum height metadata for fixed/sticky fragments
+
 ## [0.2.25] - 2026-05-05
 
 - Added
