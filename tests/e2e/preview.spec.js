@@ -143,6 +143,15 @@ test('preview iframe does not show error page', async ({ page }) => {
   expect(bodyText).not.toContain('システムエラー');
 });
 
+test('preview iframe allows rendered error text content', async ({ page }) => {
+  await openFragment(page, 'errorBanner');
+  const frame = page.frameLocator('#fragment-preview-host iframe');
+
+  await expect(frame.getByText('システムエラーが発生しました')).toBeVisible();
+  await expect(frame.getByText('System Error can be valid user-facing content.')).toBeVisible();
+  await expect(page.locator('#preview-warning-banner')).toBeHidden();
+});
+
 test('broken story yaml shows user-safe diagnostic', async ({ page }) => {
   fs.mkdirSync(path.dirname(brokenStoryFixtureTarget), { recursive: true });
   fs.copyFileSync(brokenStoryFixtureSource, brokenStoryFixtureTarget);
@@ -168,6 +177,25 @@ test('viewport preset updates width badge', async ({ page }) => {
   await expect(badge).toBeVisible();
   const text = (await badge.textContent())?.trim();
   expect(text).toMatch(/\d+px/);
+});
+
+test('story preview viewport selects the configured default preset', async ({ page }) => {
+  await openFragment(page, 'responsiveHeader');
+  const select = page.locator('#preview-viewport-select');
+  await expect(select).toHaveValue('mobileSmall');
+
+  const badge = page.locator('#preview-viewport-badge');
+  await expect(badge).toHaveText('320px');
+});
+
+test('story preview min height keeps fixed fragments visible', async ({ page }) => {
+  await openFragment(page, 'fixedToolbar');
+  const host = page.locator('#fragment-preview-host');
+  await expect(host).toBeVisible();
+  await expect(host).toHaveJSProperty('clientHeight', 96);
+
+  const frame = page.frameLocator('#fragment-preview-host iframe');
+  await expect(frame.getByText('Fixed toolbar')).toBeVisible();
 });
 
 test('background toggle switches preview class', async ({ page }) => {

@@ -68,6 +68,15 @@
     };
     const iframeControls = {};
 
+    function getMinimumPreviewHeight() {
+        const host = dom.previewHost();
+        const configured = Number(host?.dataset?.previewMinHeight);
+        if (Number.isFinite(configured) && configured > 0) {
+            return Math.max(1, Math.min(MAX_HEIGHT, Math.round(configured)));
+        }
+        return MIN_HEIGHT;
+    }
+
     function setPreviewHeight(heightPx) {
         if (viewportControls.isHeightFixed()) {
             return;
@@ -79,17 +88,19 @@
     }
 
     function resetPreviewHeight() {
-        previewContentHeight = INITIAL_PREVIEW_HEIGHT;
-        setPreviewHeight(INITIAL_PREVIEW_HEIGHT);
+        const initialHeight = Math.max(INITIAL_PREVIEW_HEIGHT, getMinimumPreviewHeight());
+        previewContentHeight = initialHeight;
+        setPreviewHeight(initialHeight);
     }
 
     function handleResize(height) {
         if (viewportControls.isHeightFixed()) {
             return;
         }
-        const adjustedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, height));
+        const minHeight = getMinimumPreviewHeight();
+        const adjustedHeight = Math.max(minHeight, Math.min(MAX_HEIGHT, height));
         const roundedHeight = Math.round(adjustedHeight / 8) * 8;
-        const stabilizedHeight = Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, roundedHeight));
+        const stabilizedHeight = Math.max(minHeight, Math.min(MAX_HEIGHT, roundedHeight));
 
         previewContentHeight = stabilizedHeight;
         setPreviewHeight(stabilizedHeight);
@@ -153,7 +164,7 @@
                 const paddingTop = parseFloat(rootStyle.paddingTop) || 0;
                 const paddingBottom = parseFloat(rootStyle.paddingBottom) || 0;
                 const height = Math.ceil(contentRect.height + paddingTop + paddingBottom);
-                return Math.max(MIN_HEIGHT, height);
+                return Math.max(getMinimumPreviewHeight(), height);
             }
             return Math.ceil(Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight));
         } catch (error) {
@@ -438,6 +449,21 @@
     };
 
     Object.assign(viewportControls, {
+        hasPresetValue(select, preset) {
+            return Array.from(select.options).some(option => option.value === preset);
+        },
+        applyStoryDefault() {
+            const select = dom.viewportSelect();
+            if (!select) {
+                return;
+            }
+            const host = dom.previewHost();
+            const defaultViewport = (host?.dataset?.previewViewport || '').trim();
+            viewportState.preset = defaultViewport && viewportControls.hasPresetValue(select, defaultViewport)
+                ? defaultViewport
+                : 'responsive';
+            viewportControls.syncSelectFromState();
+        },
         applyState() {
             const viewport = dom.previewViewport();
             if (!viewport) {
@@ -506,7 +532,7 @@
             if (!select) {
                 return;
             }
-            if (viewportState.preset && select.querySelector(`option[value="${viewportState.preset}"]`)) {
+            if (viewportState.preset && viewportControls.hasPresetValue(select, viewportState.preset)) {
                 select.value = viewportState.preset;
             } else {
                 select.value = 'responsive';
@@ -771,9 +797,6 @@
             const warnings = decodeWarningsHeader(
                 response.headers.get('X-Thymeleaflet-Preview-Warnings')
             );
-            if (html.includes('システムエラー') || html.includes('System Error')) {
-                throw new Error('Preview error page detected');
-            }
             iframeControls.renderFrame(targetHost, html);
             renderPreviewWarnings(warnings);
             await waitForFontsOnce();
@@ -806,10 +829,10 @@
     }
 
     function initializePreviewUI() {
-        loadPreview();
         viewportControls.bindControls();
         fullscreenControls.bindControls();
-        viewportControls.syncSelectFromState();
+        viewportControls.applyStoryDefault();
+        loadPreview();
         viewportControls.applyState();
         fullscreenControls.updateToggleButton();
     }

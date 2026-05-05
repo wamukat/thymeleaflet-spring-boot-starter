@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+/**
+ * Error banner sample
+ *
+ * @fragment errorBanner
+ * @param title {@code String} [required] Error title
+ * @param message {@code String} [required] Error message
+ */
+-->
+<div th:fragment="errorBanner(title, message)"
+     class="rounded border border-red-200 bg-red-50 px-4 py-3 text-red-900">
+    <h2 class="text-sm font-semibold" th:text="${title}">System Error</h2>
+    <p class="mt-1 text-xs" th:text="${message}">System Error details</p>
+</div>
+</body>
+</html>

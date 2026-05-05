@@ -1,0 +1,14 @@
+meta:
+  title: Error Banner
+  description: Error text preview regression fixture
+
+storyGroups:
+  errorBanner:
+    title: Error Banner
+    description: Allows legitimate error text in rendered preview HTML
+    stories:
+      - name: default
+        title: Default
+        parameters:
+          title: システムエラーが発生しました
+          message: System Error can be valid user-facing content.

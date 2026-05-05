@@ -10,6 +10,7 @@ storyGroups:
       - name: default
         title: Default
         preview:
+          viewport: mobileSmall
           wrapper: |
             <div class="px-6 py-6 text-base-content font-display">
               <div class="max-w-6xl mx-auto">
