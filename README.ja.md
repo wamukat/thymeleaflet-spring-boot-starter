@@ -111,9 +111,8 @@ thymeleaflet:
 - `cache.preload` は起動時にキャッシュをウォームアップします（低CPU環境向け）。
 - CSP はプレビューで外部 JS/CSS を使えるよう意図的に緩めています。信頼できる環境でのみ利用してください。
 - プレビュー iframe は same-origin を許可しているため、Cookie / localStorage / 認証付きAPIが動作します。
-- デフォルトでは Thymeleaflet は Spring Security のルールを自動登録しません。
-- Spring Security 利用アプリで設定を簡略化したい場合は `thymeleaflet.security.auto-permit=true` を設定すると、`/thymeleaflet/**` を許可する最小ルールを自動登録します。
-- 明示的に管理したい場合はデフォルトのままにして、利用側アプリの `SecurityFilterChain` で `/thymeleaflet/**` を許可してください。
+- デフォルトでは、Spring Security が存在する場合に `/thymeleaflet/**` を許可する最小ルールを自動登録します。
+- 明示的に管理したい場合は `thymeleaflet.security.auto-permit=false` を設定し、利用側アプリの `SecurityFilterChain` で `/thymeleaflet/**` を許可してください。
 
 ## エンドポイント
 

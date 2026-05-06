@@ -1,14 +1,14 @@
 # セキュリティ
 
-Thymeleaflet は Spring Security のフィルターチェーンを自動登録しません。
+Spring Security が存在する場合、Thymeleaflet はデフォルトで `/thymeleaflet/**` を許可する最小限のフィルターチェーンを登録します。
 開発用途向けの補助ツールとして利用してください。
 
 ## 連携方針
 
 セキュリティ挙動は利用側アプリで管理します。
-Spring Security を使う場合は、Opt-in 自動許可か明示設定を選択できます。
+Spring Security を使う場合は、デフォルトの自動許可を使うか、opt out して明示設定できます。
 
-### Option A: Opt-in 自動許可（手早く使う）
+### Option A: デフォルトの自動許可（手早く使う）
 
 ```yaml
 thymeleaflet:
@@ -18,9 +18,16 @@ thymeleaflet:
 
 この設定で `/thymeleaflet/**` のみを許可する最小チェーンを登録します。
 ローカル開発または信頼できる内部環境向けの quick start として扱ってください。
-`prod` または `production` profile で `auto-permit=true` が有効な場合、起動時に WARN を出します。
+`prod` または `production` profile で `auto-permit` が有効な場合、起動時に WARN を出します。
+この補助設定は、明示的に `false` を指定しない限りデフォルトで有効です。
 
-### Option B: 利用側で明示設定
+### Option B: Opt out して利用側で明示設定
+
+```yaml
+thymeleaflet:
+  security:
+    auto-permit: false
+```
 
 ```java
 http.authorizeHttpRequests(auth -> auth
@@ -31,10 +38,11 @@ http.authorizeHttpRequests(auth -> auth
 
 ## 挙動
 
-- Thymeleaflet 自体は認可/認証ルールを追加しません。
-- Thymeleaflet 自体は CSRF/ヘッダー/セッション制御を追加しません。
+- 自動許可ヘルパーは `/thymeleaflet/**` の認可だけを追加します。
+- 自動許可ヘルパーは、Custom story の POST レンダリングが動作するよう Thymeleaflet UI パスの CSRF を無効化します。
+- Thymeleaflet はヘッダー/セッション制御を追加しません。
 - 既存アプリのセキュリティ設定がそのまま有効です。
-- `auto-permit=true` の場合のみ、`/thymeleaflet/**` 向けの最小許可チェーンを追加します。
+- `auto-permit=false` の場合、Thymeleaflet は `SecurityFilterChain` を追加しません。
 
 ## 推奨
 

@@ -106,13 +106,13 @@ spring:
 
 Alternatively, remove the dependency from production builds. If Thymeleaflet is
 active under a `prod` or `production` profile, startup logs a warning.
-`thymeleaflet.security.auto-permit=true` logs an additional warning because it
-permits the UI path.
+`thymeleaflet.security.auto-permit` logs an additional warning because it permits
+the UI path. This helper is enabled by default unless set to `false`.
 
 If your app uses Spring Security, either:
 
-- set `thymeleaflet.security.auto-permit=true` for quick onboarding, or
-- permit `/thymeleaflet/**` in your app-side security configuration.
+- keep the default auto-permit helper for quick onboarding, or
+- set `thymeleaflet.security.auto-permit=false` and permit `/thymeleaflet/**` in your app-side security configuration.
 
 `thymeleaflet.base-path` currently supports only `/thymeleaflet`.
 Using another path fails fast at startup.

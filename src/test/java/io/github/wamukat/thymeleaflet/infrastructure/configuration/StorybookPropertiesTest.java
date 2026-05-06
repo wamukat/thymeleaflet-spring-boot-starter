@@ -44,9 +44,12 @@ class StorybookPropertiesTest {
     @Test
     void rawSecurityConfig_acceptsBooleanToggle() {
         StorybookProperties.SecurityConfig security = new StorybookProperties.SecurityConfig();
-        security.setAutoPermit(true);
 
         assertThat(security.isAutoPermit()).isTrue();
+
+        security.setAutoPermit(false);
+
+        assertThat(security.isAutoPermit()).isFalse();
     }
 
     @Test

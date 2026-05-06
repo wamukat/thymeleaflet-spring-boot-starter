@@ -254,9 +254,9 @@ public class StorybookProperties {
     public static class SecurityConfig {
         /**
          * true のとき `/thymeleaflet/**` を許可する補助チェーンを登録する
-         * デフォルト: false
+         * デフォルト: true
          */
-        private boolean autoPermit = false;
+        private boolean autoPermit = true;
 
         public boolean isAutoPermit() {
             return autoPermit;
