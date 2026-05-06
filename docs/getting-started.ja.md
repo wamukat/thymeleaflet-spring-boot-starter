@@ -106,12 +106,13 @@ spring:
 
 本番ビルドから依存関係を外す運用でも問題ありません。
 `prod` または `production` profile で Thymeleaflet が有効な場合、起動時に WARN を出します。
-`thymeleaflet.security.auto-permit=true` の場合は UI パスを許可するため、追加の WARN を出します。
+`thymeleaflet.security.auto-permit` が有効な場合は UI パスを許可するため、追加の WARN を出します。
+この補助設定は、明示的に `false` を指定しない限りデフォルトで有効です。
 
 Spring Security を使う場合は、次のいずれかを選択してください。
 
-- 手早く使う: `thymeleaflet.security.auto-permit=true`
-- 明示管理: 利用側アプリのセキュリティ設定で `/thymeleaflet/**` を許可
+- 手早く使う: デフォルトの自動許可を利用する
+- 明示管理: `thymeleaflet.security.auto-permit=false` を設定し、利用側アプリのセキュリティ設定で `/thymeleaflet/**` を許可
 
 `thymeleaflet.base-path` は現在 `/thymeleaflet` のみサポートしています。
 別のパスを設定すると起動時にエラーになります。

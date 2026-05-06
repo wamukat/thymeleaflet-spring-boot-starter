@@ -24,19 +24,19 @@ class ResolvedStorybookConfigTest {
         assertThat(resolved.getResources().getTemplatePaths()).containsExactly("/templates/");
         assertThat(resolved.getPreview().getBackgroundLight()).isEqualTo("#f3f4f6");
         assertThat(resolved.getPreview().getBackgroundDark()).isEqualTo("#1f2937");
-        assertThat(resolved.getSecurity().isAutoPermit()).isFalse();
+        assertThat(resolved.getSecurity().isAutoPermit()).isTrue();
     }
 
     @Test
-    void from_resolvesSecurityAutoPermitFlag() {
+    void from_resolvesSecurityAutoPermitOptOutFlag() {
         StorybookProperties raw = new StorybookProperties();
         StorybookProperties.SecurityConfig security = new StorybookProperties.SecurityConfig();
-        security.setAutoPermit(true);
+        security.setAutoPermit(false);
         raw.setSecurity(security);
 
         ResolvedStorybookConfig resolved = ResolvedStorybookConfig.from(raw);
 
-        assertThat(resolved.getSecurity().isAutoPermit()).isTrue();
+        assertThat(resolved.getSecurity().isAutoPermit()).isFalse();
     }
 
     @Test

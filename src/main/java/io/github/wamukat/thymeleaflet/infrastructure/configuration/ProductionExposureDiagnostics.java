@@ -44,7 +44,7 @@ public class ProductionExposureDiagnostics implements ApplicationRunner {
         );
         if (storybookConfig.getSecurity().isAutoPermit()) {
             warnings.add(
-                "thymeleaflet.security.auto-permit=true is active under a production profile and permits "
+                "thymeleaflet.security.auto-permit is active under a production profile and permits "
                     + storybookConfig.getBasePath() + "/**. Prefer app-owned authentication rules or disable "
                     + "Thymeleaflet in production."
             );

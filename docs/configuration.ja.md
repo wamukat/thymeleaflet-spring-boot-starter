@@ -58,10 +58,11 @@ JavaScript を使いたい場合は `resources.scripts` に登録してくださ
 
 | プロパティ | 型 | デフォルト | 説明 |
 |---|---|---|---|
-| `thymeleaflet.security.auto-permit` | boolean | `false` | Opt-in: Spring Security 利用時に `/thymeleaflet/**` 許可の最小ルールを自動登録。開発時の quick start 用です |
+| `thymeleaflet.security.auto-permit` | boolean | `true` | Spring Security 利用時に `/thymeleaflet/**` 許可の最小ルールを自動登録。明示管理する場合は `false` にします |
 
 `prod` または `production` profile が有効な状態で Thymeleaflet UI も有効な場合、起動時に WARN を出します。
-さらに `thymeleaflet.security.auto-permit=true` の場合は、UI パスを許可する高リスク設定として追加の WARN を出します。
+さらに `thymeleaflet.security.auto-permit` が有効な場合は、UI パスを許可する高リスク設定として追加の WARN を出します。
+この補助設定は、明示的に `false` を指定しない限りデフォルトで有効です。
 
 ### CSP 補足（意図的に緩め）
 
@@ -70,10 +71,10 @@ Thymeleaflet はプレビューで外部 JS/CSS を使えるよう、CSP を意�
 
 ## Spring Security 連携
 
-デフォルトでは Thymeleaflet は独自の `SecurityFilterChain` を追加しません。
+デフォルトでは、Spring Security が存在する場合に `/thymeleaflet/**` 向けの小さな `SecurityFilterChain` を追加します。
 次のいずれかを選択してください:
 
-- 自動許可を Opt-in:
+- デフォルトの自動許可:
 
 ```yaml
 thymeleaflet:
@@ -81,7 +82,13 @@ thymeleaflet:
     auto-permit: true
 ```
 
-- 利用側アプリで明示的に設定:
+- Opt out して利用側アプリで明示的に設定:
+
+```yaml
+thymeleaflet:
+  security:
+    auto-permit: false
+```
 
 ```java
 http.authorizeHttpRequests(auth -> auth

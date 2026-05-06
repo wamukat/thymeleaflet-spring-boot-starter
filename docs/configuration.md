@@ -58,12 +58,12 @@ parsing, type extraction, and dependency analysis reread source resources instea
 
 | Property | Type | Default | Description |
 |---|---|---|---|
-| `thymeleaflet.security.auto-permit` | boolean | `false` | Opt-in: register minimal permit rule for `/thymeleaflet/**` when Spring Security is present. Use only for development quick starts |
+| `thymeleaflet.security.auto-permit` | boolean | `true` | Register a minimal permit rule for `/thymeleaflet/**` when Spring Security is present. Set `false` to opt out and manage app-side security explicitly |
 
 When a `prod` or `production` profile is active, Thymeleaflet logs a warning if
 the UI is still enabled. It logs an additional warning when
-`thymeleaflet.security.auto-permit=true` is also active because that setting
-permits the UI path.
+`thymeleaflet.security.auto-permit` is active because that setting permits the
+UI path. The helper is active by default unless explicitly set to `false`.
 
 ### CSP note (permissive by design)
 
@@ -73,10 +73,11 @@ behind authentication and use it only in trusted environments.
 
 ## Spring Security Integration
 
-By default, Thymeleaflet does not add its own `SecurityFilterChain`.
+By default, Thymeleaflet adds a small `SecurityFilterChain` for `/thymeleaflet/**`
+when Spring Security is present.
 Use one of the following options:
 
-- Opt-in auto permit:
+- Default auto permit:
 
 ```yaml
 thymeleaflet:
@@ -84,7 +85,13 @@ thymeleaflet:
     auto-permit: true
 ```
 
-- Explicit app-side security rule:
+- Opt out and use an explicit app-side security rule:
+
+```yaml
+thymeleaflet:
+  security:
+    auto-permit: false
+```
 
 ```java
 http.authorizeHttpRequests(auth -> auth

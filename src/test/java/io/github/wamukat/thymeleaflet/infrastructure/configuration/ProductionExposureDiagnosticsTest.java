@@ -27,9 +27,23 @@ class ProductionExposureDiagnosticsTest {
     void warningMessages_shouldWarnWhenAutoPermitIsActiveUnderProductionProfile() {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles("production");
+
+        List<String> warnings = ProductionExposureDiagnostics.warningMessages(
+            environment,
+            ResolvedStorybookConfig.from(new StorybookProperties())
+        );
+
+        assertThat(warnings)
+            .anyMatch(message -> message.contains("thymeleaflet.security.auto-permit is active"));
+    }
+
+    @Test
+    void warningMessages_shouldNotWarnAboutAutoPermitWhenOptedOutUnderProductionProfile() {
+        MockEnvironment environment = new MockEnvironment();
+        environment.setActiveProfiles("production");
         StorybookProperties properties = new StorybookProperties();
         StorybookProperties.SecurityConfig security = new StorybookProperties.SecurityConfig();
-        security.setAutoPermit(true);
+        security.setAutoPermit(false);
         properties.setSecurity(security);
 
         List<String> warnings = ProductionExposureDiagnostics.warningMessages(
@@ -38,7 +52,7 @@ class ProductionExposureDiagnosticsTest {
         );
 
         assertThat(warnings)
-            .anyMatch(message -> message.contains("thymeleaflet.security.auto-permit=true"));
+            .noneMatch(message -> message.contains("thymeleaflet.security.auto-permit is active"));
     }
 
     @Test

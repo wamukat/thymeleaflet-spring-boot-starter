@@ -63,6 +63,16 @@ class StorybookAutoConfigurationTest {
     }
 
     @Test
+    void autoPermitSecurityConfiguration_shouldBeEnabledWhenPropertyIsMissing() {
+        ConditionalOnProperty annotation = ThymeleafletAutoPermitSecurityConfig.class.getAnnotation(ConditionalOnProperty.class);
+
+        assertNotNull(annotation, "auto-permit security configuration should be property-gated");
+        assertEquals("thymeleaflet.security.auto-permit", annotation.name()[0]);
+        assertEquals("true", annotation.havingValue());
+        assertTrue(annotation.matchIfMissing(), "auto-permit should be enabled by default and opt-out with false");
+    }
+
+    @Test
     void thymeleafletObjectMapperBean_shouldBeConditionalOnMissingBean() throws NoSuchMethodException {
         Method method = StorybookAutoConfiguration.class.getDeclaredMethod("thymeleafletObjectMapper");
         ConditionalOnMissingBean annotation = method.getAnnotation(ConditionalOnMissingBean.class);

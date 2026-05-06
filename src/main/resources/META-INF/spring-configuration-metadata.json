@@ -108,8 +108,8 @@
     {
       "name": "thymeleaflet.security.auto-permit",
       "type": "java.lang.Boolean",
-      "description": "When true, registers a minimal SecurityFilterChain to permit /thymeleaflet/**. Intended for development quick starts; avoid in production.",
-      "defaultValue": false
+      "description": "When true, registers a minimal SecurityFilterChain to permit /thymeleaflet/**. Enabled by default for development quick starts; set false to opt out.",
+      "defaultValue": true
     }
   ]
 }

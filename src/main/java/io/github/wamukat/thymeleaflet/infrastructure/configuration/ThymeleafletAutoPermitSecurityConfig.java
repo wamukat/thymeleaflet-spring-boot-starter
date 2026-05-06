@@ -13,7 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Optional Spring Security integration for quick adoption.
  *
- * <p>When {@code thymeleaflet.security.auto-permit=true}, this registers
+ * <p>Unless {@code thymeleaflet.security.auto-permit=false}, this registers
  * a small filter chain that permits only {@code /thymeleaflet/**}.</p>
  */
 @Configuration
@@ -21,7 +21,7 @@ import org.springframework.security.web.SecurityFilterChain;
     "org.springframework.security.web.SecurityFilterChain",
     "org.springframework.security.config.annotation.web.builders.HttpSecurity"
 })
-@ConditionalOnProperty(name = "thymeleaflet.security.auto-permit", havingValue = "true")
+@ConditionalOnProperty(name = "thymeleaflet.security.auto-permit", havingValue = "true", matchIfMissing = true)
 public class ThymeleafletAutoPermitSecurityConfig {
 
     private final String basePath;

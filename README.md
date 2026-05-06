@@ -114,9 +114,8 @@ thymeleaflet:
 - `cache.preload` warms the caches at application startup (useful for low-CPU demo environments).
 - CSP is intentionally permissive to allow external JS/CSS in previews. Use only in trusted environments.
 - Preview iframes allow same-origin so cookies/localStorage and authenticated API calls work.
-- By default, Thymeleaflet does not register Spring Security rules.
-- If your app uses Spring Security and you want zero-config onboarding, set `thymeleaflet.security.auto-permit=true` to auto-register a minimal permit rule for `/thymeleaflet/**`.
-- If you prefer explicit control, keep the default and allow `/thymeleaflet/**` in your app-side `SecurityFilterChain`.
+- By default, Thymeleaflet auto-registers a minimal Spring Security permit rule for `/thymeleaflet/**` when Spring Security is present.
+- If you prefer explicit control, set `thymeleaflet.security.auto-permit=false` and allow `/thymeleaflet/**` in your app-side `SecurityFilterChain`.
 
 ## Endpoints
 
