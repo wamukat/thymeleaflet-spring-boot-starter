@@ -35,16 +35,20 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
 
     private final FragmentDependencyPort fragmentDependencyPort;
 
+    private final StoryDisplayValueFormatter storyDisplayValueFormatter;
+
     public FragmentPreviewUseCaseImpl(
         StoryContentCoordinationUseCase storyContentCoordinationUseCase,
         JavaDocLookupPort javaDocLookupPort,
         ObjectMapper objectMapper,
-        FragmentDependencyPort fragmentDependencyPort
+        FragmentDependencyPort fragmentDependencyPort,
+        StoryDisplayValueFormatter storyDisplayValueFormatter
     ) {
         this.storyContentCoordinationUseCase = storyContentCoordinationUseCase;
         this.javaDocLookupPort = javaDocLookupPort;
         this.objectMapper = objectMapper;
         this.fragmentDependencyPort = fragmentDependencyPort;
+        this.storyDisplayValueFormatter = storyDisplayValueFormatter;
     }
 
     @Override
@@ -73,6 +77,7 @@ public class FragmentPreviewUseCaseImpl implements FragmentPreviewUseCase {
         command.getModel().addAttribute("stories", result.stories().orElse(List.of()));
         command.getModel().addAttribute("displayParameters", result.displayParameters().orElse(Map.of()));
         command.getModel().addAttribute("displayModel", displayModel);
+        command.getModel().addAttribute("displayModelFormatted", storyDisplayValueFormatter.format(displayModel));
         command.getModel().addAttribute("templatePathEncoded", command.getFullTemplatePath().replace("/", "."));
         command.getModel().addAttribute("javadocInfo", result.javadocInfo().orElse(null));
         command.getModel().addAttribute("dependentComponents",

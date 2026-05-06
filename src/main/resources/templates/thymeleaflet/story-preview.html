@@ -180,23 +180,10 @@
                             <div th:if="${displayModel != null and !displayModel.isEmpty()}" class="space-y-3">
                                 <div class="text-xs font-semibold tracking-wide text-emerald-700 bg-emerald-50 inline-flex px-2 py-1 rounded">MODEL</div>
                                 <div class="space-y-3">
-                                    <div th:each="entry : ${displayModel}" 
-                                         class="flex justify-between items-start py-2 px-3 bg-gray-50 rounded">
-                                        <div class="flex-1">
-                                            <span class="text-sm font-mono text-gray-700" th:text="${entry.key}">key</span>
-                                            <div class="text-xs text-gray-500 mt-1">
-                                                <span th:switch="${entry.value != null ? entry.value.class.simpleName : 'null'}">
-                                                    <span th:case="'Boolean'" class="bg-purple-100 text-purple-800 px-2 py-1 rounded">Boolean</span>
-                                                    <span th:case="'String'" class="bg-blue-100 text-blue-800 px-2 py-1 rounded">String</span>
-                                                    <span th:case="'Integer'" class="bg-green-100 text-green-800 px-2 py-1 rounded">Number</span>
-                                                    <span th:case="'null'" class="bg-gray-100 text-gray-800 px-2 py-1 rounded">null</span>
-                                                    <span th:case="*" class="bg-gray-100 text-gray-800 px-2 py-1 rounded">Object</span>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <span class="text-sm text-gray-800 break-all" th:text="${entry.value}">value</span>
-                                        </div>
+                                    <div class="py-2 px-3 bg-gray-50 rounded">
+                                        <div class="text-sm font-mono text-gray-700">model</div>
+                                        <div class="mt-2 text-sm text-gray-800 whitespace-pre-wrap break-words font-mono"
+                                             th:text="${displayModelFormatted != null ? displayModelFormatted : displayModel}">value</div>
                                     </div>
                                 </div>
                             </div>

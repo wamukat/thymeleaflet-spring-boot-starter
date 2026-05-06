@@ -2,6 +2,7 @@ package io.github.wamukat.thymeleaflet.infrastructure.web.service;
 
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryParameterUseCase;
 import io.github.wamukat.thymeleaflet.application.port.inbound.story.StoryRetrievalUseCase;
+import io.github.wamukat.thymeleaflet.application.service.preview.StoryDisplayValueFormatter;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
 import io.github.wamukat.thymeleaflet.infrastructure.web.rendering.ThymeleafFragmentRenderer;
@@ -49,6 +50,8 @@ public class StoryCommonDataService {
 
     private final FragmentModelInferenceService fragmentModelInferenceService;
 
+    private final StoryDisplayValueFormatter storyDisplayValueFormatter;
+
     public StoryCommonDataService(
         StoryParameterUseCase storyParameterUseCase,
         ThymeleafFragmentRenderer thymeleafFragmentRenderer,
@@ -58,7 +61,8 @@ public class StoryCommonDataService {
         ResolvedStorybookConfig storybookConfig,
         PreviewConfigService previewConfigService,
         FragmentSourceSnippetService fragmentSourceSnippetService,
-        FragmentModelInferenceService fragmentModelInferenceService
+        FragmentModelInferenceService fragmentModelInferenceService,
+        StoryDisplayValueFormatter storyDisplayValueFormatter
     ) {
         this.storyParameterUseCase = storyParameterUseCase;
         this.thymeleafFragmentRenderer = thymeleafFragmentRenderer;
@@ -69,6 +73,7 @@ public class StoryCommonDataService {
         this.previewConfigService = previewConfigService;
         this.fragmentSourceSnippetService = fragmentSourceSnippetService;
         this.fragmentModelInferenceService = fragmentModelInferenceService;
+        this.storyDisplayValueFormatter = storyDisplayValueFormatter;
     }
     
     /**
@@ -151,9 +156,12 @@ public class StoryCommonDataService {
         
         // モデルに設定
         model.addAttribute("displayParameters", orderedDisplayParameters);
+        model.addAttribute("displayParameterValuesFormatted", storyDisplayValueFormatter.formatValues(orderedDisplayParameters));
         model.addAttribute("orderedParameterNames", orderedParameterNames);
         model.addAttribute("displayModel", displayModel);
+        model.addAttribute("displayModelFormatted", storyDisplayValueFormatter.format(displayModel));
         model.addAttribute("displayMethodReturns", displayMethodReturns);
+        model.addAttribute("displayMethodReturnsFormatted", storyDisplayValueFormatter.format(displayMethodReturns));
         model.addAttribute("dependentComponents",
             fragmentDependencyService.findDependencies(templatePath, fragmentName));
         model.addAttribute("defaultStory", defaultStory.orElse(null));
