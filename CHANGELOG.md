@@ -8,6 +8,21 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.28] - 2026-05-06
+
+- Changed
+  - Enabled `thymeleaflet.security.auto-permit` by default when Spring Security is present, so zero-config apps can use custom story POST rendering without a CSRF 403. Set `thymeleaflet.security.auto-permit=false` to opt out and manage security explicitly. (#190)
+- Docs
+  - Updated README, configuration, getting-started, security, and Spring configuration metadata docs to describe the new opt-out security helper behavior. (#190)
+- Test
+  - Added configuration, metadata, and production diagnostic coverage for the default-enabled auto-permit behavior and explicit opt-out path. (#190)
+- Build
+  - Updated Maven project, sample app, and README dependency examples to `0.2.28`.
+
+### Issues
+
+- #190 `thymeleaflet.security.auto-permit` default should be true
+
 ## [0.2.27] - 2026-05-06
 
 - Changed
