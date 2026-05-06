@@ -6,6 +6,7 @@ import io.github.wamukat.thymeleaflet.domain.model.FragmentStoryInfo;
 import io.github.wamukat.thymeleaflet.domain.model.FragmentSummary;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryItem;
 import io.github.wamukat.thymeleaflet.domain.model.configuration.StoryPreview;
+import io.github.wamukat.thymeleaflet.application.service.preview.StoryDisplayValueFormatter;
 import io.github.wamukat.thymeleaflet.infrastructure.adapter.documentation.JavaDocAnalyzer;
 import io.github.wamukat.thymeleaflet.domain.service.FragmentDomainService;
 import io.github.wamukat.thymeleaflet.infrastructure.configuration.ResolvedStorybookConfig;
@@ -204,7 +205,8 @@ class StoryCommonDataServiceTest {
             ResolvedStorybookConfig.from(properties),
             previewConfigService,
             fragmentSourceSnippetService,
-            fragmentModelInferenceService
+            fragmentModelInferenceService,
+            new StoryDisplayValueFormatter(new com.fasterxml.jackson.databind.ObjectMapper())
         );
     }
 

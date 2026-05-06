@@ -126,8 +126,8 @@
                                     </div>
                                     <div class="flex-1 min-w-0">
                                         <div th:if="${displayParameters != null and displayParameters.containsKey(parameterName) and displayParameters.get(parameterName) != null and (displayParameters.get(parameterName).class.isArray() or displayParameters.get(parameterName) instanceof T(java.util.List) or displayParameters.get(parameterName) instanceof T(java.util.Map))}"
-                                             class="w-full min-h-9 text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
-                                             th:text="${displayParameters.get(parameterName)}"></div>
+                                             class="w-full min-h-9 text-sm font-medium px-2 py-1 rounded border break-words block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
+                                             th:text="${displayParameterValuesFormatted != null and displayParameterValuesFormatted.containsKey(parameterName) ? displayParameterValuesFormatted.get(parameterName) : displayParameters.get(parameterName)}"></div>
                                         <div th:unless="${displayParameters != null and displayParameters.containsKey(parameterName) and displayParameters.get(parameterName) != null and (displayParameters.get(parameterName).class.isArray() or displayParameters.get(parameterName) instanceof T(java.util.List) or displayParameters.get(parameterName) instanceof T(java.util.Map))}"
                                              class="w-full min-h-9 px-2 py-1 rounded border break-all bg-white border-gray-200 text-gray-800 flex items-center">
                                             <span th:if="${displayParameters != null and displayParameters.containsKey(parameterName) and displayParameters.get(parameterName) instanceof T(java.lang.String) and #strings.isEmpty(displayParameters.get(parameterName))}"
@@ -153,8 +153,8 @@
                                 <div th:if="${storyParam.value != null and (storyParam.value.class.isArray() or storyParam.value instanceof T(java.util.List) or storyParam.value instanceof T(java.util.Map))}" class="space-y-3">
                                     <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200"
                                          th:text="${storyParam.key}"></div>
-                                    <div class="w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
-                                         th:text="${storyParam.value}"></div>
+                                    <div class="w-full text-sm font-medium px-2 py-1 rounded border break-words block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
+                                         th:text="${displayParameterValuesFormatted != null and displayParameterValuesFormatted.containsKey(storyParam.key) ? displayParameterValuesFormatted.get(storyParam.key) : storyParam.value}"></div>
                                 </div>
                                 <div th:unless="${storyParam.value != null and (storyParam.value.class.isArray() or storyParam.value instanceof T(java.util.List) or storyParam.value instanceof T(java.util.Map))}" class="flex items-start gap-4">
                                     <div class="flex-shrink-0">
@@ -178,8 +178,8 @@
                             <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200">
                                 model
                             </div>
-                            <div class="mt-3 w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
-                                 th:text="${displayModel}"></div>
+                            <div class="mt-3 w-full text-sm font-medium px-2 py-1 rounded border break-words block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
+                                 th:text="${displayModelFormatted != null ? displayModelFormatted : displayModel}"></div>
                         </div>
                     </div>
 
@@ -190,8 +190,8 @@
                             <div class="inline-block px-3 py-1 rounded-md text-sm font-mono font-semibold border bg-gray-100 text-gray-800 border-gray-200">
                                 methodReturns
                             </div>
-                            <div class="mt-3 w-full text-sm font-medium px-2 py-1 rounded border break-all block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
-                                 th:text="${displayMethodReturns}"></div>
+                            <div class="mt-3 w-full text-sm font-medium px-2 py-1 rounded border break-words block bg-white border-gray-200 text-gray-800 font-mono whitespace-pre-wrap"
+                                 th:text="${displayMethodReturnsFormatted != null ? displayMethodReturnsFormatted : displayMethodReturns}"></div>
                         </div>
                     </div>
 

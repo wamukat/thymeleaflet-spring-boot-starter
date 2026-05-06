@@ -75,6 +75,17 @@ test('selectInput source includes complete leading comment block', async ({ page
   await expect(source).toContainText('th:fragment="selectInput');
 });
 
+test('story values model renders object values as formatted JSON', async ({ page }) => {
+  await openFragment(page, 'selectInput');
+  const storyValues = page.locator('.card-thymeleaflet').filter({ hasText: 'Story values' }).first();
+  await expect(storyValues).toBeVisible();
+
+  const storyValuesText = await storyValues.innerText();
+  expect(storyValuesText).toContain('{\n  "options" : [');
+  expect(storyValuesText).toContain('"value" : "starter"');
+  expect(storyValuesText).not.toContain('{options=[{value=starter');
+});
+
 test('fragment syntax sample renders supported variants', async ({ page }) => {
   await openFragment(page, 'fragmentSyntaxOverview');
   const preview = page.frameLocator('#fragment-preview-host iframe').locator('body');
