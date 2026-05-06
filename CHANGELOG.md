@@ -8,6 +8,22 @@ This project follows the Keep a Changelog format and uses Semantic Versioning.
 - Added
   - TBD
 
+## [0.2.27] - 2026-05-06
+
+- Changed
+  - Improved the Story values panel so model objects are displayed as readable pretty-printed JSON instead of Java `Map.toString()` output. (#191)
+  - Applied the same object formatting path to object-valued fragment parameters and method return candidates in Story values. (#191)
+- Build
+  - Enforced `@NullMarked` package coverage and redundant null-check cleanup for stronger NullAway/JSpecify integration. (#111)
+  - Updated Maven project, sample app, and README dependency examples to `0.2.27`.
+- Test
+  - Added formatter unit coverage and E2E regression coverage to keep Story values object display readable. (#191)
+
+### Issues
+
+- PR #111 Add NullAway/JSpecify package coverage and documentation
+- PR #191 Improve Story values object formatting
+
 ## [0.2.26] - 2026-05-05
 
 - Added
